@@ -1,19 +1,20 @@
-import { motion } from "framer-motion";
-import { Code2, Server, BrainCircuit, CloudCog } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Minus } from "lucide-react";
 import { capabilities } from "../data/portfolioData";
-
-const icons = { Code2, Server, BrainCircuit, CloudCog };
 
 const fadeUp = {
   hidden: { opacity: 0, y: 36 },
   show: (i = 0) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.1, duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+    transition: { delay: i * 0.08, duration: 0.8, ease: [0.16, 1, 0.3, 1] },
   }),
 };
 
 export const Capabilities = () => {
+  const [openId, setOpenId] = useState("frontend");
+
   return (
     <section
       id="capabilities"
@@ -21,13 +22,13 @@ export const Capabilities = () => {
       className="relative bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
       <div className="pointer-events-none absolute inset-0 bg-grid opacity-40" />
-      <div className="relative mx-auto max-w-7xl">
+      <div className="relative mx-auto max-w-4xl">
         <motion.p
           variants={fadeUp} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
-          className="font-kodemono text-xs uppercase tracking-[0.35em] text-cyber"
+          className="font-kodemono text-xs uppercase tracking-[0.35em] text-white"
         >
-          03 // SYSTEM SPECIFICATIONS
+          04 // SYSTEM SPECIFICATIONS
         </motion.p>
         <motion.h2
           variants={fadeUp} custom={1} initial="hidden" whileInView="show"
@@ -37,58 +38,66 @@ export const Capabilities = () => {
           Capabilities
         </motion.h2>
 
-        <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:gap-8">
+        <div className="mt-14 border-y border-[#222]">
           {capabilities.map((cap, i) => {
-            const Icon = icons[cap.icon];
+            const open = openId === cap.id;
             return (
               <motion.div
                 key={cap.id}
-                data-testid={`capability-card-${cap.id}`}
+                data-testid={`capability-accordion-${cap.id}`}
                 variants={fadeUp} custom={i} initial="hidden" whileInView="show"
                 viewport={{ once: true, margin: "-60px" }}
-                className="group glass rounded-2xl p-8 transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-cyber/40 hover:shadow-[0_0_50px_rgba(0,255,209,0.08)] sm:p-10"
+                className={i > 0 ? "border-t border-[#222]" : ""}
               >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-cyber/25 bg-cyber/5 text-cyber transition-shadow duration-500 group-hover:shadow-[0_0_20px_rgba(0,255,209,0.25)]">
-                    <Icon size={22} />
-                  </div>
-                  <div>
-                    <h3 className="font-orbitron text-lg font-semibold text-white">
+                <button
+                  data-testid={`capability-trigger-${cap.id}`}
+                  onClick={() => setOpenId(open ? null : cap.id)}
+                  aria-expanded={open}
+                  className="group flex w-full items-center justify-between gap-6 py-7 text-left"
+                >
+                  <span className="flex items-baseline gap-4 sm:gap-6">
+                    <span className="font-kodemono text-xs text-[#8A8A8A]">[ {cap.num} ]</span>
+                    <span
+                      className={`font-orbitron text-xl font-semibold transition-colors duration-300 sm:text-2xl ${
+                        open ? "text-white" : "text-[#BDBDBD] group-hover:text-white"
+                      }`}
+                    >
                       {cap.title}
-                    </h3>
-                    <p className="mt-1 font-inter text-xs text-neutral-500">
-                      {cap.description}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-8 space-y-5">
-                  {cap.skills.map((skill, j) => (
-                    <div key={skill.name}>
-                      <div className="flex items-center justify-between">
-                        <span className="font-kodemono text-[11px] uppercase tracking-[0.15em] text-neutral-300">
-                          {skill.name}
-                        </span>
-                        <span className="font-kodemono text-[11px] text-cyber">
-                          {skill.level}%
-                        </span>
+                    </span>
+                  </span>
+                  {open ? (
+                    <Minus size={18} className="shrink-0 text-white" />
+                  ) : (
+                    <Plus size={18} className="shrink-0 text-[#8A8A8A] transition-colors duration-300 group-hover:text-white" />
+                  )}
+                </button>
+                <AnimatePresence initial={false}>
+                  {open && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pb-8 sm:pl-[4.5rem]">
+                        <p className="max-w-lg font-inter text-sm leading-relaxed text-[#8A8A8A]">
+                          {cap.description}
+                        </p>
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          {cap.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full border border-[#222] px-3 py-1.5 font-kodemono text-[10px] uppercase tracking-wider text-[#BDBDBD]"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${skill.level}%` }}
-                          viewport={{ once: true, margin: "-40px" }}
-                          transition={{
-                            delay: 0.2 + j * 0.1,
-                            duration: 1.1,
-                            ease: [0.16, 1, 0.3, 1],
-                          }}
-                          className="h-full rounded-full bg-cyber shadow-[0_0_10px_rgba(0,255,209,0.6)]"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             );
           })}

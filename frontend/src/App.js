@@ -2,6 +2,7 @@ import { useState } from "react";
 import "@/App.css";
 import { useLenis } from "@/hooks/useLenis";
 import { Hero } from "@/components/Hero";
+import { SystemFeatures } from "@/components/SystemFeatures";
 import { NavigationDock } from "@/components/NavigationDock";
 import { Marquee } from "@/components/Marquee";
 import { About } from "@/components/About";
@@ -19,6 +20,7 @@ function App() {
       <NavigationDock visible={heroReady} />
       <main>
         <Hero onReady={() => setHeroReady(true)} />
+        <SystemFeatures />
         <Marquee />
         <About />
         <Projects />

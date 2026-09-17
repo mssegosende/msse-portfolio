@@ -57,13 +57,6 @@ export const marqueeItems = [
   "CREATIVE ENGINEERING",
 ];
 
-export const robotShots = {
-  head: "https://images.unsplash.com/photo-1677212004257-103cfa6b59d0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwzfHxmdXR1cmlzdGljJTIwY3liZXJuZXRpYyUyMHJvYm90JTIwaGlnaCUyMHRlY2glMjBkYXJrJTIwZGV0YWlsfGVufDB8fHx8MTc4OTY1Nzg3NXww&ixlib=rb-4.1.0&q=85",
-  torso:
-    "https://images.unsplash.com/photo-1676115299568-f17971f0bb87?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHw0fHxmdXR1cmlzdGljJTIwY3liZXJuZXRpYyUyMHJvYm90JTIwaGlnaCUyMHRlY2glMjBkYXJrJTIwZGV0YWlsfGVufDB8fHx8MTc4OTY1Nzg3NXww&ixlib=rb-4.1.0&q=85",
-  arm: "https://images.pexels.com/photos/29054365/pexels-photo-29054365.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
-};
-
 export const projects = [
   {
     id: "synthesis",
@@ -75,7 +68,6 @@ export const projects = [
     github: "https://github.com/",
     demo: "https://example.com/",
     span: "md:col-span-7",
-    image: robotShots.torso,
     featured: true,
   },
   {
@@ -88,7 +80,6 @@ export const projects = [
     github: "https://github.com/",
     demo: "https://example.com/",
     span: "md:col-span-5",
-    image: null,
   },
   {
     id: "visionpipe",
@@ -100,7 +91,6 @@ export const projects = [
     github: "https://github.com/",
     demo: null,
     span: "md:col-span-4",
-    image: null,
   },
   {
     id: "pulseboard",
@@ -112,7 +102,6 @@ export const projects = [
     github: "https://github.com/",
     demo: "https://example.com/",
     span: "md:col-span-4",
-    image: null,
   },
   {
     id: "forge",
@@ -124,62 +113,74 @@ export const projects = [
     github: "https://github.com/",
     demo: null,
     span: "md:col-span-4",
-    image: null,
+  },
+];
+
+export const systemFeatures = [
+  {
+    num: "01",
+    part: "HEAD",
+    title: "AI ENGINEERING",
+    text: "LLMs, agents and RAG pipelines — intelligence engineered for production.",
+    side: "left",
+    top: "20%",
+    from: { x: 26, y: 27 },
+    to: { x: 50, y: 29 },
+  },
+  {
+    num: "02",
+    part: "HANDS",
+    title: "FRONTEND",
+    text: "React interfaces with cinematic motion and real-time 3D.",
+    side: "right",
+    top: "46%",
+    from: { x: 74, y: 53 },
+    to: { x: 62, y: 60 },
+  },
+  {
+    num: "03",
+    part: "TORSO",
+    title: "BACKEND",
+    text: "FastAPI services, databases and APIs built for real load.",
+    side: "left",
+    top: "68%",
+    from: { x: 26, y: 74 },
+    to: { x: 45, y: 57 },
   },
 ];
 
 export const capabilities = [
   {
     id: "frontend",
-    icon: "Code2",
-    title: "Frontend Engineering",
+    num: "01",
+    title: "Frontend",
     description:
       "Interfaces that feel alive — motion-first, accessible, obsessively optimized.",
-    skills: [
-      { name: "React / Next.js", level: 95 },
-      { name: "TypeScript", level: 90 },
-      { name: "Motion / 3D (Spline, Three.js)", level: 82 },
-      { name: "Tailwind / Design Systems", level: 92 },
-    ],
+    tags: ["React", "Next.js", "TypeScript", "Tailwind CSS", "Framer Motion", "Spline / Three.js", "Radix / shadcn"],
   },
   {
     id: "backend",
-    icon: "Server",
-    title: "Backend Systems",
+    num: "02",
+    title: "Backend",
     description:
       "Resilient APIs and event-driven architectures built for real load.",
-    skills: [
-      { name: "FastAPI / Node.js", level: 93 },
-      { name: "PostgreSQL / MongoDB", level: 88 },
-      { name: "Redis / Kafka", level: 80 },
-      { name: "API Design / Auth", level: 90 },
-    ],
+    tags: ["FastAPI", "Node.js", "PostgreSQL", "MongoDB", "Redis", "Kafka", "REST / gRPC", "Auth"],
   },
   {
-    id: "aiml",
-    icon: "BrainCircuit",
-    title: "AI / Machine Learning",
+    id: "ai",
+    num: "03",
+    title: "AI",
     description:
       "From notebooks to production: training, evaluation and serving.",
-    skills: [
-      { name: "PyTorch / TensorFlow", level: 87 },
-      { name: "LLM Fine-tuning / RAG", level: 91 },
-      { name: "Computer Vision", level: 78 },
-      { name: "MLOps / Eval Harnesses", level: 84 },
-    ],
+    tags: ["PyTorch", "LLM Fine-tuning", "RAG", "Agents / LangChain", "Computer Vision", "Eval Harnesses", "MLOps"],
   },
   {
-    id: "devops",
-    icon: "CloudCog",
-    title: "Cloud & DevOps",
+    id: "tools",
+    num: "04",
+    title: "Tools",
     description:
       "Infrastructure as code, observability by default, zero-downtime deploys.",
-    skills: [
-      { name: "Docker / Kubernetes", level: 85 },
-      { name: "AWS / GCP", level: 82 },
-      { name: "CI/CD Pipelines", level: 88 },
-      { name: "Monitoring / Tracing", level: 79 },
-    ],
+    tags: ["Docker", "Kubernetes", "AWS / GCP", "CI/CD", "Git", "Observability", "Linux"],
   },
 ];
 

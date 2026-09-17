@@ -12,9 +12,9 @@ module.exports = {
         orbitron: ['Orbitron', 'sans-serif'],
         inter: ['Inter', 'sans-serif'],
         kodemono: ['"Kode Mono"', 'monospace'],
+        pixel: ['Silkscreen', 'monospace'],
       },
       colors: {
-        cyber: '#00FFD1',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

@@ -13,7 +13,7 @@ export const Marquee = () => {
             <span className="font-kodemono text-4xl font-semibold uppercase tracking-wider text-outline sm:text-6xl">
               {item}
             </span>
-            <span className="font-kodemono text-2xl text-cyber/60">•</span>
+            <span className="font-kodemono text-2xl text-white/30">•</span>
           </span>
         ))}
       </div>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=Kode+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=Kode+Mono:wght@400;500;600;700&family=Silkscreen:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -12,19 +12,19 @@
         --card-foreground: 0 0% 100%;
         --popover: 240 10% 4%;
         --popover-foreground: 0 0% 100%;
-        --primary: 168 100% 50%;
+        --primary: 0 0% 100%;
         --primary-foreground: 0 0% 0%;
-        --secondary: 240 5% 10%;
+        --secondary: 0 0% 7%;
         --secondary-foreground: 0 0% 100%;
-        --muted: 240 5% 10%;
-        --muted-foreground: 225 10% 60%;
-        --accent: 168 100% 50%;
+        --muted: 0 0% 7%;
+        --muted-foreground: 0 0% 54%;
+        --accent: 0 0% 100%;
         --accent-foreground: 0 0% 0%;
         --destructive: 0 84% 60%;
         --destructive-foreground: 0 0% 98%;
         --border: 0 0% 100% / 0.08;
         --input: 0 0% 100% / 0.1;
-        --ring: 168 100% 50%;
+        --ring: 0 0% 100%;
         --radius: 0.75rem;
     }
 }
@@ -57,7 +57,7 @@ body {
 }
 
 ::selection {
-    background: rgba(0, 255, 209, 0.28);
+    background: rgba(255, 255, 255, 0.25);
     color: #ffffff;
 }
 
@@ -68,7 +68,7 @@ body {
     background: #000000;
 }
 ::-webkit-scrollbar-thumb {
-    background: rgba(0, 255, 209, 0.35);
+    background: rgba(255, 255, 255, 0.3);
     border-radius: 3px;
 }
 
@@ -77,8 +77,8 @@ body {
     color: transparent;
 }
 
-.text-outline-cyan {
-    -webkit-text-stroke: 1px rgba(0, 255, 209, 0.4);
+.text-outline-grey {
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
     color: transparent;
 }
 
@@ -99,8 +99,8 @@ body {
 .scanline-overlay {
     background: repeating-linear-gradient(
         0deg,
-        rgba(0, 255, 209, 0.05) 0px,
-        rgba(0, 255, 209, 0.05) 1px,
+        rgba(255, 255, 255, 0.04) 0px,
+        rgba(255, 255, 255, 0.04) 1px,
         transparent 1px,
         transparent 4px
     );
@@ -119,7 +119,7 @@ body {
 .terminal-caret::after {
     content: '▋';
     margin-left: 2px;
-    color: #00ffd1;
+    color: #ffffff;
     animation: caret-blink 1.1s step-end infinite;
 }
 

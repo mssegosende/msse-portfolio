@@ -9,7 +9,7 @@ import {
 } from "framer-motion";
 import Spline from "@splinetool/react-spline";
 import { FolderOpen, Send } from "lucide-react";
-import { SPLINE_SCENE_URL, profile, robotShots } from "../data/portfolioData";
+import { SPLINE_SCENE_URL, profile } from "../data/portfolioData";
 import { scrollToId } from "../hooks/useLenis";
 
 const lineReveal = {
@@ -124,19 +124,16 @@ export const Hero = ({ onReady }) => {
             </div>
           )}
 
-          {/* Animated fallback */}
+          {/* Animated fallback — pure CSS, monochrome */}
           {failed && (
             <div className="absolute inset-0" data-testid="hero-fallback">
-              <img
-                src={robotShots.head}
-                alt="Cybernetic unit — static render"
-                className="h-full w-full object-cover opacity-45 animate-kenburns"
-              />
+              <div className="absolute inset-0 bg-[#050505]" />
+              <div className="absolute inset-0 bg-grid opacity-50" />
               <div className="absolute inset-0 scanline-overlay" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/70" />
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.07),transparent_60%)]" />
               <div
                 data-testid="hero-fallback-badge"
-                className="absolute right-6 top-24 rounded-full border border-cyber/30 bg-black/60 px-4 py-2 font-kodemono text-[10px] uppercase tracking-[0.3em] text-cyber backdrop-blur-md"
+                className="absolute right-6 top-24 rounded-full border border-[#222] bg-black/60 px-4 py-2 font-kodemono text-[10px] uppercase tracking-[0.3em] text-[#8A8A8A] backdrop-blur-md"
               >
                 3D OFFLINE // STATIC RENDER
               </div>
@@ -198,15 +195,15 @@ export const Hero = ({ onReady }) => {
                   />
                   <motion.circle
                     cx="42" cy="42" r={R} fill="none"
-                    stroke="#00FFD1" strokeWidth="1.5" strokeLinecap="round"
+                    stroke="#FFFFFF" strokeWidth="1.5" strokeLinecap="round"
                     strokeDasharray={CIRC}
                     initial={{ strokeDashoffset: CIRC }}
                     animate={{ strokeDashoffset: CIRC - (CIRC * progress) / 100 }}
                     transition={{ ease: "easeOut", duration: 0.3 }}
-                    style={{ filter: "drop-shadow(0 0 6px rgba(0,255,209,0.7))" }}
+                    style={{ filter: "drop-shadow(0 0 6px rgba(255,255,255,0.6))" }}
                   />
                 </svg>
-                <div className="absolute inset-0 flex items-center justify-center font-kodemono text-sm text-cyber">
+                <div className="absolute inset-0 flex items-center justify-center font-kodemono text-sm text-white">
                   {Math.round(progress)}%
                 </div>
               </div>
@@ -230,7 +227,7 @@ export const Hero = ({ onReady }) => {
           >
             <span data-testid="hero-brand" className="font-orbitron text-sm font-bold tracking-[0.3em] text-white mix-blend-difference">
               {profile.shortMark}
-              <span className="text-cyber">AI</span>
+              <span className="text-[#8A8A8A]">AI</span>
             </span>
           </motion.div>
 
@@ -240,7 +237,7 @@ export const Hero = ({ onReady }) => {
             animate={revealed ? "show" : "hidden"}
             className="absolute right-6 top-6 sm:right-10 sm:top-8 flex items-center gap-2"
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-cyber animate-pulse-dot" />
+            <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse-dot" />
             <span data-testid="hero-status" className="font-kodemono text-[10px] uppercase tracking-[0.3em] text-neutral-300 mix-blend-difference">
               STATUS: {profile.status}
             </span>
@@ -255,7 +252,7 @@ export const Hero = ({ onReady }) => {
             <button
               data-testid="hero-cta-projects"
               onClick={() => scrollToId("projects")}
-              className="flex items-center gap-2 rounded-full bg-cyber px-5 py-2.5 font-kodemono text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_26px_rgba(0,255,209,0.45)]"
+              className="flex items-center gap-2 rounded-full bg-white px-5 py-2.5 font-kodemono text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_26px_rgba(255,255,255,0.4)]"
             >
               <FolderOpen size={13} />
               Projects
@@ -263,7 +260,7 @@ export const Hero = ({ onReady }) => {
             <button
               data-testid="hero-cta-contact"
               onClick={() => scrollToId("contact")}
-              className="flex items-center gap-2 rounded-full border border-white/25 bg-black/40 px-5 py-2.5 font-kodemono text-[10px] uppercase tracking-[0.2em] text-white backdrop-blur-md transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-cyber/60 hover:bg-cyber/10"
+              className="flex items-center gap-2 rounded-full border border-white/25 bg-black/40 px-5 py-2.5 font-kodemono text-[10px] uppercase tracking-[0.2em] text-white backdrop-blur-md transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/10"
             >
               <Send size={13} />
               Contact
@@ -277,8 +274,8 @@ export const Hero = ({ onReady }) => {
             data-testid="hero-stat-card"
             className="glass absolute bottom-24 right-6 rounded-xl px-4 py-3 text-right sm:bottom-28 sm:right-10"
           >
-            <div className="font-orbitron text-xl font-bold text-cyber">6+</div>
-            <div className="mt-0.5 font-kodemono text-[9px] uppercase tracking-[0.25em] text-neutral-400">
+            <div className="font-orbitron text-xl font-bold text-white">6+</div>
+            <div className="mt-0.5 font-kodemono text-[9px] uppercase tracking-[0.25em] text-[#8A8A8A]">
               years shipping
               <br />
               intelligent systems

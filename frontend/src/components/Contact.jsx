@@ -20,6 +20,9 @@ const validate = ({ name, email, message }) => {
   return null;
 };
 
+const inputClass =
+  "mt-1.5 w-full rounded-lg border border-[#222] bg-white/[0.03] px-4 py-3 font-kodemono text-sm text-white placeholder:text-[#555] outline-none transition-[border-color,box-shadow] duration-300 focus:border-white/50 focus:shadow-[0_0_20px_rgba(255,255,255,0.07)]";
+
 export const Contact = () => {
   const [form, setForm] = useState({ name: "", email: "", company: "", message: "", website: "" });
   const [lines, setLines] = useState([]);
@@ -65,7 +68,7 @@ export const Contact = () => {
     }
   };
 
-  const lineColor = { cmd: "text-neutral-300", out: "text-neutral-400", ok: "text-cyber", err: "text-red-400" };
+  const lineColor = { cmd: "text-[#BDBDBD]", out: "text-[#8A8A8A]", ok: "text-white", err: "text-[#8A8A8A]" };
 
   return (
     <section
@@ -73,14 +76,14 @@ export const Contact = () => {
       data-testid="contact-section"
       className="relative bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(0,255,209,0.06),transparent_60%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.04),transparent_60%)]" />
       <div className="relative mx-auto max-w-4xl">
         <motion.p
           variants={fadeUp} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
-          className="font-kodemono text-xs uppercase tracking-[0.35em] text-cyber"
+          className="font-kodemono text-xs uppercase tracking-[0.35em] text-white"
         >
-          04 // OPEN CHANNEL
+          05 // OPEN CHANNEL
         </motion.p>
         <motion.h2
           variants={fadeUp} custom={1} initial="hidden" whileInView="show"
@@ -94,73 +97,73 @@ export const Contact = () => {
           variants={fadeUp} custom={2} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
           data-testid="contact-terminal"
-          className="mt-14 overflow-hidden rounded-2xl border border-white/10 bg-[#050505]/90 shadow-[0_0_80px_rgba(0,255,209,0.05)] backdrop-blur-xl"
+          className="mt-14 overflow-hidden rounded-2xl border border-[#222] bg-[#0A0A0A]/90 shadow-[0_0_80px_rgba(255,255,255,0.03)] backdrop-blur-xl"
         >
           {/* terminal chrome */}
-          <div className="flex items-center gap-2 border-b border-white/10 px-5 py-3.5">
-            <span className="h-3 w-3 rounded-full bg-red-500/70" />
-            <span className="h-3 w-3 rounded-full bg-yellow-500/70" />
-            <span className="h-3 w-3 rounded-full bg-green-500/70" />
-            <span className="ml-4 font-kodemono text-[11px] tracking-wider text-neutral-500">
+          <div className="flex items-center gap-2 border-b border-[#222] px-5 py-3.5">
+            <span className="h-3 w-3 rounded-full bg-[#333]" />
+            <span className="h-3 w-3 rounded-full bg-[#555]" />
+            <span className="h-3 w-3 rounded-full bg-[#777]" />
+            <span className="ml-4 font-kodemono text-[11px] tracking-wider text-[#8A8A8A]">
               msg@portfolio: ~/contact — zsh
             </span>
           </div>
 
           <div className="p-6 font-kodemono text-[13px] leading-relaxed sm:p-8">
             {terminalBoot.map((line, i) => (
-              <p key={i} className={line.type === "cmd" ? "text-neutral-300" : "text-neutral-500"}>
+              <p key={i} className={line.type === "cmd" ? "text-[#BDBDBD]" : "text-[#8A8A8A]"}>
                 {line.type === "cmd" ? `$ ${line.text}` : line.text}
               </p>
             ))}
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-              <p className="text-neutral-300">$ contact --send --secure</p>
+              <p className="text-[#BDBDBD]">$ contact --send --secure</p>
 
               <label className="block">
-                <span className="text-cyber">&gt; name:</span>
+                <span className="text-white">&gt; name:</span>
                 <input
                   data-testid="contact-name-input"
                   type="text"
                   value={form.name}
                   onChange={set("name")}
                   placeholder="your name"
-                  className="mt-1.5 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 font-kodemono text-sm text-white placeholder:text-neutral-600 outline-none transition-[border-color,box-shadow] duration-300 focus:border-cyber/50 focus:shadow-[0_0_20px_rgba(0,255,209,0.08)]"
+                  className={inputClass}
                 />
               </label>
 
               <label className="block">
-                <span className="text-cyber">&gt; email:</span>
+                <span className="text-white">&gt; email:</span>
                 <input
                   data-testid="contact-email-input"
                   type="email"
                   value={form.email}
                   onChange={set("email")}
                   placeholder="you@domain.com"
-                  className="mt-1.5 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 font-kodemono text-sm text-white placeholder:text-neutral-600 outline-none transition-[border-color,box-shadow] duration-300 focus:border-cyber/50 focus:shadow-[0_0_20px_rgba(0,255,209,0.08)]"
+                  className={inputClass}
                 />
               </label>
 
               <label className="block">
-                <span className="text-cyber">&gt; company <span className="text-neutral-600">(optional):</span></span>
+                <span className="text-white">&gt; company <span className="text-[#555]">(optional):</span></span>
                 <input
                   data-testid="contact-company-input"
                   type="text"
                   value={form.company}
                   onChange={set("company")}
                   placeholder="organization / studio"
-                  className="mt-1.5 w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 font-kodemono text-sm text-white placeholder:text-neutral-600 outline-none transition-[border-color,box-shadow] duration-300 focus:border-cyber/50 focus:shadow-[0_0_20px_rgba(0,255,209,0.08)]"
+                  className={inputClass}
                 />
               </label>
 
               <label className="block">
-                <span className="text-cyber">&gt; message:</span>
+                <span className="text-white">&gt; message:</span>
                 <textarea
                   data-testid="contact-message-input"
                   value={form.message}
                   onChange={set("message")}
                   placeholder="describe your project, timeline, scope…"
                   rows={4}
-                  className="mt-1.5 w-full resize-none rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 font-kodemono text-sm text-white placeholder:text-neutral-600 outline-none transition-[border-color,box-shadow] duration-300 focus:border-cyber/50 focus:shadow-[0_0_20px_rgba(0,255,209,0.08)]"
+                  className={`${inputClass} resize-none`}
                 />
               </label>
 
@@ -180,14 +183,14 @@ export const Contact = () => {
                 data-testid="contact-submit-button"
                 type="submit"
                 disabled={sending}
-                className="group relative w-full rounded-lg border border-cyber/40 bg-cyber/10 px-6 py-4 font-kodemono text-xs font-semibold uppercase tracking-[0.3em] text-cyber transition-[background-color,box-shadow,color] duration-300 hover:bg-cyber hover:text-black hover:shadow-[0_0_40px_rgba(0,255,209,0.4)] disabled:cursor-wait disabled:opacity-50"
+                className="group relative w-full rounded-lg border border-white/30 bg-white/5 px-6 py-4 font-kodemono text-xs font-semibold uppercase tracking-[0.3em] text-white transition-[background-color,box-shadow,color] duration-300 hover:bg-white hover:text-black hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] disabled:cursor-wait disabled:opacity-50"
               >
                 {sending ? "Transmitting…" : done ? "Transmit again" : "Transmit message"}
               </button>
             </form>
 
             {lines.length > 0 && (
-              <div data-testid="contact-status-lines" className="mt-6 space-y-1.5 border-t border-white/10 pt-5">
+              <div data-testid="contact-status-lines" className="mt-6 space-y-1.5 border-t border-[#222] pt-5">
                 {lines.map((line, i) => (
                   <motion.p
                     key={i}
@@ -198,7 +201,7 @@ export const Contact = () => {
                     {line.text}
                   </motion.p>
                 ))}
-                <span className="terminal-caret text-neutral-500" />
+                <span className="terminal-caret text-[#8A8A8A]" />
               </div>
             )}
           </div>
