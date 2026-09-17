@@ -33,6 +33,12 @@ export const profile = {
   ],
 };
 
+// PLACEHOLDER — María will replace these two paragraphs with her real story.
+export const story = [
+  "Every system I build starts the same way: with a question nobody thought to ask. I grew up taking machines apart to understand them — now I build the intelligence inside them. What began as curiosity about how things work became a discipline: engineering software that thinks, learns, and holds up under real-world pressure.",
+  "Today I work across the full stack — from the neural architectures that reason, to the interfaces that make that reasoning feel effortless. I believe great engineering is invisible: it just works, beautifully. This portfolio is a snapshot of that journey — the systems I've shipped, the craft behind them, and where I'm headed next.",
+];
+
 export const manifesto = [
   {
     num: "01",

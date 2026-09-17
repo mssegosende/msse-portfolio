@@ -24,7 +24,7 @@ export const NavigationDock = ({ visible }) => {
           <button
             data-testid="nav-brand"
             onClick={() => scrollToId("hero")}
-            className="mr-2 hidden shrink-0 px-3 py-2 font-orbitron text-[13px] font-bold tracking-[0.02em] text-white transition-colors hover:text-[#BDBDBD] sm:block"
+            className="mr-2 hidden shrink-0 px-3 py-2 font-orbitron text-[13px] font-bold tracking-[0.02em] text-white transition-colors hover:text-[#D3D3D3] sm:block"
           >
             {profile.shortMark}
           </button>
@@ -33,7 +33,7 @@ export const NavigationDock = ({ visible }) => {
               key={id}
               data-testid={testid}
               onClick={() => scrollToId(id)}
-              className="group flex shrink-0 items-center gap-2 px-3 py-2 text-[#8A8A8A] transition-[color,background-color] duration-300 hover:bg-white/5 hover:text-white"
+              className="group flex shrink-0 items-center gap-2 px-3 py-2 text-[#A6A6A6] transition-[color,background-color] duration-300 hover:bg-white/5 hover:text-white"
               aria-label={label}
             >
               <Icon size={15} />

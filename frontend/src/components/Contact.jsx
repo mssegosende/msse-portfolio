@@ -22,7 +22,7 @@ const validate = ({ name, email, message }) => {
 };
 
 const inputClass =
-  "mt-1.5 w-full rounded-lg border border-[#222] bg-white/[0.03] px-4 py-3 font-kodemono text-sm text-white placeholder:text-[#8A8A8A] outline-none transition-[border-color,box-shadow] duration-300 focus:border-white/50 focus:shadow-[0_0_20px_rgba(255,255,255,0.07)]";
+  "mt-1.5 w-full rounded-lg border border-[#222] bg-white/[0.03] px-4 py-3 font-kodemono text-sm text-white placeholder:text-[#A6A6A6] outline-none transition-[border-color,box-shadow] duration-300 focus:border-white/50 focus:shadow-[0_0_20px_rgba(255,255,255,0.07)]";
 
 export const Contact = () => {
   const [form, setForm] = useState({ name: "", email: "", company: "", message: "", website: "" });
@@ -69,7 +69,7 @@ export const Contact = () => {
     }
   };
 
-  const lineColor = { cmd: "text-[#BDBDBD]", out: "text-[#8A8A8A]", ok: "text-white", err: "text-[#8A8A8A]" };
+  const lineColor = { cmd: "text-[#D3D3D3]", out: "text-[#A6A6A6]", ok: "text-white", err: "text-[#A6A6A6]" };
 
   return (
     <section
@@ -106,20 +106,20 @@ export const Contact = () => {
             <span className="h-3 w-3 rounded-full bg-[#333]" />
             <span className="h-3 w-3 rounded-full bg-[#555]" />
             <span className="h-3 w-3 rounded-full bg-[#777]" />
-            <span className="ml-4 font-kodemono text-[13px] tracking-wider text-[#8A8A8A]">
+            <span className="ml-4 font-kodemono text-[13px] tracking-wider text-[#A6A6A6]">
               msg@portfolio: ~/contact — zsh
             </span>
           </div>
 
           <div className="p-6 font-kodemono text-[13px] leading-relaxed sm:p-8">
             {terminalBoot.map((line, i) => (
-              <p key={i} className={line.type === "cmd" ? "text-[#BDBDBD]" : "text-[#8A8A8A]"}>
+              <p key={i} className={line.type === "cmd" ? "text-[#D3D3D3]" : "text-[#A6A6A6]"}>
                 {line.type === "cmd" ? `$ ${line.text}` : line.text}
               </p>
             ))}
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-              <p className="text-[#BDBDBD]">$ contact --send --secure</p>
+              <p className="text-[#D3D3D3]">$ contact --send --secure</p>
 
               <label className="block">
                 <span className="text-white">&gt; name:</span>
@@ -146,7 +146,7 @@ export const Contact = () => {
               </label>
 
               <label className="block">
-                <span className="text-white">&gt; company <span className="text-[#8A8A8A]">(optional):</span></span>
+                <span className="text-white">&gt; company <span className="text-[#A6A6A6]">(optional):</span></span>
                 <input
                   data-testid="contact-company-input"
                   type="text"
@@ -203,7 +203,7 @@ export const Contact = () => {
                     {line.text}
                   </motion.p>
                 ))}
-                <span className="terminal-caret text-[#8A8A8A]" />
+                <span className="terminal-caret text-[#A6A6A6]" />
               </div>
             )}
           </div>

@@ -22,7 +22,7 @@ const ProjectCard = ({ project, index }) => (
     <div className="relative">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A]">
+          <p className="font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">
             {project.subtitle}
           </p>
           <h3 className="mt-2 font-display text-lg uppercase text-white sm:text-xl">
@@ -31,11 +31,11 @@ const ProjectCard = ({ project, index }) => (
         </div>
         <ArrowUpRight
           size={20}
-          className="shrink-0 text-[#8A8A8A] transition-[color,transform] duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-white"
+          className="shrink-0 text-[#A6A6A6] transition-[color,transform] duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-white"
         />
       </div>
 
-      <p className="mt-4 max-w-lg font-inter text-sm leading-relaxed text-[#8A8A8A]">
+      <p className="mt-4 max-w-lg font-inter text-sm leading-relaxed text-[#A6A6A6]">
         {project.description}
       </p>
 
@@ -43,7 +43,7 @@ const ProjectCard = ({ project, index }) => (
         {project.tags.map((tag) => (
           <span
             key={tag}
-            className="border border-[#222] px-3 py-1.5 font-display text-[13px] uppercase tracking-wider text-[#8A8A8A] transition-colors duration-300 group-hover:border-white/20 group-hover:text-[#BDBDBD]"
+            className="border border-[#222] px-3 py-1.5 font-display text-[13px] uppercase tracking-wider text-[#A6A6A6] transition-colors duration-300 group-hover:border-white/20 group-hover:text-[#D3D3D3]"
           >
             {tag}
           </span>
@@ -57,7 +57,7 @@ const ProjectCard = ({ project, index }) => (
             href={project.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A] transition-colors hover:text-white"
+            className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6] transition-colors hover:text-white"
           >
             <Github size={14} /> Code
           </a>
@@ -68,7 +68,7 @@ const ProjectCard = ({ project, index }) => (
             href={project.demo}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A] transition-colors hover:text-white"
+            className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6] transition-colors hover:text-white"
           >
             <ExternalLink size={14} /> Live
           </a>
@@ -107,7 +107,7 @@ export const Projects = () => {
           <motion.p
             variants={fadeUp} custom={2} initial="hidden" whileInView="show"
             viewport={{ once: true, margin: "-80px" }}
-            className="max-w-sm font-inter text-sm leading-relaxed text-[#8A8A8A]"
+            className="max-w-sm font-inter text-sm leading-relaxed text-[#A6A6A6]"
           >
             Systems I've designed, trained and shipped — from agent platforms to
             realtime pipelines.

@@ -59,10 +59,10 @@ export const Capabilities = () => {
                   className="group flex w-full items-center justify-between gap-6 py-7 text-left"
                 >
                   <span className="flex items-baseline gap-4 sm:gap-6">
-                    <span className="font-display text-[13px] text-[#8A8A8A]">[ {cap.num} ]</span>
+                    <span className="font-display text-[13px] text-[#A6A6A6]">[ {cap.num} ]</span>
                     <span
                       className={`font-display text-base uppercase transition-colors duration-300 sm:text-lg ${
-                        open ? "text-white" : "text-[#BDBDBD] group-hover:text-white"
+                        open ? "text-white" : "text-[#D3D3D3] group-hover:text-white"
                       }`}
                     >
                       {cap.title}
@@ -71,7 +71,7 @@ export const Capabilities = () => {
                   {open ? (
                     <Minus size={18} className="shrink-0 text-white" />
                   ) : (
-                    <Plus size={18} className="shrink-0 text-[#8A8A8A] transition-colors duration-300 group-hover:text-white" />
+                    <Plus size={18} className="shrink-0 text-[#A6A6A6] transition-colors duration-300 group-hover:text-white" />
                   )}
                 </button>
                 <AnimatePresence initial={false}>
@@ -84,14 +84,14 @@ export const Capabilities = () => {
                       className="overflow-hidden"
                     >
                       <div className="pb-8 sm:pl-[4.5rem]">
-                        <p className="max-w-lg font-inter text-sm leading-relaxed text-[#8A8A8A]">
+                        <p className="max-w-lg font-inter text-sm leading-relaxed text-[#A6A6A6]">
                           {cap.description}
                         </p>
                         <div className="mt-5 flex flex-wrap gap-2">
                           {cap.tags.map((tag) => (
                             <span
                               key={tag}
-                              className="border border-[#222] px-3 py-1.5 font-display text-[13px] uppercase tracking-wider text-[#BDBDBD]"
+                              className="border border-[#222] px-3 py-1.5 font-display text-[13px] uppercase tracking-wider text-[#D3D3D3]"
                             >
                               {tag}
                             </span>

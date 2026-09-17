@@ -38,7 +38,7 @@ export const About = () => {
           >
             Human behind
             <br />
-            the <span className="text-[#8A8A8A]">machine</span>
+            the <span className="text-[#A6A6A6]">machine</span>
           </motion.h2>
 
           {profile.bio.map((para, i) => (
@@ -46,7 +46,7 @@ export const About = () => {
               key={i}
               variants={fadeUp} custom={2 + i} initial="hidden" whileInView="show"
               viewport={{ once: true, margin: "-80px" }}
-              className="mt-6 font-inter text-sm leading-relaxed text-[#BDBDBD] sm:text-base"
+              className="mt-6 font-inter text-sm leading-relaxed text-[#D3D3D3] sm:text-base"
             >
               {para}
             </motion.p>
@@ -62,7 +62,7 @@ export const About = () => {
                 <div className="font-display text-2xl text-white sm:text-3xl">
                   {s.value}
                 </div>
-                <div className="mt-2 font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A]">
+                <div className="mt-2 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">
                   {s.label}
                 </div>
               </div>
@@ -86,7 +86,7 @@ export const About = () => {
               <h3 className="mt-6 font-display text-sm uppercase tracking-wider text-white">
                 {ch.title}
               </h3>
-              <p className="mt-4 font-inter text-sm leading-relaxed text-[#8A8A8A]">
+              <p className="mt-4 font-inter text-sm leading-relaxed text-[#A6A6A6]">
                 {ch.text}
               </p>
             </motion.article>

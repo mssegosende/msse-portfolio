@@ -8,6 +8,7 @@ import {
   SPLINE_SCENE_URL,
   SPLINE_SCENE_2_URL,
   profile,
+  story,
   systemFeatures,
 } from "../data/portfolioData";
 import { scrollToId } from "../hooks/useLenis";
@@ -31,7 +32,7 @@ const uiFade = {
   }),
 };
 
-const WORDMARK = "MISSENGINEER";
+const WORDMARK = "MSGCENGINEER";
 
 export const ScrollScene = ({ onReady }) => {
   const [progress, setProgress] = useState(0);
@@ -61,6 +62,7 @@ export const ScrollScene = ({ onReady }) => {
   const headlineRef = useRef(null);
   const pillsRef = useRef(null);
   const featuresHeaderRef = useRef(null);
+  const storyRefs = useRef([]);
   const calloutRefs = useRef([]);
   const lineRefs = useRef([]);
   const dotRefs = useRef([]);
@@ -116,9 +118,14 @@ export const ScrollScene = ({ onReady }) => {
     const startScale = reduce ? 1 : isMobile ? 1.3 : 1.45;
     const startY = reduce ? "4%" : isMobile ? "7%" : "10%";
     const endY = reduce ? "5%" : isMobile ? "8.5%" : "11.5%";
-    const c2 = isMobile
-      ? { scale: 1.05, x: "-48%", y: "8%" }
-      : { scale: 1.2, x: "-16%", y: "-6%" };
+    // phase 2 (story): extreme close-up — head + upper chest fill the frame
+    const c2close = isMobile
+      ? { scale: 1.55, x: "-48%", y: "14%" }
+      : { scale: 1.85, x: "-16%", y: "6%" };
+    // phase 3 (cards): pulled back to hero-like head-to-torso framing
+    const c2far = isMobile
+      ? { scale: 1.05, x: "-48%", y: "10%" }
+      : { scale: 1.2, x: "-16%", y: "-3.5%" };
 
     // mouse parallax on both scenes (outside gsap.context to avoid TDZ on ctx)
     let removeMouse = null;
@@ -144,11 +151,12 @@ export const ScrollScene = ({ onReady }) => {
         y: startY,
         transformOrigin: "50% 50%",
       });
-      gsap.set(canvas2WrapRef.current, { ...c2, transformOrigin: "50% 50%" });
+      gsap.set(canvas2WrapRef.current, { ...c2close, transformOrigin: "50% 50%" });
       gsap.set(layer2Ref.current, { opacity: 0 });
       gsap.set(layer2InnerRef.current, { filter: "brightness(0.25)" });
       gsap.set(featuresHeaderRef.current, { opacity: 0, y: 24 });
       gsap.set(overlayRef.current, { opacity: 0 });
+      storyRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 28 }));
       calloutRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 36 }));
       lineRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0 }));
       dotRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0 }));
@@ -179,21 +187,21 @@ export const ScrollScene = ({ onReady }) => {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "+=380%",
+          end: "+=620%",
           pin: true,
           scrub: 1,
           anticipatePin: 1,
           onUpdate: (self) => {
             const p = self.progress;
-            if (p > 0.3 && !mount2Ref.current) {
+            if (p > 0.15 && !mount2Ref.current) {
               mount2Ref.current = true;
               setMountScene2(true);
             }
-            if (p > 0.8 && !stopped1Ref.current) {
+            if (p > 0.45 && !stopped1Ref.current) {
               stopped1Ref.current = true;
               try { app1Ref.current?.stop(); } catch (e) { /* runtime without stop() */ }
             }
-            if (p < 0.55 && stopped1Ref.current) {
+            if (p < 0.25 && stopped1Ref.current) {
               stopped1Ref.current = false;
               try { app1Ref.current?.play(); } catch (e) { /* runtime without play() */ }
             }
@@ -203,9 +211,9 @@ export const ScrollScene = ({ onReady }) => {
 
       // wordmarks drift slowly through their scenes
       tl.fromTo(wm1Ref.current, { y: 24 }, { y: -40, duration: 0.5 }, 0);
-      tl.fromTo(wm2Ref.current, { y: 30 }, { y: -30, duration: 0.45 }, 0.54);
+      tl.fromTo(wm2Ref.current, { y: 30 }, { y: -30, duration: 0.6 }, 0.5);
 
-      // Phase 1 -> 2: headline leaves, light drains to black, slight drift-in
+      // PHASE 1 exit: headline leaves, light drains to black, slight drift-in
       tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
       tl.to(drain, { b: 0.02, c: 1.15, duration: 0.3, onUpdate: applyDrain }, 0.1);
       tl.to(overlayRef.current, { opacity: 0.35, duration: 0.3 }, 0.1);
@@ -216,14 +224,31 @@ export const ScrollScene = ({ onReady }) => {
       );
       tl.to(pillsRef.current, { opacity: 0, y: 24, duration: 0.08 }, 0.2);
 
-      // Phase 3: crossfade in darkness — robot changes tone dark -> light
-      tl.to(splineLayerRef.current, { opacity: 0, duration: 0.12 }, 0.52);
-      tl.to(layer2Ref.current, { opacity: 1, duration: 0.12 }, 0.52);
-      tl.to(lift, { b: 1, duration: 0.16, onUpdate: applyLift }, 0.52);
-      tl.to(featuresHeaderRef.current, { opacity: 1, y: 0, duration: 0.06 }, 0.6);
+      // PHASE 2: crossfade in darkness — chrome robot rises in EXTREME CLOSE-UP
+      tl.to(splineLayerRef.current, { opacity: 0, duration: 0.12 }, 0.5);
+      tl.to(layer2Ref.current, { opacity: 1, duration: 0.12 }, 0.5);
+      tl.to(lift, { b: 1, duration: 0.16, onUpdate: applyLift }, 0.5);
 
-      // Callouts one by one
-      const times = [0.72, 0.82, 0.9];
+      // story paragraphs fade in one after another during the close-up hold
+      // (long scroll lock: only the tiny idle breathing moves the robot here)
+      if (storyRefs.current[0])
+        tl.to(storyRefs.current[0], { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.62);
+      if (storyRefs.current[1])
+        tl.to(storyRefs.current[1], { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.78);
+
+      // PHASE 3: story leaves, robot pulls back to hero-like framing, then cards
+      const storyEls = storyRefs.current.filter(Boolean);
+      if (storyEls.length)
+        tl.to(storyEls, { opacity: 0, y: -24, duration: 0.07, ease: "power1.in" }, 1.04);
+      tl.to(
+        canvas2WrapRef.current,
+        { scale: c2far.scale, x: c2far.x, y: c2far.y, duration: 0.14, ease: "power1.inOut" },
+        1.04
+      );
+      tl.to(featuresHeaderRef.current, { opacity: 1, y: 0, duration: 0.06 }, 1.18);
+
+      // Callouts one by one — only after the pull-back has settled
+      const times = [1.26, 1.36, 1.44];
       systemFeatures.forEach((f, i) => {
         if (calloutRefs.current[i])
           tl.to(calloutRefs.current[i], { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, times[i]);
@@ -277,7 +302,7 @@ export const ScrollScene = ({ onReady }) => {
                   data-testid="bg-wordmark"
                   className="pointer-events-none absolute inset-x-0 top-[47%] text-center"
                 >
-                  <span className="whitespace-nowrap font-display text-[13vw] font-bold uppercase leading-none tracking-[-0.01em] text-white mix-blend-difference">
+                  <span className="text-engraved whitespace-nowrap font-display text-[clamp(2rem,10.5vw,10rem)] font-bold uppercase leading-none tracking-[-0.01em] text-white mix-blend-difference">
                     {WORDMARK}
                   </span>
                 </div>
@@ -305,7 +330,7 @@ export const ScrollScene = ({ onReady }) => {
                   <div className="absolute inset-0 scanline-overlay" />
                   <div
                     data-testid="hero-fallback-badge"
-                    className="absolute right-6 top-24 border border-[#222] bg-black/60 px-4 py-2 font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A] backdrop-blur-md"
+                    className="absolute right-6 top-24 border border-[#222] bg-black/60 px-4 py-2 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6] backdrop-blur-md"
                   >
                     3D OFFLINE // STATIC RENDER
                   </div>
@@ -332,7 +357,7 @@ export const ScrollScene = ({ onReady }) => {
                 data-testid="bg-wordmark-2"
                 className="pointer-events-none absolute inset-x-0 top-[53%] text-center"
               >
-                <span className="whitespace-nowrap font-display text-[13vw] font-bold uppercase leading-none tracking-[-0.01em] text-white opacity-30 mix-blend-difference">
+                <span className="text-engraved whitespace-nowrap font-display text-[clamp(2rem,10.5vw,10rem)] font-bold uppercase leading-none tracking-[-0.01em] text-white opacity-30 mix-blend-difference">
                   {WORDMARK}
                 </span>
               </div>
@@ -388,7 +413,7 @@ export const ScrollScene = ({ onReady }) => {
               initial="hidden"
               animate={revealed ? "show" : "hidden"}
               data-testid="hero-headline-1"
-              className="font-display text-[clamp(2rem,6vw,5.75rem)] font-light uppercase leading-none tracking-[0.02em] text-white"
+              className="text-engraved font-display text-[clamp(2rem,6vw,5.75rem)] font-light uppercase leading-none tracking-[0.02em] text-white"
             >
               — Build the future —
             </motion.h1>
@@ -400,7 +425,7 @@ export const ScrollScene = ({ onReady }) => {
               initial="hidden"
               animate={revealed ? "show" : "hidden"}
               data-testid="hero-headline-2"
-              className="font-display text-[clamp(1rem,3vw,2.5rem)] font-light uppercase leading-none tracking-[0.02em] text-white/40"
+              className="text-engraved font-display text-[clamp(1rem,3vw,2.5rem)] font-light uppercase leading-none tracking-[0.02em] text-white/60"
             >
               one system at a time
             </motion.p>
@@ -415,7 +440,7 @@ export const ScrollScene = ({ onReady }) => {
         >
           <span data-testid="hero-brand" className="font-orbitron text-sm font-bold tracking-[0.3em] text-white mix-blend-difference">
             {profile.shortMark}
-            <span className="text-[#8A8A8A]">AI</span>
+            <span className="text-[#A6A6A6]">AI</span>
           </span>
         </motion.div>
 
@@ -426,7 +451,7 @@ export const ScrollScene = ({ onReady }) => {
           className="absolute right-6 top-6 sm:right-10 sm:top-8 flex items-center gap-2"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse-dot" />
-          <span data-testid="hero-status" className="font-display text-[13px] uppercase tracking-[0.02em] text-[#BDBDBD] mix-blend-difference">
+          <span data-testid="hero-status" className="font-display text-[13px] uppercase tracking-[0.02em] text-[#D3D3D3] mix-blend-difference">
             STATUS: {profile.status}
           </span>
         </motion.div>
@@ -457,12 +482,28 @@ export const ScrollScene = ({ onReady }) => {
           </div>
         </motion.div>
 
+        {/* story paragraphs (phase 2) — beside the close-up robot, below it on mobile */}
+        <div className="absolute inset-x-5 bottom-28 sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-1/2 sm:w-[24rem] sm:-translate-y-1/2 lg:right-[9%]">
+          {story.map((para, i) => (
+            <p
+              key={i}
+              ref={(el) => (storyRefs.current[i] = el)}
+              data-testid={`story-paragraph-${i + 1}`}
+              className={`font-inter text-sm leading-relaxed text-[#D3D3D3] sm:text-base ${
+                i > 0 ? "mt-6" : ""
+              }`}
+            >
+              {para}
+            </p>
+          ))}
+        </div>
+
         {/* features header (phase 3) */}
         <div
           ref={featuresHeaderRef}
           className="pointer-events-none absolute inset-x-0 top-8 text-center sm:top-12"
         >
-          <p className="font-display text-[13px] uppercase tracking-[0.02em] text-[#BDBDBD]">
+          <p className="font-display text-[13px] uppercase tracking-[0.02em] text-[#D3D3D3]">
             01 // system features
           </p>
           <h2
@@ -471,7 +512,7 @@ export const ScrollScene = ({ onReady }) => {
           >
             System Features
           </h2>
-          <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A]">
+          <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">
             based on the msg·01 core
           </p>
         </div>
@@ -526,14 +567,14 @@ export const ScrollScene = ({ onReady }) => {
                 {f.num}
               </div>
               <div className="mt-5 flex items-baseline gap-3">
-                <span className="font-display text-[13px] uppercase tracking-[0.02em] text-[#BDBDBD]">
+                <span className="font-display text-[13px] uppercase tracking-[0.02em] text-[#D3D3D3]">
                   {f.part}
                 </span>
               </div>
               <h3 className="mt-2 font-display text-xl font-light uppercase text-white">
                 {f.title}
               </h3>
-              <p className="mt-3 font-inter text-sm leading-relaxed text-[#BDBDBD]">
+              <p className="mt-3 font-inter text-sm leading-relaxed text-[#D3D3D3]">
                 {f.text}
               </p>
             </div>
@@ -550,7 +591,7 @@ export const ScrollScene = ({ onReady }) => {
               <div key={f.num} className="flex flex-col items-center gap-3">
                 <span
                   ref={(el) => (railRefs.current[i] = el)}
-                  className="font-display text-[13px] tracking-[0.02em] text-[#8A8A8A]"
+                  className="font-display text-[13px] tracking-[0.02em] text-[#A6A6A6]"
                 >
                   {f.num}
                 </span>
@@ -569,18 +610,18 @@ export const ScrollScene = ({ onReady }) => {
             exit={{ opacity: 0, transition: { duration: 0.9 } }}
             className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black"
           >
-            <p className="font-display text-[13px] font-light uppercase tracking-[0.02em] text-[#8A8A8A]">
+            <p className="font-display text-[13px] font-light uppercase tracking-[0.02em] text-[#A6A6A6]">
               System boot
             </p>
             <div className="mt-6 h-px w-56 bg-[#222]">
               <motion.div
-                className="h-px bg-[#BDBDBD]"
+                className="h-px bg-[#D3D3D3]"
                 initial={{ width: "0%" }}
                 animate={{ width: `${progress}%` }}
                 transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.3 }}
               />
             </div>
-            <p className="mt-4 font-display text-[13px] tracking-[0.02em] text-[#8A8A8A]">
+            <p className="mt-4 font-display text-[13px] tracking-[0.02em] text-[#A6A6A6]">
               {Math.round(progress)}%
             </p>
           </motion.div>

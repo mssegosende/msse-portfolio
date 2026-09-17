@@ -13,12 +13,12 @@ export const Footer = () => {
           <button
             data-testid="footer-brand"
             onClick={() => scrollToId("hero")}
-            className="font-orbitron text-sm font-bold tracking-[0.02em] text-white transition-colors hover:text-[#BDBDBD]"
+            className="font-orbitron text-sm font-bold tracking-[0.02em] text-white transition-colors hover:text-[#D3D3D3]"
           >
             {profile.shortMark}
-            <span className="text-[#8A8A8A]">AI</span>
+            <span className="text-[#A6A6A6]">AI</span>
           </button>
-          <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A]">
+          <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">
             © 2026 {profile.name} — engineered, not templated
           </p>
         </div>
@@ -30,7 +30,7 @@ export const Footer = () => {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="GitHub"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#222] text-[#8A8A8A] transition-[color,border-color] duration-300 hover:border-white/40 hover:text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#222] text-[#A6A6A6] transition-[color,border-color] duration-300 hover:border-white/40 hover:text-white"
           >
             <Github size={16} />
           </a>
@@ -40,7 +40,7 @@ export const Footer = () => {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="LinkedIn"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#222] text-[#8A8A8A] transition-[color,border-color] duration-300 hover:border-white/40 hover:text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#222] text-[#A6A6A6] transition-[color,border-color] duration-300 hover:border-white/40 hover:text-white"
           >
             <Linkedin size={16} />
           </a>
@@ -48,7 +48,7 @@ export const Footer = () => {
             data-testid="footer-email-link"
             href={`mailto:${profile.email}`}
             aria-label="Email"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#222] text-[#8A8A8A] transition-[color,border-color] duration-300 hover:border-white/40 hover:text-white"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#222] text-[#A6A6A6] transition-[color,border-color] duration-300 hover:border-white/40 hover:text-white"
           >
             <Mail size={16} />
           </a>
