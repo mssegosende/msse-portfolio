@@ -118,14 +118,15 @@ export const ScrollScene = ({ onReady }) => {
     const startScale = reduce ? 1 : isMobile ? 1.3 : 1.45;
     const startY = reduce ? "4%" : isMobile ? "7%" : "10%";
     const endY = reduce ? "5%" : isMobile ? "8.5%" : "11.5%";
-    // phase 2 (story): extreme close-up — head + upper chest fill the frame
+    // phase 2 (story): extreme close-up — head + upper chest fill the frame;
+    // mobile sits higher/smaller so the story paragraphs fit below the head
     const c2close = isMobile
-      ? { scale: 1.55, x: "-48%", y: "14%" }
+      ? { scale: 1.3, x: "-48%", y: "3%" }
       : { scale: 1.85, x: "-16%", y: "6%" };
     // phase 3 (cards): pulled back to hero-like head-to-torso framing
     const c2far = isMobile
       ? { scale: 1.05, x: "-48%", y: "10%" }
-      : { scale: 1.2, x: "-16%", y: "-3.5%" };
+      : { scale: 1.2, x: "-10%", y: "-3.5%" };
 
     // mouse parallax on both scenes (outside gsap.context to avoid TDZ on ctx)
     let removeMouse = null;
