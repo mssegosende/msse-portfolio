@@ -5,6 +5,9 @@
 export const SPLINE_SCENE_URL =
   "https://prod.spline.design/3X4Nd1e9lv8rgSg1/scene.splinecode";
 
+export const SPLINE_SCENE_2_URL =
+  "https://prod.spline.design/PU4OS9xwmiHIeZOj/scene.splinecode";
+
 export const profile = {
   name: "María Sol Gosende",
   shortMark: "MSG://",
@@ -125,7 +128,7 @@ export const systemFeatures = [
     side: "left",
     top: "20%",
     from: { x: 26, y: 27 },
-    to: { x: 50, y: 27 },
+    to: { x: 50, y: 30 },
   },
   {
     num: "02",
@@ -135,7 +138,7 @@ export const systemFeatures = [
     side: "right",
     top: "46%",
     from: { x: 74, y: 53 },
-    to: { x: 63, y: 61 },
+    to: { x: 63, y: 62 },
   },
   {
     num: "03",
@@ -145,7 +148,7 @@ export const systemFeatures = [
     side: "left",
     top: "68%",
     from: { x: 26, y: 74 },
-    to: { x: 50, y: 55 },
+    to: { x: 50, y: 58 },
   },
 ];
 
