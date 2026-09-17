@@ -81,14 +81,14 @@ export const Contact = () => {
         <motion.p
           variants={fadeUp} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
-          className="font-kodemono text-xs uppercase tracking-[0.35em] text-white"
+          className="font-pixel text-[10px] uppercase tracking-[0.35em] text-white"
         >
           05 // OPEN CHANNEL
         </motion.p>
         <motion.h2
           variants={fadeUp} custom={1} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
-          className="mt-6 font-orbitron text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
+          className="text-engraved mt-6 font-pixel text-3xl uppercase text-white sm:text-4xl lg:text-5xl"
         >
           Initiate contact
         </motion.h2>
@@ -97,7 +97,7 @@ export const Contact = () => {
           variants={fadeUp} custom={2} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
           data-testid="contact-terminal"
-          className="mt-14 overflow-hidden rounded-2xl border border-[#222] bg-[#0A0A0A]/90 shadow-[0_0_80px_rgba(255,255,255,0.03)] backdrop-blur-xl"
+          className="corner-frame cut-corner mt-14 overflow-hidden border border-[#222] bg-[#0A0A0A]/90 shadow-[0_0_80px_rgba(255,255,255,0.03)] backdrop-blur-xl"
         >
           {/* terminal chrome */}
           <div className="flex items-center gap-2 border-b border-[#222] px-5 py-3.5">
@@ -183,7 +183,7 @@ export const Contact = () => {
                 data-testid="contact-submit-button"
                 type="submit"
                 disabled={sending}
-                className="group relative w-full rounded-lg border border-white/30 bg-white/5 px-6 py-4 font-kodemono text-xs font-semibold uppercase tracking-[0.3em] text-white transition-[background-color,box-shadow,color] duration-300 hover:bg-white hover:text-black hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] disabled:cursor-wait disabled:opacity-50"
+                className="group relative w-full border border-white/30 bg-white/5 px-6 py-4 font-pixel text-[10px] uppercase tracking-[0.3em] text-white transition-[background-color,box-shadow,color] duration-300 hover:bg-white hover:text-black hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] disabled:cursor-wait disabled:opacity-50"
               >
                 {sending ? "Transmitting…" : done ? "Transmit again" : "Transmit message"}
               </button>

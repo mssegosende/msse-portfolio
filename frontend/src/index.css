@@ -133,6 +133,46 @@ body {
     }
 }
 
+.text-engraved {
+    text-shadow:
+        1px 1px 0 rgba(70, 70, 70, 0.45),
+        0 3px 10px rgba(0, 0, 0, 0.85);
+}
+
+.tick-marks {
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.22) 0px,
+        rgba(255, 255, 255, 0.22) 1px,
+        transparent 1px,
+        transparent 14px
+    );
+}
+
+.cut-corner {
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
+}
+
+.corner-frame {
+    position: relative;
+}
+.corner-frame::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    background:
+        linear-gradient(to right, rgba(255, 255, 255, 0.4) 10px, transparent 10px) top left / 10px 1px,
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.4) 10px, transparent 10px) top left / 1px 10px,
+        linear-gradient(to left, rgba(255, 255, 255, 0.4) 10px, transparent 10px) top right / 10px 1px,
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.4) 10px, transparent 10px) top right / 1px 10px,
+        linear-gradient(to right, rgba(255, 255, 255, 0.4) 10px, transparent 10px) bottom left / 10px 1px,
+        linear-gradient(to top, rgba(255, 255, 255, 0.4) 10px, transparent 10px) bottom left / 1px 10px,
+        linear-gradient(to left, rgba(255, 255, 255, 0.4) 10px, transparent 10px) bottom right / 10px 1px,
+        linear-gradient(to top, rgba(255, 255, 255, 0.4) 10px, transparent 10px) bottom right / 1px 10px;
+    background-repeat: no-repeat;
+}
+
 input:-webkit-autofill,
 textarea:-webkit-autofill {
     -webkit-box-shadow: 0 0 0 1000px #000 inset;

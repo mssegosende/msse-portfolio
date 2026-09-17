@@ -18,7 +18,7 @@ export const Footer = () => {
             {profile.shortMark}
             <span className="text-[#8A8A8A]">AI</span>
           </button>
-          <p className="mt-3 font-kodemono text-[10px] uppercase tracking-[0.25em] text-[#555]">
+          <p className="mt-3 font-pixel text-[9px] uppercase tracking-[0.25em] text-[#555]">
             © 2026 {profile.name} — engineered, not templated
           </p>
         </div>

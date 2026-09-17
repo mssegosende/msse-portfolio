@@ -26,14 +26,14 @@ export const Capabilities = () => {
         <motion.p
           variants={fadeUp} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
-          className="font-kodemono text-xs uppercase tracking-[0.35em] text-white"
+          className="font-pixel text-[10px] uppercase tracking-[0.35em] text-white"
         >
           04 // SYSTEM SPECIFICATIONS
         </motion.p>
         <motion.h2
           variants={fadeUp} custom={1} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
-          className="mt-6 font-orbitron text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
+          className="text-engraved mt-6 font-pixel text-3xl uppercase text-white sm:text-4xl lg:text-5xl"
         >
           Capabilities
         </motion.h2>
@@ -56,9 +56,9 @@ export const Capabilities = () => {
                   className="group flex w-full items-center justify-between gap-6 py-7 text-left"
                 >
                   <span className="flex items-baseline gap-4 sm:gap-6">
-                    <span className="font-kodemono text-xs text-[#8A8A8A]">[ {cap.num} ]</span>
+                    <span className="font-pixel text-[10px] text-[#8A8A8A]">[ {cap.num} ]</span>
                     <span
-                      className={`font-orbitron text-xl font-semibold transition-colors duration-300 sm:text-2xl ${
+                      className={`font-pixel text-base uppercase transition-colors duration-300 sm:text-lg ${
                         open ? "text-white" : "text-[#BDBDBD] group-hover:text-white"
                       }`}
                     >
@@ -88,7 +88,7 @@ export const Capabilities = () => {
                           {cap.tags.map((tag) => (
                             <span
                               key={tag}
-                              className="rounded-full border border-[#222] px-3 py-1.5 font-kodemono text-[10px] uppercase tracking-wider text-[#BDBDBD]"
+                              className="border border-[#222] px-3 py-1.5 font-pixel text-[8px] uppercase tracking-wider text-[#BDBDBD]"
                             >
                               {tag}
                             </span>

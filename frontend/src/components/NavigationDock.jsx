@@ -20,11 +20,11 @@ export const NavigationDock = ({ visible }) => {
         transition={{ delay: 0.5, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         className="pointer-events-auto"
       >
-        <div className="glass flex max-w-[calc(100vw-1.5rem)] items-center gap-1 overflow-x-auto rounded-full px-2 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.6)] sm:px-3">
+        <div className="glass flex max-w-[calc(100vw-1.5rem)] items-center gap-1 px-2 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.6)] sm:px-3 cut-corner overflow-x-auto">
           <button
             data-testid="nav-brand"
             onClick={() => scrollToId("hero")}
-            className="mr-2 hidden shrink-0 rounded-full px-3 py-2 font-orbitron text-[11px] font-bold tracking-[0.25em] text-white transition-colors hover:text-[#BDBDBD] sm:block"
+            className="mr-2 hidden shrink-0 px-3 py-2 font-orbitron text-[11px] font-bold tracking-[0.25em] text-white transition-colors hover:text-[#BDBDBD] sm:block"
           >
             {profile.shortMark}
           </button>
@@ -33,11 +33,11 @@ export const NavigationDock = ({ visible }) => {
               key={id}
               data-testid={testid}
               onClick={() => scrollToId(id)}
-              className="group flex shrink-0 items-center gap-2 rounded-full px-3 py-2 text-[#8A8A8A] transition-[color,background-color] duration-300 hover:bg-white/5 hover:text-white"
+              className="group flex shrink-0 items-center gap-2 px-3 py-2 text-[#8A8A8A] transition-[color,background-color] duration-300 hover:bg-white/5 hover:text-white"
               aria-label={label}
             >
               <Icon size={15} />
-              <span className="hidden font-kodemono text-[10px] uppercase tracking-[0.2em] md:block">
+              <span className="hidden font-pixel text-[9px] uppercase tracking-[0.2em] md:block">
                 {label}
               </span>
             </button>
@@ -45,7 +45,7 @@ export const NavigationDock = ({ visible }) => {
           <button
             data-testid="nav-cta-button"
             onClick={() => scrollToId("contact")}
-            className="ml-1 flex shrink-0 items-center gap-2 rounded-full bg-white px-4 py-2 font-kodemono text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(255,255,255,0.35)]"
+            className="ml-1 flex shrink-0 items-center gap-2 bg-white px-4 py-2 font-pixel text-[9px] uppercase tracking-[0.2em] text-black transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(255,255,255,0.35)]"
           >
             <Send size={12} />
             <span className="hidden sm:block">Initiate</span>

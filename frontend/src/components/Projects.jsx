@@ -16,15 +16,15 @@ const ProjectCard = ({ project, index }) => (
     data-testid={`project-card-${project.id}`}
     variants={fadeUp} custom={index} initial="hidden" whileInView="show"
     viewport={{ once: true, margin: "-60px" }}
-    className={`group relative flex min-h-[320px] flex-col justify-end overflow-hidden rounded-2xl border border-[#222] bg-[#0A0A0A] p-7 transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-white/30 hover:shadow-[0_0_50px_rgba(255,255,255,0.06)] sm:p-9 ${project.span}`}
+    className={`group corner-frame cut-corner relative flex min-h-[320px] flex-col justify-end border border-[#222] bg-[#0A0A0A] p-7 transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-white/30 hover:shadow-[0_0_50px_rgba(255,255,255,0.06)] sm:p-9 ${project.span}`}
   >
     <div className="relative">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-kodemono text-[10px] uppercase tracking-[0.3em] text-[#8A8A8A]">
+          <p className="font-pixel text-[9px] uppercase tracking-[0.3em] text-[#8A8A8A]">
             {project.subtitle}
           </p>
-          <h3 className="mt-2 font-orbitron text-xl font-bold text-white sm:text-2xl">
+          <h3 className="mt-2 font-pixel text-lg uppercase text-white sm:text-xl">
             {project.title}
           </h3>
         </div>
@@ -42,7 +42,7 @@ const ProjectCard = ({ project, index }) => (
         {project.tags.map((tag) => (
           <span
             key={tag}
-            className="rounded-full border border-[#222] px-3 py-1 font-kodemono text-[10px] uppercase tracking-wider text-[#8A8A8A] transition-colors duration-300 group-hover:border-white/20 group-hover:text-[#BDBDBD]"
+            className="border border-[#222] px-3 py-1.5 font-pixel text-[8px] uppercase tracking-wider text-[#8A8A8A] transition-colors duration-300 group-hover:border-white/20 group-hover:text-[#BDBDBD]"
           >
             {tag}
           </span>
@@ -56,7 +56,7 @@ const ProjectCard = ({ project, index }) => (
             href={project.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 font-kodemono text-[11px] uppercase tracking-[0.15em] text-[#8A8A8A] transition-colors hover:text-white"
+            className="flex items-center gap-1.5 font-pixel text-[9px] uppercase tracking-[0.15em] text-[#8A8A8A] transition-colors hover:text-white"
           >
             <Github size={14} /> Code
           </a>
@@ -67,7 +67,7 @@ const ProjectCard = ({ project, index }) => (
             href={project.demo}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 font-kodemono text-[11px] uppercase tracking-[0.15em] text-[#8A8A8A] transition-colors hover:text-white"
+            className="flex items-center gap-1.5 font-pixel text-[9px] uppercase tracking-[0.15em] text-[#8A8A8A] transition-colors hover:text-white"
           >
             <ExternalLink size={14} /> Live
           </a>
@@ -90,14 +90,14 @@ export const Projects = () => {
             <motion.p
               variants={fadeUp} initial="hidden" whileInView="show"
               viewport={{ once: true, margin: "-80px" }}
-              className="font-kodemono text-xs uppercase tracking-[0.35em] text-white"
+              className="font-pixel text-[10px] uppercase tracking-[0.35em] text-white"
             >
               03 // SELECTED WORK
             </motion.p>
             <motion.h2
               variants={fadeUp} custom={1} initial="hidden" whileInView="show"
               viewport={{ once: true, margin: "-80px" }}
-              className="mt-6 font-orbitron text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
+              className="text-engraved mt-6 font-pixel text-3xl uppercase text-white sm:text-4xl lg:text-5xl"
             >
               Projects
             </motion.h2>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   motion,
+  useMotionValue,
   useReducedMotion,
   useScroll,
   useSpring,
@@ -20,7 +21,7 @@ const FeatureCallout = ({ feature, index, progress, reduceMotion }) => {
     <>
       <motion.svg
         data-testid={`feature-line-${feature.num}`}
-        className="pointer-events-none absolute inset-0 h-full w-full"
+        className="pointer-events-none absolute inset-0 z-10 h-full w-full"
         viewBox="0 0 100 100"
         preserveAspectRatio="none"
         style={{ opacity: lineOpacity }}
@@ -42,25 +43,25 @@ const FeatureCallout = ({ feature, index, progress, reduceMotion }) => {
           left: `${feature.to.x}%`,
           top: `${feature.to.y}%`,
         }}
-        className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
+        className="pointer-events-none absolute z-10 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
       />
       <motion.div
         data-testid={`feature-callout-${feature.num}`}
         style={{ opacity, y, top: feature.top, willChange: "transform, opacity" }}
-        className={`absolute w-72 max-w-[42vw] ${
+        className={`absolute z-10 w-72 max-w-[42vw] ${
           feature.side === "left" ? "left-[5%]" : "right-[5%]"
         }`}
       >
-        <div className="rounded-xl border border-[#222] bg-black/70 p-6 backdrop-blur-md">
-          <div className="flex items-baseline gap-3">
-            <span className="font-orbitron text-4xl font-black text-outline-grey">
-              {feature.num}
-            </span>
-            <span className="font-kodemono text-[10px] uppercase tracking-[0.3em] text-[#8A8A8A]">
+        <div className="corner-frame cut-corner relative border border-[#222] bg-black/70 p-6 pt-3 backdrop-blur-md">
+          <div className="select-none font-pixel text-6xl leading-none text-outline-grey">
+            {feature.num}
+          </div>
+          <div className="-mt-4 flex items-baseline gap-3">
+            <span className="font-pixel text-[9px] uppercase tracking-[0.3em] text-[#8A8A8A]">
               {feature.part}
             </span>
           </div>
-          <h3 className="mt-4 font-pixel text-base uppercase tracking-wide text-white">
+          <h3 className="mt-2 font-pixel text-base uppercase text-white">
             {feature.title}
           </h3>
           <p className="mt-3 font-inter text-sm leading-relaxed text-[#8A8A8A]">
@@ -76,7 +77,7 @@ const RailItem = ({ num, progress, index }) => {
   const t = 0.16 + index * 0.28;
   const color = useTransform(progress, [t, t + 0.05], ["#555555", "#FFFFFF"]);
   return (
-    <motion.span style={{ color }} className="font-kodemono text-xs tracking-[0.3em]">
+    <motion.span style={{ color }} className="font-pixel text-[10px] tracking-[0.3em]">
       {num}
     </motion.span>
   );
@@ -84,18 +85,18 @@ const RailItem = ({ num, progress, index }) => {
 
 const SectionHeader = ({ compact }) => (
   <div className={compact ? "text-center" : "pointer-events-none absolute inset-x-0 top-8 z-10 text-center sm:top-12"}>
-    <p className="font-kodemono text-[10px] uppercase tracking-[0.4em] text-[#8A8A8A]">
+    <p className="font-pixel text-[9px] uppercase tracking-[0.4em] text-[#8A8A8A]">
       01 // system features
     </p>
     <h2
       data-testid="features-headline"
-      className={`mt-4 font-pixel uppercase text-white ${
+      className={`text-engraved mt-4 font-pixel uppercase text-white ${
         compact ? "text-2xl" : "text-3xl mix-blend-difference sm:text-5xl"
       }`}
     >
       System Features
     </h2>
-    <p className="mt-3 font-kodemono text-[10px] uppercase tracking-[0.35em] text-[#8A8A8A]">
+    <p className="mt-3 font-pixel text-[9px] uppercase tracking-[0.35em] text-[#8A8A8A]">
       based on the msg·01 core
     </p>
   </div>
@@ -121,17 +122,52 @@ export const SystemFeatures = () => {
   });
   const smooth = useSpring(scrollYProgress, { stiffness: 90, damping: 26, mass: 0.5 });
 
+  // Black curtain mask — hole grows from the head outward, soft gradient edge
+  // (gradient stops are relative to the ellipse size, so the ellipse grows and
+  //  the 55%->100% band keeps the edge soft at every step)
+  const maskImage = useTransform(smooth, (v) => {
+    const p = Math.min(Math.max(v / 0.85, 0), 1);
+    const rx = 16 + p * 134;
+    const ry = 12 + p * 108;
+    const cy = 30 + p * 16;
+    return `radial-gradient(ellipse ${rx}% ${ry}% at 50% ${cy}%, transparent 55%, black 100%)`;
+  });
+  const maskOpacity = useTransform(smooth, [0.88, 1], [1, 0]);
+
+  // Restrained parallax: a few px + max ~2deg tilt, from scroll and mouse
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const mxS = useSpring(mouseX, { stiffness: 60, damping: 20 });
+  const myS = useSpring(mouseY, { stiffness: 60, damping: 20 });
+  const robotX = useTransform(mxS, (v) => (reduceMotion ? 0 : v * 10));
+  const scrollShift = useTransform(smooth, [0, 1], [-8, 8]);
+  const robotY = useTransform([myS, scrollShift], ([m, s]) =>
+    reduceMotion ? 0 : m * 8 + s
+  );
+  const scrollTilt = useTransform(smooth, [0, 1], [-0.7, 0.7]);
+  const robotTilt = useTransform([mxS, scrollTilt], ([m, s]) =>
+    reduceMotion ? 0 : m * 1.4 + s
+  );
+
+  const handleMouse = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    mouseX.set((e.clientX - r.left) / r.width - 0.5);
+    mouseY.set((e.clientY - r.top) / r.height - 0.5);
+  };
+
   if (isMobile) {
     return (
       <section id="features" data-testid="features-section" className="bg-black px-4 py-20">
         <SectionHeader compact />
         <div className="mt-8 flex justify-center" data-testid="features-robot-mobile">
-          <img
-            src="/robot-full.png"
-            alt="MSG·01 humanoid unit — full render"
-            loading="lazy"
-            className="h-[46vh] rounded-xl border border-[#222] object-contain brightness-[0.32] contrast-105"
-          />
+          <div className="corner-frame inline-block">
+            <img
+              src="/robot-full.png"
+              alt="MSG·01 humanoid unit — full render"
+              loading="lazy"
+              className="h-[46vh] border border-[#222] object-contain brightness-[0.32] contrast-105"
+            />
+          </div>
         </div>
         <div className="mt-10 space-y-5">
           {systemFeatures.map((f) => (
@@ -142,15 +178,15 @@ export const SystemFeatures = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-              className="rounded-xl border border-[#222] bg-[#0A0A0A] p-6"
+              className="corner-frame cut-corner border border-[#222] bg-[#0A0A0A] p-6 pt-3"
             >
-              <div className="flex items-baseline gap-3">
-                <span className="font-orbitron text-3xl font-black text-outline-grey">{f.num}</span>
-                <span className="font-kodemono text-[10px] uppercase tracking-[0.3em] text-[#8A8A8A]">
+              <div className="select-none font-pixel text-5xl leading-none text-outline-grey">{f.num}</div>
+              <div className="-mt-3">
+                <span className="font-pixel text-[9px] uppercase tracking-[0.3em] text-[#8A8A8A]">
                   {f.part}
                 </span>
               </div>
-              <h3 className="mt-3 font-pixel text-base uppercase text-white">{f.title}</h3>
+              <h3 className="mt-2 font-pixel text-base uppercase text-white">{f.title}</h3>
               <p className="mt-2 font-inter text-sm leading-relaxed text-[#8A8A8A]">{f.text}</p>
             </motion.div>
           ))}
@@ -166,15 +202,28 @@ export const SystemFeatures = () => {
       data-testid="features-section"
       className="relative h-[320vh] bg-black"
     >
-      <div className="sticky top-0 h-screen overflow-hidden">
-        {/* static render of the Spline robot — captured from the live scene */}
+      <div className="sticky top-0 h-screen overflow-hidden" onMouseMove={handleMouse}>
+        {/* static render of the Spline robot — fixed size, subtle parallax only */}
         <div className="absolute inset-0 flex items-center justify-center" data-testid="features-robot">
-          <img
-            src="/robot-full.png"
-            alt="MSG·01 humanoid unit — full render"
-            className="h-[85vh] rounded-2xl border border-[#222] object-contain brightness-[0.32] contrast-105 shadow-[0_0_80px_rgba(255,255,255,0.05)]"
-          />
+          <motion.div
+            style={{ x: robotX, y: robotY, rotate: robotTilt, willChange: "transform" }}
+            className="corner-frame inline-block"
+          >
+            <img
+              src="/robot-full.png"
+              alt="MSG·01 humanoid unit — full render"
+              className="h-[85vh] border border-[#222] object-contain brightness-[0.32] contrast-105 shadow-[0_0_80px_rgba(255,255,255,0.05)]"
+            />
+          </motion.div>
         </div>
+
+        {/* black curtain — retracts on scroll, soft gradient edge */}
+        <motion.div
+          data-testid="features-mask"
+          className="pointer-events-none absolute inset-0 bg-black"
+          style={{ WebkitMaskImage: maskImage, maskImage, opacity: maskOpacity }}
+        />
+
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(0,0,0,0.65)_100%)]" />
         <SectionHeader />
         {systemFeatures.map((f, i) => (
@@ -202,3 +251,4 @@ export const SystemFeatures = () => {
     </section>
   );
 };
+

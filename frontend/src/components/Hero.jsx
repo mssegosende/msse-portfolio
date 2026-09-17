@@ -238,7 +238,7 @@ export const Hero = ({ onReady }) => {
             className="absolute right-6 top-6 sm:right-10 sm:top-8 flex items-center gap-2"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse-dot" />
-            <span data-testid="hero-status" className="font-kodemono text-[10px] uppercase tracking-[0.3em] text-neutral-300 mix-blend-difference">
+            <span data-testid="hero-status" className="font-pixel text-[9px] uppercase tracking-[0.3em] text-neutral-300 mix-blend-difference">
               STATUS: {profile.status}
             </span>
           </motion.div>
@@ -252,7 +252,7 @@ export const Hero = ({ onReady }) => {
             <button
               data-testid="hero-cta-projects"
               onClick={() => scrollToId("projects")}
-              className="flex items-center gap-2 rounded-full bg-white px-5 py-2.5 font-kodemono text-[10px] font-semibold uppercase tracking-[0.2em] text-black transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_26px_rgba(255,255,255,0.4)]"
+              className="flex items-center gap-2 bg-white px-5 py-2.5 font-pixel text-[9px] uppercase tracking-[0.2em] text-black transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_26px_rgba(255,255,255,0.4)]"
             >
               <FolderOpen size={13} />
               Projects
@@ -260,26 +260,11 @@ export const Hero = ({ onReady }) => {
             <button
               data-testid="hero-cta-contact"
               onClick={() => scrollToId("contact")}
-              className="flex items-center gap-2 rounded-full border border-white/25 bg-black/40 px-5 py-2.5 font-kodemono text-[10px] uppercase tracking-[0.2em] text-white backdrop-blur-md transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/10"
+              className="flex items-center gap-2 border border-white/25 bg-black/40 px-5 py-2.5 font-pixel text-[9px] uppercase tracking-[0.2em] text-white backdrop-blur-md transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/10"
             >
               <Send size={13} />
               Contact
             </button>
-          </motion.div>
-
-          {/* bottom-right stat card */}
-          <motion.div
-            variants={uiFade} custom={3} initial="hidden"
-            animate={revealed ? "show" : "hidden"}
-            data-testid="hero-stat-card"
-            className="glass absolute bottom-24 right-6 rounded-xl px-4 py-3 text-right sm:bottom-28 sm:right-10"
-          >
-            <div className="font-orbitron text-xl font-bold text-white">6+</div>
-            <div className="mt-0.5 font-kodemono text-[9px] uppercase tracking-[0.25em] text-[#8A8A8A]">
-              years shipping
-              <br />
-              intelligent systems
-            </div>
           </motion.div>
         </div>
 
