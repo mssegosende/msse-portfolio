@@ -12,7 +12,7 @@ module.exports = {
         orbitron: ['Orbitron', 'sans-serif'],
         inter: ['Inter', 'sans-serif'],
         kodemono: ['"Kode Mono"', 'monospace'],
-        pixel: ['Silkscreen', 'monospace'],
+        display: ['Rajdhani', 'sans-serif'],
       },
       colors: {
         background: 'hsl(var(--background))',

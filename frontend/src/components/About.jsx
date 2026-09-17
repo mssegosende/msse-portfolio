@@ -21,7 +21,7 @@ export const About = () => {
         <motion.p
           variants={fadeUp} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
-          className="font-pixel text-[10px] uppercase tracking-[0.35em] text-white"
+          className="font-display text-[13px] uppercase tracking-[0.02em] text-white"
         >
           02 // WHO
         </motion.p>
@@ -30,7 +30,7 @@ export const About = () => {
           <motion.h2
             variants={fadeUp} custom={1} initial="hidden" whileInView="show"
             viewport={{ once: true, margin: "-80px" }}
-            className="text-engraved font-pixel text-3xl uppercase text-white sm:text-4xl lg:text-5xl"
+            className="text-engraved font-display font-light text-3xl uppercase text-white sm:text-4xl lg:text-5xl"
           >
             Human behind
             <br />
@@ -55,10 +55,10 @@ export const About = () => {
           >
             {profile.stats.map((s) => (
               <div key={s.label} data-testid={`about-stat-${s.label.split(" ")[1] || s.label}`}>
-                <div className="font-pixel text-2xl text-white sm:text-3xl">
+                <div className="font-display text-2xl text-white sm:text-3xl">
                   {s.value}
                 </div>
-                <div className="mt-2 font-pixel text-[8px] uppercase tracking-[0.2em] text-[#8A8A8A]">
+                <div className="mt-2 font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A]">
                   {s.label}
                 </div>
               </div>
@@ -76,10 +76,10 @@ export const About = () => {
               viewport={{ once: true, margin: "-60px" }}
               className="group corner-frame cut-corner bg-black p-8 pt-5 transition-colors duration-500 hover:bg-[#0A0A0A] sm:p-10 sm:pt-7"
             >
-              <div className="select-none font-pixel text-7xl leading-none text-outline-grey transition-all duration-500 group-hover:[-webkit-text-stroke-color:rgba(255,255,255,0.55)]">
+              <div className="select-none font-display text-7xl leading-none text-outline-grey transition-all duration-500 group-hover:[-webkit-text-stroke-color:rgba(255,255,255,0.55)]">
                 {ch.num}
               </div>
-              <h3 className="-mt-5 font-pixel text-sm uppercase tracking-wider text-white">
+              <h3 className="-mt-5 font-display text-sm uppercase tracking-wider text-white">
                 {ch.title}
               </h3>
               <p className="mt-4 font-inter text-sm leading-relaxed text-[#8A8A8A]">

@@ -125,7 +125,7 @@ export const systemFeatures = [
     side: "left",
     top: "20%",
     from: { x: 26, y: 27 },
-    to: { x: 50, y: 29 },
+    to: { x: 50, y: 27 },
   },
   {
     num: "02",
@@ -135,7 +135,7 @@ export const systemFeatures = [
     side: "right",
     top: "46%",
     from: { x: 74, y: 53 },
-    to: { x: 62, y: 60 },
+    to: { x: 63, y: 61 },
   },
   {
     num: "03",
@@ -145,7 +145,7 @@ export const systemFeatures = [
     side: "left",
     top: "68%",
     from: { x: 26, y: 74 },
-    to: { x: 45, y: 57 },
+    to: { x: 50, y: 55 },
   },
 ];
 

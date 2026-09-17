@@ -24,7 +24,7 @@ export const NavigationDock = ({ visible }) => {
           <button
             data-testid="nav-brand"
             onClick={() => scrollToId("hero")}
-            className="mr-2 hidden shrink-0 px-3 py-2 font-orbitron text-[11px] font-bold tracking-[0.25em] text-white transition-colors hover:text-[#BDBDBD] sm:block"
+            className="mr-2 hidden shrink-0 px-3 py-2 font-orbitron text-[13px] font-bold tracking-[0.02em] text-white transition-colors hover:text-[#BDBDBD] sm:block"
           >
             {profile.shortMark}
           </button>
@@ -37,7 +37,7 @@ export const NavigationDock = ({ visible }) => {
               aria-label={label}
             >
               <Icon size={15} />
-              <span className="hidden font-pixel text-[9px] uppercase tracking-[0.2em] md:block">
+              <span className="hidden font-display text-[13px] uppercase tracking-[0.02em] md:block">
                 {label}
               </span>
             </button>
@@ -45,7 +45,7 @@ export const NavigationDock = ({ visible }) => {
           <button
             data-testid="nav-cta-button"
             onClick={() => scrollToId("contact")}
-            className="ml-1 flex shrink-0 items-center gap-2 bg-white px-4 py-2 font-pixel text-[9px] uppercase tracking-[0.2em] text-black transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(255,255,255,0.35)]"
+            className="ml-1 flex shrink-0 items-center gap-2 bg-white px-4 py-2 font-display text-[13px] uppercase tracking-[0.02em] text-black transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(255,255,255,0.35)]"
           >
             <Send size={12} />
             <span className="hidden sm:block">Initiate</span>

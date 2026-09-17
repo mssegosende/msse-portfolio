@@ -21,7 +21,7 @@ const validate = ({ name, email, message }) => {
 };
 
 const inputClass =
-  "mt-1.5 w-full rounded-lg border border-[#222] bg-white/[0.03] px-4 py-3 font-kodemono text-sm text-white placeholder:text-[#555] outline-none transition-[border-color,box-shadow] duration-300 focus:border-white/50 focus:shadow-[0_0_20px_rgba(255,255,255,0.07)]";
+  "mt-1.5 w-full rounded-lg border border-[#222] bg-white/[0.03] px-4 py-3 font-kodemono text-sm text-white placeholder:text-[#8A8A8A] outline-none transition-[border-color,box-shadow] duration-300 focus:border-white/50 focus:shadow-[0_0_20px_rgba(255,255,255,0.07)]";
 
 export const Contact = () => {
   const [form, setForm] = useState({ name: "", email: "", company: "", message: "", website: "" });
@@ -81,14 +81,14 @@ export const Contact = () => {
         <motion.p
           variants={fadeUp} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
-          className="font-pixel text-[10px] uppercase tracking-[0.35em] text-white"
+          className="font-display text-[13px] uppercase tracking-[0.02em] text-white"
         >
           05 // OPEN CHANNEL
         </motion.p>
         <motion.h2
           variants={fadeUp} custom={1} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
-          className="text-engraved mt-6 font-pixel text-3xl uppercase text-white sm:text-4xl lg:text-5xl"
+          className="text-engraved mt-6 font-display font-light text-3xl uppercase text-white sm:text-4xl lg:text-5xl"
         >
           Initiate contact
         </motion.h2>
@@ -104,7 +104,7 @@ export const Contact = () => {
             <span className="h-3 w-3 rounded-full bg-[#333]" />
             <span className="h-3 w-3 rounded-full bg-[#555]" />
             <span className="h-3 w-3 rounded-full bg-[#777]" />
-            <span className="ml-4 font-kodemono text-[11px] tracking-wider text-[#8A8A8A]">
+            <span className="ml-4 font-kodemono text-[13px] tracking-wider text-[#8A8A8A]">
               msg@portfolio: ~/contact — zsh
             </span>
           </div>
@@ -144,7 +144,7 @@ export const Contact = () => {
               </label>
 
               <label className="block">
-                <span className="text-white">&gt; company <span className="text-[#555]">(optional):</span></span>
+                <span className="text-white">&gt; company <span className="text-[#8A8A8A]">(optional):</span></span>
                 <input
                   data-testid="contact-company-input"
                   type="text"
@@ -183,7 +183,7 @@ export const Contact = () => {
                 data-testid="contact-submit-button"
                 type="submit"
                 disabled={sending}
-                className="group relative w-full border border-white/30 bg-white/5 px-6 py-4 font-pixel text-[10px] uppercase tracking-[0.3em] text-white transition-[background-color,box-shadow,color] duration-300 hover:bg-white hover:text-black hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] disabled:cursor-wait disabled:opacity-50"
+                className="group relative w-full border border-white/30 bg-white/5 px-6 py-4 font-display text-[13px] uppercase tracking-[0.02em] text-white transition-[background-color,box-shadow,color] duration-300 hover:bg-white hover:text-black hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] disabled:cursor-wait disabled:opacity-50"
               >
                 {sending ? "Transmitting…" : done ? "Transmit again" : "Transmit message"}
               </button>

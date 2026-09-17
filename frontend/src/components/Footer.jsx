@@ -13,12 +13,12 @@ export const Footer = () => {
           <button
             data-testid="footer-brand"
             onClick={() => scrollToId("hero")}
-            className="font-orbitron text-sm font-bold tracking-[0.3em] text-white transition-colors hover:text-[#BDBDBD]"
+            className="font-orbitron text-sm font-bold tracking-[0.02em] text-white transition-colors hover:text-[#BDBDBD]"
           >
             {profile.shortMark}
             <span className="text-[#8A8A8A]">AI</span>
           </button>
-          <p className="mt-3 font-pixel text-[9px] uppercase tracking-[0.25em] text-[#555]">
+          <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A]">
             © 2026 {profile.name} — engineered, not templated
           </p>
         </div>

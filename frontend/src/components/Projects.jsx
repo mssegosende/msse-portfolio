@@ -21,16 +21,16 @@ const ProjectCard = ({ project, index }) => (
     <div className="relative">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-pixel text-[9px] uppercase tracking-[0.3em] text-[#8A8A8A]">
+          <p className="font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A]">
             {project.subtitle}
           </p>
-          <h3 className="mt-2 font-pixel text-lg uppercase text-white sm:text-xl">
+          <h3 className="mt-2 font-display text-lg uppercase text-white sm:text-xl">
             {project.title}
           </h3>
         </div>
         <ArrowUpRight
           size={20}
-          className="shrink-0 text-[#555] transition-[color,transform] duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-white"
+          className="shrink-0 text-[#8A8A8A] transition-[color,transform] duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-white"
         />
       </div>
 
@@ -42,7 +42,7 @@ const ProjectCard = ({ project, index }) => (
         {project.tags.map((tag) => (
           <span
             key={tag}
-            className="border border-[#222] px-3 py-1.5 font-pixel text-[8px] uppercase tracking-wider text-[#8A8A8A] transition-colors duration-300 group-hover:border-white/20 group-hover:text-[#BDBDBD]"
+            className="border border-[#222] px-3 py-1.5 font-display text-[13px] uppercase tracking-wider text-[#8A8A8A] transition-colors duration-300 group-hover:border-white/20 group-hover:text-[#BDBDBD]"
           >
             {tag}
           </span>
@@ -56,7 +56,7 @@ const ProjectCard = ({ project, index }) => (
             href={project.github}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 font-pixel text-[9px] uppercase tracking-[0.15em] text-[#8A8A8A] transition-colors hover:text-white"
+            className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A] transition-colors hover:text-white"
           >
             <Github size={14} /> Code
           </a>
@@ -67,7 +67,7 @@ const ProjectCard = ({ project, index }) => (
             href={project.demo}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 font-pixel text-[9px] uppercase tracking-[0.15em] text-[#8A8A8A] transition-colors hover:text-white"
+            className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#8A8A8A] transition-colors hover:text-white"
           >
             <ExternalLink size={14} /> Live
           </a>
@@ -90,14 +90,14 @@ export const Projects = () => {
             <motion.p
               variants={fadeUp} initial="hidden" whileInView="show"
               viewport={{ once: true, margin: "-80px" }}
-              className="font-pixel text-[10px] uppercase tracking-[0.35em] text-white"
+              className="font-display text-[13px] uppercase tracking-[0.02em] text-white"
             >
               03 // SELECTED WORK
             </motion.p>
             <motion.h2
               variants={fadeUp} custom={1} initial="hidden" whileInView="show"
               viewport={{ once: true, margin: "-80px" }}
-              className="text-engraved mt-6 font-pixel text-3xl uppercase text-white sm:text-4xl lg:text-5xl"
+              className="text-engraved mt-6 font-display font-light text-3xl uppercase text-white sm:text-4xl lg:text-5xl"
             >
               Projects
             </motion.h2>
