@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { terminalBoot } from "../data/portfolioData";
+import { GridField } from "./GridField";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 36 },
@@ -74,9 +75,10 @@ export const Contact = () => {
     <section
       id="contact"
       data-testid="contact-section"
-      className="relative bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
+      className="relative overflow-hidden bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.04),transparent_60%)]" />
+      <GridField />
       <div className="relative mx-auto max-w-4xl">
         <motion.p
           variants={fadeUp} initial="hidden" whileInView="show"

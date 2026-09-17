@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { profile, manifesto } from "../data/portfolioData";
+import { GridField } from "./GridField";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 36 },
@@ -15,9 +16,12 @@ export const About = () => {
     <section
       id="about"
       data-testid="about-section"
-      className="relative bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
+      className="relative overflow-hidden bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
-      <div className="mx-auto max-w-7xl">
+      <GridField intensity={0.45} />
+      {/* soft scrim: text sits on near-solid black, grid stays visible at the edges */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_65%_at_50%_45%,rgba(0,0,0,0.82),transparent_100%)]" />
+      <div className="relative mx-auto max-w-7xl">
         <motion.p
           variants={fadeUp} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
@@ -79,7 +83,7 @@ export const About = () => {
               <div className="select-none font-display text-7xl leading-none text-outline-grey transition-all duration-500 group-hover:[-webkit-text-stroke-color:rgba(255,255,255,0.55)]">
                 {ch.num}
               </div>
-              <h3 className="-mt-5 font-display text-sm uppercase tracking-wider text-white">
+              <h3 className="mt-6 font-display text-sm uppercase tracking-wider text-white">
                 {ch.title}
               </h3>
               <p className="mt-4 font-inter text-sm leading-relaxed text-[#8A8A8A]">

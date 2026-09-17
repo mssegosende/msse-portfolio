@@ -31,6 +31,8 @@ const uiFade = {
   }),
 };
 
+const WORDMARK = "MISSENGINEER";
+
 export const ScrollScene = ({ onReady }) => {
   const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -45,14 +47,15 @@ export const ScrollScene = ({ onReady }) => {
 
   const sectionRef = useRef(null);
   const canvasWrapRef = useRef(null);
+  const canvas2WrapRef = useRef(null);
   const parallax1Ref = useRef(null);
   const parallax2Ref = useRef(null);
   const idle1Ref = useRef(null);
   const idle2Ref = useRef(null);
   const splineLayerRef = useRef(null);
   const overlayRef = useRef(null);
-  const bandRef = useRef(null);
-  const bgTextRef = useRef(null);
+  const wm1Ref = useRef(null);
+  const wm2Ref = useRef(null);
   const layer2Ref = useRef(null);
   const layer2InnerRef = useRef(null);
   const headlineRef = useRef(null);
@@ -109,9 +112,13 @@ export const ScrollScene = ({ onReady }) => {
 
   useLayoutEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // head+shoulders framing, NEXBOT band pushed low (camouflaged by the band overlay)
-    const startScale = reduce ? 1 : isMobile ? 1.35 : 1.7;
-    const startY = reduce ? "8%" : isMobile ? "19%" : "30%";
+    // middle ground: camera closer, robot vertically centered, little air above the head
+    const startScale = reduce ? 1 : isMobile ? 1.3 : 1.45;
+    const startY = reduce ? "4%" : isMobile ? "7%" : "10%";
+    const endY = reduce ? "5%" : isMobile ? "8.5%" : "11.5%";
+    const c2 = isMobile
+      ? { scale: 1.05, x: "-48%", y: "8%" }
+      : { scale: 1.2, x: "-16%", y: "-6%" };
 
     // mouse parallax on both scenes (outside gsap.context to avoid TDZ on ctx)
     let removeMouse = null;
@@ -137,6 +144,7 @@ export const ScrollScene = ({ onReady }) => {
         y: startY,
         transformOrigin: "50% 50%",
       });
+      gsap.set(canvas2WrapRef.current, { ...c2, transformOrigin: "50% 50%" });
       gsap.set(layer2Ref.current, { opacity: 0 });
       gsap.set(layer2InnerRef.current, { filter: "brightness(0.25)" });
       gsap.set(featuresHeaderRef.current, { opacity: 0, y: 24 });
@@ -149,9 +157,9 @@ export const ScrollScene = ({ onReady }) => {
       if (!reduce) {
         [idle1Ref.current, idle2Ref.current].forEach((el) => {
           if (!el) return;
-          gsap.set(el, { y: -10, rotation: -0.8 });
-          gsap.to(el, { y: 10, duration: 3, yoyo: true, repeat: -1, ease: "sine.inOut" });
-          gsap.to(el, { rotation: 0.8, duration: 3.7, yoyo: true, repeat: -1, ease: "sine.inOut" });
+          gsap.set(el, { y: -3, rotation: -0.2 });
+          gsap.to(el, { y: 3, duration: 5, yoyo: true, repeat: -1, ease: "sine.inOut" });
+          gsap.to(el, { rotation: 0.2, duration: 6.3, yoyo: true, repeat: -1, ease: "sine.inOut" });
         });
       }
 
@@ -160,6 +168,7 @@ export const ScrollScene = ({ onReady }) => {
       const applyDrain = () => {
         canvasWrapRef.current.style.filter = `brightness(${drain.b}) contrast(${drain.c})`;
       };
+      applyDrain();
       const lift = { b: 0.25 };
       const applyLift = () => {
         layer2InnerRef.current.style.filter = `brightness(${lift.b})`;
@@ -192,17 +201,17 @@ export const ScrollScene = ({ onReady }) => {
         },
       });
 
-      // MSSGOSENDE drifts slowly upward through the whole scene
-      tl.fromTo(bgTextRef.current, { y: 0 }, { y: -90, duration: 0.99 }, 0);
+      // wordmarks drift slowly through their scenes
+      tl.fromTo(wm1Ref.current, { y: 24 }, { y: -40, duration: 0.5 }, 0);
+      tl.fromTo(wm2Ref.current, { y: 30 }, { y: -30, duration: 0.45 }, 0.54);
 
       // Phase 1 -> 2: headline leaves, light drains to black, slight drift-in
       tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
-      tl.to(bandRef.current, { opacity: 0, duration: 0.08 }, 0.06);
       tl.to(drain, { b: 0.02, c: 1.15, duration: 0.3, onUpdate: applyDrain }, 0.1);
       tl.to(overlayRef.current, { opacity: 0.35, duration: 0.3 }, 0.1);
       tl.to(
         canvasWrapRef.current,
-        { scale: startScale * 0.94, y: isMobile ? "21%" : "32%", duration: 0.32, ease: "power1.inOut" },
+        { scale: startScale * 0.96, y: endY, duration: 0.32, ease: "power1.inOut" },
         0.1
       );
       tl.to(pillsRef.current, { opacity: 0, y: 24, duration: 0.08 }, 0.2);
@@ -227,6 +236,9 @@ export const ScrollScene = ({ onReady }) => {
         if (isMobile && i < systemFeatures.length - 1)
           tl.to(calloutRefs.current[i], { opacity: 0, y: -24, duration: 0.05 }, times[i + 1] - 0.04);
       });
+
+      // hold: extra scroll distance after card 03 so the user can read it before release
+      tl.to({}, { duration: 0.3 });
     }, sectionRef);
 
     const lenis = window.__lenis;
@@ -249,7 +261,7 @@ export const ScrollScene = ({ onReady }) => {
       data-testid="scene-section"
       className="relative h-screen min-h-[640px] w-full overflow-hidden bg-black"
     >
-      {/* Layer A — live dark scene */}
+      {/* Layer A — live dark scene + painted wordmark + silhouette occluder */}
       <div ref={splineLayerRef} className="absolute inset-0">
         <div
           ref={canvasWrapRef}
@@ -258,8 +270,24 @@ export const ScrollScene = ({ onReady }) => {
         >
           <div ref={parallax1Ref} className="absolute inset-0">
             <div ref={idle1Ref} className="absolute inset-0">
+              {/* the wall — MSSGOSENDE painted on it; multiply canvas occludes it */}
+              <div className="absolute inset-0 bg-[#EDEDED]">
+                <div
+                  ref={wm1Ref}
+                  data-testid="bg-wordmark"
+                  className="pointer-events-none absolute inset-x-0 top-[47%] text-center"
+                >
+                  <span className="whitespace-nowrap font-display text-[13vw] font-bold uppercase leading-none tracking-[-0.01em] text-white mix-blend-difference">
+                    {WORDMARK}
+                  </span>
+                </div>
+              </div>
+
               {!failed && (
-                <div className="absolute inset-0" data-testid="spline-canvas-wrap">
+                <div
+                  className="absolute inset-0 mix-blend-multiply"
+                  data-testid="spline-canvas-wrap"
+                >
                   <Spline
                     scene={SPLINE_SCENE_URL}
                     onLoad={handleLoad}
@@ -288,25 +316,27 @@ export const ScrollScene = ({ onReady }) => {
         </div>
       </div>
 
-      {/* NEXBOT camouflage band — matches scene bg, fades out as light drains */}
-      <div
-        ref={bandRef}
-        data-testid="wordmark-band"
-        className="pointer-events-none absolute left-[-5%] right-[-5%] top-[56%] h-[36%] bg-[linear-gradient(90deg,#E1E1E1,#EEEEEE_30%,#EEEEEE_70%,#DFDFDF)] opacity-95 blur-2xl md:top-[63%] md:h-[42%]"
-      />
-
-      {/* soft black overlay that deepens with the drain (scene 1 only) */}
+      {/* soft black overlay deepening with the drain (scene 1 only) */}
       <div ref={overlayRef} className="pointer-events-none absolute inset-0 bg-black" />
 
-      {/* Layer C — light chrome scene, lazily mounted, rising out of darkness */}
-      <div
-        ref={layer2Ref}
-        className="pointer-events-none absolute inset-0 flex items-center justify-center"
-      >
-        <div className="absolute h-[90vh] w-[90vh] bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.07),transparent_62%)]" />
+      {/* Layer C — chrome scene, lazily mounted, rising out of darkness */}
+      <div ref={layer2Ref} className="pointer-events-none absolute inset-0">
         <div ref={parallax2Ref} className="absolute inset-0">
           <div ref={idle2Ref} className="absolute inset-0">
             <div ref={layer2InnerRef} className="absolute inset-0">
+              <div className="absolute left-1/2 top-1/2 h-[90vh] w-[90vh] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.07),transparent_62%)]" />
+
+              {/* wordmark behind the canvas — screen blend gives real occlusion */}
+              <div
+                ref={wm2Ref}
+                data-testid="bg-wordmark-2"
+                className="pointer-events-none absolute inset-x-0 top-[53%] text-center"
+              >
+                <span className="whitespace-nowrap font-display text-[13vw] font-bold uppercase leading-none tracking-[-0.01em] text-white opacity-30 mix-blend-difference">
+                  {WORDMARK}
+                </span>
+              </div>
+
               {/* fallback static render until/if the live scene fails */}
               {(!scene2Ready || scene2Failed) && (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -318,45 +348,38 @@ export const ScrollScene = ({ onReady }) => {
                   />
                 </div>
               )}
-              {mountScene2 && !scene2Failed && (
-                <div
-                  data-testid="spline2-canvas-wrap"
-                  className={`absolute inset-y-0 left-[-7%] right-0 transition-opacity duration-1000 ${
-                    scene2Ready ? "opacity-100" : "opacity-0"
-                  }`}
-                >
-                  <Spline
-                    scene={SPLINE_SCENE_2_URL}
-                    onLoad={() => setScene2Ready(true)}
-                    onError={() => setScene2Failed(true)}
-                  />
-                </div>
-              )}
+
+              <div
+                ref={canvas2WrapRef}
+                data-testid="spline2-canvas-wrap"
+                className={`absolute inset-0 transition-opacity duration-1000 ${
+                  scene2Ready ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                {mountScene2 && !scene2Failed && (
+                  <div className="absolute inset-0 mix-blend-screen">
+                    <Spline
+                      scene={SPLINE_SCENE_2_URL}
+                      onLoad={() => setScene2Ready(true)}
+                      onError={() => setScene2Failed(true)}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* MSSGOSENDE — own background wordmark, difference-blended, slow parallax */}
-      <div
-        ref={bgTextRef}
-        data-testid="bg-wordmark"
-        className="pointer-events-none absolute inset-x-0 top-[64%] text-center mix-blend-difference"
-      >
-        <span className="whitespace-nowrap font-display text-[11vw] font-light uppercase leading-none tracking-[0.08em] text-white opacity-[0.12]">
-          MSSGOSENDE
-        </span>
-      </div>
-
       {/* gentle edge vignette */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)]" />
 
-      {/* Layer D — UI */}
-      <div className="absolute inset-0 z-10">
-        {/* kinetic headline (phase 1) — tight, difference blend */}
+      {/* Layer D — UI (pointer-events pass through to the Spline canvas below) */}
+      <div className="pointer-events-none absolute inset-0 z-10">
+        {/* kinetic headline (phase 1) — sits just above the nav dock, difference blend */}
         <div
           ref={headlineRef}
-          className="pointer-events-none absolute inset-x-0 top-[13%] text-center mix-blend-difference sm:top-[15%]"
+          className="pointer-events-none absolute inset-x-0 bottom-40 text-center mix-blend-difference sm:bottom-24"
         >
           <div className="overflow-hidden px-4">
             <motion.h1
@@ -502,7 +525,7 @@ export const ScrollScene = ({ onReady }) => {
               <div className="select-none font-display text-7xl font-light leading-none text-outline-grey">
                 {f.num}
               </div>
-              <div className="-mt-4 flex items-baseline gap-3">
+              <div className="mt-5 flex items-baseline gap-3">
                 <span className="font-display text-[13px] uppercase tracking-[0.02em] text-[#BDBDBD]">
                   {f.part}
                 </span>

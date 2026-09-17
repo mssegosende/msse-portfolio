@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Github, ExternalLink, ArrowUpRight } from "lucide-react";
 import { projects } from "../data/portfolioData";
+import { GridField } from "./GridField";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 36 },
@@ -82,9 +83,10 @@ export const Projects = () => {
     <section
       id="projects"
       data-testid="projects-section"
-      className="relative bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
+      className="relative overflow-hidden bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
-      <div className="mx-auto max-w-7xl">
+      <GridField />
+      <div className="relative mx-auto max-w-7xl">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <motion.p

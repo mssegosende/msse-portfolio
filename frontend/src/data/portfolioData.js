@@ -3,7 +3,7 @@
 // ============================================================
 
 export const SPLINE_SCENE_URL =
-  "https://prod.spline.design/3X4Nd1e9lv8rgSg1/scene.splinecode";
+  "https://prod.spline.design/f1rJJWMxGAz7LFXO/scene.splinecode";
 
 export const SPLINE_SCENE_2_URL =
   "https://prod.spline.design/PU4OS9xwmiHIeZOj/scene.splinecode";
@@ -128,7 +128,7 @@ export const systemFeatures = [
     side: "left",
     top: "20%",
     from: { x: 26, y: 27 },
-    to: { x: 50, y: 30 },
+    to: { x: 50, y: 38 },
   },
   {
     num: "02",
@@ -138,7 +138,7 @@ export const systemFeatures = [
     side: "right",
     top: "46%",
     from: { x: 74, y: 53 },
-    to: { x: 63, y: 62 },
+    to: { x: 67, y: 86 },
   },
   {
     num: "03",
@@ -148,7 +148,7 @@ export const systemFeatures = [
     side: "left",
     top: "68%",
     from: { x: 26, y: 74 },
-    to: { x: 50, y: 58 },
+    to: { x: 50, y: 77 },
   },
 ];
 

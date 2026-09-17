@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Minus } from "lucide-react";
 import { capabilities } from "../data/portfolioData";
+import { GridField } from "./GridField";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 36 },
@@ -19,9 +20,11 @@ export const Capabilities = () => {
     <section
       id="capabilities"
       data-testid="capabilities-section"
-      className="relative bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
+      className="relative overflow-hidden bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
-      <div className="pointer-events-none absolute inset-0 bg-grid opacity-40" />
+      <GridField intensity={0.45} />
+      {/* soft scrim: text sits on near-solid black, grid stays visible at the edges */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_65%_at_50%_45%,rgba(0,0,0,0.82),transparent_100%)]" />
       <div className="relative mx-auto max-w-4xl">
         <motion.p
           variants={fadeUp} initial="hidden" whileInView="show"
