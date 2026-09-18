@@ -34,6 +34,11 @@ const uiFade = {
 
 const WORDMARK = "MSGCENGINEER";
 
+// Where each callout lands. The gaze turns toward these in order, so the
+// positions and the head poses in GAZE must stay in sync.
+// No translate utilities here: GSAP animates `y` on these nodes and would
+// wipe a Tailwind transform, so card 03 centres with mx-auto instead.
+
 export const ScrollScene = ({ onReady }) => {
   const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -45,6 +50,10 @@ export const ScrollScene = ({ onReady }) => {
   const mount2Ref = useRef(false);
   const stopped1Ref = useRef(false);
   const app1Ref = useRef(null);
+  const app2Ref = useRef(null);
+  const lastMouseRef = useRef(0);
+  const mouseGazeRef = useRef({ x: 0, y: 0 });
+  const applyGazeRef = useRef(null);
 
   const sectionRef = useRef(null);
   const canvasWrapRef = useRef(null);
@@ -92,6 +101,38 @@ export const ScrollScene = ({ onReady }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // TEMP PROBE — dumps what the scene 2 runtime exposes, to find a Look At target
+  const probeScene2 = (app) => {
+    const P = "SPLINE2::";
+    window.__spline2 = app; // TEMP: para la prueba de rotacion
+    try {
+      const objs = typeof app.getAllObjects === "function" ? app.getAllObjects() : null;
+      console.log(`${P}api`, JSON.stringify({
+        getAllObjects: typeof app.getAllObjects,
+        findObjectByName: typeof app.findObjectByName,
+        findObjectById: typeof app.findObjectById,
+        setVariable: typeof app.setVariable,
+        getVariable: typeof app.getVariable,
+        getVariables: typeof app.getVariables,
+        emitEvent: typeof app.emitEvent,
+        getSplineEvents: typeof app.getSplineEvents,
+        objectCount: objs ? objs.length : null,
+      }));
+      if (objs) {
+        objs.forEach((o, i) => {
+          const pos = o.position ? `${o.position.x?.toFixed(1)},${o.position.y?.toFixed(1)},${o.position.z?.toFixed(1)}` : "-";
+          console.log(`${P}obj ${i} name="${o.name}" type=${o.type || "?"} pos=[${pos}] visible=${o.visible}`);
+        });
+      }
+      if (typeof app.getVariables === "function")
+        console.log(`${P}vars`, JSON.stringify(app.getVariables()));
+      if (typeof app.getSplineEvents === "function")
+        console.log(`${P}events`, JSON.stringify(Object.keys(app.getSplineEvents() || {})));
+    } catch (e) {
+      console.log(`${P}error`, String(e));
+    }
+  };
+
   const handleLoad = (app) => {
     app1Ref.current = app;
     if (readyRef.current) return;
@@ -120,13 +161,34 @@ export const ScrollScene = ({ onReady }) => {
     const endY = reduce ? "5%" : isMobile ? "8.5%" : "11.5%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
+    // STEP 1 (story) — the closest framing of the whole sequence: head fills the
+    // upper frame, neck and shoulder tops visible, cut at the upper torso.
+    // Calibrated against the reference screenshot at 2000x1014.
     const c2close = isMobile
-      ? { scale: 1.3, x: "-48%", y: "3%" }
-      : { scale: 1.85, x: "-16%", y: "6%" };
-    // phase 3 (cards): pulled back to hero-like head-to-torso framing
+      ? { scale: 1.5, x: "-48%", y: "14%" }
+      : { scale: 2.1, x: "-16%", y: "26%" };
+    // STEP 4 (cards) — the farthest framing, centred
     const c2far = isMobile
       ? { scale: 1.05, x: "-48%", y: "10%" }
-      : { scale: 1.2, x: "-10%", y: "-3.5%" };
+      : { scale: 1.2, x: "0%", y: "-3.5%" };
+    // STEP 2 — swings to the opposite side and pulls back
+    const c2s2 = isMobile
+      ? { scale: 1.3, x: "-48%", y: "12%" }
+      : { scale: 1.6, x: "16%", y: "14%" };
+    // STEP 3 — grows slightly again and re-centres
+    const c2s3 = isMobile
+      ? { scale: 1.4, x: "-48%", y: "11%" }
+      : { scale: 1.75, x: "0%", y: "8%" };
+    const BODY_STEPS = [c2close, c2s2, c2s3, c2far];
+
+    // gaze poses, radians, capped at ±0.35. three.js convention:
+    // +y turns the face to the viewer's right, +x tips it down.
+    const GAZE = {
+      text: { x: 0.0, y: 0.32 },   // step 1: at the story block on the right
+      upLeft: { x: -0.22, y: -0.26 },  // step 2: card 01, top-left
+      downRight: { x: 0.22, y: 0.26 }, // step 3: card 02, bottom-right
+      downCenter: { x: 0.3, y: 0.0 },  // step 4: card 03, bottom-centre
+    };
 
     // mouse parallax on both scenes (outside gsap.context to avoid TDZ on ctx)
     let removeMouse = null;
@@ -141,6 +203,9 @@ export const ScrollScene = ({ onReady }) => {
         const ny = (e.clientY - r.top) / r.height - 0.5;
         px1(nx * 12); py1(ny * 8);
         px2(nx * 12); py2(ny * 8);
+        // cursor takes priority over the directed gaze for 1.2s after it moves
+        lastMouseRef.current = Date.now();
+        mouseGazeRef.current = { x: ny * 0.7, y: nx * 0.7 }; // ±0.35 rad
       };
       sectionRef.current.addEventListener("mousemove", onMouse);
       removeMouse = () => sectionRef.current?.removeEventListener("mousemove", onMouse);
@@ -183,8 +248,89 @@ export const ScrollScene = ({ onReady }) => {
         layer2InnerRef.current.style.filter = `brightness(${lift.b})`;
       };
 
+      // ---- phase 3 rig ------------------------------------------------------
+      // `body.t` walks 0..3 across the four framings; anchors are re-projected
+      // against whatever scale/offset that lands on, never against the final one.
+      const lerp = (a, b, t) => a + (b - a) * t;
+
+      // Anchors in the robot's OWN space (percent of the untransformed layer),
+      // derived once from the framing the original `to` points were authored at
+      // (scale 1.2, x -10%, y -3.5%). Chosen high on the body on purpose: the
+      // hands sit at py 83, which projects below the viewport at the closer
+      // steps, so a connector to them would point off-screen.
+      const anchors = [
+        { px: 58.33, py: 42.9 },  // 01 — visor / head
+        { px: 58.33, py: 62.0 },  // 02 — upper chest
+        { px: 58.33, py: 75.4 },  // 03 — torso
+      ].map((a, i) => ({
+        ...a,
+        fromX: systemFeatures[i].from.x,
+        fromY: systemFeatures[i].from.y,
+      }));
+
+      const body = { t: 0 };
+      const draw = systemFeatures.map(() => ({ p: 0 }));
+
+      const applyPull = () => {
+        // interpolate between the two framings `body.t` currently sits between
+        const i = Math.min(Math.floor(body.t), BODY_STEPS.length - 2);
+        const f = Math.min(Math.max(body.t - i, 0), 1);
+        const A = BODY_STEPS[i], B = BODY_STEPS[i + 1];
+        const sc = lerp(A.scale, B.scale, f);
+        const tx = lerp(parseFloat(A.x), parseFloat(B.x), f);
+        const ty = lerp(parseFloat(A.y), parseFloat(B.y), f);
+        gsap.set(canvas2WrapRef.current, { scale: sc, x: `${tx}%`, y: `${ty}%` });
+
+        // vector-effect="non-scaling-stroke" makes stroke-dasharray screen-space,
+        // so the connector length must be measured in px, not in viewBox units
+        const W = sectionRef.current ? sectionRef.current.clientWidth : 1;
+        const H = sectionRef.current ? sectionRef.current.clientHeight : 1;
+
+        // re-project every anchor against the live transform
+        anchors.forEach((a, i) => {
+          const x = 50 + (a.px - 50) * sc + tx;
+          const y = 50 + (a.py - 50) * sc + ty;
+          const line = lineRefs.current[i];
+          if (line) {
+            // dashed connector that grows from the card toward the body part:
+            // the endpoint itself is interpolated, so the dash pattern stays put
+            // instead of marching. Reversing draw[i].p erases it the same way.
+            const ex = lerp(a.fromX, x, draw[i].p);
+            const ey = lerp(a.fromY, y, draw[i].p);
+            line.setAttribute("x2", ex);
+            line.setAttribute("y2", ey);
+          }
+          const dot = dotRefs.current[i];
+          if (dot) {
+            dot.style.left = `${x}%`;
+            dot.style.top = `${y}%`;
+          }
+        });
+      };
+
+      // ---- directed gaze, with the cursor taking over ------------------------
+      const gaze = { x: 0, y: 0 };      // target written by the timeline
+      const cur = { x: 0, y: 0 };       // what is actually applied, eased
+      const applyGaze = () => {
+        const head = app2Ref.current && app2Ref.current.findObjectByName
+          ? app2Ref.current.findObjectByName("Head")
+          : null;
+        if (!head) return;
+        const fresh = Date.now() - lastMouseRef.current < 1200;
+        const tx = fresh ? mouseGazeRef.current.x : gaze.x;
+        const ty = fresh ? mouseGazeRef.current.y : gaze.y;
+        cur.x += (tx - cur.x) * 0.08;
+        cur.y += (ty - cur.y) * 0.08;
+        head.rotation.x = cur.x;
+        head.rotation.y = cur.y;
+      };
+      applyGazeRef.current = applyGaze;
+      gsap.ticker.add(applyGaze);
+
       const tl = gsap.timeline({
         defaults: { ease: "none" },
+        // keeps dots/lines glued to the robot while it is still moving
+        onUpdate: applyPull,
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
@@ -237,34 +383,71 @@ export const ScrollScene = ({ onReady }) => {
       if (storyRefs.current[1])
         tl.to(storyRefs.current[1], { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.78);
 
-      // PHASE 3: story leaves, robot pulls back to hero-like framing, then cards
+      // PHASE 3 — four steps, then a closing beat. The head ALWAYS turns first
+      // and the card lands where it is looking; only one card/line is on screen
+      // at a time until the closing beat shows all three together.
       const storyEls = storyRefs.current.filter(Boolean);
-      if (storyEls.length)
-        tl.to(storyEls, { opacity: 0, y: -24, duration: 0.07, ease: "power1.in" }, 1.04);
-      tl.to(
-        canvas2WrapRef.current,
-        { scale: c2far.scale, x: c2far.x, y: c2far.y, duration: 0.14, ease: "power1.inOut" },
-        1.04
-      );
-      tl.to(featuresHeaderRef.current, { opacity: 1, y: 0, duration: 0.06 }, 1.18);
 
-      // Callouts one by one — only after the pull-back has settled
-      const times = [1.26, 1.36, 1.44];
-      systemFeatures.forEach((f, i) => {
-        if (calloutRefs.current[i])
-          tl.to(calloutRefs.current[i], { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, times[i]);
-        if (lineRefs.current[i])
-          tl.to(lineRefs.current[i], { opacity: 1, duration: 0.05 }, times[i] + 0.04);
-        if (dotRefs.current[i])
-          tl.to(dotRefs.current[i], { opacity: 1, duration: 0.03 }, times[i] + 0.05);
-        if (railRefs.current[i])
-          tl.to(railRefs.current[i], { color: "#FFFFFF", duration: 0.03 }, times[i]);
-        if (isMobile && i < systemFeatures.length - 1)
-          tl.to(calloutRefs.current[i], { opacity: 0, y: -24, duration: 0.05 }, times[i + 1] - 0.04);
+      // STEP 1: the head holds on the story block at the right for the whole
+      // close-up. Set as scene 2 fades in, well before the first body move.
+      tl.to(gaze, { ...GAZE.text, duration: 0.05, ease: "power2.out" }, 0.52);
+
+      // STEP 1 -> 2: swings to the opposite side, pulls back. Gaze: up-left.
+      tl.to(gaze, { ...GAZE.upLeft, duration: 0.06, ease: "power2.inOut" }, 1.00);
+      if (storyEls.length)
+        tl.to(storyEls, { opacity: 0, y: -24, duration: 0.06, ease: "power1.in" }, 1.00);
+      tl.to(body, { t: 1, duration: 0.14, ease: "power1.inOut" }, 1.04);
+      tl.to(featuresHeaderRef.current, { opacity: 1, y: 0, duration: 0.06 }, 1.06);
+      tl.to(calloutRefs.current[0], { opacity: 1, y: 0, duration: 0.06, ease: "power1.out" }, 1.12);
+      tl.set(lineRefs.current[0], { opacity: 1 }, 1.12);
+      tl.to(draw[0], { p: 1, duration: 0.07, ease: "power1.inOut" }, 1.12);
+      tl.to(dotRefs.current[0], { opacity: 1, duration: 0.03 }, 1.19);
+      tl.to(railRefs.current[0], { color: "#FFFFFF", duration: 0.03 }, 1.12);
+
+      // STEP 2 -> 3: grows slightly, re-centres. Gaze: down-right.
+      tl.to(gaze, { ...GAZE.downRight, duration: 0.06, ease: "power2.inOut" }, 1.24);
+      tl.to(body, { t: 2, duration: 0.14, ease: "power1.inOut" }, 1.28);
+      // card 01 and its line are erased with the same animation, reversed
+      tl.to(dotRefs.current[0], { opacity: 0, duration: 0.02 }, 1.26);
+      tl.to(draw[0], { p: 0, duration: 0.06, ease: "power1.inOut" }, 1.26);
+      tl.to(calloutRefs.current[0], { opacity: 0, y: -20, duration: 0.05 }, 1.28);
+      tl.set(lineRefs.current[0], { opacity: 0 }, 1.33);
+      tl.to(calloutRefs.current[1], { opacity: 1, y: 0, duration: 0.06, ease: "power1.out" }, 1.36);
+      tl.set(lineRefs.current[1], { opacity: 1 }, 1.36);
+      tl.to(draw[1], { p: 1, duration: 0.07, ease: "power1.inOut" }, 1.36);
+      tl.to(dotRefs.current[1], { opacity: 1, duration: 0.03 }, 1.43);
+      tl.to(railRefs.current[1], { color: "#FFFFFF", duration: 0.03 }, 1.36);
+
+      // STEP 3 -> 4: lands on c2far, the farthest framing. Gaze: down-centre,
+      // the last head move of the sequence.
+      tl.to(gaze, { ...GAZE.downCenter, duration: 0.06, ease: "power2.inOut" }, 1.48);
+      tl.to(body, { t: 3, duration: 0.14, ease: "power1.inOut" }, 1.52);
+      tl.to(dotRefs.current[1], { opacity: 0, duration: 0.02 }, 1.50);
+      tl.to(draw[1], { p: 0, duration: 0.06, ease: "power1.inOut" }, 1.50);
+      tl.to(calloutRefs.current[1], { opacity: 0, y: -20, duration: 0.05 }, 1.52);
+      tl.set(lineRefs.current[1], { opacity: 0 }, 1.57);
+      tl.to(calloutRefs.current[2], { opacity: 1, y: 0, duration: 0.06, ease: "power1.out" }, 1.60);
+      tl.set(lineRefs.current[2], { opacity: 1 }, 1.60);
+      tl.to(draw[2], { p: 1, duration: 0.07, ease: "power1.inOut" }, 1.60);
+      tl.to(dotRefs.current[2], { opacity: 1, duration: 0.03 }, 1.67);
+      tl.to(railRefs.current[2], { color: "#FFFFFF", duration: 0.03 }, 1.60);
+
+      // CLOSING: gaze returns to the right, then all three cards and all three
+      // dashed connectors come in together and stay for the hold.
+      tl.to(gaze, { ...GAZE.text, duration: 0.07, ease: "power2.inOut" }, 1.74);
+      [0, 1].forEach((i) => {
+        tl.to(calloutRefs.current[i], { opacity: 1, y: 0, duration: 0.06, ease: "power1.out" }, 1.82);
+        tl.set(lineRefs.current[i], { opacity: 1 }, 1.82);
+        tl.to(draw[i], { p: 1, duration: 0.07, ease: "power1.inOut" }, 1.82);
+        tl.to(dotRefs.current[i], { opacity: 1, duration: 0.03 }, 1.89);
+        tl.to(railRefs.current[i], { color: "#FFFFFF", duration: 0.03 }, 1.82);
       });
 
-      // hold: extra scroll distance after card 03 so the user can read it before release
+      // hold: extra scroll distance with the three cards up before release
       tl.to({}, { duration: 0.3 });
+
+      // first projection, so nothing is stale before the first scroll tick
+      applyPull();
     }, sectionRef);
 
     const lenis = window.__lenis;
@@ -276,6 +459,7 @@ export const ScrollScene = ({ onReady }) => {
       clearTimeout(refresh);
       if (removeMouse) removeMouse();
       if (lenis) lenis.off("scroll", onScroll);
+      gsap.ticker.remove(applyGazeRef.current);
       ctx.revert();
     };
   }, [isMobile]);
@@ -356,9 +540,9 @@ export const ScrollScene = ({ onReady }) => {
               <div
                 ref={wm2Ref}
                 data-testid="bg-wordmark-2"
-                className="pointer-events-none absolute inset-x-0 top-[53%] text-center"
+                className="pointer-events-none absolute inset-x-0 top-[34%] text-center sm:top-[76%]"
               >
-                <span className="whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-white opacity-30 mix-blend-difference">
+                <span className="whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-[#1E1E1E]">
                   {WORDMARK}
                 </span>
               </div>
@@ -386,7 +570,11 @@ export const ScrollScene = ({ onReady }) => {
                   <div className="absolute inset-0 mix-blend-screen">
                     <Spline
                       scene={SPLINE_SCENE_2_URL}
-                      onLoad={() => setScene2Ready(true)}
+                      onLoad={(app) => {
+                        app2Ref.current = app;
+                        probeScene2(app);
+                        setScene2Ready(true);
+                      }}
                       onError={() => setScene2Failed(true)}
                     />
                   </div>
@@ -539,10 +727,11 @@ export const ScrollScene = ({ onReady }) => {
                 ref={(el) => (lineRefs.current[i] = el)}
                 x1={f.from.x}
                 y1={f.from.y}
-                x2={f.to.x}
-                y2={f.to.y}
+                x2={f.from.x}
+                y2={f.from.y}
                 stroke="rgba(255,255,255,0.45)"
                 strokeWidth="1"
+                strokeDasharray="5 7"
                 vectorEffect="non-scaling-stroke"
               />
             </svg>
