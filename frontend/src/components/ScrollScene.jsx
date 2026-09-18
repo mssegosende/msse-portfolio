@@ -162,33 +162,35 @@ export const ScrollScene = ({ onReady }) => {
     const endY = reduce ? "5%" : isMobile ? "8.5%" : "11.5%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
-    // Framings. The lateral travel is deliberately small: the pull-back reads
-    // as a camera dollying out, not as the robot sliding around the frame.
+    // Framings. Scale progression 2.8 -> 2.8 -> 1.7 -> 1.35 -> 1.15: the first
+    // two beats hold the same distance, the pull-back starts at card 02 with a
+    // deliberate jump, and from card 03 on the robot stays centred.
     // PRE — a touch closer than the story; the move starts under the crossfade
     const c2pre = isMobile
-      ? { scale: 1.62, x: "-48%", y: "17%" }
-      : { scale: 2.32, x: "-18%", y: "30%" };
-    // STEP 1 (story) — closest framing: head fills the upper frame, cut at the
-    // upper torso. Robot left, story text right.
+      ? { scale: 1.95, x: "-48%", y: "26%" }
+      : { scale: 3.0, x: "-18%", y: "51%" };
+    // STEP 1 (story) — head and shoulders only. Robot left, story text right.
     const c2close = isMobile
-      ? { scale: 1.5, x: "-48%", y: "14%" }
-      : { scale: 2.1, x: "-16%", y: "26%" };
-    // STEP 2 (card 01, at the LEFT) — robot moves to the RIGHT of the frame
+      ? { scale: 1.8, x: "-48%", y: "22%" }
+      : { scale: 2.8, x: "-16%", y: "47%" };
+    // STEP 2 (card 01, at the LEFT) — same distance, the robot only slides
+    // right. No pull-back yet.
     const c2s2 = isMobile
-      ? { scale: 1.32, x: "-48%", y: "12%" }
-      : { scale: 1.70, x: "10%", y: "16%" };
-    // STEP 3 (card 02, at the RIGHT) — pulls back further, moves to the LEFT
+      ? { scale: 1.8, x: "-38%", y: "22%" }
+      : { scale: 2.8, x: "7%", y: "47%" };
+    // STEP 3 (card 02, at the RIGHT) — the big jump: hard pull-back and the
+    // robot goes fully left, cropped by the edge on purpose.
     const c2s3 = isMobile
-      ? { scale: 1.18, x: "-48%", y: "10%" }
-      : { scale: 1.45, x: "-10%", y: "8%" };
-    // STEP 4 (card 03) — centred, medium size, no growing
+      ? { scale: 1.35, x: "-56%", y: "12%" }
+      : { scale: 1.7, x: "-38%", y: "14%" };
+    // STEP 4 (card 03) — centred horizontally and vertically; stays here.
     const c2far = isMobile
-      ? { scale: 1.08, x: "-48%", y: "8%" }
-      : { scale: 1.25, x: "0%", y: "2%" };
-    // CLOSING — centred horizontally and vertically, three cards up
+      ? { scale: 1.12, x: "-48%", y: "6%" }
+      : { scale: 1.35, x: "0%", y: "5%" };
+    // CLOSING — same position as card 03, only the scale changes.
     const c2end = isMobile
-      ? { scale: 1.02, x: "-48%", y: "6%" }
-      : { scale: 1.15, x: "0%", y: "0%" };
+      ? { scale: 1.0, x: "-48%", y: "6%" }
+      : { scale: 1.15, x: "0%", y: "5%" };
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
     // Gaze poses, radians, capped at ±0.35. +y turns the face to the viewer's
@@ -741,7 +743,6 @@ export const ScrollScene = ({ onReady }) => {
                 y2={f.from.y}
                 stroke="rgba(255,255,255,0.45)"
                 strokeWidth="1"
-                strokeDasharray="5 7"
                 vectorEffect="non-scaling-stroke"
               />
             </svg>
