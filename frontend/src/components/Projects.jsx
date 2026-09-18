@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Github, ExternalLink, ArrowUpRight } from "lucide-react";
-import { projects } from "../data/portfolioData";
+import { getProjects } from "../data/portfolioData";
 import { GridField } from "./GridField";
 
 const fadeUp = {
@@ -20,6 +20,14 @@ const ProjectCard = ({ project, index }) => (
     className={`group corner-frame cut-corner relative flex min-h-[320px] flex-col justify-end border border-[#222] bg-[#0A0A0A] p-7 transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-white/30 hover:shadow-[0_0_50px_rgba(255,255,255,0.06)] sm:p-9 ${project.span}`}
   >
     <div className="relative">
+      {project.draft && (
+        <span
+          data-testid={`project-draft-badge-${project.id}`}
+          className="absolute -top-1 right-0 border border-[#E5B567]/40 px-2.5 py-1 font-display text-[11px] uppercase tracking-[0.18em] text-[#E5B567]"
+        >
+          Draft
+        </span>
+      )}
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">
@@ -51,10 +59,10 @@ const ProjectCard = ({ project, index }) => (
       </div>
 
       <div className="mt-6 flex items-center gap-4">
-        {project.github && (
+        {project.codeUrl && (
           <a
             data-testid={`project-github-link-${project.id}`}
-            href={project.github}
+            href={project.codeUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6] transition-colors hover:text-white"
@@ -62,10 +70,10 @@ const ProjectCard = ({ project, index }) => (
             <Github size={14} /> Code
           </a>
         )}
-        {project.demo && (
+        {project.liveUrl && (
           <a
             data-testid={`project-demo-link-${project.id}`}
-            href={project.demo}
+            href={project.liveUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6] transition-colors hover:text-white"
@@ -115,7 +123,7 @@ export const Projects = () => {
         </div>
 
         <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-8">
-          {projects.map((p, i) => (
+          {getProjects().map((p, i) => (
             <ProjectCard key={p.id} project={p} index={i} />
           ))}
         </div>

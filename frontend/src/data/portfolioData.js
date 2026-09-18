@@ -2,11 +2,14 @@
 // PORTFOLIO DATA — edit this single file to update the site.
 // ============================================================
 //
-// CONTENT STATUS: every string below is real. Nothing is invented.
-// `projectBacklog` at the bottom holds the real project NAMES that do not
-// have descriptions yet — it is deliberately NOT rendered, so the live site
-// never shows a placeholder. Move an entry up into `projects` once its
-// description is written.
+// CONTENT STATUS: every string below is real EXCEPT entries flagged
+// `draft: true`, whose copy is placeholder text waiting on the real thing.
+// Draft entries render in `yarn start` with a DRAFT badge and are stripped
+// from the production bundle (see `getProjects` below), so the published
+// site never shows invented copy. Rewrite the copy, drop the flag.
+//
+// `projectBacklog` at the bottom holds real project NAMES with no copy at
+// all — never rendered, in any environment.
 // ============================================================
 
 export const SPLINE_SCENE_URL =
@@ -79,19 +82,53 @@ export const marqueeItems = [
   "FINTECH SYSTEMS",
 ];
 
+// ------------------------------------------------------------
+// PROJECTS — 5 cards. Authored spans are 7 + 5 on the first row and
+// 4 + 4 + 4 on the second, matching the 12-column grid in Projects.jsx.
+// Do not change the grid in the component; change the spans here.
+// ------------------------------------------------------------
 export const projects = [
   {
-    id: "alphardre",
-    title: "ALPHARDRE",
-    subtitle: "Fintech SaaS — Freelance Income",
+    id: "polaris",
+    title: "POLARIS",
+    subtitle: "AI Engineering — Agent Orchestration",
+    // DRAFT — need: the real problem it solves, what was built, the stack.
     description:
-      "Argentine freelancers invoice in a currency that loses value while they wait to be paid, and a missed monotributo threshold means a forced recategorization. AlphardRE tracks what they actually earned: real income adjusted by the INDEC inflation index, USD conversion across multiple exchange rates, and category tracking that flags SAFE, WARNING or CRITICAL before a threshold is crossed.",
-    tags: ["Python", "FastAPI", "PostgreSQL"],
-    // TODO(confirm) — public repo / live URL, if there is one.
-    github: null,
-    demo: null,
+      "A multi-step agent runtime that plans a task, calls the services it needs and reports what it could not resolve instead of guessing. Every tool the agent reaches for sits behind a typed contract, so a malformed call fails at the edge rather than halfway through a run. State is persisted per run, which makes a failed step replayable instead of a restart.",
+    tags: ["Python", "FastAPI", "LangGraph", "PostgreSQL", "Docker"],
+    codeUrl: "",
+    liveUrl: "",
     span: "md:col-span-7",
     featured: true,
+    draft: true,
+  },
+  {
+    id: "ethos",
+    title: "ETHOS",
+    subtitle: "Backend — Functional Medicine Platform",
+    // DRAFT — need: what it does, the stack, and whether this is personal
+    // work or the Los Angeles booking platform from the 2021–22 role.
+    description:
+      "Booking and patient-record infrastructure for a functional-medicine practice, where a dropped appointment and a dropped payment are the same incident. The API keeps scheduling, billing and clinical records reconciled behind one set of contracts, so the three never disagree about the same visit.",
+    tags: ["Python", "FastAPI", "PostgreSQL", "Docker"],
+    codeUrl: "",
+    liveUrl: "",
+    span: "md:col-span-5",
+    draft: true,
+  },
+  {
+    id: "vega",
+    title: "VEGA",
+    subtitle: "Data — Ingestion Pipeline",
+    // DRAFT — placeholder name for the star-named pipeline. Need: the real
+    // name, what it ingests, and where the output goes.
+    description:
+      "An ingestion pipeline that pulls from sources that disagree about their own schema and lands them in one normalised model. Each stage validates before it writes, so bad input is quarantined with the reason attached instead of silently reshaping the table downstream.",
+    tags: ["Python", "PostgreSQL", "Docker"],
+    codeUrl: "",
+    liveUrl: "",
+    span: "md:col-span-4",
+    draft: true,
   },
   {
     id: "apsis",
@@ -101,11 +138,65 @@ export const projects = [
       "An assistant I'm building for my own workflow, one module at a time. Modular React + TypeScript frontend on a Vite build, FastAPI backend, with an LLM agent planned behind each module — the first reads incoming job proposals and drafts the replies.",
     tags: ["React", "TypeScript", "Vite", "FastAPI", "LLM Agents"],
     // TODO(confirm) — public repo / live URL, if there is one.
-    github: null,
-    demo: null,
-    span: "md:col-span-5",
+    codeUrl: "",
+    liveUrl: "",
+    span: "md:col-span-4",
+  },
+  {
+    id: "project-05",
+    title: "PROJECT 05",
+    subtitle: "Full Stack — Internal Tooling",
+    // DRAFT — placeholder slot. Needs a real project, or delete the entry.
+    description:
+      "A small internal tool that replaced a spreadsheet three people were editing at once. React and TypeScript on the front, a FastAPI service and a relational model behind it, containerised so it runs the same on any machine that needs it.",
+    tags: ["React", "TypeScript", "FastAPI", "PostgreSQL", "Docker"],
+    codeUrl: "",
+    liveUrl: "",
+    span: "md:col-span-4",
+    draft: true,
   },
 ];
+
+// Static class strings so Tailwind's scanner can see every span it may emit.
+// A template literal here would be silently dropped from the stylesheet.
+const SPAN_CLASS = {
+  4: "md:col-span-4",
+  5: "md:col-span-5",
+  6: "md:col-span-6",
+  7: "md:col-span-7",
+  12: "md:col-span-12",
+};
+
+// Lay n cards out on the 12-column grid: a 7 + 5 hero row, then rows of
+// three, with a short trailing row widened so it never leaves a gap.
+const layoutSpans = (n) => {
+  if (n <= 0) return [];
+  if (n === 1) return [12];
+  if (n === 2) return [7, 5];
+  if (n === 3) return [4, 4, 4];
+  if (n === 4) return [7, 5, 6, 6];
+  const spans = [7, 5];
+  let rest = n - 2;
+  while (rest >= 3) {
+    spans.push(4, 4, 4);
+    rest -= 3;
+  }
+  if (rest === 1) spans.push(12);
+  if (rest === 2) spans.push(6, 6);
+  return spans;
+};
+
+// The list the site actually renders. In development every card shows and
+// keeps its authored span; in the production build drafts are stripped and
+// the survivors are re-laid out so one card goes full width instead of
+// sitting in a 7-column box with 5 columns of nothing beside it.
+export const getProjects = () => {
+  const isProduction = process.env.NODE_ENV === "production";
+  const visible = isProduction ? projects.filter((p) => !p.draft) : projects;
+  if (visible.length === projects.length) return visible;
+  const spans = layoutSpans(visible.length);
+  return visible.map((p, i) => ({ ...p, span: SPAN_CLASS[spans[i]] }));
+};
 
 // NOTE: the pinned hero animates exactly three cards (01/02/03) at hardcoded
 // positions. Keep this array at three entries.
@@ -190,22 +281,12 @@ export const terminalBoot = [
 // ============================================================
 // PROJECT BACKLOG — NOT RENDERED ON THE SITE.
 // Real project names, captured so they aren't lost. Each needs a
-// description before it can move into `projects` above. Nothing here is
-// guessed: `note` records only what was actually said about it.
+// description before it can move into `projects` above — even as a draft.
+// Nothing here is guessed: `note` records only what was actually said.
+// ETHOS and POLARIS moved up into `projects` as drafts; their open
+// questions now live as TODO comments on those entries.
 // ============================================================
 export const projectBacklog = [
-  {
-    id: "ethos",
-    title: "ETHOS",
-    category: "backend",
-    note: "The functional-medicine one. Need: what it does, the stack, and whether this is personal work or the Los Angeles booking platform from the 2021–22 role.",
-  },
-  {
-    id: "polaris",
-    title: "POLARIS",
-    category: "ai",
-    note: "Need: what problem it solves, what was built, the stack.",
-  },
   {
     id: "mira",
     title: "MIRA",
