@@ -55,11 +55,11 @@ export const About = () => {
           <motion.div
             variants={fadeUp} custom={4} initial="hidden" whileInView="show"
             viewport={{ once: true, margin: "-80px" }}
-            className="mt-12 grid grid-cols-3 gap-6 border-t border-[#222] pt-8"
+            className="mt-12 flex flex-wrap gap-x-16 gap-y-8 border-t border-[#222] pt-8"
           >
             {profile.stats.map((s) => (
               <div key={s.label} data-testid={`about-stat-${s.label.split(" ")[1] || s.label}`}>
-                <div className="font-display text-2xl text-white sm:text-3xl">
+                <div className="font-display text-4xl text-white sm:text-5xl">
                   {s.value}
                 </div>
                 <div className="mt-2 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">

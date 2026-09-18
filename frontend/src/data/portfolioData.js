@@ -1,6 +1,13 @@
 // ============================================================
 // PORTFOLIO DATA — edit this single file to update the site.
 // ============================================================
+//
+// CONTENT STATUS: every string below is real. Nothing is invented.
+// `projectBacklog` at the bottom holds the real project NAMES that do not
+// have descriptions yet — it is deliberately NOT rendered, so the live site
+// never shows a placeholder. Move an entry up into `projects` once its
+// description is written.
+// ============================================================
 
 export const SPLINE_SCENE_URL =
   "https://prod.spline.design/f1rJJWMxGAz7LFXO/scene.splinecode";
@@ -14,123 +21,94 @@ export const profile = {
   role: "Full Stack Developer & AI Engineer",
   taglineLines: ["Full Stack Developer", "& AI Engineer"],
   tagline:
-    "I build intelligent systems — from neural networks to production-grade web platforms.",
+    "I build the backend systems businesses run on — APIs, microservices, and the AI layers on top of them.",
   status: "ONLINE",
   location: "BUENOS AIRES — GLOBAL",
-  email: "maria.sol.gosende@example.com",
+  email: "10021msse@gmail.com",
   socials: {
-    github: "https://github.com/",
-    linkedin: "https://linkedin.com/",
+    github: "https://github.com/mssegosende",
+    // TODO — give me the real URL and the footer icon appears. Null hides it.
+    linkedin: null,
   },
   bio: [
-    "I'm María Sol — a full stack developer and AI engineer who treats software like precision engineering. I design and ship end-to-end systems: reactive frontends, resilient backends, and machine learning pipelines that survive contact with production.",
-    "My work sits at the intersection of elegant interfaces and intelligent infrastructure. Whether it's orchestrating LLM agents, training vision models, or crafting interfaces that feel alive, I care about one thing: systems that are as beautiful inside as they are outside.",
+    "I'm María Sol — a full stack developer and AI engineer based in Buenos Aires. I've spent the last five years building the systems other people's businesses run on: backend infrastructure and payment workflows for a functional-medicine booking platform in Los Angeles, a microservice that resolved scheduling conflicts and data discrepancies between systems that disagreed with each other, and REST APIs written from scratch for a core-banking simulation platform.",
+    "Right now I'm architecting the migration of a legacy C# monolith into distributed polyglot microservices, and building FastAPI services that power AI-assisted pricing features consumed by an agent layer. I work across Python, TypeScript and C#, and I care most about the unglamorous parts — strict API contracts, validation layers, data that reconciles — because those are what decide whether a system survives in production.",
   ],
-  stats: [
-    { value: "6+", label: "Years shipping code" },
-    { value: "30+", label: "Projects delivered" },
-    { value: "12", label: "AI models in production" },
-  ],
+  // Years only — Aug 2021 → present, continuous. No job-derived counts.
+  stats: [{ value: "5+", label: "Years shipping code" }],
 };
 
-// PLACEHOLDER — María will replace these two paragraphs with her real story.
+// Hero story paragraphs — DRAFT from real history, pending approval.
+// NOTE: ScrollScene animates exactly two paragraphs (storyRefs 0 and 1) at
+// fixed timeline positions. A third would never fade in — keep this at two.
 export const story = [
-  "Every system I build starts the same way: with a question nobody thought to ask. I grew up taking machines apart to understand them — now I build the intelligence inside them. What began as curiosity about how things work became a discipline: engineering software that thinks, learns, and holds up under real-world pressure.",
-  "Today I work across the full stack — from the neural architectures that reason, to the interfaces that make that reasoning feel effortless. I believe great engineering is invisible: it just works, beautifully. This portfolio is a snapshot of that journey — the systems I've shipped, the craft behind them, and where I'm headed next.",
+  "I started where the load is: backend infrastructure. Booking systems that couldn't drop a payment, a microservice that had to reconcile data two systems disagreed about, banking APIs written from scratch. That work taught me reliability isn't a feature you add later — it's decided in the first contract you write.",
+  "Now I do it at a larger scale: breaking a legacy monolith into distributed services, and wiring AI agents into pricing systems where a wrong answer costs real money. I build my own products for the same reason — AlphardRE, so Argentine freelancers can see what their income is actually worth, and Apsis, because I wanted an assistant built to my own standards.",
 ];
 
 export const manifesto = [
   {
     num: "01",
-    title: "Intelligence is a craft",
-    text: "Models are not magic. They are engineered systems — trained, evaluated, monitored. I build AI with the same rigor as any critical infrastructure.",
+    title: "Contracts before code",
+    text: "Strict API contracts and validation layers aren't bureaucracy. They're what stops two services from quietly disagreeing about the same data until someone's money is wrong.",
   },
   {
     num: "02",
     title: "Interfaces are the product",
-    text: "The best backend in the world fails if the interface feels dead. Motion, latency, feedback — every millisecond is a design decision.",
+    text: "The most resilient backend in the world fails if the interface feels dead. Motion, latency and feedback are engineering decisions, not decoration.",
   },
   {
     num: "03",
-    title: "Ship, measure, refine",
-    text: "Perfection is a direction, not a destination. I ship early, instrument everything, and let real usage carve the roadmap.",
+    title: "Legacy is a starting point",
+    text: "Real systems are rarely greenfield. The craft is migrating what a business already runs on — without ever stopping it.",
   },
 ];
 
 export const marqueeItems = [
   "FULL STACK DEVELOPMENT",
-  "NEURAL NETWORKS",
-  "GENERATIVE AI",
-  "DISTRIBUTED SYSTEMS",
-  "LLM ORCHESTRATION",
-  "CREATIVE ENGINEERING",
+  "DISTRIBUTED MICROSERVICES",
+  "API DESIGN",
+  "LLM AGENTS",
+  "DATA PIPELINES",
+  "FINTECH SYSTEMS",
 ];
 
 export const projects = [
   {
-    id: "synthesis",
-    title: "SYNTHESIS",
-    subtitle: "AI Agent Orchestrator",
+    id: "alphardre",
+    title: "ALPHARDRE",
+    subtitle: "Fintech SaaS — Freelance Income",
     description:
-      "Multi-agent LLM platform that plans, executes and self-corrects complex workflows. Tool routing, memory layers and human-in-the-loop checkpoints — all observable in real time.",
-    tags: ["Python", "FastAPI", "LangChain", "React", "Redis"],
-    github: "https://github.com/",
-    demo: "https://example.com/",
+      "Argentine freelancers invoice in a currency that loses value while they wait to be paid, and a missed monotributo threshold means a forced recategorization. AlphardRE tracks what they actually earned: real income adjusted by the INDEC inflation index, USD conversion across multiple exchange rates, and category tracking that flags SAFE, WARNING or CRITICAL before a threshold is crossed.",
+    tags: ["Python", "FastAPI", "PostgreSQL"],
+    // TODO(confirm) — public repo / live URL, if there is one.
+    github: null,
+    demo: null,
     span: "md:col-span-7",
     featured: true,
   },
   {
-    id: "neurachat",
-    title: "NeuraChat",
-    subtitle: "Conversational AI Suite",
+    id: "apsis",
+    title: "APSIS",
+    subtitle: "AI Productivity Assistant",
     description:
-      "Production chat platform with RAG over private docs, streaming responses and sub-second latency at scale.",
-    tags: ["Next.js", "OpenAI", "pgvector", "WebSockets"],
-    github: "https://github.com/",
-    demo: "https://example.com/",
+      "An assistant I'm building for my own workflow, one module at a time. Modular React + TypeScript frontend on a Vite build, FastAPI backend, with an LLM agent planned behind each module — the first reads incoming job proposals and drafts the replies.",
+    tags: ["React", "TypeScript", "Vite", "FastAPI", "LLM Agents"],
+    // TODO(confirm) — public repo / live URL, if there is one.
+    github: null,
+    demo: null,
     span: "md:col-span-5",
-  },
-  {
-    id: "visionpipe",
-    title: "VisionPipe",
-    subtitle: "Real-time CV Pipeline",
-    description:
-      "GPU-accelerated computer vision pipeline processing 40+ streams — detection, tracking and anomaly scoring on the edge.",
-    tags: ["PyTorch", "CUDA", "Docker", "gRPC"],
-    github: "https://github.com/",
-    demo: null,
-    span: "md:col-span-4",
-  },
-  {
-    id: "pulseboard",
-    title: "Pulseboard",
-    subtitle: "Realtime Analytics",
-    description:
-      "Streaming analytics dashboard ingesting 1M+ events/day with live visualizations and anomaly alerts.",
-    tags: ["React", "D3.js", "Kafka", "ClickHouse"],
-    github: "https://github.com/",
-    demo: "https://example.com/",
-    span: "md:col-span-4",
-  },
-  {
-    id: "forge",
-    title: "Forge UI",
-    subtitle: "Design System Engine",
-    description:
-      "Token-driven component engine generating accessible, themeable UI kits from a single design schema.",
-    tags: ["TypeScript", "Storybook", "Tailwind"],
-    github: "https://github.com/",
-    demo: null,
-    span: "md:col-span-4",
   },
 ];
 
+// NOTE: the pinned hero animates exactly three cards (01/02/03) at hardcoded
+// positions. Keep this array at three entries.
 export const systemFeatures = [
   {
     num: "01",
     part: "HEAD",
     title: "AI ENGINEERING",
-    text: "LLMs, agents and RAG pipelines — intelligence engineered for production.",
+    text: "LLM agents and AI-assisted features wired into services that already carry production load.",
     side: "left",
     top: "20%",
     from: { x: 26, y: 27 },
@@ -140,7 +118,7 @@ export const systemFeatures = [
     num: "02",
     part: "HANDS",
     title: "FRONTEND",
-    text: "React interfaces with cinematic motion and real-time 3D.",
+    text: "React and TypeScript interfaces — motion, real-time 3D, and feedback that keeps up with the user.",
     side: "right",
     top: "46%",
     from: { x: 74, y: 53 },
@@ -150,7 +128,7 @@ export const systemFeatures = [
     num: "03",
     part: "TORSO",
     title: "BACKEND",
-    text: "FastAPI services, databases and APIs built for real load.",
+    text: "FastAPI, NestJS and .NET microservices with strict contracts and real data behind them.",
     side: "left",
     top: "68%",
     from: { x: 26, y: 74 },
@@ -164,38 +142,77 @@ export const capabilities = [
     num: "01",
     title: "Frontend",
     description:
-      "Interfaces that feel alive — motion-first, accessible, obsessively optimized.",
-    tags: ["React", "Next.js", "TypeScript", "Tailwind CSS", "Framer Motion", "Spline / Three.js", "Radix / shadcn"],
+      "Interfaces built on the same stacks I ship backends with — typed, motion-first, accessible.",
+    tags: ["React", "Next.js", "Remix", "TypeScript", "Tailwind CSS", "Three.js"],
   },
   {
     id: "backend",
     num: "02",
     title: "Backend",
     description:
-      "Resilient APIs and event-driven architectures built for real load.",
-    tags: ["FastAPI", "Node.js", "PostgreSQL", "MongoDB", "Redis", "Kafka", "REST / gRPC", "Auth"],
+      "APIs and microservices with strict contracts, validation layers and real load behind them.",
+    tags: ["FastAPI", "Flask", "NestJS", "Express", "Node.js", "C# / .NET", "REST APIs"],
   },
   {
     id: "ai",
     num: "03",
-    title: "AI",
+    title: "AI Engineering",
     description:
-      "From notebooks to production: training, evaluation and serving.",
-    tags: ["PyTorch", "LLM Fine-tuning", "RAG", "Agents / LangChain", "Computer Vision", "Eval Harnesses", "MLOps"],
+      "Agent layers and AI-assisted features built into production services, not demos.",
+    tags: ["LangChain", "LangGraph", "LLM Agents", "Agent-consumed APIs", "Python"],
   },
   {
-    id: "tools",
+    id: "data",
     num: "04",
-    title: "Tools",
+    title: "Data & Infrastructure",
     description:
-      "Infrastructure as code, observability by default, zero-downtime deploys.",
-    tags: ["Docker", "Kubernetes", "AWS / GCP", "CI/CD", "Git", "Observability", "Linux"],
+      "Relational data, ETL pipelines, and the migration path from monolith to services.",
+    tags: ["PostgreSQL", "SQL Server", "SQLAlchemy", "ETL Pipelines", "Docker", "Git"],
   },
 ];
 
 export const terminalBoot = [
   { type: "cmd", text: "whoami" },
-  { type: "out", text: "maria.sol.gosende — full stack developer & ai engineer" },
+  { type: "out", text: "mssegosende — full stack developer & ai engineer" },
   { type: "cmd", text: "cat availability.txt" },
-  { type: "out", text: "STATUS: OPEN TO PROJECTS // RESPONSE TIME < 24H" },
+  { type: "out", text: "STATUS: OPEN TO OPPORTUNITIES // REMOTE — WORLDWIDE" },
+];
+
+// ============================================================
+// PROJECT BACKLOG — NOT RENDERED ON THE SITE.
+// Real project names, captured so they aren't lost. Each needs a
+// description before it can move into `projects` above. Nothing here is
+// guessed: `note` records only what was actually said about it.
+// ============================================================
+export const projectBacklog = [
+  {
+    id: "ethos",
+    title: "ETHOS",
+    category: "backend",
+    note: "The functional-medicine one. Need: what it does, the stack, and whether this is personal work or the Los Angeles booking platform from the 2021–22 role.",
+  },
+  {
+    id: "polaris",
+    title: "POLARIS",
+    category: "ai",
+    note: "Need: what problem it solves, what was built, the stack.",
+  },
+  {
+    id: "mira",
+    title: "MIRA",
+    category: "ai",
+    note: "Need: what problem it solves, what was built, the stack.",
+  },
+  {
+    id: "autopia",
+    title: "AUTOPIA",
+    category: "backend",
+    note: "NOT BUILT YET — described as a truck/car project you want to do, related to your work experience. Keep this out of `projects` until it exists; a recruiter asking about it is the exact failure mode we are fixing.",
+  },
+  {
+    id: "jack-and-sally",
+    title: "JACK & SALLY",
+    category: "frontend",
+    note: "The frontend piece you said you would probably include. Need: what it is and the stack — Three.js?",
+  },
 ];

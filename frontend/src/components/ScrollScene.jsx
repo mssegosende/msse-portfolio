@@ -303,7 +303,7 @@ export const ScrollScene = ({ onReady }) => {
                   data-testid="bg-wordmark"
                   className="pointer-events-none absolute inset-x-0 top-[47%] text-center"
                 >
-                  <span className="text-engraved whitespace-nowrap font-display text-[clamp(2rem,10.5vw,10rem)] font-bold uppercase leading-none tracking-[-0.01em] text-white mix-blend-difference">
+                  <span className="whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-white opacity-[0.35] mix-blend-difference">
                     {WORDMARK}
                   </span>
                 </div>
@@ -358,7 +358,7 @@ export const ScrollScene = ({ onReady }) => {
                 data-testid="bg-wordmark-2"
                 className="pointer-events-none absolute inset-x-0 top-[53%] text-center"
               >
-                <span className="text-engraved whitespace-nowrap font-display text-[clamp(2rem,10.5vw,10rem)] font-bold uppercase leading-none tracking-[-0.01em] text-white opacity-30 mix-blend-difference">
+                <span className="whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-white opacity-30 mix-blend-difference">
                   {WORDMARK}
                 </span>
               </div>
@@ -400,39 +400,46 @@ export const ScrollScene = ({ onReady }) => {
       {/* gentle edge vignette */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)]" />
 
-      {/* Layer D — UI (pointer-events pass through to the Spline canvas below) */}
-      <div className="pointer-events-none absolute inset-0 z-10">
-        {/* kinetic headline (phase 1) — sits just above the nav dock, difference blend */}
-        <div
-          ref={headlineRef}
-          className="pointer-events-none absolute inset-x-0 bottom-40 text-center mix-blend-difference sm:bottom-24"
-        >
-          <div className="overflow-hidden px-4">
-            <motion.h1
-              variants={lineReveal}
-              custom={0}
-              initial="hidden"
-              animate={revealed ? "show" : "hidden"}
-              data-testid="hero-headline-1"
-              className="text-engraved font-display text-[clamp(2rem,6vw,5.75rem)] font-light uppercase leading-none tracking-[0.02em] text-white"
-            >
-              — Build the future —
-            </motion.h1>
-          </div>
-          <div className="mt-4 overflow-hidden px-4">
-            <motion.p
-              variants={lineReveal}
-              custom={1}
-              initial="hidden"
-              animate={revealed ? "show" : "hidden"}
-              data-testid="hero-headline-2"
-              className="text-engraved font-display text-[clamp(1rem,3vw,2.5rem)] font-light uppercase leading-none tracking-[0.02em] text-white/60"
-            >
-              one system at a time
-            </motion.p>
-          </div>
+      {/* Layer C2 — the kinetic headline lives OUTSIDE the z-indexed UI layer on
+          purpose. Its mix-blend-difference must blend against the 3D scene below
+          (letters go dark over the light wall, white over the robot), and any
+          z-index on an ancestor would create a stacking context that isolates the
+          blend and flattens the text to plain white. DOM order already paints it
+          above the scenes. */}
+      {/* kinetic headline (phase 1) — sits just above the nav dock, difference blend */}
+      <div
+        ref={headlineRef}
+        className="pointer-events-none absolute inset-x-0 bottom-40 text-center mix-blend-difference sm:bottom-24"
+      >
+        <div className="overflow-hidden px-4">
+          <motion.h1
+            variants={lineReveal}
+            custom={0}
+            initial="hidden"
+            animate={revealed ? "show" : "hidden"}
+            data-testid="hero-headline-1"
+            className="font-inter text-[clamp(1.2rem,4.1vw,3.9rem)] font-extralight uppercase leading-none tracking-[0.3em] text-white"
+          >
+            — Build the future —
+          </motion.h1>
         </div>
+        <div className="mt-4 overflow-hidden px-4">
+          <motion.p
+            variants={lineReveal}
+            custom={1}
+            initial="hidden"
+            animate={revealed ? "show" : "hidden"}
+            data-testid="hero-headline-2"
+            className="font-inter text-[clamp(0.7rem,2.25vw,2rem)] font-extralight uppercase leading-none tracking-[0.42em] text-white/40"
+          >
+            one system at a time
+          </motion.p>
+        </div>
+      </div>
 
+      {/* Layer D — UI. Keeps z-10: these marks must NOT invert against the
+          scene, or the brand, status and rail numbers wash out on the light wall. */}
+      <div className="pointer-events-none absolute inset-0 z-10">
         {/* top-left brand */}
         <motion.div
           variants={uiFade} custom={0} initial="hidden"

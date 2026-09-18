@@ -34,16 +34,18 @@ export const Footer = () => {
           >
             <Github size={16} />
           </a>
-          <a
-            data-testid="footer-linkedin-link"
-            href={profile.socials.linkedin}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="LinkedIn"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-[#222] text-[#A6A6A6] transition-[color,border-color] duration-300 hover:border-white/40 hover:text-white"
-          >
-            <Linkedin size={16} />
-          </a>
+          {profile.socials.linkedin && (
+            <a
+              data-testid="footer-linkedin-link"
+              href={profile.socials.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#222] text-[#A6A6A6] transition-[color,border-color] duration-300 hover:border-white/40 hover:text-white"
+            >
+              <Linkedin size={16} />
+            </a>
+          )}
           <a
             data-testid="footer-email-link"
             href={`mailto:${profile.email}`}

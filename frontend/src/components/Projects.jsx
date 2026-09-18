@@ -109,8 +109,8 @@ export const Projects = () => {
             viewport={{ once: true, margin: "-80px" }}
             className="max-w-sm font-inter text-sm leading-relaxed text-[#A6A6A6]"
           >
-            Systems I've designed, trained and shipped — from agent platforms to
-            realtime pipelines.
+            Products I've designed and built end to end — from the data model
+            up to the interface.
           </motion.p>
         </div>
 
