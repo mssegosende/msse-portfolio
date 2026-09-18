@@ -130,35 +130,41 @@ export const ScrollScene = ({ onReady }) => {
     const endY = reduce ? "5%" : isMobile ? "8.5%" : "11.5%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
-    // Framings. Scale progression 2.8 -> 2.8 -> 1.7 -> 1.35 -> 1.15: the first
-    // two beats hold the same distance, the pull-back starts at card 02 with a
-    // deliberate jump, and from card 03 on the robot stays centred.
-    // PRE — a touch closer than the story; the move starts under the crossfade
+    // The robot is NOT centred inside the Spline scene: its body sits about
+    // 180px (unscaled) right of the canvas centre, so x:0 centres the CANVAS,
+    // not the robot. Measured off the rendered silhouette at two scales
+    // (+258px at 1.35, +208px at 1.15 => ~180px unscaled), not off the
+    // transform. Every framing below is expressed as the visual offset of the
+    // BODY from the viewport centre; fx() converts it into the transform.
+    const ROBOT_DX = 180;
+    const VW = window.innerWidth || 2000;
+    const fx = (visualPx, scale) => `${((visualPx - ROBOT_DX * scale) / VW) * 100}%`;
+
+    // Scale progression 2.8 -> 2.4 -> 2.0 -> 1.6 -> 1.5: always some retreat
+    // between beats, and the closing comes back in rather than pulling further.
     const c2pre = isMobile
       ? { scale: 1.95, x: "-48%", y: "26%" }
-      : { scale: 3.0, x: "-18%", y: "51%" };
-    // STEP 1 (story) — head and shoulders only. Robot left, story text right.
+      : { scale: 3.0, x: fx(0, 3.0), y: "53%" };
+    // STEP 1 (story) — closest, and centred. The text sits to the right.
     const c2close = isMobile
       ? { scale: 1.8, x: "-48%", y: "22%" }
-      : { scale: 2.8, x: "-16%", y: "47%" };
-    // STEP 2 (card 01, at the LEFT) — same distance, the robot only slides
-    // right. No pull-back yet.
+      : { scale: 2.8, x: fx(0, 2.8), y: "47%" };
+    // STEP 2 (card 01, at the LEFT) — starts to retreat, drifts slightly right
     const c2s2 = isMobile
-      ? { scale: 1.8, x: "-38%", y: "22%" }
-      : { scale: 2.8, x: "7%", y: "47%" };
-    // STEP 3 (card 02, at the RIGHT) — the big jump: hard pull-back and the
-    // robot goes fully left, cropped by the edge on purpose.
+      ? { scale: 1.7, x: "-38%", y: "20%" }
+      : { scale: 2.4, x: fx(200, 2.4), y: "35%" };
+    // STEP 3 (card 02, at the RIGHT) — hard move to the left, cropped on purpose
     const c2s3 = isMobile
-      ? { scale: 1.35, x: "-56%", y: "12%" }
-      : { scale: 1.7, x: "-38%", y: "14%" };
-    // STEP 4 (card 03) — centred horizontally and vertically; stays here.
+      ? { scale: 1.45, x: "-56%", y: "14%" }
+      : { scale: 2.0, x: fx(-520, 2.0), y: "23%" };
+    // STEP 4 (card 03) — body centred; stays here
     const c2far = isMobile
-      ? { scale: 1.12, x: "-48%", y: "6%" }
-      : { scale: 1.35, x: "0%", y: "5%" };
-    // CLOSING — same position as card 03, only the scale changes.
+      ? { scale: 1.2, x: "-48%", y: "8%" }
+      : { scale: 1.6, x: fx(0, 1.6), y: "11%" };
+    // CLOSING — comes back in slightly, same centred position
     const c2end = isMobile
-      ? { scale: 1.0, x: "-48%", y: "6%" }
-      : { scale: 1.15, x: "0%", y: "5%" };
+      ? { scale: 1.15, x: "-48%", y: "7%" }
+      : { scale: 1.5, x: fx(0, 1.5), y: "8%" };
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
     // Gaze poses, radians, capped at ±0.35. +y turns the face to the viewer's
@@ -735,22 +741,22 @@ export const ScrollScene = ({ onReady }) => {
             className={`absolute ${
               isMobile
                 ? "left-4 right-4 w-auto"
-                : `w-72 max-w-[42vw] ${f.side === "left" ? "left-[5%]" : "right-[5%]"}`
+                : `w-[27rem] max-w-[46vw] ${f.side === "left" ? "left-[5%]" : "right-[5%]"}`
             }`}
           >
-            <div className="corner-frame cut-corner relative border border-[#222] bg-black/70 p-6 pt-3 backdrop-blur-md">
-              <div className="select-none font-display text-7xl font-light leading-none text-outline-grey">
+            <div className="corner-frame cut-corner relative border border-[#222] bg-black/70 p-9 pt-6 backdrop-blur-md">
+              <div className="select-none font-display text-[7rem] font-light leading-[0.85] text-outline-grey">
                 {f.num}
               </div>
-              <div className="mt-5 flex items-baseline gap-3">
+              <div className="mt-7 flex items-baseline gap-3">
                 <span className="font-display text-[13px] uppercase tracking-[0.02em] text-[#D3D3D3]">
                   {f.part}
                 </span>
               </div>
-              <h3 className="mt-2 font-display text-xl font-light uppercase text-white">
+              <h3 className="mt-2.5 font-display text-2xl font-light uppercase tracking-[0.01em] text-white">
                 {f.title}
               </h3>
-              <p className="mt-3 font-inter text-sm leading-relaxed text-[#D3D3D3]">
+              <p className="mt-4 font-inter text-[15px] leading-[1.65] text-[#D3D3D3]">
                 {f.text}
               </p>
             </div>
