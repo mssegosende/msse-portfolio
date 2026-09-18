@@ -102,38 +102,6 @@ export const ScrollScene = ({ onReady }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // TEMP PROBE — dumps what the scene 2 runtime exposes, to find a Look At target
-  const probeScene2 = (app) => {
-    const P = "SPLINE2::";
-    window.__spline2 = app; // TEMP: para la prueba de rotacion
-    try {
-      const objs = typeof app.getAllObjects === "function" ? app.getAllObjects() : null;
-      console.log(`${P}api`, JSON.stringify({
-        getAllObjects: typeof app.getAllObjects,
-        findObjectByName: typeof app.findObjectByName,
-        findObjectById: typeof app.findObjectById,
-        setVariable: typeof app.setVariable,
-        getVariable: typeof app.getVariable,
-        getVariables: typeof app.getVariables,
-        emitEvent: typeof app.emitEvent,
-        getSplineEvents: typeof app.getSplineEvents,
-        objectCount: objs ? objs.length : null,
-      }));
-      if (objs) {
-        objs.forEach((o, i) => {
-          const pos = o.position ? `${o.position.x?.toFixed(1)},${o.position.y?.toFixed(1)},${o.position.z?.toFixed(1)}` : "-";
-          console.log(`${P}obj ${i} name="${o.name}" type=${o.type || "?"} pos=[${pos}] visible=${o.visible}`);
-        });
-      }
-      if (typeof app.getVariables === "function")
-        console.log(`${P}vars`, JSON.stringify(app.getVariables()));
-      if (typeof app.getSplineEvents === "function")
-        console.log(`${P}events`, JSON.stringify(Object.keys(app.getSplineEvents() || {})));
-    } catch (e) {
-      console.log(`${P}error`, String(e));
-    }
-  };
-
   const handleLoad = (app) => {
     app1Ref.current = app;
     if (readyRef.current) return;
@@ -573,8 +541,8 @@ export const ScrollScene = ({ onReady }) => {
                     <Spline
                       scene={SPLINE_SCENE_2_URL}
                       onLoad={(app) => {
+                        // kept: the directed gaze writes Head.rotation on it
                         app2Ref.current = app;
-                        probeScene2(app);
                         setScene2Ready(true);
                       }}
                       onError={() => setScene2Failed(true)}
