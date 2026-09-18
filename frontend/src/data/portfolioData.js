@@ -46,6 +46,12 @@ export const story = [
   "Now I do it at a larger scale: breaking a legacy monolith into distributed services, and wiring AI agents into pricing systems where a wrong answer costs real money. I build my own products for the same reason — AlphardRE, so Argentine freelancers can see what their income is actually worth, and Apsis, because I wanted an assistant built to my own standards.",
 ];
 
+// Title above the story block in the pinned hero.
+export const storyTitle = {
+  name: "María Sol Gosende Centurión",
+  role: "Full Stack Developer & AI Engineer",
+};
+
 export const manifesto = [
   {
     num: "01",

@@ -9,6 +9,7 @@ import {
   SPLINE_SCENE_2_URL,
   profile,
   story,
+  storyTitle,
   systemFeatures,
 } from "../data/portfolioData";
 import { scrollToId } from "../hooks/useLenis";
@@ -65,7 +66,7 @@ export const ScrollScene = ({ onReady }) => {
   const splineLayerRef = useRef(null);
   const overlayRef = useRef(null);
   const wm1Ref = useRef(null);
-  const wm2Ref = useRef(null);
+  const storyTitleRef = useRef(null);
   const layer2Ref = useRef(null);
   const layer2InnerRef = useRef(null);
   const headlineRef = useRef(null);
@@ -161,34 +162,45 @@ export const ScrollScene = ({ onReady }) => {
     const endY = reduce ? "5%" : isMobile ? "8.5%" : "11.5%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
-    // STEP 1 (story) — the closest framing of the whole sequence: head fills the
-    // upper frame, neck and shoulder tops visible, cut at the upper torso.
-    // Calibrated against the reference screenshot at 2000x1014.
+    // Framings. The lateral travel is deliberately small: the pull-back reads
+    // as a camera dollying out, not as the robot sliding around the frame.
+    // PRE — a touch closer than the story; the move starts under the crossfade
+    const c2pre = isMobile
+      ? { scale: 1.62, x: "-48%", y: "17%" }
+      : { scale: 2.32, x: "-18%", y: "30%" };
+    // STEP 1 (story) — closest framing: head fills the upper frame, cut at the
+    // upper torso. Robot left, story text right.
     const c2close = isMobile
       ? { scale: 1.5, x: "-48%", y: "14%" }
       : { scale: 2.1, x: "-16%", y: "26%" };
-    // STEP 4 (cards) — the farthest framing, centred
-    const c2far = isMobile
-      ? { scale: 1.05, x: "-48%", y: "10%" }
-      : { scale: 1.2, x: "0%", y: "-3.5%" };
-    // STEP 2 — swings to the opposite side and pulls back
+    // STEP 2 (card 01, at the LEFT) — robot moves to the RIGHT of the frame
     const c2s2 = isMobile
-      ? { scale: 1.3, x: "-48%", y: "12%" }
-      : { scale: 1.6, x: "16%", y: "14%" };
-    // STEP 3 — grows slightly again and re-centres
+      ? { scale: 1.32, x: "-48%", y: "12%" }
+      : { scale: 1.70, x: "10%", y: "16%" };
+    // STEP 3 (card 02, at the RIGHT) — pulls back further, moves to the LEFT
     const c2s3 = isMobile
-      ? { scale: 1.4, x: "-48%", y: "11%" }
-      : { scale: 1.75, x: "0%", y: "8%" };
-    const BODY_STEPS = [c2close, c2s2, c2s3, c2far];
+      ? { scale: 1.18, x: "-48%", y: "10%" }
+      : { scale: 1.45, x: "-10%", y: "8%" };
+    // STEP 4 (card 03) — centred, medium size, no growing
+    const c2far = isMobile
+      ? { scale: 1.08, x: "-48%", y: "8%" }
+      : { scale: 1.25, x: "0%", y: "2%" };
+    // CLOSING — centred horizontally and vertically, three cards up
+    const c2end = isMobile
+      ? { scale: 1.02, x: "-48%", y: "6%" }
+      : { scale: 1.15, x: "0%", y: "0%" };
+    const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
-    // gaze poses, radians, capped at ±0.35. three.js convention:
-    // +y turns the face to the viewer's right, +x tips it down.
+    // Gaze poses, radians, capped at ±0.35. +y turns the face to the viewer's
+    // right, +x tips it down. Each one points at where its card actually sits.
     const GAZE = {
-      text: { x: 0.0, y: 0.32 },   // step 1: at the story block on the right
-      upLeft: { x: -0.22, y: -0.26 },  // step 2: card 01, top-left
-      downRight: { x: 0.22, y: 0.26 }, // step 3: card 02, bottom-right
-      downCenter: { x: 0.3, y: 0.0 },  // step 4: card 03, bottom-centre
+      text: { x: 0.0, y: 0.32 },        // story block, right
+      card01: { x: -0.18, y: -0.30 },   // card 01: left, upper
+      card02: { x: 0.02, y: 0.32 },     // card 02: right, middle
+      card03: { x: 0.24, y: -0.26 },    // card 03: left, lower
+      front: { x: 0.0, y: 0.0 },        // released at the end
     };
+
 
     // mouse parallax on both scenes (outside gsap.context to avoid TDZ on ctx)
     let removeMouse = null;
@@ -223,6 +235,7 @@ export const ScrollScene = ({ onReady }) => {
       gsap.set(featuresHeaderRef.current, { opacity: 0, y: 24 });
       gsap.set(overlayRef.current, { opacity: 0 });
       storyRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 28 }));
+      gsap.set(storyTitleRef.current, { opacity: 0, y: 28 });
       calloutRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 36 }));
       lineRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0 }));
       dotRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0 }));
@@ -311,12 +324,16 @@ export const ScrollScene = ({ onReady }) => {
       // ---- directed gaze, with the cursor taking over ------------------------
       const gaze = { x: 0, y: 0 };      // target written by the timeline
       const cur = { x: 0, y: 0 };       // what is actually applied, eased
+      // While `lock` is 1 the head stays welded to the directed pose: the
+      // cursor cannot pull it away and it never drifts back to centre. The
+      // timeline releases it on the closing beat.
+      const gazeLock = { on: 1 };
       const applyGaze = () => {
         const head = app2Ref.current && app2Ref.current.findObjectByName
           ? app2Ref.current.findObjectByName("Head")
           : null;
         if (!head) return;
-        const fresh = Date.now() - lastMouseRef.current < 1200;
+        const fresh = !gazeLock.on && Date.now() - lastMouseRef.current < 1200;
         const tx = fresh ? mouseGazeRef.current.x : gaze.x;
         const ty = fresh ? mouseGazeRef.current.y : gaze.y;
         cur.x += (tx - cur.x) * 0.08;
@@ -334,7 +351,7 @@ export const ScrollScene = ({ onReady }) => {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "+=620%",
+          end: "+=1040%",
           pin: true,
           scrub: 1,
           anticipatePin: 1,
@@ -358,7 +375,6 @@ export const ScrollScene = ({ onReady }) => {
 
       // wordmarks drift slowly through their scenes
       tl.fromTo(wm1Ref.current, { y: 24 }, { y: -40, duration: 0.5 }, 0);
-      tl.fromTo(wm2Ref.current, { y: 30 }, { y: -30, duration: 0.6 }, 0.5);
 
       // PHASE 1 exit: headline leaves, light drains to black, slight drift-in
       tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
@@ -378,73 +394,68 @@ export const ScrollScene = ({ onReady }) => {
 
       // story paragraphs fade in one after another during the close-up hold
       // (long scroll lock: only the tiny idle breathing moves the robot here)
+      tl.to(storyTitleRef.current, { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.56);
       if (storyRefs.current[0])
         tl.to(storyRefs.current[0], { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.62);
       if (storyRefs.current[1])
         tl.to(storyRefs.current[1], { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.78);
 
-      // PHASE 3 — four steps, then a closing beat. The head ALWAYS turns first
-      // and the card lands where it is looking; only one card/line is on screen
-      // at a time until the closing beat shows all three together.
+      // PHASE 3 — the robot is ALREADY moving when the crossfade reveals it,
+      // then four evenly spaced steps and a closing beat. Each card gets the
+      // same slice of scroll so none of them feels rushed against the others.
       const storyEls = storyRefs.current.filter(Boolean);
 
-      // STEP 1: the head holds on the story block at the right for the whole
-      // close-up. Set as scene 2 fades in, well before the first body move.
-      tl.to(gaze, { ...GAZE.text, duration: 0.05, ease: "power2.out" }, 0.52);
+      // ENTRY: starts at 0.40, under the crossfade (0.50), so the scene is
+      // never revealed frozen. One continuous eased move into the story framing.
+      tl.to(body, { t: 1, duration: 0.38, ease: "power2.out" }, 0.40);
+      tl.to(gaze, { ...GAZE.text, duration: 0.10, ease: "power2.out" }, 0.46);
 
-      // STEP 1 -> 2: swings to the opposite side, pulls back. Gaze: up-left.
-      tl.to(gaze, { ...GAZE.upLeft, duration: 0.06, ease: "power2.inOut" }, 1.00);
+      const STEP_AT = [1.10, 1.70, 2.30];  // evenly spaced, 0.60 apart
+      const CARD_IN = [1.32, 1.92, 2.52];  // card lands after the body settles
+      const POSES = [GAZE.card01, GAZE.card02, GAZE.card03];
+
       if (storyEls.length)
-        tl.to(storyEls, { opacity: 0, y: -24, duration: 0.06, ease: "power1.in" }, 1.00);
-      tl.to(body, { t: 1, duration: 0.14, ease: "power1.inOut" }, 1.04);
-      tl.to(featuresHeaderRef.current, { opacity: 1, y: 0, duration: 0.06 }, 1.06);
-      tl.to(calloutRefs.current[0], { opacity: 1, y: 0, duration: 0.06, ease: "power1.out" }, 1.12);
-      tl.set(lineRefs.current[0], { opacity: 1 }, 1.12);
-      tl.to(draw[0], { p: 1, duration: 0.07, ease: "power1.inOut" }, 1.12);
-      tl.to(dotRefs.current[0], { opacity: 1, duration: 0.03 }, 1.19);
-      tl.to(railRefs.current[0], { color: "#FFFFFF", duration: 0.03 }, 1.12);
+        tl.to(storyEls, { opacity: 0, y: -24, duration: 0.10, ease: "power1.in" }, 1.02);
+      tl.to(storyTitleRef.current, { opacity: 0, y: -24, duration: 0.10, ease: "power1.in" }, 1.02);
+      tl.to(featuresHeaderRef.current, { opacity: 1, y: 0, duration: 0.10 }, 1.10);
 
-      // STEP 2 -> 3: grows slightly, re-centres. Gaze: down-right.
-      tl.to(gaze, { ...GAZE.downRight, duration: 0.06, ease: "power2.inOut" }, 1.24);
-      tl.to(body, { t: 2, duration: 0.14, ease: "power1.inOut" }, 1.28);
-      // card 01 and its line are erased with the same animation, reversed
-      tl.to(dotRefs.current[0], { opacity: 0, duration: 0.02 }, 1.26);
-      tl.to(draw[0], { p: 0, duration: 0.06, ease: "power1.inOut" }, 1.26);
-      tl.to(calloutRefs.current[0], { opacity: 0, y: -20, duration: 0.05 }, 1.28);
-      tl.set(lineRefs.current[0], { opacity: 0 }, 1.33);
-      tl.to(calloutRefs.current[1], { opacity: 1, y: 0, duration: 0.06, ease: "power1.out" }, 1.36);
-      tl.set(lineRefs.current[1], { opacity: 1 }, 1.36);
-      tl.to(draw[1], { p: 1, duration: 0.07, ease: "power1.inOut" }, 1.36);
-      tl.to(dotRefs.current[1], { opacity: 1, duration: 0.03 }, 1.43);
-      tl.to(railRefs.current[1], { color: "#FFFFFF", duration: 0.03 }, 1.36);
+      systemFeatures.forEach((f, i) => {
+        const at = STEP_AT[i];
+        const cardAt = CARD_IN[i];
+        // head turns FIRST, and holds there for the whole step
+        tl.to(gaze, { ...POSES[i], duration: 0.14, ease: "power2.inOut" }, at);
+        tl.to(body, { t: i + 2, duration: 0.30, ease: "power1.inOut" }, at + 0.06);
 
-      // STEP 3 -> 4: lands on c2far, the farthest framing. Gaze: down-centre,
-      // the last head move of the sequence.
-      tl.to(gaze, { ...GAZE.downCenter, duration: 0.06, ease: "power2.inOut" }, 1.48);
-      tl.to(body, { t: 3, duration: 0.14, ease: "power1.inOut" }, 1.52);
-      tl.to(dotRefs.current[1], { opacity: 0, duration: 0.02 }, 1.50);
-      tl.to(draw[1], { p: 0, duration: 0.06, ease: "power1.inOut" }, 1.50);
-      tl.to(calloutRefs.current[1], { opacity: 0, y: -20, duration: 0.05 }, 1.52);
-      tl.set(lineRefs.current[1], { opacity: 0 }, 1.57);
-      tl.to(calloutRefs.current[2], { opacity: 1, y: 0, duration: 0.06, ease: "power1.out" }, 1.60);
-      tl.set(lineRefs.current[2], { opacity: 1 }, 1.60);
-      tl.to(draw[2], { p: 1, duration: 0.07, ease: "power1.inOut" }, 1.60);
-      tl.to(dotRefs.current[2], { opacity: 1, duration: 0.03 }, 1.67);
-      tl.to(railRefs.current[2], { color: "#FFFFFF", duration: 0.03 }, 1.60);
+        // the previous card and its connector are erased with the same motion
+        if (i > 0) {
+          tl.to(dotRefs.current[i - 1], { opacity: 0, duration: 0.04 }, at);
+          tl.to(draw[i - 1], { p: 0, duration: 0.12, ease: "power1.inOut" }, at);
+          tl.to(calloutRefs.current[i - 1], { opacity: 0, y: -20, duration: 0.10 }, at + 0.02);
+          tl.set(lineRefs.current[i - 1], { opacity: 0 }, at + 0.14);
+        }
 
-      // CLOSING: gaze returns to the right, then all three cards and all three
-      // dashed connectors come in together and stay for the hold.
-      tl.to(gaze, { ...GAZE.text, duration: 0.07, ease: "power2.inOut" }, 1.74);
-      [0, 1].forEach((i) => {
-        tl.to(calloutRefs.current[i], { opacity: 1, y: 0, duration: 0.06, ease: "power1.out" }, 1.82);
-        tl.set(lineRefs.current[i], { opacity: 1 }, 1.82);
-        tl.to(draw[i], { p: 1, duration: 0.07, ease: "power1.inOut" }, 1.82);
-        tl.to(dotRefs.current[i], { opacity: 1, duration: 0.03 }, 1.89);
-        tl.to(railRefs.current[i], { color: "#FFFFFF", duration: 0.03 }, 1.82);
+        tl.to(calloutRefs.current[i], { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" }, cardAt);
+        tl.set(lineRefs.current[i], { opacity: 1 }, cardAt);
+        tl.to(draw[i], { p: 1, duration: 0.14, ease: "power1.inOut" }, cardAt);
+        tl.to(dotRefs.current[i], { opacity: 1, duration: 0.05 }, cardAt + 0.14);
+        tl.to(railRefs.current[i], { color: "#FFFFFF", duration: 0.05 }, cardAt);
       });
 
-      // hold: extra scroll distance with the three cards up before release
-      tl.to({}, { duration: 0.3 });
+      // CLOSING: robot centres in the viewport, the head is released, and the
+      // three cards come back together with their three dashed connectors.
+      tl.to(body, { t: 5, duration: 0.30, ease: "power1.inOut" }, 2.92);
+      tl.to(gaze, { ...GAZE.front, duration: 0.16, ease: "power2.inOut" }, 2.92);
+      tl.set(gazeLock, { on: 0 }, 3.10);
+      [0, 1].forEach((i) => {
+        tl.to(calloutRefs.current[i], { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" }, 3.16);
+        tl.set(lineRefs.current[i], { opacity: 1 }, 3.16);
+        tl.to(draw[i], { p: 1, duration: 0.14, ease: "power1.inOut" }, 3.16);
+        tl.to(dotRefs.current[i], { opacity: 1, duration: 0.05 }, 3.30);
+        tl.to(railRefs.current[i], { color: "#FFFFFF", duration: 0.05 }, 3.16);
+      });
+
+      // hold: the three cards stay up while the user reads, before release
+      tl.to({}, { duration: 0.45 });
 
       // first projection, so nothing is stale before the first scroll tick
       applyPull();
@@ -535,17 +546,6 @@ export const ScrollScene = ({ onReady }) => {
           <div ref={idle2Ref} className="absolute inset-0">
             <div ref={layer2InnerRef} className="absolute inset-0">
               <div className="absolute left-1/2 top-1/2 h-[90vh] w-[90vh] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.07),transparent_62%)]" />
-
-              {/* wordmark behind the canvas — screen blend gives real occlusion */}
-              <div
-                ref={wm2Ref}
-                data-testid="bg-wordmark-2"
-                className="pointer-events-none absolute inset-x-0 top-[34%] text-center sm:top-[76%]"
-              >
-                <span className="whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-[#1E1E1E]">
-                  {WORDMARK}
-                </span>
-              </div>
 
               {/* fallback static render until/if the live scene fails */}
               {(!scene2Ready || scene2Failed) && (
@@ -680,6 +680,16 @@ export const ScrollScene = ({ onReady }) => {
 
         {/* story paragraphs (phase 2) — beside the close-up robot, below it on mobile */}
         <div className="absolute inset-x-5 bottom-28 sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-1/2 sm:w-[24rem] sm:-translate-y-1/2 lg:right-[9%]">
+          {/* story heading — section-title type, sized so it never pushes the
+              paragraphs out of the viewport */}
+          <div ref={storyTitleRef} className="mb-6" data-testid="story-title">
+            <h2 className="font-display text-xl font-light uppercase leading-tight tracking-[0.02em] text-white sm:text-[1.75rem]">
+              {storyTitle.name}
+            </h2>
+            <p className="mt-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">
+              {storyTitle.role}
+            </p>
+          </div>
           {story.map((para, i) => (
             <p
               key={i}
