@@ -80,9 +80,24 @@ export const ScrollScene = ({ onReady }) => {
   const dotRefs = useRef([]);
   const railRefs = useRef([]);
 
-  const [isMobile] = useState(
+  const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
   );
+
+  // The breakpoint used to be read once at mount and never again, so a page
+  // that loaded under 768px — browser zoom, a narrow window, devtools docked
+  // to the side — kept the mobile layout (full-width cards pinned to the
+  // bottom, no connectors, no progress rail) even after the viewport went
+  // back to desktop width. Only a reload recovered it. The layout effect
+  // below already lists isMobile in its deps and reverts its GSAP context,
+  // so re-running on a real breakpoint change is the path it was written for.
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const onChange = (e) => setIsMobile(e.matches);
+    mq.addEventListener("change", onChange);
+    setIsMobile(mq.matches);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   // loader: smooth asymptotic fill to ~90% over ~2.5s, completes on scene load
   useEffect(() => {
