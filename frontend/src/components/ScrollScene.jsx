@@ -156,14 +156,18 @@ export const ScrollScene = ({ onReady }) => {
     const c2close = isMobile
       ? { scale: 1.8, x: "-48%", y: "22%" }
       : { scale: 2.8, x: fx(0, 2.8), y: "47%" };
-    // STEP 2 (card 01, at the LEFT) — starts to retreat, drifts slightly right
+    // STEP 2 (card 01, at the LEFT) — leans INTO its card. At 2.4 the only
+    // thing beside the card is the head, and +200 left a 454px void between
+    // the two. Measured off the silhouette, not the transform.
     const c2s2 = isMobile
       ? { scale: 1.7, x: "-38%", y: "20%" }
-      : { scale: 2.4, x: fx(200, 2.4), y: "35%" };
-    // STEP 3 (card 02, at the RIGHT) — hard move to the left, cropped on purpose
+      : { scale: 2.4, x: fx(-250, 2.4), y: "35%" };
+    // STEP 3 (card 02, at the RIGHT) — leans right toward its card. -520 put
+    // the body hard against the left edge with a 285px void before the card;
+    // it still crops, just less.
     const c2s3 = isMobile
       ? { scale: 1.45, x: "-56%", y: "14%" }
-      : { scale: 2.0, x: fx(-520, 2.0), y: "23%" };
+      : { scale: 2.0, x: fx(-230, 2.0), y: "23%" };
     // STEP 4 (card 03) — body centred; stays here
     const c2far = isMobile
       ? { scale: 1.2, x: "-48%", y: "8%" }
