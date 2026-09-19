@@ -65,6 +65,8 @@ export const ScrollScene = ({ onReady }) => {
   const idle2Ref = useRef(null);
   const splineLayerRef = useRef(null);
   const overlayRef = useRef(null);
+  const wallRef = useRef(null);
+  const vignetteRef = useRef(null);
   const wm1Ref = useRef(null);
   const storyTitleRef = useRef(null);
   const layer2Ref = useRef(null);
@@ -126,8 +128,13 @@ export const ScrollScene = ({ onReady }) => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // middle ground: camera closer, robot vertically centered, little air above the head
     const startScale = reduce ? 1 : isMobile ? 1.3 : 1.45;
-    const startY = reduce ? "4%" : isMobile ? "7%" : "10%";
-    const endY = reduce ? "5%" : isMobile ? "8.5%" : "11.5%";
+    // The head cleared the top of the viewport by ~78px at 2000x1014, which
+    // read as dead air. Measured off the silhouette, not the transform: -3.9%
+    // of the wrap height is ~39px, so the gap halves and the head still has
+    // room. The wall is inside the same scaled wrap (1.45 => 228px of bleed
+    // past each edge), so moving it up cannot expose an edge.
+    const startY = reduce ? "2%" : isMobile ? "4.5%" : "6.1%";
+    const endY = reduce ? "3%" : isMobile ? "6%" : "7.6%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -206,6 +213,21 @@ export const ScrollScene = ({ onReady }) => {
         transformOrigin: "50% 50%",
       });
       gsap.set(canvas2WrapRef.current, { ...c2close, transformOrigin: "50% 50%" });
+      // The hero loads as white as CSS allows and only settles into the grey
+      // once the scroll starts. Two of the three greys are ours: the wall is
+      // #EDEDED (237) and the edge vignette is on at full strength from the
+      // first paint. The third is not — the Spline canvas composites with
+      // mix-blend-multiply over its own light-grey backdrop, which costs a
+      // flat ~27 levels everywhere and cannot come off without losing the
+      // occlusion that makes the robot read against the wall.
+      gsap.set(wallRef.current, { backgroundColor: "#FFFFFF" });
+      // The wordmark is mix-blend-difference, so what you see is |wall - text|.
+      // Against a pure white wall, white text differences to exactly zero and
+      // the wordmark disappears (measured: 0 levels of spread, vs 6 at
+      // #EDEDED). Load it at #EDEDED so the delta is the same 18 levels the
+      // approved treatment has, and let the two swap as the wall darkens.
+      gsap.set(wm1Ref.current.firstChild, { color: "#EDEDED" });
+      gsap.set(vignetteRef.current, { opacity: 0 });
       gsap.set(layer2Ref.current, { opacity: 0 });
       gsap.set(layer2InnerRef.current, { filter: "brightness(0.25)" });
       gsap.set(featuresHeaderRef.current, { opacity: 0, y: 24 });
@@ -352,6 +374,12 @@ export const ScrollScene = ({ onReady }) => {
       // wordmarks drift slowly through their scenes
       tl.fromTo(wm1Ref.current, { y: 24 }, { y: -40, duration: 0.5 }, 0);
 
+      // Grey settles in ahead of the drain, so the order reads white -> grey
+      // -> black instead of white -> black.
+      tl.to(vignetteRef.current, { opacity: 1, duration: 0.20 }, 0.02);
+      tl.to(wallRef.current, { backgroundColor: "#EDEDED", duration: 0.20 }, 0.02);
+      tl.to(wm1Ref.current.firstChild, { color: "#FFFFFF", duration: 0.20 }, 0.02);
+
       // PHASE 1 exit: headline leaves, light drains to black, slight drift-in
       tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
       tl.to(drain, { b: 0.02, c: 1.15, duration: 0.3, onUpdate: applyDrain }, 0.1);
@@ -468,7 +496,7 @@ export const ScrollScene = ({ onReady }) => {
           <div ref={parallax1Ref} className="absolute inset-0">
             <div ref={idle1Ref} className="absolute inset-0">
               {/* the wall — MSSGOSENDE painted on it; multiply canvas occludes it */}
-              <div className="absolute inset-0 bg-[#EDEDED]">
+              <div ref={wallRef} className="absolute inset-0 bg-[#EDEDED]">
                 <div
                   ref={wm1Ref}
                   data-testid="bg-wordmark"
@@ -561,8 +589,12 @@ export const ScrollScene = ({ onReady }) => {
         </div>
       </div>
 
-      {/* gentle edge vignette */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)]" />
+      {/* gentle edge vignette — faded in by the timeline, not on at load */}
+      <div
+        ref={vignetteRef}
+        data-testid="hero-vignette"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)]"
+      />
 
       {/* Layer C2 — the kinetic headline lives OUTSIDE the z-indexed UI layer on
           purpose. Its mix-blend-difference must blend against the 3D scene below
@@ -582,7 +614,7 @@ export const ScrollScene = ({ onReady }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-1"
-            className="font-inter text-[clamp(1.2rem,4.1vw,3.9rem)] font-extralight uppercase leading-none tracking-[0.3em] text-white"
+            className="font-inter text-[clamp(1rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.3em] text-white"
           >
             — Build the future —
           </motion.h1>
@@ -594,7 +626,7 @@ export const ScrollScene = ({ onReady }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-2"
-            className="font-inter text-[clamp(0.7rem,2.25vw,2rem)] font-extralight uppercase leading-none tracking-[0.42em] text-white/40"
+            className="font-inter text-[clamp(0.56rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.42em] text-white/40"
           >
             one system at a time
           </motion.p>
@@ -612,7 +644,7 @@ export const ScrollScene = ({ onReady }) => {
         >
           <span data-testid="hero-brand" className="font-orbitron text-sm font-bold tracking-[0.3em] text-white mix-blend-difference">
             {profile.shortMark}
-            <span className="text-[#A6A6A6]">AI</span>
+            <span className="text-[#A6A6A6]"> {profile.markSuffix}</span>
           </span>
         </motion.div>
 

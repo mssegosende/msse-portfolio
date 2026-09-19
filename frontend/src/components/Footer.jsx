@@ -16,7 +16,7 @@ export const Footer = () => {
             className="font-orbitron text-sm font-bold tracking-[0.02em] text-white transition-colors hover:text-[#D3D3D3]"
           >
             {profile.shortMark}
-            <span className="text-[#A6A6A6]">AI</span>
+            <span className="text-[#A6A6A6]"> {profile.markSuffix}</span>
           </button>
           <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">
             © 2026 {profile.name} — engineered, not templated

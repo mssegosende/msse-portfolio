@@ -20,7 +20,10 @@ export const SPLINE_SCENE_2_URL =
 
 export const profile = {
   name: "María Sol Gosende",
-  shortMark: "MSG://",
+  // Two parts: the dock shows the mark alone, the hero and the footer show
+  // mark + suffix in grey => "MSGC // AI SOFTWARE".
+  shortMark: "MSGC //",
+  markSuffix: "AI SOFTWARE",
   role: "Full Stack Developer & AI Engineer",
   taglineLines: ["Full Stack Developer", "& AI Engineer"],
   tagline:
