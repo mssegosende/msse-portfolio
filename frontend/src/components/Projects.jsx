@@ -20,16 +20,19 @@ const ProjectCard = ({ project, index }) => (
     className={`group corner-frame cut-corner relative flex min-h-[320px] flex-col justify-end border border-[#222] bg-[#0A0A0A] p-7 transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-white/30 hover:shadow-[0_0_50px_rgba(255,255,255,0.06)] sm:p-9 ${project.span}`}
   >
     <div className="relative">
-      {project.draft && (
-        <span
-          data-testid={`project-draft-badge-${project.id}`}
-          className="absolute -top-1 right-0 border border-[#E5B567]/40 px-2.5 py-1 font-display text-[11px] uppercase tracking-[0.18em] text-[#E5B567]"
-        >
-          Draft
-        </span>
-      )}
       <div className="flex items-start justify-between gap-4">
         <div>
+          {/* Dev-only: drafts never reach the production bundle, so this needs
+              no environment check of its own. Sits above the subtitle rather
+              than in the corner, where it would land under the arrow icon. */}
+          {project.draft && (
+            <span
+              data-testid={`project-draft-badge-${project.id}`}
+              className="mb-3 inline-block border border-[#E5B567]/40 px-2.5 py-1 font-display text-[11px] uppercase tracking-[0.18em] text-[#E5B567]"
+            >
+              Draft
+            </span>
+          )}
           <p className="font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">
             {project.subtitle}
           </p>
