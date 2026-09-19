@@ -687,7 +687,9 @@ export const ScrollScene = ({ onReady }) => {
         </motion.div>
 
         {/* story paragraphs (phase 2) — beside the close-up robot, below it on mobile */}
-        <div className="absolute inset-x-5 bottom-28 sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-1/2 sm:w-[24rem] sm:-translate-y-1/2 lg:right-[9%]">
+        {/* At the story framing (scale 2.8) the head centres near 31% of the
+            viewport; dead-centring this block left it a head below that. */}
+        <div className="absolute inset-x-5 bottom-28 sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 lg:right-[9%]">
           {/* story heading — section-title type, sized so it never pushes the
               paragraphs out of the viewport */}
           <div ref={storyTitleRef} className="mb-6" data-testid="story-title">
