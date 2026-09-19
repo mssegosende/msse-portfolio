@@ -268,15 +268,21 @@ export const ScrollScene = ({ onReady }) => {
       // against whatever scale/offset that lands on, never against the final one.
       const lerp = (a, b, t) => a + (b - a) * t;
 
-      // Anchors in the robot's OWN space (percent of the untransformed layer),
-      // derived once from the framing the original `to` points were authored at
-      // (scale 1.2, x -10%, y -3.5%). Chosen high on the body on purpose: the
-      // hands sit at py 83, which projects below the viewport at the closer
-      // steps, so a connector to them would point off-screen.
+      // Anchors in the robot's OWN space (percent of the untransformed layer).
+      // Re-derived by inverting the projection below against the closing
+      // framing (scale 1.5, x -13.5%, y 8%) with the body parts measured off
+      // the bare silhouette, because the previous set was authored for a
+      // framing that no longer exists: "head" landed on the chest, "hands" on
+      // the lower torso and "torso" below the robot entirely.
+      //
+      // The literal hands sit at py ~77.7. At card 02's scale of 2.0 that
+      // projects to y ~128% — 288px BELOW the viewport — so card 02 anchors
+      // to the forearm instead, which is the nearest point on the same limb
+      // that stays on screen at every beat it appears in.
       const anchors = [
-        { px: 58.33, py: 42.9 },  // 01 — visor / head
-        { px: 58.33, py: 62.0 },  // 02 — upper chest
-        { px: 58.33, py: 75.4 },  // 03 — torso
+        { px: 58.5, py: 26.4 },   // 01 HEAD   — visor centre
+        { px: 73.3, py: 56.7 },   // 02 HANDS  — right forearm (see note above)
+        { px: 58.5, py: 54.1 },   // 03 TORSO  — centre of the chest plate
       ].map((a, i) => ({
         ...a,
         fromX: systemFeatures[i].from.x,
