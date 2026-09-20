@@ -1,7 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     blocklist: ["overline"],
-    darkMode: ["class"],
+    darkMode: ['selector', "[data-theme='dark']"],
     content: [
     "./src/**/*.{js,jsx,ts,tsx}",
     "./public/index.html"
@@ -14,40 +14,12 @@ module.exports = {
         kodemono: ['"Kode Mono"', 'monospace'],
         display: ['Rajdhani', 'sans-serif'],
       },
+      // The whole palette is two channel-triplet tokens plus their alphas.
+      // <alpha-value> lets `text-ink/65` and `border-ink/10` resolve against
+      // the same variable the raw CSS uses, so a theme flip is one attribute.
       colors: {
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))'
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))'
-        },
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))'
-        },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))'
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))'
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))'
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))'
-        },
-        border: 'rgba(255, 255, 255, 0.08)',
-        input: 'rgba(255, 255, 255, 0.1)',
-        ring: 'hsl(var(--ring))'
+        ink: 'rgb(var(--ink) / <alpha-value>)',
+        surface: 'rgb(var(--surface) / <alpha-value>)',
       },
       borderRadius: {
         lg: 'var(--radius)',

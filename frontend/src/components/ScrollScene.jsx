@@ -504,12 +504,19 @@ export const ScrollScene = ({ onReady }) => {
     };
   }, [isMobile]);
 
+  // The hero is a fixed cinematic: it opens on a light wall and drains into
+  // darkness on its own schedule, identically in either page theme. The
+  // data-theme="dark" below is what keeps that true — every token inside
+  // resolves back to the value it had before the site became themeable
+  // (ink/65 -> #A6A6A6 over black, ink/[0.13] -> #222, surface -> #000), so the
+  // sequence is untouched while the page around it flips.
   return (
     <section
       id="hero"
       ref={sectionRef}
       data-testid="scene-section"
-      className="relative h-screen min-h-[640px] w-full overflow-hidden bg-black"
+      data-theme="dark"
+      className="relative h-screen min-h-[640px] w-full overflow-hidden bg-surface"
     >
       {/* Layer A — live dark scene + painted wordmark + silhouette occluder */}
       <div ref={splineLayerRef} className="absolute inset-0">
@@ -527,7 +534,7 @@ export const ScrollScene = ({ onReady }) => {
                   data-testid="bg-wordmark"
                   className="pointer-events-none absolute inset-x-0 top-[47%] text-center"
                 >
-                  <span className="whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-white opacity-[0.35] mix-blend-difference">
+                  <span className="whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-ink opacity-[0.35] mix-blend-difference">
                     {WORDMARK}
                   </span>
                 </div>
@@ -550,12 +557,12 @@ export const ScrollScene = ({ onReady }) => {
               )}
               {failed && (
                 <div className="absolute inset-0" data-testid="hero-fallback">
-                  <div className="absolute inset-0 bg-[#050505]" />
+                  <div className="absolute inset-0 bg-ink/[0.02]" />
                   <div className="absolute inset-0 bg-grid opacity-50" />
                   <div className="absolute inset-0 scanline-overlay" />
                   <div
                     data-testid="hero-fallback-badge"
-                    className="absolute right-6 top-24 border border-[#222] bg-black/60 px-4 py-2 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6] backdrop-blur-md"
+                    className="absolute right-6 top-24 border border-ink/[0.13] bg-surface/60 px-4 py-2 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65 backdrop-blur-md"
                   >
                     3D OFFLINE // STATIC RENDER
                   </div>
@@ -567,14 +574,14 @@ export const ScrollScene = ({ onReady }) => {
       </div>
 
       {/* soft black overlay deepening with the drain (scene 1 only) */}
-      <div ref={overlayRef} className="pointer-events-none absolute inset-0 bg-black" />
+      <div ref={overlayRef} className="pointer-events-none absolute inset-0 bg-surface" />
 
       {/* Layer C — chrome scene, lazily mounted, rising out of darkness */}
       <div ref={layer2Ref} className="pointer-events-none absolute inset-0">
         <div ref={parallax2Ref} className="absolute inset-0">
           <div ref={idle2Ref} className="absolute inset-0">
             <div ref={layer2InnerRef} className="absolute inset-0">
-              <div className="absolute left-1/2 top-1/2 h-[90vh] w-[90vh] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.07),transparent_62%)]" />
+              <div className="absolute left-1/2 top-1/2 h-[90vh] w-[90vh] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgb(var(--ink) / 0.07),transparent_62%)]" />
 
               {/* fallback static render until/if the live scene fails */}
               {(!scene2Ready || scene2Failed) && (
@@ -618,7 +625,7 @@ export const ScrollScene = ({ onReady }) => {
       <div
         ref={vignetteRef}
         data-testid="hero-vignette"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgba(0,0,0,0.55)_100%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgb(var(--surface) / 0.55)_100%)]"
       />
 
       {/* Layer C2 — the kinetic headline lives OUTSIDE the z-indexed UI layer on
@@ -639,7 +646,7 @@ export const ScrollScene = ({ onReady }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-1"
-            className="font-inter text-[clamp(1rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.3em] text-white"
+            className="font-inter text-[clamp(1rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.3em] text-ink"
           >
             — Build the future —
           </motion.h1>
@@ -651,7 +658,7 @@ export const ScrollScene = ({ onReady }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-2"
-            className="font-inter text-[clamp(0.56rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.42em] text-white/40"
+            className="font-inter text-[clamp(0.56rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.42em] text-ink/40"
           >
             one system at a time
           </motion.p>
@@ -667,9 +674,9 @@ export const ScrollScene = ({ onReady }) => {
           animate={revealed ? "show" : "hidden"}
           className="absolute left-6 top-6 sm:left-10 sm:top-8"
         >
-          <span data-testid="hero-brand" className="font-orbitron text-sm font-bold tracking-[0.3em] text-white mix-blend-difference">
+          <span data-testid="hero-brand" className="font-orbitron text-sm font-bold tracking-[0.3em] text-ink mix-blend-difference">
             {profile.shortMark}
-            <span className="text-[#A6A6A6]"> {profile.markSuffix}</span>
+            <span className="text-ink/65"> {profile.markSuffix}</span>
           </span>
         </motion.div>
 
@@ -679,8 +686,8 @@ export const ScrollScene = ({ onReady }) => {
           animate={revealed ? "show" : "hidden"}
           className="absolute right-6 top-6 sm:right-10 sm:top-8 flex items-center gap-2"
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse-dot" />
-          <span data-testid="hero-status" className="font-display text-[13px] uppercase tracking-[0.02em] text-[#D3D3D3] mix-blend-difference">
+          <span className="h-1.5 w-1.5 rounded-full bg-ink animate-pulse-dot" />
+          <span data-testid="hero-status" className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] mix-blend-difference">
             STATUS: {profile.status}
           </span>
         </motion.div>
@@ -695,7 +702,7 @@ export const ScrollScene = ({ onReady }) => {
             <button
               data-testid="hero-cta-projects"
               onClick={() => scrollToId("projects")}
-              className="flex items-center gap-2 bg-white px-5 py-2.5 font-display text-[13px] uppercase tracking-[0.02em] text-black transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_26px_rgba(255,255,255,0.4)]"
+              className="flex items-center gap-2 bg-ink px-5 py-2.5 font-display text-[13px] uppercase tracking-[0.02em] text-surface transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_26px_rgb(var(--ink) / 0.4)]"
             >
               <FolderOpen size={13} />
               Projects
@@ -703,7 +710,7 @@ export const ScrollScene = ({ onReady }) => {
             <button
               data-testid="hero-cta-contact"
               onClick={() => scrollToId("contact")}
-              className="flex items-center gap-2 border border-white/25 bg-black/40 px-5 py-2.5 font-display text-[13px] uppercase tracking-[0.02em] text-white backdrop-blur-md transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-white/60 hover:bg-white/10"
+              className="flex items-center gap-2 border border-ink/25 bg-surface/40 px-5 py-2.5 font-display text-[13px] uppercase tracking-[0.02em] text-ink backdrop-blur-md transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-ink/60 hover:bg-ink/10"
             >
               <Send size={13} />
               Contact
@@ -718,10 +725,10 @@ export const ScrollScene = ({ onReady }) => {
           {/* story heading — section-title type, sized so it never pushes the
               paragraphs out of the viewport */}
           <div ref={storyTitleRef} className="mb-6" data-testid="story-title">
-            <h2 className="font-display text-xl font-light uppercase leading-tight tracking-[0.02em] text-white sm:text-[1.75rem]">
+            <h2 className="font-display text-xl font-light uppercase leading-tight tracking-[0.02em] text-ink sm:text-[1.75rem]">
               {storyTitle.name}
             </h2>
-            <p className="mt-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">
+            <p className="mt-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65">
               {storyTitle.role}
             </p>
           </div>
@@ -730,7 +737,7 @@ export const ScrollScene = ({ onReady }) => {
               key={i}
               ref={(el) => (storyRefs.current[i] = el)}
               data-testid={`story-paragraph-${i + 1}`}
-              className={`font-inter text-sm leading-relaxed text-[#D3D3D3] sm:text-base ${
+              className={`font-inter text-sm leading-relaxed text-ink/[0.83] sm:text-base ${
                 i > 0 ? "mt-6" : ""
               }`}
             >
@@ -744,16 +751,16 @@ export const ScrollScene = ({ onReady }) => {
           ref={featuresHeaderRef}
           className="pointer-events-none absolute inset-x-0 top-8 text-center sm:top-12"
         >
-          <p className="font-display text-[13px] uppercase tracking-[0.02em] text-[#D3D3D3]">
+          <p className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83]">
             01 // system features
           </p>
           <h2
             data-testid="features-headline"
-            className="text-engraved mt-4 font-display text-3xl font-light uppercase text-white sm:text-5xl"
+            className="text-engraved mt-4 font-display text-3xl font-light uppercase text-ink sm:text-5xl"
           >
             System Features
           </h2>
-          <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">
+          <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65">
             based on the msg·01 core
           </p>
         </div>
@@ -774,7 +781,7 @@ export const ScrollScene = ({ onReady }) => {
                 y1={f.from.y}
                 x2={f.from.x}
                 y2={f.from.y}
-                stroke="rgba(255,255,255,0.45)"
+                stroke="rgb(var(--ink) / 0.45)"
                 strokeWidth="1"
                 vectorEffect="non-scaling-stroke"
               />
@@ -786,7 +793,7 @@ export const ScrollScene = ({ onReady }) => {
               key={`dot-${f.num}`}
               ref={(el) => (dotRefs.current[i] = el)}
               style={{ left: `${f.to.x}%`, top: `${f.to.y}%` }}
-              className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
+              className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink"
             />
           ))}
 
@@ -803,19 +810,19 @@ export const ScrollScene = ({ onReady }) => {
                 : `w-[27rem] max-w-[46vw] ${f.side === "left" ? "left-[5%]" : "right-[5%]"}`
             }`}
           >
-            <div className="corner-frame cut-corner relative border border-[#222] bg-black/70 p-9 pt-6 backdrop-blur-md">
+            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/70 p-9 pt-6 backdrop-blur-md">
               <div className="select-none font-display text-[7rem] font-light leading-[0.85] text-outline-grey">
                 {f.num}
               </div>
               <div className="mt-7 flex items-baseline gap-3">
-                <span className="font-display text-[13px] uppercase tracking-[0.02em] text-[#D3D3D3]">
+                <span className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83]">
                   {f.part}
                 </span>
               </div>
-              <h3 className="mt-2.5 font-display text-2xl font-light uppercase tracking-[0.01em] text-white">
+              <h3 className="mt-2.5 font-display text-2xl font-light uppercase tracking-[0.01em] text-ink">
                 {f.title}
               </h3>
-              <p className="mt-4 font-inter text-[15px] leading-[1.65] text-[#D3D3D3]">
+              <p className="mt-4 font-inter text-[15px] leading-[1.65] text-ink/[0.83]">
                 {f.text}
               </p>
             </div>
@@ -832,11 +839,11 @@ export const ScrollScene = ({ onReady }) => {
               <div key={f.num} className="flex flex-col items-center gap-3">
                 <span
                   ref={(el) => (railRefs.current[i] = el)}
-                  className="font-display text-[13px] tracking-[0.02em] text-[#A6A6A6]"
+                  className="font-display text-[13px] tracking-[0.02em] text-ink/65"
                 >
                   {f.num}
                 </span>
-                {i < systemFeatures.length - 1 && <span className="h-6 w-px bg-[#333]" />}
+                {i < systemFeatures.length - 1 && <span className="h-6 w-px bg-ink/20" />}
               </div>
             ))}
           </div>
@@ -849,20 +856,20 @@ export const ScrollScene = ({ onReady }) => {
           <motion.div
             data-testid="hero-loader"
             exit={{ opacity: 0, transition: { duration: 0.9 } }}
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black"
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-surface"
           >
-            <p className="font-display text-[13px] font-light uppercase tracking-[0.02em] text-[#A6A6A6]">
+            <p className="font-display text-[13px] font-light uppercase tracking-[0.02em] text-ink/65">
               System boot
             </p>
-            <div className="mt-6 h-px w-56 bg-[#222]">
+            <div className="mt-6 h-px w-56 bg-ink/[0.13]">
               <motion.div
-                className="h-px bg-[#D3D3D3]"
+                className="h-px bg-ink/[0.83]"
                 initial={{ width: "0%" }}
                 animate={{ width: `${progress}%` }}
                 transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.3 }}
               />
             </div>
-            <p className="mt-4 font-display text-[13px] tracking-[0.02em] text-[#A6A6A6]">
+            <p className="mt-4 font-display text-[13px] tracking-[0.02em] text-ink/65">
               {Math.round(progress)}%
             </p>
           </motion.div>

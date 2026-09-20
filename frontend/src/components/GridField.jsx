@@ -22,6 +22,21 @@ export const GridField = ({ intensity = 1 }) => {
     let rows = 0;
     const mouse = { x: -9999, y: -9999, cx: 0, cy: 0, active: false };
 
+    // 2D canvas takes no CSS classes, so the grid colour has to be read off
+    // the root token. getComputedStyle is far too slow to call per frame, so
+    // it is cached here and invalidated when the theme attribute flips.
+    let inkChannels = "255 255 255";
+    const readInk = () => {
+      const v = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim();
+      if (v) inkChannels = v;
+    };
+    readInk();
+    const themeObserver = new MutationObserver(readInk);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+
     const build = () => {
       const rect = canvas.parentElement.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -78,7 +93,7 @@ export const GridField = ({ intensity = 1 }) => {
 
       // base pass — barely perceptible
       const baseAlpha = 0.06 * intensity;
-      ctx.strokeStyle = `rgba(255,255,255,${baseAlpha})`;
+      ctx.strokeStyle = `rgb(${inkChannels} / ${baseAlpha})`;
       for (let r = 0; r < rows; r++) {
         ctx.beginPath();
         for (let c = 0; c < cols; c++) {
@@ -105,7 +120,7 @@ export const GridField = ({ intensity = 1 }) => {
           const my = (a.y + a.oy + b.y + b.oy) / 2 - mouse.y;
           const d = Math.hypot(mx, my);
           if (d < RADIUS) {
-            ctx.strokeStyle = `rgba(255,255,255,${(0.06 + 0.16 * (1 - d / RADIUS)) * intensity})`;
+            ctx.strokeStyle = `rgb(${inkChannels} / ${(0.06 + 0.16 * (1 - d / RADIUS)) * intensity})`;
             ctx.beginPath();
             ctx.moveTo(a.x + a.ox, a.y + a.oy);
             ctx.lineTo(b.x + b.ox, b.y + b.oy);
@@ -143,6 +158,7 @@ export const GridField = ({ intensity = 1 }) => {
     return () => {
       cancelAnimationFrame(raf);
       io.disconnect();
+      themeObserver.disconnect();
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("resize", build);
     };

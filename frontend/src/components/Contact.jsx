@@ -22,7 +22,7 @@ const validate = ({ name, email, message }) => {
 };
 
 const inputClass =
-  "mt-1.5 w-full rounded-lg border border-[#222] bg-white/[0.03] px-4 py-3 font-kodemono text-sm text-white placeholder:text-[#A6A6A6] outline-none transition-[border-color,box-shadow] duration-300 focus:border-white/50 focus:shadow-[0_0_20px_rgba(255,255,255,0.07)]";
+  "mt-1.5 w-full rounded-lg border border-ink/[0.13] bg-ink/[0.03] px-4 py-3 font-kodemono text-sm text-ink placeholder:text-ink/65 outline-none transition-[border-color,box-shadow] duration-300 focus:border-ink/50 focus:shadow-[0_0_20px_rgb(var(--ink) / 0.07)]";
 
 export const Contact = () => {
   const [form, setForm] = useState({ name: "", email: "", company: "", message: "", website: "" });
@@ -69,28 +69,28 @@ export const Contact = () => {
     }
   };
 
-  const lineColor = { cmd: "text-[#D3D3D3]", out: "text-[#A6A6A6]", ok: "text-white", err: "text-[#A6A6A6]" };
+  const lineColor = { cmd: "text-ink/[0.83]", out: "text-ink/65", ok: "text-ink", err: "text-ink/65" };
 
   return (
     <section
       id="contact"
       data-testid="contact-section"
-      className="relative overflow-hidden bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
+      className="relative overflow-hidden bg-surface px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.04),transparent_60%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgb(var(--ink) / 0.04),transparent_60%)]" />
       <GridField />
       <div className="relative mx-auto max-w-4xl">
         <motion.p
           variants={fadeUp} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
-          className="font-display text-[13px] uppercase tracking-[0.02em] text-white"
+          className="font-display text-[13px] uppercase tracking-[0.02em] text-ink"
         >
           05 // OPEN CHANNEL
         </motion.p>
         <motion.h2
           variants={fadeUp} custom={1} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
-          className="text-engraved mt-6 font-display font-light text-3xl uppercase text-white sm:text-4xl lg:text-5xl"
+          className="text-engraved mt-6 font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
         >
           Initiate contact
         </motion.h2>
@@ -99,30 +99,30 @@ export const Contact = () => {
           variants={fadeUp} custom={2} initial="hidden" whileInView="show"
           viewport={{ once: true, margin: "-80px" }}
           data-testid="contact-terminal"
-          className="corner-frame cut-corner mt-14 overflow-hidden border border-[#222] bg-[#0A0A0A]/90 shadow-[0_0_80px_rgba(255,255,255,0.03)] backdrop-blur-xl"
+          className="corner-frame cut-corner mt-14 overflow-hidden border border-ink/[0.13] bg-ink/[0.04]/90 shadow-[0_0_80px_rgb(var(--ink) / 0.03)] backdrop-blur-xl"
         >
           {/* terminal chrome */}
-          <div className="flex items-center gap-2 border-b border-[#222] px-5 py-3.5">
-            <span className="h-3 w-3 rounded-full bg-[#333]" />
-            <span className="h-3 w-3 rounded-full bg-[#555]" />
-            <span className="h-3 w-3 rounded-full bg-[#777]" />
-            <span className="ml-4 font-kodemono text-[13px] tracking-wider text-[#A6A6A6]">
+          <div className="flex items-center gap-2 border-b border-ink/[0.13] px-5 py-3.5">
+            <span className="h-3 w-3 rounded-full bg-ink/20" />
+            <span className="h-3 w-3 rounded-full bg-ink/[0.33]" />
+            <span className="h-3 w-3 rounded-full bg-ink/[0.47]" />
+            <span className="ml-4 font-kodemono text-[13px] tracking-wider text-ink/65">
               msg@portfolio: ~/contact — zsh
             </span>
           </div>
 
           <div className="p-6 font-kodemono text-[13px] leading-relaxed sm:p-8">
             {terminalBoot.map((line, i) => (
-              <p key={i} className={line.type === "cmd" ? "text-[#D3D3D3]" : "text-[#A6A6A6]"}>
+              <p key={i} className={line.type === "cmd" ? "text-ink/[0.83]" : "text-ink/65"}>
                 {line.type === "cmd" ? `$ ${line.text}` : line.text}
               </p>
             ))}
 
             <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-              <p className="text-[#D3D3D3]">$ contact --send --secure</p>
+              <p className="text-ink/[0.83]">$ contact --send --secure</p>
 
               <label className="block">
-                <span className="text-white">&gt; name:</span>
+                <span className="text-ink">&gt; name:</span>
                 <input
                   data-testid="contact-name-input"
                   type="text"
@@ -134,7 +134,7 @@ export const Contact = () => {
               </label>
 
               <label className="block">
-                <span className="text-white">&gt; email:</span>
+                <span className="text-ink">&gt; email:</span>
                 <input
                   data-testid="contact-email-input"
                   type="email"
@@ -146,7 +146,7 @@ export const Contact = () => {
               </label>
 
               <label className="block">
-                <span className="text-white">&gt; company <span className="text-[#A6A6A6]">(optional):</span></span>
+                <span className="text-ink">&gt; company <span className="text-ink/65">(optional):</span></span>
                 <input
                   data-testid="contact-company-input"
                   type="text"
@@ -158,7 +158,7 @@ export const Contact = () => {
               </label>
 
               <label className="block">
-                <span className="text-white">&gt; message:</span>
+                <span className="text-ink">&gt; message:</span>
                 <textarea
                   data-testid="contact-message-input"
                   value={form.message}
@@ -185,14 +185,14 @@ export const Contact = () => {
                 data-testid="contact-submit-button"
                 type="submit"
                 disabled={sending}
-                className="group relative w-full border border-white/30 bg-white/5 px-6 py-4 font-display text-[13px] uppercase tracking-[0.02em] text-white transition-[background-color,box-shadow,color] duration-300 hover:bg-white hover:text-black hover:shadow-[0_0_40px_rgba(255,255,255,0.25)] disabled:cursor-wait disabled:opacity-50"
+                className="group relative w-full border border-ink/30 bg-ink/5 px-6 py-4 font-display text-[13px] uppercase tracking-[0.02em] text-ink transition-[background-color,box-shadow,color] duration-300 hover:bg-ink hover:text-surface hover:shadow-[0_0_40px_rgb(var(--ink) / 0.25)] disabled:cursor-wait disabled:opacity-50"
               >
                 {sending ? "Transmitting…" : done ? "Transmit again" : "Transmit message"}
               </button>
             </form>
 
             {lines.length > 0 && (
-              <div data-testid="contact-status-lines" className="mt-6 space-y-1.5 border-t border-[#222] pt-5">
+              <div data-testid="contact-status-lines" className="mt-6 space-y-1.5 border-t border-ink/[0.13] pt-5">
                 {lines.map((line, i) => (
                   <motion.p
                     key={i}
@@ -203,7 +203,7 @@ export const Contact = () => {
                     {line.text}
                   </motion.p>
                 ))}
-                <span className="terminal-caret text-[#A6A6A6]" />
+                <span className="terminal-caret text-ink/65" />
               </div>
             )}
           </div>

@@ -15,7 +15,7 @@ function App() {
   const [heroReady, setHeroReady] = useState(false);
 
   return (
-    <div className="App bg-black font-inter text-white antialiased">
+    <div className="App bg-surface font-inter text-ink antialiased">
       <NavigationDock visible={heroReady} />
       <main>
         <ScrollScene onReady={() => setHeroReady(true)} />

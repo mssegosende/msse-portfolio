@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { User, FolderOpen, Cpu, Mail, Send } from "lucide-react";
+import { User, FolderOpen, Cpu, Mail, Send, Sun, Moon } from "lucide-react";
 import { profile } from "../data/portfolioData";
 import { scrollToId } from "../hooks/useLenis";
+import { useTheme } from "../hooks/useTheme";
 
 const links = [
   { id: "about", label: "About", icon: User, testid: "nav-about-link" },
@@ -11,6 +12,8 @@ const links = [
 ];
 
 export const NavigationDock = ({ visible }) => {
+  const { theme, toggle } = useTheme();
+
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-3">
       <motion.nav
@@ -20,11 +23,11 @@ export const NavigationDock = ({ visible }) => {
         transition={{ delay: 0.5, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         className="pointer-events-auto"
       >
-        <div className="glass flex max-w-[calc(100vw-1.5rem)] items-center gap-1 px-2 py-2 shadow-[0_8px_40px_rgba(0,0,0,0.6)] sm:px-3 cut-corner overflow-x-auto">
+        <div className="glass flex max-w-[calc(100vw-1.5rem)] items-center gap-1 px-2 py-2 shadow-[0_8px_40px_rgb(var(--surface) / 0.6)] sm:px-3 cut-corner overflow-x-auto">
           <button
             data-testid="nav-brand"
             onClick={() => scrollToId("hero")}
-            className="mr-2 hidden shrink-0 px-3 py-2 font-orbitron text-[13px] font-bold tracking-[0.02em] text-white transition-colors hover:text-[#D3D3D3] sm:block"
+            className="mr-2 hidden shrink-0 px-3 py-2 font-orbitron text-[13px] font-bold tracking-[0.02em] text-ink transition-colors hover:text-ink/[0.83] sm:block"
           >
             {profile.shortMark}
           </button>
@@ -33,7 +36,7 @@ export const NavigationDock = ({ visible }) => {
               key={id}
               data-testid={testid}
               onClick={() => scrollToId(id)}
-              className="group flex shrink-0 items-center gap-2 px-3 py-2 text-[#A6A6A6] transition-[color,background-color] duration-300 hover:bg-white/5 hover:text-white"
+              className="group flex shrink-0 items-center gap-2 px-3 py-2 text-ink/65 transition-[color,background-color] duration-300 hover:bg-ink/5 hover:text-ink"
               aria-label={label}
             >
               <Icon size={15} />
@@ -42,10 +45,20 @@ export const NavigationDock = ({ visible }) => {
               </span>
             </button>
           ))}
+          <span aria-hidden="true" className="mx-1 h-5 w-px shrink-0 bg-ink/15" />
+          <button
+            data-testid="theme-toggle"
+            onClick={toggle}
+            className="group flex shrink-0 items-center gap-2 px-3 py-2 text-ink/65 transition-[color,background-color] duration-300 hover:bg-ink/5 hover:text-ink"
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
           <button
             data-testid="nav-cta-button"
             onClick={() => scrollToId("contact")}
-            className="ml-1 flex shrink-0 items-center gap-2 bg-white px-4 py-2 font-display text-[13px] uppercase tracking-[0.02em] text-black transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(255,255,255,0.35)]"
+            className="ml-1 flex shrink-0 items-center gap-2 bg-ink px-4 py-2 font-display text-[13px] uppercase tracking-[0.02em] text-surface transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgb(var(--ink) / 0.35)]"
           >
             <Send size={12} />
             <span className="hidden sm:block">Initiate</span>

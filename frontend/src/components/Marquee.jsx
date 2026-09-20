@@ -5,7 +5,7 @@ export const Marquee = () => {
   return (
     <section
       data-testid="marquee-section"
-      className="relative overflow-hidden border-y border-white/10 bg-black py-10"
+      className="relative overflow-hidden border-y border-ink/10 bg-surface py-10"
     >
       <div className="flex w-max animate-marquee items-center gap-10 whitespace-nowrap">
         {row.map((item, i) => (
@@ -13,7 +13,7 @@ export const Marquee = () => {
             <span className="font-display text-4xl uppercase tracking-wider text-outline sm:text-6xl">
               {item}
             </span>
-            <span className="font-kodemono text-2xl text-white/30">•</span>
+            <span className="font-kodemono text-2xl text-ink/30">•</span>
           </span>
         ))}
       </div>

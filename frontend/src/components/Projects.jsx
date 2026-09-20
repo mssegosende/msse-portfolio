@@ -17,7 +17,7 @@ const ProjectCard = ({ project, index }) => (
     data-testid={`project-card-${project.id}`}
     variants={fadeUp} custom={index} initial="hidden" whileInView="show"
     viewport={{ once: true, margin: "-60px" }}
-    className={`group corner-frame cut-corner relative flex min-h-[320px] flex-col justify-end border border-[#222] bg-[#0A0A0A] p-7 transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-white/30 hover:shadow-[0_0_50px_rgba(255,255,255,0.06)] sm:p-9 ${project.span}`}
+    className={`group corner-frame cut-corner relative flex min-h-[320px] flex-col justify-end border border-ink/[0.13] bg-ink/[0.04] p-7 transition-[border-color,box-shadow,transform] duration-500 hover:-translate-y-1 hover:border-ink/30 hover:shadow-[0_0_50px_rgb(var(--ink) / 0.06)] sm:p-9 ${project.span}`}
   >
     <div className="relative">
       <div className="flex items-start justify-between gap-4">
@@ -33,20 +33,20 @@ const ProjectCard = ({ project, index }) => (
               Draft
             </span>
           )}
-          <p className="font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6]">
+          <p className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/65">
             {project.subtitle}
           </p>
-          <h3 className="mt-2 font-display text-lg uppercase text-white sm:text-xl">
+          <h3 className="mt-2 font-display text-lg uppercase text-ink sm:text-xl">
             {project.title}
           </h3>
         </div>
         <ArrowUpRight
           size={20}
-          className="shrink-0 text-[#A6A6A6] transition-[color,transform] duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-white"
+          className="shrink-0 text-ink/65 transition-[color,transform] duration-300 group-hover:-translate-y-1 group-hover:translate-x-1 group-hover:text-ink"
         />
       </div>
 
-      <p className="mt-4 max-w-lg font-inter text-sm leading-relaxed text-[#A6A6A6]">
+      <p className="mt-4 max-w-lg font-inter text-sm leading-relaxed text-ink/65">
         {project.description}
       </p>
 
@@ -54,7 +54,7 @@ const ProjectCard = ({ project, index }) => (
         {project.tags.map((tag) => (
           <span
             key={tag}
-            className="border border-[#222] px-3 py-1.5 font-display text-[13px] uppercase tracking-wider text-[#A6A6A6] transition-colors duration-300 group-hover:border-white/20 group-hover:text-[#D3D3D3]"
+            className="border border-ink/[0.13] px-3 py-1.5 font-display text-[13px] uppercase tracking-wider text-ink/65 transition-colors duration-300 group-hover:border-ink/20 group-hover:text-ink/[0.83]"
           >
             {tag}
           </span>
@@ -68,7 +68,7 @@ const ProjectCard = ({ project, index }) => (
             href={project.codeUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6] transition-colors hover:text-white"
+            className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65 transition-colors hover:text-ink"
           >
             <Github size={14} /> Code
           </a>
@@ -79,7 +79,7 @@ const ProjectCard = ({ project, index }) => (
             href={project.liveUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-[#A6A6A6] transition-colors hover:text-white"
+            className="flex items-center gap-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65 transition-colors hover:text-ink"
           >
             <ExternalLink size={14} /> Live
           </a>
@@ -94,7 +94,7 @@ export const Projects = () => {
     <section
       id="projects"
       data-testid="projects-section"
-      className="relative overflow-hidden bg-black px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
+      className="relative overflow-hidden bg-surface px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
       <GridField />
       <div className="relative mx-auto max-w-7xl">
@@ -103,14 +103,14 @@ export const Projects = () => {
             <motion.p
               variants={fadeUp} initial="hidden" whileInView="show"
               viewport={{ once: true, margin: "-80px" }}
-              className="font-display text-[13px] uppercase tracking-[0.02em] text-white"
+              className="font-display text-[13px] uppercase tracking-[0.02em] text-ink"
             >
               03 // SELECTED WORK
             </motion.p>
             <motion.h2
               variants={fadeUp} custom={1} initial="hidden" whileInView="show"
               viewport={{ once: true, margin: "-80px" }}
-              className="text-engraved mt-6 font-display font-light text-3xl uppercase text-white sm:text-4xl lg:text-5xl"
+              className="text-engraved mt-6 font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
             >
               Projects
             </motion.h2>
@@ -118,7 +118,7 @@ export const Projects = () => {
           <motion.p
             variants={fadeUp} custom={2} initial="hidden" whileInView="show"
             viewport={{ once: true, margin: "-80px" }}
-            className="max-w-sm font-inter text-sm leading-relaxed text-[#A6A6A6]"
+            className="max-w-sm font-inter text-sm leading-relaxed text-ink/65"
           >
             Products I've designed and built end to end — from the data model
             up to the interface.
