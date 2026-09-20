@@ -48,6 +48,11 @@ export const ScrollScene = ({ onReady }) => {
   // scene in white mode, white in dark mode. Its text therefore scopes to the
   // inverse of the page theme, or it comes out matching its own backdrop.
   const ch2Theme = darkMode ? "light" : "dark";
+  // Dark mode swaps which MODEL plays in which slot — the real silver robot
+  // opens, the real black one closes. Not a filter on the same model: the
+  // materials are baked per scene, so only a swap gives the genuine article.
+  const slot1Url = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
+  const slot2Url = darkMode ? SPLINE_SCENE_URL : SPLINE_SCENE_2_URL;
   const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -165,9 +170,20 @@ export const ScrollScene = ({ onReady }) => {
     // (+258px at 1.35, +208px at 1.15 => ~180px unscaled), not off the
     // transform. Every framing below is expressed as the visual offset of the
     // BODY from the viewport centre; fx() converts it into the transform.
-    const ROBOT_DX = 180;
+    // ROBOT_DX is a property of the MODEL in slot 2, not of the slot. Measured
+    // off the rendered silhouette's centroid at 2000px, default camera:
+    //   scene 2's robot  +177.8px  (the calibrated 180 below)
+    //   scene 1's robot    -6.5px  (centred — it is a different model)
+    // So when dark mode puts scene 1's robot in slot 2, the correction has to
+    // go to ~0 or every framing lands 180px off.
+    const ROBOT_DX = darkMode ? 0 : 180;
+    // Slot 1 holds the OTHER model, so it takes the opposite correction: in
+    // white mode it is scene 1's centred robot and needs none; in dark mode it
+    // is scene 2's, which sits +180px right like it does in slot 2.
+    const ROBOT_DX_1 = darkMode ? 180 : 0;
     const VW = window.innerWidth || 2000;
     const fx = (visualPx, scale) => `${((visualPx - ROBOT_DX * scale) / VW) * 100}%`;
+    const fx1 = (visualPx, scale) => `${((visualPx - ROBOT_DX_1 * scale) / VW) * 100}%`;
 
     // Scale progression 2.8 -> 2.4 -> 2.0 -> 1.6 -> 1.5: always some retreat
     // between beats, and the closing comes back in rather than pulling further.
@@ -177,7 +193,17 @@ export const ScrollScene = ({ onReady }) => {
     // STEP 1 (story) — closest, and centred. The text sits to the right.
     const c2close = isMobile
       ? { scale: 1.8, x: "-48%", y: "22%" }
-      : { scale: 2.8, x: fx(0, 2.8), y: "47%" };
+      : {
+          scale: 2.8,
+          // Dark mode puts a DARK robot behind the story column, where white
+          // mode had a light one on black — so the arm that the last two lines
+          // used to cross harmlessly now swallows them. Measured off the beat:
+          // the forearm reaches ~x1560 at 2000px and the text starts ~x1430,
+          // so the body steps 200px left to clear it. White mode keeps the
+          // approved centred framing.
+          x: fx(darkMode ? -200 : 0, 2.8),
+          y: "47%",
+        };
     // STEP 2 (card 01, at the LEFT) — leans INTO its card. At 2.4 the only
     // thing beside the card is the head, and +200 left a 454px void between
     // the two. Measured off the silhouette, not the transform.
@@ -235,6 +261,7 @@ export const ScrollScene = ({ onReady }) => {
     const ctx = gsap.context(() => {
       gsap.set(canvasWrapRef.current, {
         scale: startScale,
+        x: fx1(0, startScale),
         y: startY,
         transformOrigin: "50% 50%",
       });
@@ -247,28 +274,20 @@ export const ScrollScene = ({ onReady }) => {
       // flat ~27 levels everywhere and cannot come off without losing the
       // occlusion that makes the robot read against the wall.
       // ---- tone ------------------------------------------------------------
-      // Both Spline scenes are monochrome, so a CSS invert() is a clean tonal
-      // mirror rather than a colour hack: scene 1's black robot becomes silver
-      // on a dark wall, and scene 2's silver robot becomes dark on white. That
-      // is what lets dark mode reverse the whole sequence WITHOUT reordering
-      // the scenes — the geometry never moves, so ROBOT_DX, the framings and
-      // the connector anchors all stay valid.
-      //
-      // invert() is appended AFTER brightness/contrast on purpose. The drain
-      // numbers below are unchanged between modes; running them before the
-      // invert means the same curve that drains to black in white mode washes
-      // out to white in dark mode.
+      // Dark mode runs the same sequence against the opposite tone. The two
+      // models trade slots (see slot1Url/slot2Url), so the robot you see is
+      // always the real material — silver opening on black, black closing on
+      // white — never a negative of the other one.
       const tone = darkMode
         ? {
             wallStart: "#000000",
             wallSettle: "#121212",
             wmStart: "#121212",
             wmSettle: "#000000",
-            overlay: "#FFFFFF",
+            overlay: "#000000",
             backdrop: "#FFFFFF",
             railOn: "#000000",
-            vignette: "255 255 255",
-            fx: " invert(1)",
+            vignette: "0 0 0",
           }
         : {
             wallStart: "#FFFFFF",
@@ -279,7 +298,6 @@ export const ScrollScene = ({ onReady }) => {
             backdrop: "#000000",
             railOn: "#FFFFFF",
             vignette: "0 0 0",
-            fx: "",
           };
 
       // The backdrop scene 2 composites against — its canvas is transparent, so
@@ -295,9 +313,14 @@ export const ScrollScene = ({ onReady }) => {
       // #EDEDED). Load it at #EDEDED so the delta is the same 18 levels the
       // approved treatment has, and let the two swap as the wall darkens.
       gsap.set(wm1Ref.current.firstChild, { color: tone.wmStart });
+      // The wordmark is painted on the wall, which lives INSIDE the wrap that
+      // slot 1 translates to centre its robot. Without this it slides off with
+      // the wall. The offset is in the wrap's local px, so the wrap's own scale
+      // cancels it exactly and the mark stays centred in the viewport.
+      gsap.set(wm1Ref.current, { x: ROBOT_DX_1 });
       gsap.set(vignetteRef.current, { opacity: 0 });
       gsap.set(layer2Ref.current, { opacity: 0 });
-      gsap.set(layer2InnerRef.current, { filter: `brightness(0.25)${tone.fx}` });
+      gsap.set(layer2InnerRef.current, { filter: "brightness(0.25)" });
       gsap.set(featuresHeaderRef.current, { opacity: 0, y: 24 });
       gsap.set(overlayRef.current, { opacity: 0 });
       storyRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 28 }));
@@ -319,12 +342,12 @@ export const ScrollScene = ({ onReady }) => {
       // tonal drain proxy: light drains out of scene 1, no shapes
       const drain = { b: 1, c: 1 };
       const applyDrain = () => {
-        canvasWrapRef.current.style.filter = `brightness(${drain.b}) contrast(${drain.c})${tone.fx}`;
+        canvasWrapRef.current.style.filter = `brightness(${drain.b}) contrast(${drain.c})`;
       };
       applyDrain();
       const lift = { b: 0.25 };
       const applyLift = () => {
-        layer2InnerRef.current.style.filter = `brightness(${lift.b})${tone.fx}`;
+        layer2InnerRef.current.style.filter = `brightness(${lift.b})`;
       };
 
       // ---- phase 3 rig ------------------------------------------------------
@@ -343,10 +366,16 @@ export const ScrollScene = ({ onReady }) => {
       // projects to y ~128% — 288px BELOW the viewport — so card 02 anchors
       // to the forearm instead, which is the nearest point on the same limb
       // that stays on screen at every beat it appears in.
+      // The anchor percentages below were calibrated against scene 2's robot,
+      // whose body centre sits ROBOT_DX right of the layer centre. Swapping the
+      // model moves that centre, so every anchor shifts by the same delta
+      // expressed in layer percent. In white mode this evaluates to 0 and the
+      // calibrated numbers are used untouched.
+      const anchorShift = ((ROBOT_DX - 180) / VW) * 100;
       const anchors = [
-        { px: 58.5, py: 26.4 },   // 01 HEAD   — visor centre
-        { px: 73.3, py: 56.7 },   // 02 HANDS  — right forearm (see note above)
-        { px: 58.5, py: 54.1 },   // 03 TORSO  — centre of the chest plate
+        { px: 58.5 + anchorShift, py: 26.4 },   // 01 HEAD   — visor centre
+        { px: 73.3 + anchorShift, py: 56.7 },   // 02 HANDS  — right forearm (see note above)
+        { px: 58.5 + anchorShift, py: 54.1 },   // 03 TORSO  — centre of the chest plate
       ].map((a, i) => ({
         ...a,
         fromX: systemFeatures[i].from.x,
@@ -460,7 +489,13 @@ export const ScrollScene = ({ onReady }) => {
       tl.to(overlayRef.current, { opacity: 0.35, duration: 0.3 }, 0.1);
       tl.to(
         canvasWrapRef.current,
-        { scale: startScale * 0.96, y: endY, duration: 0.32, ease: "power1.inOut" },
+        {
+          scale: startScale * 0.96,
+          x: fx1(0, startScale * 0.96),
+          y: endY,
+          duration: 0.32,
+          ease: "power1.inOut",
+        },
         0.1
       );
       tl.to(pillsRef.current, { opacity: 0, y: 24, duration: 0.08 }, 0.2);
@@ -597,7 +632,7 @@ export const ScrollScene = ({ onReady }) => {
                   data-testid="spline-canvas-wrap"
                 >
                   <Spline
-                    scene={SPLINE_SCENE_URL}
+                    scene={slot1Url}
                     onLoad={handleLoad}
                     onError={() => {
                       setFailed(true);
@@ -656,10 +691,21 @@ export const ScrollScene = ({ onReady }) => {
                 {mountScene2 && !scene2Failed && (
                   <div className={`absolute inset-0 ${darkMode ? "mix-blend-multiply" : "mix-blend-screen"}`}>
                     <Spline
-                      scene={SPLINE_SCENE_2_URL}
+                      scene={slot2Url}
                       onLoad={(app) => {
-                        // kept: the directed gaze writes Head.rotation on it
+                        // kept: the directed gaze writes Head.rotation on it.
+                        // Both scenes expose an identical rig (same 7 objects,
+                        // Head in both), so the gaze ports across the swap.
                         app2Ref.current = app;
+                        // Scene 1's background is baked opaque #E2E2E2. In slot 2
+                        // it IS chapter 2's backdrop, so lift it to pure white.
+                        if (darkMode) {
+                          try {
+                            app.setBackgroundColor("#FFFFFF");
+                          } catch (e) {
+                            /* older runtime without setBackgroundColor */
+                          }
+                        }
                         setScene2Ready(true);
                       }}
                       onError={() => setScene2Failed(true)}
