@@ -47,12 +47,16 @@ export const ScrollScene = ({ onReady }) => {
   // Chapter 2 plays against the OPPOSITE tone from the page: black behind the
   // scene in white mode, white in dark mode. Its text therefore scopes to the
   // inverse of the page theme, or it comes out matching its own backdrop.
-  const ch2Theme = darkMode ? "light" : "dark";
-  // Dark mode swaps which MODEL plays in which slot — the real silver robot
-  // opens, the real black one closes. Not a filter on the same model: the
-  // materials are baked per scene, so only a swap gives the genuine article.
-  const slot1Url = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
-  const slot2Url = darkMode ? SPLINE_SCENE_URL : SPLINE_SCENE_2_URL;
+  // Chapter 2 now shares the page's tone instead of opposing it, so its text
+  // scopes to the page theme rather than the inverse.
+  const ch2Theme = darkMode ? "dark" : "light";
+  // ONE robot per theme, the whole way through. The theme picks the model and
+  // both slots run it, so the figure you meet in the opening shot is the same
+  // one that carries the feature cards — white mode is the black robot on
+  // white throughout, dark mode the silver robot on black throughout.
+  const sceneUrl = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
+  const slot1Url = sceneUrl;
+  const slot2Url = sceneUrl;
   const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -176,11 +180,11 @@ export const ScrollScene = ({ onReady }) => {
     //   scene 1's robot    -6.5px  (centred — it is a different model)
     // So when dark mode puts scene 1's robot in slot 2, the correction has to
     // go to ~0 or every framing lands 180px off.
-    const ROBOT_DX = darkMode ? 0 : 180;
-    // Slot 1 holds the OTHER model, so it takes the opposite correction: in
-    // white mode it is scene 1's centred robot and needs none; in dark mode it
-    // is scene 2's, which sits +180px right like it does in slot 2.
-    const ROBOT_DX_1 = darkMode ? 180 : 0;
+    // Measured off each silhouette's centroid at 2000px, default camera:
+    // scene 2's robot sits +177.8px right of centre, scene 1's is centred
+    // (-6.5px). Both slots now run the SAME model, so one offset serves both.
+    const ROBOT_DX = darkMode ? 180 : 0;
+    const ROBOT_DX_1 = ROBOT_DX;
     const VW = window.innerWidth || 2000;
     const fx = (visualPx, scale) => `${((visualPx - ROBOT_DX * scale) / VW) * 100}%`;
     const fx1 = (visualPx, scale) => `${((visualPx - ROBOT_DX_1 * scale) / VW) * 100}%`;
@@ -201,7 +205,7 @@ export const ScrollScene = ({ onReady }) => {
           // the forearm reaches ~x1560 at 2000px and the text starts ~x1430,
           // so the body steps 200px left to clear it. White mode keeps the
           // approved centred framing.
-          x: fx(darkMode ? -200 : 0, 2.8),
+          x: fx(-200, 2.8),
           y: "47%",
         };
     // STEP 2 (card 01, at the LEFT) — leans INTO its card. At 2.4 the only
@@ -285,19 +289,25 @@ export const ScrollScene = ({ onReady }) => {
             wmStart: "#121212",
             wmSettle: "#000000",
             overlay: "#000000",
-            backdrop: "#FFFFFF",
-            railOn: "#000000",
+            backdrop: "#000000",
+            railOn: "#FFFFFF",
             vignette: "0 0 0",
+            drainTo: { b: 0.02, c: 1.15 },
+            liftFrom: 0.25,
           }
         : {
             wallStart: "#FFFFFF",
             wallSettle: "#EDEDED",
             wmStart: "#EDEDED",
             wmSettle: "#FFFFFF",
-            overlay: "#000000",
-            backdrop: "#000000",
-            railOn: "#FFFFFF",
+            overlay: "#FFFFFF",
+            backdrop: "#FFFFFF",
+            railOn: "#000000",
             vignette: "0 0 0",
+            // white mode dips through WHITE, not black: the wash rises into
+            // the veil instead of falling into it
+            drainTo: { b: 1.25, c: 0.9 },
+            liftFrom: 1.6,
           };
 
       // The backdrop scene 2 composites against — its canvas is transparent, so
@@ -320,7 +330,7 @@ export const ScrollScene = ({ onReady }) => {
       gsap.set(wm1Ref.current, { x: ROBOT_DX_1 });
       gsap.set(vignetteRef.current, { opacity: 0 });
       gsap.set(layer2Ref.current, { opacity: 0 });
-      gsap.set(layer2InnerRef.current, { filter: "brightness(0.25)" });
+      gsap.set(layer2InnerRef.current, { filter: `brightness(${tone.liftFrom})` });
       gsap.set(featuresHeaderRef.current, { opacity: 0, y: 24 });
       gsap.set(overlayRef.current, { opacity: 0 });
       storyRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 28 }));
@@ -345,7 +355,7 @@ export const ScrollScene = ({ onReady }) => {
         canvasWrapRef.current.style.filter = `brightness(${drain.b}) contrast(${drain.c})`;
       };
       applyDrain();
-      const lift = { b: 0.25 };
+      const lift = { b: tone.liftFrom };
       const applyLift = () => {
         layer2InnerRef.current.style.filter = `brightness(${lift.b})`;
       };
@@ -485,8 +495,8 @@ export const ScrollScene = ({ onReady }) => {
 
       // PHASE 1 exit: headline leaves, light drains to black, slight drift-in
       tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
-      tl.to(drain, { b: 0.02, c: 1.15, duration: 0.3, onUpdate: applyDrain }, 0.1);
-      tl.to(overlayRef.current, { opacity: 0.35, duration: 0.3 }, 0.1);
+      tl.to(drain, { ...tone.drainTo, duration: 0.3, onUpdate: applyDrain }, 0.1);
+      tl.to(overlayRef.current, { opacity: 1, duration: 0.34 }, 0.1);
       tl.to(
         canvasWrapRef.current,
         {
@@ -611,26 +621,35 @@ export const ScrollScene = ({ onReady }) => {
           data-testid="hero-canvas-zoom"
           className="absolute inset-0 will-change-transform"
         >
-          <div ref={parallax1Ref} className="absolute inset-0">
-            <div ref={idle1Ref} className="absolute inset-0">
-              {/* the wall — MSSGOSENDE painted on it; multiply canvas occludes it */}
-              <div ref={wallRef} className="absolute inset-0 bg-[#EDEDED]">
-                <div
-                  ref={wm1Ref}
-                  data-testid="bg-wordmark"
-                  className="pointer-events-none absolute inset-x-0 top-[47%] text-center"
-                >
-                  <span className="whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-ink opacity-[0.35] mix-blend-difference">
-                    {WORDMARK}
-                  </span>
-                </div>
-              </div>
+          {/* The wall sits OUTSIDE the drift wrappers on purpose. It used to
+              live inside them, so the idle float and the mouse parallax moved
+              the painted wordmark along with the robot and the whole backdrop
+              swam. Only the canvas should drift.
 
-              {!failed && (
-                <div
-                  className={`absolute inset-0 ${darkMode ? "mix-blend-screen" : "mix-blend-multiply"}`}
-                  data-testid="spline-canvas-wrap"
-                >
+              The blend stays on the OUTER canvas element, with the transforms
+              nested inside it, because an element that GSAP gives a transform
+              becomes a stacking context — putting the blend under the drift
+              wrappers would isolate it from the wall and the occlusion that
+              makes the robot read against the wordmark would vanish. */}
+          <div ref={wallRef} className="absolute inset-0 bg-[#EDEDED]">
+            <div
+              ref={wm1Ref}
+              data-testid="bg-wordmark"
+              className="pointer-events-none absolute inset-x-0 top-[47%] text-center"
+            >
+              <span className="whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-ink opacity-[0.35] mix-blend-difference">
+                {WORDMARK}
+              </span>
+            </div>
+          </div>
+
+          {!failed && (
+            <div
+              className={`absolute inset-0 ${darkMode ? "mix-blend-screen" : "mix-blend-multiply"}`}
+              data-testid="spline-canvas-wrap"
+            >
+              <div ref={parallax1Ref} className="absolute inset-0">
+                <div ref={idle1Ref} className="absolute inset-0">
                   <Spline
                     scene={slot1Url}
                     onLoad={handleLoad}
@@ -640,22 +659,22 @@ export const ScrollScene = ({ onReady }) => {
                     }}
                   />
                 </div>
-              )}
-              {failed && (
-                <div className="absolute inset-0" data-testid="hero-fallback">
-                  <div className="absolute inset-0 bg-ink/[0.02]" />
-                  <div className="absolute inset-0 bg-grid opacity-50" />
-                  <div className="absolute inset-0 scanline-overlay" />
-                  <div
-                    data-testid="hero-fallback-badge"
-                    className="absolute right-6 top-24 border border-ink/[0.13] bg-surface/60 px-4 py-2 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65 backdrop-blur-md"
-                  >
-                    3D OFFLINE // STATIC RENDER
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
-          </div>
+          )}
+          {failed && (
+            <div className="absolute inset-0" data-testid="hero-fallback">
+              <div className="absolute inset-0 bg-ink/[0.02]" />
+              <div className="absolute inset-0 bg-grid opacity-50" />
+              <div className="absolute inset-0 scanline-overlay" />
+              <div
+                data-testid="hero-fallback-badge"
+                className="absolute right-6 top-24 border border-ink/[0.13] bg-surface/60 px-4 py-2 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65 backdrop-blur-md"
+              >
+                3D OFFLINE // STATIC RENDER
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -664,32 +683,41 @@ export const ScrollScene = ({ onReady }) => {
 
       {/* Layer C — chrome scene, lazily mounted, rising out of darkness */}
       <div ref={layer2Ref} className="pointer-events-none absolute inset-0">
-        <div ref={parallax2Ref} className="absolute inset-0">
-          <div ref={idle2Ref} className="absolute inset-0">
-            <div ref={layer2InnerRef} className="absolute inset-0">
-              <div className="absolute left-1/2 top-1/2 h-[90vh] w-[90vh] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgb(var(--ink) / 0.07),transparent_62%)]" />
+        <div ref={layer2InnerRef} className="absolute inset-0">
+          {/* Same decoupling as scene 1: the glow and the fallback stay put
+              while only the canvas drifts. The blend wrapper keeps its place
+              inside layer2Inner (whose filter is the stacking context the
+              blend resolves against), with the drift transforms nested inside
+              it rather than wrapping the whole layer. */}
+          <div className="absolute left-1/2 top-1/2 h-[90vh] w-[90vh] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgb(var(--ink) / 0.07),transparent_62%)]" />
 
-              {/* fallback static render until/if the live scene fails */}
-              {(!scene2Ready || scene2Failed) && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <img
-                    src="/robot-alpha.png"
-                    alt="MSG·01 humanoid unit — static render"
-                    data-testid="features-robot-fallback"
-                    className="relative h-[80vh] object-contain md:h-[95vh]"
-                  />
-                </div>
-              )}
+          {/* fallback static render until/if the live scene fails */}
+          {(!scene2Ready || scene2Failed) && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <img
+                src="/robot-alpha.png"
+                alt="MSG·01 humanoid unit — static render"
+                data-testid="features-robot-fallback"
+                className="relative h-[80vh] object-contain md:h-[95vh]"
+              />
+            </div>
+          )}
 
+          <div
+            ref={canvas2WrapRef}
+            data-testid="spline2-canvas-wrap"
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              scene2Ready ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            {mountScene2 && !scene2Failed && (
               <div
-                ref={canvas2WrapRef}
-                data-testid="spline2-canvas-wrap"
-                className={`absolute inset-0 transition-opacity duration-1000 ${
-                  scene2Ready ? "opacity-100" : "opacity-0"
+                className={`absolute inset-0 ${
+                  darkMode ? "mix-blend-screen" : "mix-blend-multiply"
                 }`}
               >
-                {mountScene2 && !scene2Failed && (
-                  <div className={`absolute inset-0 ${darkMode ? "mix-blend-multiply" : "mix-blend-screen"}`}>
+                <div ref={parallax2Ref} className="absolute inset-0">
+                  <div ref={idle2Ref} className="absolute inset-0">
                     <Spline
                       scene={slot2Url}
                       onLoad={(app) => {
@@ -697,9 +725,10 @@ export const ScrollScene = ({ onReady }) => {
                         // Both scenes expose an identical rig (same 7 objects,
                         // Head in both), so the gaze ports across the swap.
                         app2Ref.current = app;
-                        // Scene 1's background is baked opaque #E2E2E2. In slot 2
-                        // it IS chapter 2's backdrop, so lift it to pure white.
-                        if (darkMode) {
+                        // Scene 1's background is baked opaque #E2E2E2, and in
+                        // slot 2 it IS chapter 2's backdrop, so lift it to pure
+                        // white. Scene 2 is transparent and needs nothing.
+                        if (!darkMode) {
                           try {
                             app.setBackgroundColor("#FFFFFF");
                           } catch (e) {
@@ -711,9 +740,9 @@ export const ScrollScene = ({ onReady }) => {
                       onError={() => setScene2Failed(true)}
                     />
                   </div>
-                )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

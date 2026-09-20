@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { User, FolderOpen, Cpu, Mail, Send, Sun, Moon } from "lucide-react";
 import { profile } from "../data/portfolioData";
-import { scrollToId } from "../hooks/useLenis";
+import { scrollToId, scrollToTop } from "../hooks/useLenis";
 import { useTheme } from "../hooks/useTheme";
 
 const links = [
@@ -26,7 +26,7 @@ export const NavigationDock = ({ visible }) => {
         <div className="glass flex max-w-[calc(100vw-1.5rem)] items-center gap-1 px-2 py-2 shadow-[0_8px_40px_rgb(var(--surface) / 0.6)] sm:px-3 cut-corner overflow-x-auto">
           <button
             data-testid="nav-brand"
-            onClick={() => scrollToId("hero")}
+            onClick={scrollToTop}
             className="mr-2 hidden shrink-0 px-3 py-2 font-orbitron text-[13px] font-bold tracking-[0.02em] text-ink transition-colors hover:text-ink/[0.83] sm:block"
           >
             {profile.shortMark}
