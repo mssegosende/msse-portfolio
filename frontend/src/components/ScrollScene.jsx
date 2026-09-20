@@ -13,6 +13,7 @@ import {
   systemFeatures,
 } from "../data/portfolioData";
 import { scrollToId } from "../hooks/useLenis";
+import { useTheme } from "../hooks/useTheme";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -41,6 +42,12 @@ const WORDMARK = "MSGCENGINEER";
 // wipe a Tailwind transform, so card 03 centres with mx-auto instead.
 
 export const ScrollScene = ({ onReady }) => {
+  const { theme } = useTheme();
+  const darkMode = theme === "dark";
+  // Chapter 2 plays against the OPPOSITE tone from the page: black behind the
+  // scene in white mode, white in dark mode. Its text therefore scopes to the
+  // inverse of the page theme, or it comes out matching its own backdrop.
+  const ch2Theme = darkMode ? "light" : "dark";
   const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -239,16 +246,58 @@ export const ScrollScene = ({ onReady }) => {
       // mix-blend-multiply over its own light-grey backdrop, which costs a
       // flat ~27 levels everywhere and cannot come off without losing the
       // occlusion that makes the robot read against the wall.
-      gsap.set(wallRef.current, { backgroundColor: "#FFFFFF" });
+      // ---- tone ------------------------------------------------------------
+      // Both Spline scenes are monochrome, so a CSS invert() is a clean tonal
+      // mirror rather than a colour hack: scene 1's black robot becomes silver
+      // on a dark wall, and scene 2's silver robot becomes dark on white. That
+      // is what lets dark mode reverse the whole sequence WITHOUT reordering
+      // the scenes — the geometry never moves, so ROBOT_DX, the framings and
+      // the connector anchors all stay valid.
+      //
+      // invert() is appended AFTER brightness/contrast on purpose. The drain
+      // numbers below are unchanged between modes; running them before the
+      // invert means the same curve that drains to black in white mode washes
+      // out to white in dark mode.
+      const tone = darkMode
+        ? {
+            wallStart: "#000000",
+            wallSettle: "#121212",
+            wmStart: "#121212",
+            wmSettle: "#000000",
+            overlay: "#FFFFFF",
+            backdrop: "#FFFFFF",
+            railOn: "#000000",
+            vignette: "255 255 255",
+            fx: " invert(1)",
+          }
+        : {
+            wallStart: "#FFFFFF",
+            wallSettle: "#EDEDED",
+            wmStart: "#EDEDED",
+            wmSettle: "#FFFFFF",
+            overlay: "#000000",
+            backdrop: "#000000",
+            railOn: "#FFFFFF",
+            vignette: "0 0 0",
+            fx: "",
+          };
+
+      // The backdrop scene 2 composites against — its canvas is transparent, so
+      // this is the colour the robot is actually seen on.
+      gsap.set(sectionRef.current, { backgroundColor: tone.backdrop });
+      gsap.set(overlayRef.current, { backgroundColor: tone.overlay });
+      vignetteRef.current.style.setProperty("--vignette", tone.vignette);
+
+      gsap.set(wallRef.current, { backgroundColor: tone.wallStart });
       // The wordmark is mix-blend-difference, so what you see is |wall - text|.
       // Against a pure white wall, white text differences to exactly zero and
       // the wordmark disappears (measured: 0 levels of spread, vs 6 at
       // #EDEDED). Load it at #EDEDED so the delta is the same 18 levels the
       // approved treatment has, and let the two swap as the wall darkens.
-      gsap.set(wm1Ref.current.firstChild, { color: "#EDEDED" });
+      gsap.set(wm1Ref.current.firstChild, { color: tone.wmStart });
       gsap.set(vignetteRef.current, { opacity: 0 });
       gsap.set(layer2Ref.current, { opacity: 0 });
-      gsap.set(layer2InnerRef.current, { filter: "brightness(0.25)" });
+      gsap.set(layer2InnerRef.current, { filter: `brightness(0.25)${tone.fx}` });
       gsap.set(featuresHeaderRef.current, { opacity: 0, y: 24 });
       gsap.set(overlayRef.current, { opacity: 0 });
       storyRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 28 }));
@@ -270,12 +319,12 @@ export const ScrollScene = ({ onReady }) => {
       // tonal drain proxy: light drains out of scene 1, no shapes
       const drain = { b: 1, c: 1 };
       const applyDrain = () => {
-        canvasWrapRef.current.style.filter = `brightness(${drain.b}) contrast(${drain.c})`;
+        canvasWrapRef.current.style.filter = `brightness(${drain.b}) contrast(${drain.c})${tone.fx}`;
       };
       applyDrain();
       const lift = { b: 0.25 };
       const applyLift = () => {
-        layer2InnerRef.current.style.filter = `brightness(${lift.b})`;
+        layer2InnerRef.current.style.filter = `brightness(${lift.b})${tone.fx}`;
       };
 
       // ---- phase 3 rig ------------------------------------------------------
@@ -402,8 +451,8 @@ export const ScrollScene = ({ onReady }) => {
       // Grey settles in ahead of the drain, so the order reads white -> grey
       // -> black instead of white -> black.
       tl.to(vignetteRef.current, { opacity: 1, duration: 0.20 }, 0.02);
-      tl.to(wallRef.current, { backgroundColor: "#EDEDED", duration: 0.20 }, 0.02);
-      tl.to(wm1Ref.current.firstChild, { color: "#FFFFFF", duration: 0.20 }, 0.02);
+      tl.to(wallRef.current, { backgroundColor: tone.wallSettle, duration: 0.20 }, 0.02);
+      tl.to(wm1Ref.current.firstChild, { color: tone.wmSettle, duration: 0.20 }, 0.02);
 
       // PHASE 1 exit: headline leaves, light drains to black, slight drift-in
       tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
@@ -467,7 +516,7 @@ export const ScrollScene = ({ onReady }) => {
         tl.set(lineRefs.current[i], { opacity: 1 }, cardAt);
         tl.to(draw[i], { p: 1, duration: 0.14, ease: "power1.inOut" }, cardAt);
         tl.to(dotRefs.current[i], { opacity: 1, duration: 0.05 }, cardAt + 0.14);
-        tl.to(railRefs.current[i], { color: "#FFFFFF", duration: 0.05 }, cardAt);
+        tl.to(railRefs.current[i], { color: tone.railOn, duration: 0.05 }, cardAt);
       });
 
       // CLOSING: robot centres in the viewport, the head is released, and the
@@ -480,7 +529,7 @@ export const ScrollScene = ({ onReady }) => {
         tl.set(lineRefs.current[i], { opacity: 1 }, 3.16);
         tl.to(draw[i], { p: 1, duration: 0.14, ease: "power1.inOut" }, 3.16);
         tl.to(dotRefs.current[i], { opacity: 1, duration: 0.05 }, 3.30);
-        tl.to(railRefs.current[i], { color: "#FFFFFF", duration: 0.05 }, 3.16);
+        tl.to(railRefs.current[i], { color: tone.railOn, duration: 0.05 }, 3.16);
       });
 
       // hold: the three cards stay up while the user reads, before release
@@ -502,7 +551,9 @@ export const ScrollScene = ({ onReady }) => {
       gsap.ticker.remove(applyGazeRef.current);
       ctx.revert();
     };
-  }, [isMobile]);
+    // darkMode rebuilds the timeline: every tonal value above is baked into it
+    // at construction, and the GSAP context below reverts cleanly on change.
+  }, [isMobile, darkMode]);
 
   // The hero is a fixed cinematic: it opens on a light wall and drains into
   // darkness on its own schedule, identically in either page theme. The
@@ -542,7 +593,7 @@ export const ScrollScene = ({ onReady }) => {
 
               {!failed && (
                 <div
-                  className="absolute inset-0 mix-blend-multiply"
+                  className={`absolute inset-0 ${darkMode ? "mix-blend-screen" : "mix-blend-multiply"}`}
                   data-testid="spline-canvas-wrap"
                 >
                   <Spline
@@ -603,7 +654,7 @@ export const ScrollScene = ({ onReady }) => {
                 }`}
               >
                 {mountScene2 && !scene2Failed && (
-                  <div className="absolute inset-0 mix-blend-screen">
+                  <div className={`absolute inset-0 ${darkMode ? "mix-blend-multiply" : "mix-blend-screen"}`}>
                     <Spline
                       scene={SPLINE_SCENE_2_URL}
                       onLoad={(app) => {
@@ -625,7 +676,7 @@ export const ScrollScene = ({ onReady }) => {
       <div
         ref={vignetteRef}
         data-testid="hero-vignette"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgb(var(--surface) / 0.55)_100%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgb(var(--vignette,0_0_0) / 0.55)_100%)]"
       />
 
       {/* Layer C2 — the kinetic headline lives OUTSIDE the z-indexed UI layer on
@@ -721,7 +772,10 @@ export const ScrollScene = ({ onReady }) => {
         {/* story paragraphs (phase 2) — beside the close-up robot, below it on mobile */}
         {/* At the story framing (scale 2.8) the head centres near 31% of the
             viewport; dead-centring this block left it a head below that. */}
-        <div className="absolute inset-x-5 bottom-28 sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 lg:right-[9%]">
+        <div
+          data-theme={ch2Theme}
+          className="absolute inset-x-5 bottom-28 sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 lg:right-[9%]"
+        >
           {/* story heading — section-title type, sized so it never pushes the
               paragraphs out of the viewport */}
           <div ref={storyTitleRef} className="mb-6" data-testid="story-title">
@@ -749,6 +803,7 @@ export const ScrollScene = ({ onReady }) => {
         {/* features header (phase 3) */}
         <div
           ref={featuresHeaderRef}
+          data-theme={ch2Theme}
           className="pointer-events-none absolute inset-x-0 top-8 text-center sm:top-12"
         >
           <p className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83]">
@@ -771,6 +826,7 @@ export const ScrollScene = ({ onReady }) => {
             <svg
               key={`line-${f.num}`}
               data-testid={`feature-line-${f.num}`}
+              data-theme={ch2Theme}
               className="pointer-events-none absolute inset-0 h-full w-full"
               viewBox="0 0 100 100"
               preserveAspectRatio="none"
@@ -793,6 +849,7 @@ export const ScrollScene = ({ onReady }) => {
               key={`dot-${f.num}`}
               ref={(el) => (dotRefs.current[i] = el)}
               style={{ left: `${f.to.x}%`, top: `${f.to.y}%` }}
+              data-theme={ch2Theme}
               className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink"
             />
           ))}
@@ -803,6 +860,7 @@ export const ScrollScene = ({ onReady }) => {
             key={f.num}
             ref={(el) => (calloutRefs.current[i] = el)}
             data-testid={`feature-callout-${f.num}`}
+            data-theme={ch2Theme}
             style={isMobile ? { bottom: "6rem" } : { top: f.top }}
             className={`absolute ${
               isMobile
@@ -833,6 +891,7 @@ export const ScrollScene = ({ onReady }) => {
         {!isMobile && (
           <div
             data-testid="features-rail"
+            data-theme={ch2Theme}
             className="absolute right-6 top-1/2 flex -translate-y-1/2 flex-col items-center gap-3 lg:right-10"
           >
             {systemFeatures.map((f, i) => (
