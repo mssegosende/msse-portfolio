@@ -64,6 +64,26 @@ const POSE_HOME = { arm: -0.306, elbowY: -0.018, forearm: -0.471 };
 
 const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 
+/**
+ * Hand the GPU context back. Application.dispose() drops the renderer but the
+ * context itself survives until the browser garbage-collects it, and browsers
+ * cap how many may be alive at once — so a handful of theme flips reaches
+ * "Too many active WebGL contexts. Oldest context will be lost." and then the
+ * next scene fails outright with "Error creating WebGL context".
+ * WEBGL_lose_context is the only way to release one on demand. Safe on the 2D
+ * grid canvas: asking a 2D canvas for a webgl context returns null.
+ */
+const releaseGlContext = (canvas) => {
+  if (!canvas) return;
+  try {
+    const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+    const ext = gl && gl.getExtension("WEBGL_lose_context");
+    if (ext) ext.loseContext();
+  } catch (e) {
+    /* context already gone */
+  }
+};
+
 /** Collect every arm joint once; findObjectByName per frame would be silly. */
 const findBot = (app) => {
   try {
@@ -233,6 +253,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     app1Ref.current = app;
     placeBot(app);
     armsRef.current = collectArms(app);
+    glCanvasRefs.current.slot1 = canvasWrapRef.current
+      ? canvasWrapRef.current.querySelector("canvas")
+      : null;
     if (readyRef.current) return;
     readyRef.current = true;
     setProgress(100);
@@ -250,6 +273,24 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   }, [mountScene2, scene2Ready, scene2Failed]);
 
   const revealed = loaded || failed;
+
+  // Keyed on the scene urls: when a theme flip swaps them, React unmounts the
+  // old canvases, and this cleanup runs in the mutation phase — while they are
+  // still in the DOM and can still be asked to release their context.
+  // Each slot records the canvas its scene actually took, at load. Sweeping
+  // the DOM in the cleanup does not work: React runs destroy functions during
+  // the mutation phase, by which point the REPLACEMENT canvas is already in
+  // the tree, and the sweep kills the context that was just created.
+  const glCanvasRefs = useRef({});
+  useLayoutEffect(() => {
+    const held = glCanvasRefs.current;
+    return () => {
+      releaseGlContext(held.slot1);
+      releaseGlContext(held.slot2);
+      held.slot1 = null;
+      held.slot2 = null;
+    };
+  }, [slot1Url, slot2Url]);
 
   useLayoutEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -351,7 +392,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       : { scale: 1.65, x: fx(0, 1.65), y: "11.0%" };    // L .70 — the waist
     // CLOSING — comes back in slightly, same centred position
     const c2end = isMobile
-      ? { scale: 1.4, x: "0%", y: "-5%" }
+      ? { scale: 1.15, x: "25%", y: "-1.3%" }
       : { scale: 1.25, x: fx(0, 1.25), y: "-2.8%" };    // L .875 — down the legs
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
@@ -779,23 +820,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         });
       }
 
-      // The phone's last move is a drop to the feet. The rig keeps its scale,
-      // so the camera stays at the same distance as every other beat — only
-      // the figure rises inside the render until the feet are drawn at all.
-      //
-      // How far: feet sit at 1512.3 - 2.5*(y - 25.68) in native px of a 1014
-      // canvas, and they have to land around p .75, not at the canvas floor,
-      // because the quarter below them is what keeps Spline's badge out of
-      // frame once the framing pans. That solves to y 326.
-      //
-      // Card 03 stays up, but it has to get out of the way: at bottom 6rem it
-      // owns everything below y 248 on an 844 screen, which is exactly where
-      // the feet land. It rises to the top instead, so the frame reads card
-      // above, feet below, pointing at the footer.
-      if (isMobile) {
-        tl.to(botRig, { y: 326, duration: 0.26, ease: "power1.inOut" }, closeAt);
-        tl.to(calloutRefs.current[2], { y: -210, duration: 0.24, ease: "power1.inOut" }, closeAt);
-      }
+
 
       // hold before release. Short on a phone: there is no three-card payoff
       // to read there, so a long one just feels like the page has jammed.
@@ -833,6 +858,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
     return () => {
       restoreScrollRef.current = window.scrollY;
+      // Never keep writing rotations into an Application that is being torn
+      // down: the ticker below is removed, but these refs outlive the effect.
+      armsRef.current = [];
+      botRef.current = null;
       if (restoreRaf) cancelAnimationFrame(restoreRaf);
       clearTimeout(refresh);
       if (removeMouse) removeMouse();
@@ -895,6 +924,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               <div ref={parallax1Ref} className="absolute inset-0">
                 <div ref={idle1Ref} className="absolute inset-0">
                   <Spline
+                    key={slot1Url}
                     scene={slot1Url}
                     onLoad={handleLoad}
                     onError={() => {
@@ -975,6 +1005,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                     }
                    >
                     <Spline
+                      key={slot2Url}
                       scene={slot2Url}
                       onLoad={(app) => {
                         // kept: the directed gaze writes Head.rotation on it.
@@ -984,6 +1015,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                         placeBot(app);
                         armsRef.current = collectArms(app);
                         botRef.current = findBot(app);
+                        glCanvasRefs.current.slot2 = canvas2WrapRef.current
+                          ? canvas2WrapRef.current.querySelector("canvas")
+                          : null;
                         // Scene 1's background is baked opaque #E2E2E2, and in
                         // slot 2 it IS chapter 2's backdrop, so lift it to pure
                         // white. Scene 2 is transparent and needs nothing.
