@@ -256,6 +256,21 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     placeBot(app);
     armsRef.current = collectArms(app);
     head1Ref.current = app?.findObjectByName?.("Head") || null;
+    // Scene 1 ships an OPAQUE background, and that is the whole reason the
+    // wordmark leaked: an opaque canvas can only reveal the wall underneath
+    // through a blend mode, and multiply -- the only one that reveals it --
+    // by definition also lets it through wherever the robot is not black.
+    // Measured: 8272 pixels of the word showing in the body's deep interior.
+    //
+    // The runtime accepts a transparent background, so the scene stops being
+    // a sheet of colour and becomes what scene 2 already was: a figure with
+    // alpha. Composited normally, the robot's own pixels cover the wall and
+    // its empty ones reveal it. No blend, no leak.
+    try {
+      app.setBackgroundColor("rgba(0,0,0,0)");
+    } catch (e) {
+      /* older runtime */
+    }
     glCanvasRefs.current.slot1 = canvasWrapRef.current
       ? canvasWrapRef.current.querySelector("canvas")
       : null;
@@ -983,7 +998,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
           {!failed && (
             <div
-              className={`absolute inset-0 ${darkMode ? "" : "mix-blend-multiply"}`}
+              className="absolute inset-0"
               data-testid="spline-canvas-wrap"
             >
               <div ref={parallax1Ref} className="absolute inset-0">
@@ -1050,11 +1065,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             }`}
           >
             {mountScene2 && !scene2Failed && (
-              <div
-                className={`absolute inset-0 ${
-                  darkMode ? "mix-blend-screen" : "mix-blend-multiply"
-                }`}
-              >
+                <div className="absolute inset-0">
                 <div ref={parallax2Ref} className="absolute inset-0">
                   <div ref={idle2Ref} className="absolute inset-0">
                    <div
@@ -1083,15 +1094,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                         glCanvasRefs.current.slot2 = canvas2WrapRef.current
                           ? canvas2WrapRef.current.querySelector("canvas")
                           : null;
-                        // Scene 1's background is baked opaque #E2E2E2, and in
-                        // slot 2 it IS chapter 2's backdrop, so lift it to pure
-                        // white. Scene 2 is transparent and needs nothing.
-                        if (!darkMode) {
-                          try {
-                            app.setBackgroundColor("#FFFFFF");
-                          } catch (e) {
-                            /* older runtime without setBackgroundColor */
-                          }
+                        // Transparent here too: chapter 2's backdrop is the
+                        // section's own colour, which already follows the
+                        // theme, so the scene does not need to paint one.
+                        try {
+                          app.setBackgroundColor("rgba(0,0,0,0)");
+                        } catch (e) {
+                          /* older runtime without setBackgroundColor */
                         }
                         setScene2Ready(true);
                       }}
