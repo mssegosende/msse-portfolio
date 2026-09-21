@@ -1246,7 +1246,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       <div
         ref={scrollCueRef}
         data-testid="scroll-cue"
-        className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 flex-col items-center gap-2 mix-blend-difference sm:right-10 sm:top-auto sm:bottom-10 sm:translate-y-0 sm:gap-3"
+        className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 flex-col items-center gap-2 mix-blend-difference sm:left-6 sm:right-auto sm:gap-3 lg:left-10"
       >
         <span className="font-display text-[9px] uppercase tracking-[0.28em] text-white/75 [writing-mode:vertical-rl] sm:text-[11px] sm:tracking-[0.34em]">
           Scroll
