@@ -329,7 +329,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // distant. Note the overscale also keeps Spline's "Built with Spline"
     // badge out of frame — it is drawn INSIDE the WebGL canvas, not the DOM,
     // so CSS cannot reach it; anything at or below ~1.2 brings it into view.
-    const startScale = reduce ? 1 : isMobile ? 1.95 : 1.78;
+    const startScale = reduce ? 1 : isMobile ? 2.15 : 1.78;
     // The head cleared the top of the viewport by ~78px at 2000x1014, which
     // read as dead air. Measured off the silhouette, not the transform: -3.9%
     // of the wrap height is ~39px, so the gap halves and the head still has
@@ -345,8 +345,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // same way as the story beat: the head occupies native fraction
     // p 0.154..0.33, and putting its midpoint at 34% of an 844 frame at
     // scale 2.15 solves to y 40%.
-    const startY = reduce ? "2%" : isMobile ? "20%" : "12.6%";
-    const endY = reduce ? "3%" : isMobile ? "22%" : "14.1%";
+    // Acercar sube la corona fuera de cuadro, asi que la y compensa. Un punto
+    // a la fraccion nativa p cae en (p*H - H/2)*S + H/2 + Y*H; con la corona
+    // en p .154 sobre 844, sostenerla a y 21 con S 2.3 despeja Y = 32%.
+    const startY = reduce ? "2%" : isMobile ? "27%" : "12.6%";
+    const endY = reduce ? "3%" : isMobile ? "29%" : "14.1%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -474,7 +477,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     const ctx = gsap.context(() => {
       gsap.set(canvasWrapRef.current, {
         scale: startScale,
-        x: fx1(isMobile ? (darkMode ? 46 : -46) : 0, startScale),
+        x: fx1(0, startScale),
         y: startY,
         transformOrigin: "50% 50%",
       });
@@ -798,7 +801,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         canvasWrapRef.current,
         {
           scale: startScale * 0.96,
-          x: fx1(isMobile ? (darkMode ? 46 : -46) : 0, startScale * 0.96),
+          x: fx1(0, startScale * 0.96),
           y: endY,
           duration: 0.32,
           ease: "power1.inOut",
@@ -1170,7 +1173,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       {/* kinetic headline (phase 1) — sits just above the nav dock, difference blend */}
       <div
         ref={headlineRef}
-        className="pointer-events-none absolute inset-x-0 bottom-44 text-center mix-blend-difference sm:bottom-44"
+        data-theme={isMobile ? ch2Theme : undefined}
+        className="pointer-events-none absolute inset-x-0 bottom-44 text-center text-halo sm:bottom-44 sm:mix-blend-difference sm:[text-shadow:none]"
       >
         <div className="overflow-hidden px-4">
           <motion.h1
@@ -1208,11 +1212,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       <motion.div
         variants={uiFade} custom={0} initial="hidden"
         animate={revealed ? "show" : "hidden"}
+        data-theme={ch2Theme}
         className="absolute left-6 top-6 sm:left-10 sm:top-8"
       >
         <span
           data-testid="hero-brand"
-          className="font-orbitron text-xs font-bold tracking-[0.12em] text-white mix-blend-difference sm:text-sm sm:tracking-[0.3em]"
+          className="font-orbitron text-xs font-bold tracking-[0.12em] text-ink text-halo sm:text-sm sm:tracking-[0.3em]"
         >
           {profile.shortMark}
           <span className="hidden text-white/65 sm:inline"> {profile.markSuffix}</span>
@@ -1222,10 +1227,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       <motion.div
         variants={uiFade} custom={1} initial="hidden"
         animate={revealed ? "show" : "hidden"}
+        data-theme={ch2Theme}
         className="absolute right-6 top-6 sm:right-10 sm:top-8 flex items-center gap-2"
       >
-        <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse-dot" />
-        <span data-testid="hero-status" className="font-display text-[13px] uppercase tracking-[0.02em] text-white/[0.83] mix-blend-difference">
+        <span className="h-1.5 w-1.5 rounded-full bg-ink animate-pulse-dot" />
+        <span data-testid="hero-status" className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
           STATUS: {profile.status}
         </span>
       </motion.div>
@@ -1243,7 +1249,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             if (window.__lenis) window.__lenis.scrollTo(y + 4, { duration: 1.1 });
             else window.scrollTo({ top: y + 4, behavior: "smooth" });
           }}
-          className="pointer-events-auto absolute bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] text-white/70 mix-blend-difference transition-opacity duration-300 hover:text-white sm:bottom-10"
+          data-theme={isMobile ? ch2Theme : undefined}
+          className="pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] text-ink/70 text-halo transition-opacity duration-300 hover:text-ink sm:bottom-10 sm:text-white/70 sm:mix-blend-difference sm:[text-shadow:none] sm:hover:text-white"
         >
           Skip intro
         </button>
@@ -1257,7 +1264,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       <div
         ref={scrollCueRef}
         data-testid="scroll-cue"
-        className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 flex-col items-center gap-2 mix-blend-difference sm:left-6 sm:right-auto sm:gap-3 lg:left-10"
+        className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 flex-col items-center gap-2 mix-blend-difference sm:left-6 sm:gap-3 lg:left-10"
       >
         <span className="font-display text-[9px] uppercase tracking-[0.28em] text-white/75 [writing-mode:vertical-rl] sm:text-[11px] sm:tracking-[0.34em]">
           Scroll
@@ -1389,7 +1396,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 {f.num}
               </div>
               <div className="mt-7 flex items-baseline gap-3">
-                <span className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83]">
+                <span className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
                   {f.part}
                 </span>
               </div>

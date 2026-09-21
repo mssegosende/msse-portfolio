@@ -22,7 +22,7 @@ export const profile = {
   name: "María Sol Gosende",
   // Two parts: the dock shows the mark alone, the hero and the footer show
   // the mark stands alone — no suffix.
-  shortMark: "MSSE: //",
+  shortMark: "MSSE://",
   markSuffix: "",
   role: "Full Stack Developer & AI Engineer",
   taglineLines: ["Full Stack Developer", "& AI Engineer"],

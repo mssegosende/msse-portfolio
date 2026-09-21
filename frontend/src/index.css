@@ -183,6 +183,15 @@ body {
     -webkit-text-fill-color: transparent;
 }
 
+/* Un halo del color de la superficie. Despega un texto tanto de la pared
+   como del robot sin depender de un blend: en claro es blanco detras de
+   texto oscuro, en oscuro negro detras de texto claro. */
+.text-halo {
+    text-shadow:
+        0 0 10px rgb(var(--surface) / 0.92),
+        0 0 26px rgb(var(--surface) / 0.75);
+}
+
 /* Keeps the kinetic headline off the silver body in dark mode, where plain
    white alone still sits too close to polished metal. */
 .headline-glow {
