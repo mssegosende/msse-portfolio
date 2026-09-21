@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { User, FolderOpen, Cpu, Mail, Send, Sun, Moon } from "lucide-react";
+import { User, FolderOpen, Cpu, Mail, Send, Sun, Moon, Home } from "lucide-react";
 import { profile } from "../data/portfolioData";
 import { scrollToId, scrollToTop } from "../hooks/useLenis";
 import { useTheme } from "../hooks/useTheme";
@@ -24,9 +24,22 @@ export const NavigationDock = ({ visible }) => {
         className="pointer-events-auto"
       >
         <div className="glass flex max-w-[calc(100vw-1.5rem)] items-center gap-1 px-2 py-2 shadow-[0_8px_40px_rgb(var(--surface) / 0.6)] sm:px-3 cut-corner overflow-x-auto">
+          {/* The wordmark is the way back to the top, but it is hidden below
+              sm — which left a phone with no way back to the start of the
+              sequence at all. Same action, an icon at phone width. */}
+          <button
+            data-testid="nav-home"
+            onClick={scrollToTop}
+            aria-label="Back to the top"
+            title="Back to the top"
+            className="group flex shrink-0 items-center gap-2 px-3 py-2 text-ink/65 transition-[color,background-color] duration-300 hover:bg-ink/5 hover:text-ink sm:hidden"
+          >
+            <Home size={15} />
+          </button>
           <button
             data-testid="nav-brand"
             onClick={scrollToTop}
+            aria-label="Back to the top"
             className="mr-2 hidden shrink-0 px-3 py-2 font-orbitron text-[13px] font-bold tracking-[0.02em] text-ink transition-colors hover:text-ink/[0.83] sm:block"
           >
             {profile.shortMark}

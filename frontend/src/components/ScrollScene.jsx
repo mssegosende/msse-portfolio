@@ -115,6 +115,7 @@ export const ScrollScene = ({ onReady }) => {
   const wm1Ref = useRef(null);
   const storyTitleRef = useRef(null);
   const storyPanelRef = useRef(null);
+  const scrollCueRef = useRef(null);
   const layer2Ref = useRef(null);
   const layer2InnerRef = useRef(null);
   const headlineRef = useRef(null);
@@ -231,25 +232,27 @@ export const ScrollScene = ({ onReady }) => {
       ? { scale: 1.95, x: "-48%", y: "26%" }
       : { scale: 3.0, x: fx(0, 3.0), y: "53%" };
     // STEP 1 (story) — closest, and centred. The text sits to the right.
+    // STEP 1 (story) — a tight head shot, so the difference between the two
+    // robots reads at a glance instead of being a detail on a torso.
+    //
+    // Solved from the projection, not guessed. A point at native-canvas
+    // fraction p lands at (p*H - H/2)*S + H/2 + Y*H. At the old 2.8/47% the
+    // crown sat on the top edge and the chin at ~500, which puts the head at
+    // p 0.154..0.33 — 178px of native render. Filling ~70% of a 1014 frame
+    // needs S = 710/178 ≈ 4.0, and centring the head's midpoint (p 0.242)
+    // then solves to Y = 103%. It steps left so the story column stays clear.
     const c2close = isMobile
-      ? { scale: 1.8, x: "-48%", y: "22%" }
-      : {
-          scale: 2.8,
-          // Dark mode puts a DARK robot behind the story column, where white
-          // mode had a light one on black — so the arm that the last two lines
-          // used to cross harmlessly now swallows them. Measured off the beat:
-          // the forearm reaches ~x1560 at 2000px and the text starts ~x1430,
-          // so the body steps 200px left to clear it. White mode keeps the
-          // approved centred framing.
-          x: fx(-200, 2.8),
-          y: "47%",
-        };
-    // STEP 2 (card 01, at the LEFT) — leans INTO its card. At 2.4 the only
-    // thing beside the card is the head, and +200 left a 454px void between
-    // the two. Measured off the silhouette, not the transform.
+      ? { scale: 2.6, x: "-30%", y: "64%" }
+      : { scale: 4.0, x: fx(-350, 4.0), y: "103%" };
+    // STEP 2 (card 01, at the LEFT) — the body now sits OPPOSITE its card
+    // instead of leaning into it. Leaning left put the figure and the card on
+    // the same side and vacated the whole right half; that read as
+    // atmospheric when the ground was black, but on white it is just a hole.
+    // Card left + body right balances the frame and gives the connector a
+    // span to cross.
     const c2s2 = isMobile
       ? { scale: 1.7, x: "-38%", y: "20%" }
-      : { scale: 2.4, x: fx(-250, 2.4), y: "35%" };
+      : { scale: 2.4, x: fx(180, 2.4), y: "35%" };
     // STEP 3 (card 02, at the RIGHT) — leans right toward its card. -520 put
     // the body hard against the left edge with a 285px void before the card;
     // it still crops, just less.
@@ -537,6 +540,7 @@ export const ScrollScene = ({ onReady }) => {
 
       // PHASE 1 exit: headline leaves, light drains to black, slight drift-in
       tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
+      tl.to(scrollCueRef.current, { opacity: 0, y: 20, duration: 0.06 }, 0.02);
       tl.to(drain, { ...tone.drainTo, duration: 0.3, onUpdate: applyDrain }, 0.1);
       tl.to(overlayRef.current, { opacity: 1, duration: 0.34 }, 0.1);
       tl.to(
@@ -836,7 +840,7 @@ export const ScrollScene = ({ onReady }) => {
       {/* kinetic headline (phase 1) — sits just above the nav dock, difference blend */}
       <div
         ref={headlineRef}
-        className="pointer-events-none absolute inset-x-0 bottom-40 text-center mix-blend-difference sm:bottom-24"
+        className="pointer-events-none absolute inset-x-0 bottom-44 text-center mix-blend-difference sm:bottom-44"
       >
         <div className="overflow-hidden px-4">
           <motion.h1
@@ -845,7 +849,7 @@ export const ScrollScene = ({ onReady }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-1"
-            className="font-inter text-[clamp(1rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.3em] text-ink"
+            className="font-inter text-[clamp(1.4rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.12em] text-ink sm:tracking-[0.3em]"
           >
             — Build the future —
           </motion.h1>
@@ -857,11 +861,29 @@ export const ScrollScene = ({ onReady }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-2"
-            className="font-inter text-[clamp(0.56rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.42em] text-ink/40"
+            className="font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] text-ink/40 sm:tracking-[0.42em]"
           >
             one system at a time
           </motion.p>
         </div>
+      </div>
+
+      {/* Scroll cue. The hero IS the scroll — a visitor who lands, clicks a
+          project and leaves never sees either scene, so it has to say so. It
+          fades on the first beat, once the message has landed. Difference
+          blend for the same reason the headline uses one: it has to stay
+          legible over the wall, over the robot and in both themes. */}
+      <div
+        ref={scrollCueRef}
+        data-testid="scroll-cue"
+        className="pointer-events-none absolute bottom-8 right-8 flex flex-col items-center gap-3 mix-blend-difference sm:bottom-10 sm:right-10"
+      >
+        <span className="font-display text-[11px] uppercase tracking-[0.34em] text-white/75 [writing-mode:vertical-rl]">
+          Scroll
+        </span>
+        <span className="relative block h-12 w-px overflow-hidden bg-white/25">
+          <span className="absolute inset-x-0 top-0 block h-4 animate-scroll-cue bg-white" />
+        </span>
       </div>
 
       {/* Layer D — UI. Keeps z-10: these marks must NOT invert against the

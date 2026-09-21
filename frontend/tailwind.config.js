@@ -46,6 +46,10 @@ module.exports = {
         'pulse-dot': {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.25' }
+        },
+        'scroll-cue': {
+          '0%': { transform: 'translateY(-100%)' },
+          '100%': { transform: 'translateY(300%)' }
         }
       },
       animation: {
@@ -53,7 +57,8 @@ module.exports = {
         'accordion-up': 'accordion-up 0.2s ease-out',
         marquee: 'marquee 48s linear infinite',
         kenburns: 'kenburns 16s ease-in-out infinite alternate',
-        'pulse-dot': 'pulse-dot 2.2s ease-in-out infinite'
+        'pulse-dot': 'pulse-dot 2.2s ease-in-out infinite',
+        'scroll-cue': 'scroll-cue 1.9s cubic-bezier(0.65, 0, 0.35, 1) infinite'
       }
     }
   },
