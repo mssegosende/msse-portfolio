@@ -48,7 +48,46 @@ const WORDMARK = "MSGCENGINEER";
 // figure jumping.
 const OVERSAMPLE = 1.7;
 
+// The two scenes ship the rig in different POSES, which is why the silver
+// robot never quite matched the black one even with the body in the same
+// place. Read off both rigs:
+//
+//            scene 1    scene 2
+//   arm.x     -0.306    -0.474   (scene 2 holds its arms higher)
+//   elbow.y   -0.018     0.179
+//   forearm.x -0.471    -0.863   (and bends them further)
+//
+// Scene 1's values are canonical, because white mode is the default and runs
+// that rig in both slots. Applied every frame rather than once at load: each
+// scene animates its own pose, so a single assignment drifts straight back.
+const POSE_HOME = { arm: -0.306, elbowY: -0.018, forearm: -0.471 };
+
 const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
+
+/** Collect every arm joint once; findObjectByName per frame would be silly. */
+const collectArms = (app) => {
+  const out = [];
+  try {
+    const walk = (o, d) => {
+      if (!o || d > 9) return;
+      if (o.name === "arm" || o.name === "elbow" || o.name === "forearm") out.push(o);
+      (o.children || []).forEach((ch) => walk(ch, d + 1));
+    };
+    walk(app?._scene || app?.scene, 0);
+  } catch (e) {
+    /* runtime without an inspectable graph */
+  }
+  return out;
+};
+
+const applyPose = (joints) => {
+  for (let i = 0; i < joints.length; i++) {
+    const j = joints[i];
+    if (j.name === "arm") j.rotation.x = POSE_HOME.arm;
+    else if (j.name === "elbow") j.rotation.y = POSE_HOME.elbowY;
+    else j.rotation.x = POSE_HOME.forearm;
+  }
+};
 
 /** Place a scene's rig at a known spot. Both scenes share the same rig. */
 const placeBot = (app, { scale, y } = {}) => {
@@ -114,6 +153,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const lastMouseRef = useRef(0);
   const mouseGazeRef = useRef({ x: 0, y: 0 });
   const applyGazeRef = useRef(null);
+  const armsRef = useRef([]);
 
   const sectionRef = useRef(null);
   const canvasWrapRef = useRef(null);
@@ -183,6 +223,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const handleLoad = (app) => {
     app1Ref.current = app;
     placeBot(app);
+    armsRef.current = collectArms(app);
     if (readyRef.current) return;
     readyRef.current = true;
     setProgress(100);
@@ -288,27 +329,27 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // span to cross.
     const c2s2 = isMobile
       ? { scale: 1.8, x: "-22%", y: "17%" }
-      : { scale: 2.4, x: fx(180, 2.4), y: "35%" };
+      : { scale: 3.05, x: fx(150, 3.05), y: "59.3%" };   // L .45 — above the elbow
     // STEP 3 (card 02, at the RIGHT) — leans right toward its card. -520 put
     // the body hard against the left edge with a 285px void before the card;
     // it still crops, just less.
     const c2s3 = isMobile
       ? { scale: 1.6, x: "22%", y: "10%" }
-      : { scale: 2.0, x: fx(-230, 2.0), y: "23%" };
+      : { scale: 2.53, x: fx(-200, 2.53), y: "41.5%" }; // L .51 — the elbow
     // STEP 4 (card 03) — body centred; stays here
     const c2far = isMobile
       ? { scale: 1.4, x: "-14%", y: "3%" }
-      : { scale: 1.6, x: fx(0, 1.6), y: "11%" };
+      : { scale: 1.61, x: fx(0, 1.61), y: "9.5%" };     // L .715 — the waist
     // CLOSING — comes back in slightly, same centred position
     const c2end = isMobile
       ? { scale: 1.3, x: "0%", y: "0%" }
-      : { scale: 1.5, x: fx(0, 1.5), y: "8%" };
+      : { scale: 1.49, x: fx(0, 1.49), y: "5.4%" };     // L .76 — the hip
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
     // Gaze poses, radians, capped at ±0.35. +y turns the face to the viewer's
     // right, +x tips it down. Each one points at where its card actually sits.
     const GAZE = {
-      text: { x: 0.0, y: 0.32 },        // story block, right
+      text: { x: 0.26, y: 0.32 },       // story block, right — and down
       card01: { x: -0.18, y: -0.30 },   // card 01: left, upper
       card02: { x: 0.02, y: 0.32 },     // card 02: right, middle
       card03: { x: 0.24, y: -0.26 },    // card 03: left, lower
@@ -561,8 +602,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         head.rotation.x = cur.x;
         head.rotation.y = cur.y;
       };
-      applyGazeRef.current = applyGaze;
-      gsap.ticker.add(applyGaze);
+      // The pose normaliser rides the gaze ticker rather than adding its own.
+      const applyGazeAndPose = () => {
+        applyGaze();
+        if (armsRef.current.length) applyPose(armsRef.current);
+      };
+      applyGazeRef.current = applyGazeAndPose;
+      gsap.ticker.add(applyGazeAndPose);
 
       const tl = gsap.timeline({
         defaults: { ease: "none" },
@@ -877,6 +923,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                         // Head in both), so the gaze ports across the swap.
                         app2Ref.current = app;
                         placeBot(app);
+                        armsRef.current = collectArms(app);
                         // Scene 1's background is baked opaque #E2E2E2, and in
                         // slot 2 it IS chapter 2's backdrop, so lift it to pure
                         // white. Scene 2 is transparent and needs nothing.
