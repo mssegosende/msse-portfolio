@@ -184,6 +184,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const armsRef = useRef([]);
   const botRef = useRef(null);
   const head1Ref = useRef(null);
+  const heroEndRef = useRef(0);
 
   const sectionRef = useRef(null);
   const canvasWrapRef = useRef(null);
@@ -858,6 +859,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // to read there, so a long one just feels like the page has jammed.
       tl.to({}, { duration: isMobile ? 0.12 : 0.45 });
 
+      if (tl.scrollTrigger) heroEndRef.current = tl.scrollTrigger.end;
+
       // first projection, so nothing is stale before the first scroll tick
       applyPull();
     }, sectionRef);
@@ -883,6 +886,34 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       put();
     }
 
+    // Scene 1 was already stopped past 45% of the sequence, but scene 2 was
+    // never stopped at all: once the visitor scrolled past the hero into the
+    // text sections, a WebGL context went on rendering at full rate, off
+    // screen, for the rest of the session. That is the expensive thing here —
+    // not the cards, which are plain DOM.
+    //
+    // Both runtimes now idle whenever the hero is out of view. Coming back,
+    // scene 2 always resumes; scene 1 only if the sequence has not already
+    // parked it, so the two rules do not fight.
+    const heroVisibility = new IntersectionObserver(
+      ([entry]) => {
+        const visible = entry.isIntersecting;
+        try {
+          if (visible) {
+            app2Ref.current?.play?.();
+            if (!stopped1Ref.current) app1Ref.current?.play?.();
+          } else {
+            app1Ref.current?.stop?.();
+            app2Ref.current?.stop?.();
+          }
+        } catch (e) {
+          /* runtime without play/stop */
+        }
+      },
+      { rootMargin: "120px" }
+    );
+    if (sectionRef.current) heroVisibility.observe(sectionRef.current);
+
     const lenis = window.__lenis;
     const onScroll = () => ScrollTrigger.update();
     if (lenis) lenis.on("scroll", onScroll);
@@ -898,6 +929,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       if (restoreRaf) cancelAnimationFrame(restoreRaf);
       clearTimeout(refresh);
       if (removeMouse) removeMouse();
+      heroVisibility.disconnect();
       if (lenis) lenis.off("scroll", onScroll);
       gsap.ticker.remove(applyGazeRef.current);
       ctx.revert();
@@ -1178,6 +1210,24 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         </span>
       </motion.div>
 
+
+      {/* Skip intro. Only before the sequence has been seen once — after
+          that the dock owns this spot and the visitor already has every
+          section a click away. Lands just past the pin rather than at a
+          section id, so the marquee is not skipped along with the hero. */}
+      {!journeyDone && (
+        <button
+          data-testid="skip-intro"
+          onClick={() => {
+            const y = heroEndRef.current || window.innerHeight * 10;
+            if (window.__lenis) window.__lenis.scrollTo(y + 4, { duration: 1.1 });
+            else window.scrollTo({ top: y + 4, behavior: "smooth" });
+          }}
+          className="pointer-events-auto absolute bottom-7 left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] text-white/70 mix-blend-difference transition-opacity duration-300 hover:text-white sm:bottom-10"
+        >
+          Skip intro
+        </button>
+      )}
 
       {/* Scroll cue. The hero IS the scroll — a visitor who lands, clicks a
           project and leaves never sees either scene, so it has to say so. It
