@@ -48,18 +48,6 @@ const WORDMARK = "MSGCENGINEER";
 // figure jumping.
 const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 
-// Scene 1's opening framing shows the WHOLE robot. The camera is fixed and
-// crops at 3/4 — neither a taller canvas nor setZoom() moves it — so the only
-// way to see the feet is to shrink the object and lift it.
-//
-// Solved rather than guessed. Two measured framings (scale .42 and .50, both
-// at y 140) give head = 547.5 - 875*s and feet = 526.5 + 875*s at 2000x1014,
-// and y shifts both by 2.5px per unit. Constrained by: the badge needs canvas
-// scale >= 1.2 to leave frame, the feet must stay above the dock (~940) and
-// the head below the headline (~185). That lands on s .33 / y 140 / canvas
-// 1.22 -> head 204, feet 883.
-const BOT_FULL_BODY = { scale: 0.33, y: 140 };
-
 /** Place a scene's rig at a known spot. Both scenes share the same rig. */
 const placeBot = (app, { scale, y } = {}) => {
   try {
@@ -126,6 +114,7 @@ export const ScrollScene = ({ onReady }) => {
   const vignetteRef = useRef(null);
   const wm1Ref = useRef(null);
   const storyTitleRef = useRef(null);
+  const storyPanelRef = useRef(null);
   const layer2Ref = useRef(null);
   const layer2InnerRef = useRef(null);
   const headlineRef = useRef(null);
@@ -178,7 +167,7 @@ export const ScrollScene = ({ onReady }) => {
 
   const handleLoad = (app) => {
     app1Ref.current = app;
-    placeBot(app, BOT_FULL_BODY);
+    placeBot(app);
     if (readyRef.current) return;
     readyRef.current = true;
     setProgress(100);
@@ -200,21 +189,18 @@ export const ScrollScene = ({ onReady }) => {
   useLayoutEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // middle ground: camera closer, robot vertically centered, little air above the head
-    // The rig is already sized for the full body, so the canvas no longer
-    // zooms in at the open — the sequence does that later. It keeps a slight
-    // overscale because Spline draws its "Built with Spline" badge INSIDE the
-    // WebGL canvas (not the DOM, so CSS cannot reach it); at 1.0 the badge
-    // lands in frame at the bottom right. 1.08 pushes it back past the corner
-    // the way the old 1.45 framing did, and the feet still clear the dock.
-    const startScale = reduce ? 1.22 : isMobile ? 1.3 : 1.22;
+    // Back to the approved close-up. The wide full-body framing read as too
+    // distant. Note the overscale also keeps Spline's "Built with Spline"
+    // badge out of frame — it is drawn INSIDE the WebGL canvas, not the DOM,
+    // so CSS cannot reach it; anything at or below ~1.2 brings it into view.
+    const startScale = reduce ? 1 : isMobile ? 1.3 : 1.45;
     // The head cleared the top of the viewport by ~78px at 2000x1014, which
     // read as dead air. Measured off the silhouette, not the transform: -3.9%
     // of the wrap height is ~39px, so the gap halves and the head still has
     // room. The wall is inside the same scaled wrap (1.45 => 228px of bleed
     // past each edge), so moving it up cannot expose an edge.
-    // Vertical placement is Bot.position.y's job now, not the canvas's.
-    const startY = reduce ? "0%" : isMobile ? "2%" : "0%";
-    const endY = reduce ? "1%" : isMobile ? "3%" : "1.5%";
+    const startY = reduce ? "2%" : isMobile ? "4.5%" : "6.1%";
+    const endY = reduce ? "3%" : isMobile ? "6%" : "7.6%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -385,6 +371,10 @@ export const ScrollScene = ({ onReady }) => {
       gsap.set(overlayRef.current, { opacity: 0 });
       storyRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 28 }));
       gsap.set(storyTitleRef.current, { opacity: 0, y: 28 });
+      // The panel that carries the mobile backdrop fades as one with the text
+      // it sits behind; without this its translucent ground is painted over
+      // the robot from the first frame.
+      gsap.set(storyPanelRef.current, { opacity: 0 });
       calloutRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 36 }));
       lineRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0 }));
       dotRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0 }));
@@ -569,6 +559,7 @@ export const ScrollScene = ({ onReady }) => {
 
       // story paragraphs fade in one after another during the close-up hold
       // (long scroll lock: only the tiny idle breathing moves the robot here)
+      tl.to(storyPanelRef.current, { opacity: 1, duration: 0.07, ease: "power1.out" }, 0.54);
       tl.to(storyTitleRef.current, { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.56);
       if (storyRefs.current[0])
         tl.to(storyRefs.current[0], { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.62);
@@ -592,6 +583,7 @@ export const ScrollScene = ({ onReady }) => {
       if (storyEls.length)
         tl.to(storyEls, { opacity: 0, y: -24, duration: 0.10, ease: "power1.in" }, 1.02);
       tl.to(storyTitleRef.current, { opacity: 0, y: -24, duration: 0.10, ease: "power1.in" }, 1.02);
+      tl.to(storyPanelRef.current, { opacity: 0, duration: 0.10, ease: "power1.in" }, 1.04);
       tl.to(featuresHeaderRef.current, { opacity: 1, y: 0, duration: 0.10 }, 1.10);
 
       systemFeatures.forEach((f, i) => {
@@ -813,10 +805,38 @@ export const ScrollScene = ({ onReady }) => {
           z-index on an ancestor would create a stacking context that isolates the
           blend and flattens the text to plain white. DOM order already paints it
           above the scenes. */}
+      {/* Features header (phase 3). Lives OUTSIDE the z-10 UI layer for the same
+          reason the kinetic headline does: mix-blend-difference has to blend
+          against the scene below it, and any z-index on an ancestor makes a
+          stacking context that isolates the blend and flattens the text to a
+          flat colour. DOM order already paints it above the scenes.
+
+          The blend is what makes it readable where it crosses the robot: the
+          letters go white over the dark body and dark over the light ground,
+          instead of matching whatever is behind them. The engraved shadow is
+          dropped here — its offsets blend too and come out muddy. */}
+      <div
+        ref={featuresHeaderRef}
+        className="pointer-events-none absolute inset-x-0 top-8 text-center mix-blend-difference sm:top-12"
+      >
+        <p className="font-display text-[13px] uppercase tracking-[0.02em] text-white/[0.83]">
+          01 // system features
+        </p>
+        <h2
+          data-testid="features-headline"
+          className="mt-4 font-display text-3xl font-light uppercase text-white sm:text-5xl"
+        >
+          System Features
+        </h2>
+        <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-white/65">
+          based on the msg·01 core
+        </p>
+      </div>
+
       {/* kinetic headline (phase 1) — sits just above the nav dock, difference blend */}
       <div
         ref={headlineRef}
-        className="pointer-events-none absolute inset-x-0 top-14 text-center mix-blend-difference sm:top-20"
+        className="pointer-events-none absolute inset-x-0 bottom-40 text-center mix-blend-difference sm:bottom-24"
       >
         <div className="overflow-hidden px-4">
           <motion.h1
@@ -853,9 +873,12 @@ export const ScrollScene = ({ onReady }) => {
           animate={revealed ? "show" : "hidden"}
           className="absolute left-6 top-6 sm:left-10 sm:top-8"
         >
-          <span data-testid="hero-brand" className="font-orbitron text-sm font-bold tracking-[0.3em] text-ink mix-blend-difference">
+          <span
+            data-testid="hero-brand"
+            className="font-orbitron text-xs font-bold tracking-[0.12em] text-ink mix-blend-difference sm:text-sm sm:tracking-[0.3em]"
+          >
             {profile.shortMark}
-            <span className="text-ink/65"> {profile.markSuffix}</span>
+            <span className="hidden text-ink/65 sm:inline"> {profile.markSuffix}</span>
           </span>
         </motion.div>
 
@@ -901,8 +924,9 @@ export const ScrollScene = ({ onReady }) => {
         {/* At the story framing (scale 2.8) the head centres near 31% of the
             viewport; dead-centring this block left it a head below that. */}
         <div
+          ref={storyPanelRef}
           data-theme={ch2Theme}
-          className="absolute inset-x-5 bottom-28 sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 lg:right-[9%]"
+          className="absolute inset-x-5 bottom-28 cut-corner bg-surface/80 p-5 backdrop-blur-md sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 sm:bg-transparent sm:p-0 sm:backdrop-blur-none lg:right-[9%]"
         >
           {/* story heading — section-title type, sized so it never pushes the
               paragraphs out of the viewport */}
@@ -926,26 +950,6 @@ export const ScrollScene = ({ onReady }) => {
               {para}
             </p>
           ))}
-        </div>
-
-        {/* features header (phase 3) */}
-        <div
-          ref={featuresHeaderRef}
-          data-theme={ch2Theme}
-          className="pointer-events-none absolute inset-x-0 top-8 text-center sm:top-12"
-        >
-          <p className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83]">
-            01 // system features
-          </p>
-          <h2
-            data-testid="features-headline"
-            className="text-engraved mt-4 font-display text-3xl font-light uppercase text-ink sm:text-5xl"
-          >
-            System Features
-          </h2>
-          <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65">
-            based on the msg·01 core
-          </p>
         </div>
 
         {/* connector lines + dots (desktop) */}
