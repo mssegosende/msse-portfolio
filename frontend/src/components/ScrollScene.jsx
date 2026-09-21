@@ -46,6 +46,8 @@ const WORDMARK = "MSGCENGINEER";
 // so it holds at every width and the two themes land the robot in exactly the
 // same place — which is what makes the toggle swap in place instead of the
 // figure jumping.
+const OVERSAMPLE = 1.7;
+
 const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 
 /** Place a scene's rig at a known spot. Both scenes share the same rig. */
@@ -97,6 +99,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const mount2Ref = useRef(false);
   const stopped1Ref = useRef(false);
   const journeyRef = useRef(false);
+  // Where the visitor was when the timeline had to be rebuilt. Reverting the
+  // GSAP context removes the pin, which collapses the +1040% spacer; the page
+  // suddenly gets shorter and the browser clamps the scroll, which is why
+  // flipping the theme used to fling you into the second scene.
+  const restoreScrollRef = useRef(null);
   // Held in a ref so the layout effect does not have to list it: App passes a
   // fresh closure every render, and rebuilding the whole timeline for that
   // would tear down the pin mid-scroll.
@@ -196,12 +203,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
   useLayoutEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
     // middle ground: camera closer, robot vertically centered, little air above the head
     // Back to the approved close-up. The wide full-body framing read as too
     // distant. Note the overscale also keeps Spline's "Built with Spline"
     // badge out of frame — it is drawn INSIDE the WebGL canvas, not the DOM,
     // so CSS cannot reach it; anything at or below ~1.2 brings it into view.
-    const startScale = reduce ? 1 : isMobile ? 1.62 : 1.78;
+    const startScale = reduce ? 1 : isMobile ? 1.95 : 1.78;
     // The head cleared the top of the viewport by ~78px at 2000x1014, which
     // read as dead air. Measured off the silhouette, not the transform: -3.9%
     // of the wrap height is ~39px, so the gap halves and the head still has
@@ -211,8 +219,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // a point at y40 to (40-507)*1.78/1.45+507 = -66 at 2000x1014. 66px of a
     // 1014 frame is 6.5%, so the framing steps down by that much to put the
     // head back where it was.
-    const startY = reduce ? "2%" : isMobile ? "10.5%" : "12.6%";
-    const endY = reduce ? "3%" : isMobile ? "12%" : "14.1%";
+    // A phone is a portrait frame, so scene 1 is composed as a portrait: head
+    // and shoulders, big and centred, with the headline under it — rather
+    // than a mid-torso crop that reads as neither close nor wide. Derived the
+    // same way as the story beat: the head occupies native fraction
+    // p 0.154..0.33, and putting its midpoint at 34% of an 844 frame at
+    // scale 2.15 solves to y 40%.
+    const startY = reduce ? "2%" : isMobile ? "30%" : "12.6%";
+    const endY = reduce ? "3%" : isMobile ? "32%" : "14.1%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -239,8 +253,19 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
     // Scale progression 2.8 -> 2.4 -> 2.0 -> 1.6 -> 1.5: always some retreat
     // between beats, and the closing comes back in rather than pulling further.
+    //
+    // The phone gets its own progression: 2.0 -> 1.8 -> 1.6 -> 1.4, even
+    // steps of 0.2 instead of a 0.9 drop out of the story followed by three
+    // small ones, and the head swings right / left / right / left so each
+    // card arrives against a changed frame.
+    //
+    // The ceiling is not taste, it is geometry: the story panel and the
+    // callouts own the lower two thirds of a phone, so the head has to live
+    // in the top ~350px. It is 178px of native render, so anything past ~2.0
+    // pushes the face behind the panel. Each y below pins the crown near 40px
+    // from the solved form Y = (40 + 292*S - 422) / 844.
     const c2pre = isMobile
-      ? { scale: 1.95, x: "-48%", y: "26%" }
+      ? { scale: 2.2, x: "22%", y: "31%" }
       : { scale: 3.0, x: fx(0, 3.0), y: "53%" };
     // STEP 1 (story) — closest, and centred. The text sits to the right.
     // STEP 1 (story) — a tight head shot, so the difference between the two
@@ -253,7 +278,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // needs S = 710/178 ≈ 4.0, and centring the head's midpoint (p 0.242)
     // then solves to Y = 103%. It steps left so the story column stays clear.
     const c2close = isMobile
-      ? { scale: 2.6, x: "-30%", y: "64%" }
+      ? { scale: 2.0, x: "22%", y: "23%" }
       : { scale: 4.0, x: fx(-350, 4.0), y: "103%" };
     // STEP 2 (card 01, at the LEFT) — the body now sits OPPOSITE its card
     // instead of leaning into it. Leaning left put the figure and the card on
@@ -262,21 +287,21 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // Card left + body right balances the frame and gives the connector a
     // span to cross.
     const c2s2 = isMobile
-      ? { scale: 1.7, x: "-38%", y: "20%" }
+      ? { scale: 1.8, x: "-22%", y: "17%" }
       : { scale: 2.4, x: fx(180, 2.4), y: "35%" };
     // STEP 3 (card 02, at the RIGHT) — leans right toward its card. -520 put
     // the body hard against the left edge with a 285px void before the card;
     // it still crops, just less.
     const c2s3 = isMobile
-      ? { scale: 1.45, x: "-56%", y: "14%" }
+      ? { scale: 1.6, x: "22%", y: "10%" }
       : { scale: 2.0, x: fx(-230, 2.0), y: "23%" };
     // STEP 4 (card 03) — body centred; stays here
     const c2far = isMobile
-      ? { scale: 1.2, x: "-48%", y: "8%" }
+      ? { scale: 1.4, x: "-14%", y: "3%" }
       : { scale: 1.6, x: fx(0, 1.6), y: "11%" };
     // CLOSING — comes back in slightly, same centred position
     const c2end = isMobile
-      ? { scale: 1.15, x: "-48%", y: "7%" }
+      ? { scale: 1.3, x: "0%", y: "0%" }
       : { scale: 1.5, x: fx(0, 1.5), y: "8%" };
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
@@ -290,6 +315,19 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       front: { x: 0.0, y: 0.0 },        // released at the end
     };
 
+
+    // A phone has no pointer, so the parallax that gives the scenes their
+    // depth on desktop never fires there — which is why they felt flatter.
+    // Scroll is the only continuous input a phone has, so it drives the same
+    // two offsets instead: a slow sway across the pinned sequence. It writes
+    // the same refs as the mouse path and costs one assignment per tick.
+    const touchParallax = (p) => {
+      if (reduce || !parallax1Ref.current) return;
+      const sway = Math.sin(p * Math.PI * 2.2);
+      const rise = Math.cos(p * Math.PI * 1.6);
+      gsap.set(parallax1Ref.current, { x: sway * 14, y: rise * 9 });
+      if (parallax2Ref.current) gsap.set(parallax2Ref.current, { x: sway * -16, y: rise * 10 });
+    };
 
     // mouse parallax on both scenes (outside gsap.context to avoid TDZ on ctx)
     let removeMouse = null;
@@ -401,6 +439,21 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           gsap.to(el, { y: 3, duration: 5, yoyo: true, repeat: -1, ease: "sine.inOut" });
           gsap.to(el, { rotation: 0.2, duration: 6.3, yoyo: true, repeat: -1, ease: "sine.inOut" });
         });
+        // A slow lateral drift and a shallow breath on scene 1. Both are
+        // transform-only and run on periods that do not divide into the float
+        // above, so the motion never settles into an obvious loop.
+        if (idle1Ref.current) {
+          gsap.fromTo(
+            idle1Ref.current,
+            { x: -4 },
+            { x: 4, duration: 8.7, yoyo: true, repeat: -1, ease: "sine.inOut" }
+          );
+          gsap.fromTo(
+            idle1Ref.current,
+            { scale: 0.997 },
+            { scale: 1.004, duration: 7.1, yoyo: true, repeat: -1, ease: "sine.inOut" }
+          );
+        }
       }
 
       // tonal drain proxy: light drains out of scene 1, no shapes
@@ -524,6 +577,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           anticipatePin: 1,
           onUpdate: (self) => {
             const p = self.progress;
+            if (isTouchDevice) touchParallax(p);
             if (p > 0.15 && !mount2Ref.current) {
               mount2Ref.current = true;
               setMountScene2(true);
@@ -657,12 +711,24 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       applyPull();
     }, sectionRef);
 
+    // Put the visitor back where they were. refresh() first so the pin spacer
+    // has re-established the page height — without it the scroll target is
+    // still clamped to the collapsed document.
+    if (restoreScrollRef.current != null) {
+      const y = restoreScrollRef.current;
+      restoreScrollRef.current = null;
+      ScrollTrigger.refresh();
+      if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true });
+      else window.scrollTo(0, y);
+    }
+
     const lenis = window.__lenis;
     const onScroll = () => ScrollTrigger.update();
     if (lenis) lenis.on("scroll", onScroll);
     const refresh = setTimeout(() => ScrollTrigger.refresh(), 900);
 
     return () => {
+      restoreScrollRef.current = window.scrollY;
       clearTimeout(refresh);
       if (removeMouse) removeMouse();
       if (lenis) lenis.off("scroll", onScroll);
@@ -791,6 +857,18 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               >
                 <div ref={parallax2Ref} className="absolute inset-0">
                   <div ref={idle2Ref} className="absolute inset-0">
+                   <div
+                    className="absolute left-1/2 top-1/2"
+                    style={
+                      isMobile
+                        ? { position: "absolute", inset: 0 }
+                        : {
+                            width: `${OVERSAMPLE * 100}%`,
+                            height: `${OVERSAMPLE * 100}%`,
+                            transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE})`,
+                          }
+                    }
+                   >
                     <Spline
                       scene={slot2Url}
                       onLoad={(app) => {
@@ -813,6 +891,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                       }}
                       onError={() => setScene2Failed(true)}
                     />
+                   </div>
                   </div>
                 </div>
               </div>
@@ -846,7 +925,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           dropped here — its offsets blend too and come out muddy. */}
       <div
         ref={featuresHeaderRef}
-        className="pointer-events-none absolute inset-x-0 top-8 text-center mix-blend-difference sm:top-12"
+        className="pointer-events-none absolute inset-x-0 top-8 hidden text-center mix-blend-difference sm:block sm:top-12"
       >
         <p className="font-display text-[13px] uppercase tracking-[0.02em] text-white/[0.83]">
           01 // system features
@@ -934,12 +1013,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       <div
         ref={scrollCueRef}
         data-testid="scroll-cue"
-        className="pointer-events-none absolute bottom-8 right-8 flex flex-col items-center gap-3 mix-blend-difference sm:bottom-10 sm:right-10"
+        className="pointer-events-none absolute bottom-6 right-4 flex flex-col items-center gap-2 mix-blend-difference sm:bottom-10 sm:right-10 sm:gap-3"
       >
-        <span className="font-display text-[11px] uppercase tracking-[0.34em] text-white/75 [writing-mode:vertical-rl]">
+        <span className="font-display text-[9px] uppercase tracking-[0.28em] text-white/75 [writing-mode:vertical-rl] sm:text-[11px] sm:tracking-[0.34em]">
           Scroll
         </span>
-        <span className="relative block h-12 w-px overflow-hidden bg-white/25">
+        <span className="relative block h-7 w-px overflow-hidden bg-white/25 sm:h-12">
           <span className="absolute inset-x-0 top-0 block h-4 animate-scroll-cue bg-white" />
         </span>
       </div>
@@ -987,7 +1066,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         <div
           ref={storyPanelRef}
           data-theme={ch2Theme}
-          className="absolute inset-x-5 bottom-28 cut-corner bg-surface/80 p-5 backdrop-blur-md sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 sm:bg-transparent sm:p-0 sm:backdrop-blur-none lg:right-[9%]"
+          className="absolute inset-x-5 bottom-28 cut-corner bg-surface/[0.93] p-5 backdrop-blur-md sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 sm:bg-transparent sm:p-0 sm:backdrop-blur-none lg:right-[9%]"
         >
           {/* story heading — section-title type, sized so it never pushes the
               paragraphs out of the viewport */}
@@ -1061,7 +1140,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 : `w-[27rem] max-w-[46vw] ${f.side === "left" ? "left-[5%]" : "right-[5%]"}`
             }`}
           >
-            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/70 p-9 pt-6 backdrop-blur-md">
+            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.93] p-6 pt-5 backdrop-blur-md sm:bg-surface/70 sm:p-9 sm:pt-6">
               <div className="select-none font-display text-[7rem] font-light leading-[0.85] text-outline-grey">
                 {f.num}
               </div>
