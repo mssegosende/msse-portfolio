@@ -36,6 +36,47 @@ const uiFade = {
 
 const WORDMARK = "MSGCENGINEER";
 
+// Both scenes expose a `Bot` object, and they DO NOT ship it in the same
+// place: scene 1 has it at x -2.75, scene 2 at x +68.25 (and y 25.68 vs
+// 13.68). That difference is the whole reason ROBOT_DX existed — the old fix
+// pushed the canvas sideways in CSS to compensate, which only held at one
+// viewport width because the scene's own render scale is height-limited when
+// wide and width-limited when narrow (measured: +108px at 1100, +178 at 1700,
+// flat ~182 beyond). Normalising the object itself fixes it in scene units,
+// so it holds at every width and the two themes land the robot in exactly the
+// same place — which is what makes the toggle swap in place instead of the
+// figure jumping.
+const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
+
+// Scene 1's opening framing shows the WHOLE robot. The camera is fixed and
+// crops at 3/4 — neither a taller canvas nor setZoom() moves it — so the only
+// way to see the feet is to shrink the object and lift it.
+//
+// Solved rather than guessed. Two measured framings (scale .42 and .50, both
+// at y 140) give head = 547.5 - 875*s and feet = 526.5 + 875*s at 2000x1014,
+// and y shifts both by 2.5px per unit. Constrained by: the badge needs canvas
+// scale >= 1.2 to leave frame, the feet must stay above the dock (~940) and
+// the head below the headline (~185). That lands on s .33 / y 140 / canvas
+// 1.22 -> head 204, feet 883.
+const BOT_FULL_BODY = { scale: 0.33, y: 140 };
+
+/** Place a scene's rig at a known spot. Both scenes share the same rig. */
+const placeBot = (app, { scale, y } = {}) => {
+  try {
+    const bot = app?.findObjectByName?.("Bot");
+    if (!bot) return;
+    bot.position.x = BOT_HOME.x;
+    bot.position.y = y === undefined ? BOT_HOME.y : y;
+    if (scale !== undefined) {
+      bot.scale.x = scale;
+      bot.scale.y = scale;
+      bot.scale.z = scale;
+    }
+  } catch (e) {
+    /* older runtime, or a scene without the named rig */
+  }
+};
+
 // Where each callout lands. The gaze turns toward these in order, so the
 // positions and the head poses in GAZE must stay in sync.
 // No translate utilities here: GSAP animates `y` on these nodes and would
@@ -137,6 +178,7 @@ export const ScrollScene = ({ onReady }) => {
 
   const handleLoad = (app) => {
     app1Ref.current = app;
+    placeBot(app, BOT_FULL_BODY);
     if (readyRef.current) return;
     readyRef.current = true;
     setProgress(100);
@@ -158,14 +200,21 @@ export const ScrollScene = ({ onReady }) => {
   useLayoutEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // middle ground: camera closer, robot vertically centered, little air above the head
-    const startScale = reduce ? 1 : isMobile ? 1.3 : 1.45;
+    // The rig is already sized for the full body, so the canvas no longer
+    // zooms in at the open — the sequence does that later. It keeps a slight
+    // overscale because Spline draws its "Built with Spline" badge INSIDE the
+    // WebGL canvas (not the DOM, so CSS cannot reach it); at 1.0 the badge
+    // lands in frame at the bottom right. 1.08 pushes it back past the corner
+    // the way the old 1.45 framing did, and the feet still clear the dock.
+    const startScale = reduce ? 1.22 : isMobile ? 1.3 : 1.22;
     // The head cleared the top of the viewport by ~78px at 2000x1014, which
     // read as dead air. Measured off the silhouette, not the transform: -3.9%
     // of the wrap height is ~39px, so the gap halves and the head still has
     // room. The wall is inside the same scaled wrap (1.45 => 228px of bleed
     // past each edge), so moving it up cannot expose an edge.
-    const startY = reduce ? "2%" : isMobile ? "4.5%" : "6.1%";
-    const endY = reduce ? "3%" : isMobile ? "6%" : "7.6%";
+    // Vertical placement is Bot.position.y's job now, not the canvas's.
+    const startY = reduce ? "0%" : isMobile ? "2%" : "0%";
+    const endY = reduce ? "1%" : isMobile ? "3%" : "1.5%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -180,11 +229,12 @@ export const ScrollScene = ({ onReady }) => {
     //   scene 1's robot    -6.5px  (centred — it is a different model)
     // So when dark mode puts scene 1's robot in slot 2, the correction has to
     // go to ~0 or every framing lands 180px off.
-    // Measured off each silhouette's centroid at 2000px, default camera:
-    // scene 2's robot sits +177.8px right of centre, scene 1's is centred
-    // (-6.5px). Both slots now run the SAME model, so one offset serves both.
-    const ROBOT_DX = darkMode ? 180 : 0;
-    const ROBOT_DX_1 = ROBOT_DX;
+    // Zero now, in both themes: placeBot() centres the rig in SCENE units, so
+    // there is nothing left for CSS to compensate and nothing that drifts with
+    // viewport width. Kept as a named constant because every framing below is
+    // still expressed as "where the BODY goes", not where the canvas goes.
+    const ROBOT_DX = 0;
+    const ROBOT_DX_1 = 0;
     const VW = window.innerWidth || 2000;
     const fx = (visualPx, scale) => `${((visualPx - ROBOT_DX * scale) / VW) * 100}%`;
     const fx1 = (visualPx, scale) => `${((visualPx - ROBOT_DX_1 * scale) / VW) * 100}%`;
@@ -381,7 +431,9 @@ export const ScrollScene = ({ onReady }) => {
       // model moves that centre, so every anchor shifts by the same delta
       // expressed in layer percent. In white mode this evaluates to 0 and the
       // calibrated numbers are used untouched.
-      const anchorShift = ((ROBOT_DX - 180) / VW) * 100;
+      // -9 = 180px at the 2000px reference the anchors were calibrated on.
+      // Constant, not VW-derived: the body no longer moves with viewport width.
+      const anchorShift = -9;
       const anchors = [
         { px: 58.5 + anchorShift, py: 26.4 },   // 01 HEAD   — visor centre
         { px: 73.3 + anchorShift, py: 56.7 },   // 02 HANDS  — right forearm (see note above)
@@ -725,6 +777,7 @@ export const ScrollScene = ({ onReady }) => {
                         // Both scenes expose an identical rig (same 7 objects,
                         // Head in both), so the gaze ports across the swap.
                         app2Ref.current = app;
+                        placeBot(app);
                         // Scene 1's background is baked opaque #E2E2E2, and in
                         // slot 2 it IS chapter 2's backdrop, so lift it to pure
                         // white. Scene 2 is transparent and needs nothing.
@@ -763,7 +816,7 @@ export const ScrollScene = ({ onReady }) => {
       {/* kinetic headline (phase 1) — sits just above the nav dock, difference blend */}
       <div
         ref={headlineRef}
-        className="pointer-events-none absolute inset-x-0 bottom-40 text-center mix-blend-difference sm:bottom-24"
+        className="pointer-events-none absolute inset-x-0 top-14 text-center mix-blend-difference sm:top-20"
       >
         <div className="overflow-hidden px-4">
           <motion.h1
