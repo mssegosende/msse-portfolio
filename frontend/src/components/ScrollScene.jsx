@@ -34,7 +34,7 @@ const uiFade = {
   }),
 };
 
-const WORDMARK = "MSGCENGINEER";
+const WORDMARK = "MSSENGINEERING";
 
 // Both scenes expose a `Bot` object, and they DO NOT ship it in the same
 // place: scene 1 has it at x -2.75, scene 2 at x +68.25 (and y 25.68 vs
@@ -342,7 +342,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       : { scale: 1.61, x: fx(0, 1.61), y: "9.5%" };     // L .715 — the waist
     // CLOSING — comes back in slightly, same centred position
     const c2end = isMobile
-      ? { scale: 1.3, x: "0%", y: "0%" }
+      ? { scale: 1.4, x: "0%", y: "-12%" }
       : { scale: 1.49, x: fx(0, 1.49), y: "5.4%" };     // L .76 — the hip
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
@@ -1060,7 +1060,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       <div
         ref={scrollCueRef}
         data-testid="scroll-cue"
-        className="pointer-events-none absolute bottom-6 right-4 flex flex-col items-center gap-2 mix-blend-difference sm:bottom-10 sm:right-10 sm:gap-3"
+        className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 flex-col items-center gap-2 mix-blend-difference sm:right-10 sm:top-auto sm:bottom-10 sm:translate-y-0 sm:gap-3"
       >
         <span className="font-display text-[9px] uppercase tracking-[0.28em] text-white/75 [writing-mode:vertical-rl] sm:text-[11px] sm:tracking-[0.34em]">
           Scroll
