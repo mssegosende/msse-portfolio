@@ -70,7 +70,7 @@ const placeBot = (app, { scale, y } = {}) => {
 // No translate utilities here: GSAP animates `y` on these nodes and would
 // wipe a Tailwind transform, so card 03 centres with mx-auto instead.
 
-export const ScrollScene = ({ onReady }) => {
+export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const { theme } = useTheme();
   const darkMode = theme === "dark";
   // Chapter 2 plays against the OPPOSITE tone from the page: black behind the
@@ -92,9 +92,16 @@ export const ScrollScene = ({ onReady }) => {
   const [mountScene2, setMountScene2] = useState(false);
   const [scene2Ready, setScene2Ready] = useState(false);
   const [scene2Failed, setScene2Failed] = useState(false);
+  const [journeyDone, setJourneyDone] = useState(false);
   const readyRef = useRef(false);
   const mount2Ref = useRef(false);
   const stopped1Ref = useRef(false);
+  const journeyRef = useRef(false);
+  // Held in a ref so the layout effect does not have to list it: App passes a
+  // fresh closure every render, and rebuilding the whole timeline for that
+  // would tear down the pin mid-scroll.
+  const onJourneyEndRef = useRef(onJourneyEnd);
+  onJourneyEndRef.current = onJourneyEnd;
   const app1Ref = useRef(null);
   const app2Ref = useRef(null);
   const lastMouseRef = useRef(0);
@@ -194,14 +201,18 @@ export const ScrollScene = ({ onReady }) => {
     // distant. Note the overscale also keeps Spline's "Built with Spline"
     // badge out of frame — it is drawn INSIDE the WebGL canvas, not the DOM,
     // so CSS cannot reach it; anything at or below ~1.2 brings it into view.
-    const startScale = reduce ? 1 : isMobile ? 1.3 : 1.45;
+    const startScale = reduce ? 1 : isMobile ? 1.62 : 1.78;
     // The head cleared the top of the viewport by ~78px at 2000x1014, which
     // read as dead air. Measured off the silhouette, not the transform: -3.9%
     // of the wrap height is ~39px, so the gap halves and the head still has
     // room. The wall is inside the same scaled wrap (1.45 => 228px of bleed
     // past each edge), so moving it up cannot expose an edge.
-    const startY = reduce ? "2%" : isMobile ? "4.5%" : "6.1%";
-    const endY = reduce ? "3%" : isMobile ? "6%" : "7.6%";
+    // Zooming in pushes the crown off the top: scaling about the centre moves
+    // a point at y40 to (40-507)*1.78/1.45+507 = -66 at 2000x1014. 66px of a
+    // 1014 frame is 6.5%, so the framing steps down by that much to put the
+    // head back where it was.
+    const startY = reduce ? "2%" : isMobile ? "10.5%" : "12.6%";
+    const endY = reduce ? "3%" : isMobile ? "12%" : "14.1%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -507,7 +518,7 @@ export const ScrollScene = ({ onReady }) => {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "+=1040%",
+          end: isMobile ? "+=780%" : "+=1040%",
           pin: true,
           scrub: 1,
           anticipatePin: 1,
@@ -520,6 +531,16 @@ export const ScrollScene = ({ onReady }) => {
             if (p > 0.45 && !stopped1Ref.current) {
               stopped1Ref.current = true;
               try { app1Ref.current?.stop(); } catch (e) { /* runtime without stop() */ }
+            }
+            // Latches once and never unlatches: the dock and the calls to
+            // action appear when the sequence has been seen, and stay put.
+            // Scrolling back to the top must not hide them again, or the
+            // visitor has to sit through both scenes a second time to get
+            // the nav back.
+            if (p > 0.985 && !journeyRef.current) {
+              journeyRef.current = true;
+              setJourneyDone(true);
+              onJourneyEndRef.current?.();
             }
             if (p < 0.25 && stopped1Ref.current) {
               stopped1Ref.current = false;
@@ -614,19 +635,23 @@ export const ScrollScene = ({ onReady }) => {
 
       // CLOSING: robot centres in the viewport, the head is released, and the
       // three cards come back together with their three dashed connectors.
-      tl.to(body, { t: 5, duration: 0.30, ease: "power1.inOut" }, 2.92);
-      tl.to(gaze, { ...GAZE.front, duration: 0.16, ease: "power2.inOut" }, 2.92);
-      tl.set(gazeLock, { on: 0 }, 3.10);
-      [0, 1].forEach((i) => {
-        tl.to(calloutRefs.current[i], { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" }, 3.16);
-        tl.set(lineRefs.current[i], { opacity: 1 }, 3.16);
-        tl.to(draw[i], { p: 1, duration: 0.14, ease: "power1.inOut" }, 3.16);
-        tl.to(dotRefs.current[i], { opacity: 1, duration: 0.05 }, 3.30);
-        tl.to(railRefs.current[i], { color: tone.railOn, duration: 0.05 }, 3.16);
-      });
+      const closeAt = isMobile ? 2.72 : 2.92;
+      tl.to(body, { t: 5, duration: 0.30, ease: "power1.inOut" }, closeAt);
+      tl.to(gaze, { ...GAZE.front, duration: 0.16, ease: "power2.inOut" }, closeAt);
+      tl.set(gazeLock, { on: 0 }, closeAt + 0.18);
+      if (!isMobile) {
+        [0, 1].forEach((i) => {
+          tl.to(calloutRefs.current[i], { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" }, 3.16);
+          tl.set(lineRefs.current[i], { opacity: 1 }, 3.16);
+          tl.to(draw[i], { p: 1, duration: 0.14, ease: "power1.inOut" }, 3.16);
+          tl.to(dotRefs.current[i], { opacity: 1, duration: 0.05 }, 3.30);
+          tl.to(railRefs.current[i], { color: tone.railOn, duration: 0.05 }, 3.16);
+        });
+      }
 
-      // hold: the three cards stay up while the user reads, before release
-      tl.to({}, { duration: 0.45 });
+      // hold before release. Short on a phone: there is no three-card payoff
+      // to read there, so a long one just feels like the page has jammed.
+      tl.to({}, { duration: isMobile ? 0.12 : 0.45 });
 
       // first projection, so nothing is stale before the first scroll tick
       applyPull();
@@ -868,6 +893,39 @@ export const ScrollScene = ({ onReady }) => {
         </div>
       </div>
 
+      {/* Brand and status sit OUTSIDE the z-10 UI layer. They carry
+          mix-blend-difference, and a z-index on an ancestor makes a stacking
+          context that isolates the blend — which is exactly why they used to
+          render flat white and vanish against the light wall in white mode.
+          Out here the blend resolves against the scene: |backdrop - white| is
+          dark over the wall and white over the robot, so they read on both
+          without a single per-theme conditional. */}
+      <motion.div
+        variants={uiFade} custom={0} initial="hidden"
+        animate={revealed ? "show" : "hidden"}
+        className="absolute left-6 top-6 sm:left-10 sm:top-8"
+      >
+        <span
+          data-testid="hero-brand"
+          className="font-orbitron text-xs font-bold tracking-[0.12em] text-white mix-blend-difference sm:text-sm sm:tracking-[0.3em]"
+        >
+          {profile.shortMark}
+          <span className="hidden text-white/65 sm:inline"> {profile.markSuffix}</span>
+        </span>
+      </motion.div>
+
+      <motion.div
+        variants={uiFade} custom={1} initial="hidden"
+        animate={revealed ? "show" : "hidden"}
+        className="absolute right-6 top-6 sm:right-10 sm:top-8 flex items-center gap-2"
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse-dot" />
+        <span data-testid="hero-status" className="font-display text-[13px] uppercase tracking-[0.02em] text-white/[0.83] mix-blend-difference">
+          STATUS: {profile.status}
+        </span>
+      </motion.div>
+
+
       {/* Scroll cue. The hero IS the scroll — a visitor who lands, clicks a
           project and leaves never sees either scene, so it has to say so. It
           fades on the first beat, once the message has landed. Difference
@@ -886,42 +944,22 @@ export const ScrollScene = ({ onReady }) => {
         </span>
       </div>
 
-      {/* Layer D — UI. Keeps z-10: these marks must NOT invert against the
-          scene, or the brand, status and rail numbers wash out on the light wall. */}
+      {/* Layer D — UI. The z-10 is what keeps the cards and the rail from
+          blending into the scene; the marks that DO need to blend (brand,
+          status, headline, features header, scroll cue) live outside it. */}
       <div className="pointer-events-none absolute inset-0 z-10">
-        {/* top-left brand */}
-        <motion.div
-          variants={uiFade} custom={0} initial="hidden"
-          animate={revealed ? "show" : "hidden"}
-          className="absolute left-6 top-6 sm:left-10 sm:top-8"
-        >
-          <span
-            data-testid="hero-brand"
-            className="font-orbitron text-xs font-bold tracking-[0.12em] text-ink mix-blend-difference sm:text-sm sm:tracking-[0.3em]"
-          >
-            {profile.shortMark}
-            <span className="hidden text-ink/65 sm:inline"> {profile.markSuffix}</span>
-          </span>
-        </motion.div>
-
         {/* top-right status */}
-        <motion.div
-          variants={uiFade} custom={1} initial="hidden"
-          animate={revealed ? "show" : "hidden"}
-          className="absolute right-6 top-6 sm:right-10 sm:top-8 flex items-center gap-2"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-ink animate-pulse-dot" />
-          <span data-testid="hero-status" className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] mix-blend-difference">
-            STATUS: {profile.status}
-          </span>
-        </motion.div>
-
         {/* bottom-left pill buttons */}
         <motion.div
           variants={uiFade} custom={2} initial="hidden"
           animate={revealed ? "show" : "hidden"}
           className="absolute bottom-24 left-6 sm:bottom-28 sm:left-10"
         >
+          <div
+            className={`hidden transition-opacity duration-700 sm:block ${
+              journeyDone ? "opacity-100" : "pointer-events-none opacity-0"
+            }`}
+          >
           <div ref={pillsRef} className="pointer-events-auto flex flex-wrap gap-3">
             <button
               data-testid="hero-cta-projects"
@@ -939,6 +977,7 @@ export const ScrollScene = ({ onReady }) => {
               <Send size={13} />
               Contact
             </button>
+          </div>
           </div>
         </motion.div>
 

@@ -12,13 +12,15 @@ import { Footer } from "@/components/Footer";
 
 function App() {
   useLenis();
-  const [heroReady, setHeroReady] = useState(false);
+  // The dock stays out of the way until the hero sequence has been seen once.
+  // It latches on, so coming back to the top does not hide it again.
+  const [journeyDone, setJourneyDone] = useState(false);
 
   return (
     <div className="App bg-surface font-inter text-ink antialiased">
-      <NavigationDock visible={heroReady} />
+      <NavigationDock visible={journeyDone} />
       <main>
-        <ScrollScene onReady={() => setHeroReady(true)} />
+        <ScrollScene onJourneyEnd={() => setJourneyDone(true)} />
         <Marquee />
         <About />
         <Projects />
