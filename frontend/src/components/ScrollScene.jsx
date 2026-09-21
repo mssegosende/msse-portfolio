@@ -338,21 +338,21 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // span to cross.
     const c2s2 = isMobile
       ? { scale: 1.8, x: "-22%", y: "17%" }
-      : { scale: 3.05, x: fx(150, 3.05), y: "59.3%" };   // L .45 — above the elbow
+      : { scale: 2.75, x: fx(150, 2.75), y: "49.1%" };   // L .48 — above the elbow
     // STEP 3 (card 02, at the RIGHT) — leans right toward its card. -520 put
     // the body hard against the left edge with a 285px void before the card;
     // it still crops, just less.
     const c2s3 = isMobile
       ? { scale: 1.6, x: "22%", y: "10%" }
-      : { scale: 2.53, x: fx(-200, 2.53), y: "41.5%" }; // L .51 — the elbow
+      : { scale: 2.15, x: fx(-200, 2.15), y: "28.3%" }; // L .57 — past the elbow
     // STEP 4 (card 03) — body centred; stays here
     const c2far = isMobile
       ? { scale: 1.4, x: "-14%", y: "3%" }
-      : { scale: 1.61, x: fx(0, 1.61), y: "9.5%" };     // L .715 — the waist
+      : { scale: 1.65, x: fx(0, 1.65), y: "11.0%" };    // L .70 — the waist
     // CLOSING — comes back in slightly, same centred position
     const c2end = isMobile
-      ? { scale: 1.29, x: "0%", y: "11.3%" }
-      : { scale: 1.49, x: fx(0, 1.49), y: "5.4%" };     // L .76 — the hip
+      ? { scale: 1.4, x: "0%", y: "-5%" }
+      : { scale: 1.25, x: fx(0, 1.25), y: "-2.8%" };    // L .875 — down the legs
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
     // Gaze poses, radians, capped at ±0.35. +y turns the face to the viewer's
@@ -424,8 +424,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         ? {
             wallStart: "#000000",
             wallSettle: "#121212",
-            wmStart: "#262626",
-            wmSettle: "#333333",
+            wmStart: "#121212",
+            wmSettle: "#000000",
             overlay: "#000000",
             backdrop: "#000000",
             railOn: "#FFFFFF",
@@ -436,8 +436,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         : {
             wallStart: "#FFFFFF",
             wallSettle: "#EDEDED",
-            wmStart: "#DADADA",
-            wmSettle: "#CCCCCC",
+            wmStart: "#EDEDED",
+            wmSettle: "#FFFFFF",
             overlay: "#FFFFFF",
             backdrop: "#FFFFFF",
             railOn: "#000000",
@@ -779,12 +779,22 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         });
       }
 
-      // The phone ends on the whole figure: card 03 clears, the rig shrinks
-      // and rises so the feet exist inside the render, and the framing opens
-      // to hold head-to-feet. Desktop keeps its three-card payoff.
+      // The phone's last move is a drop to the feet. The rig keeps its scale,
+      // so the camera stays at the same distance as every other beat — only
+      // the figure rises inside the render until the feet are drawn at all.
+      //
+      // How far: feet sit at 1512.3 - 2.5*(y - 25.68) in native px of a 1014
+      // canvas, and they have to land around p .75, not at the canvas floor,
+      // because the quarter below them is what keeps Spline's badge out of
+      // frame once the framing pans. That solves to y 326.
+      //
+      // Card 03 stays up, but it has to get out of the way: at bottom 6rem it
+      // owns everything below y 248 on an 844 screen, which is exactly where
+      // the feet land. It rises to the top instead, so the frame reads card
+      // above, feet below, pointing at the footer.
       if (isMobile) {
-        tl.to(calloutRefs.current[2], { opacity: 0, y: -20, duration: 0.09 }, closeAt);
-        tl.to(botRig, { s: 0.4, y: 186, duration: 0.26, ease: "power1.inOut" }, closeAt);
+        tl.to(botRig, { y: 326, duration: 0.26, ease: "power1.inOut" }, closeAt);
+        tl.to(calloutRefs.current[2], { y: -210, duration: 0.24, ease: "power1.inOut" }, closeAt);
       }
 
       // hold before release. Short on a phone: there is no three-card payoff
@@ -798,12 +808,22 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // Put the visitor back where they were. refresh() first so the pin spacer
     // has re-established the page height — without it the scroll target is
     // still clamped to the collapsed document.
+    let restoreRaf = null;
     if (restoreScrollRef.current != null) {
       const y = restoreScrollRef.current;
       restoreScrollRef.current = null;
       ScrollTrigger.refresh();
-      if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true });
-      else window.scrollTo(0, y);
+      let tries = 0;
+      const put = () => {
+        if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true, force: true });
+        else window.scrollTo(0, y);
+        // Give up once it holds, or after a handful of frames; the spacer can
+        // take a beat to settle and every frame before that clamps the value.
+        if (++tries < 12 && Math.abs(window.scrollY - y) > 2) {
+          restoreRaf = requestAnimationFrame(put);
+        }
+      };
+      put();
     }
 
     const lenis = window.__lenis;
@@ -813,6 +833,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
     return () => {
       restoreScrollRef.current = window.scrollY;
+      if (restoreRaf) cancelAnimationFrame(restoreRaf);
       clearTimeout(refresh);
       if (removeMouse) removeMouse();
       if (lenis) lenis.off("scroll", onScroll);
@@ -860,7 +881,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               data-testid="bg-wordmark"
               className="pointer-events-none absolute inset-x-0 top-[47%] text-center"
             >
-              <span className="wordmark-depth whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em]">
+              <span className="wordmark-depth whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-ink opacity-[0.35] mix-blend-difference">
                 {WORDMARK}
               </span>
             </div>
