@@ -152,9 +152,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // both slots run it, so the figure you meet in the opening shot is the same
   // one that carries the feature cards — white mode is the black robot on
   // white throughout, dark mode the silver robot on black throughout.
-  const sceneUrl = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
-  const slot1Url = sceneUrl;
-  const slot2Url = sceneUrl;
   const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -215,6 +212,20 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const [isMobile, setIsMobile] = useState(
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
   );
+
+  // El telefono NO cambia de escena con el tema. Cambiarla remonta los dos
+  // <Spline> (llevan key por url) y eso destruye y recrea los dos contextos
+  // WebGL: medido, cada toggle pasa de 2 contextos creados a 4, con 2
+  // perdidos en el medio. iOS Safari tiene un techo bajo y recupera la
+  // memoria GPU de forma asincrona, asi que pide los nuevos mientras los
+  // viejos siguen tomados, mata la pestana y recarga -- de ahi el salto
+  // arriba y el tema opuesto, que sale de localStorage al recargar.
+  //
+  // Queda el plateado porque aguanta los dos fondos; el negro desaparece
+  // sobre negro. Escritorio conserva el intercambio: ahi sobrevive.
+  const sceneUrl = isMobile || darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
+  const slot1Url = sceneUrl;
+  const slot2Url = sceneUrl;
 
   // The breakpoint used to be read once at mount and never again, so a page
   // that loaded under 768px — browser zoom, a narrow window, devtools docked
