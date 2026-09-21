@@ -447,7 +447,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     const ctx = gsap.context(() => {
       gsap.set(canvasWrapRef.current, {
         scale: startScale,
-        x: fx1(0, startScale),
+        x: fx1(isMobile ? (darkMode ? 46 : -46) : 0, startScale),
         y: startY,
         transformOrigin: "50% 50%",
       });
@@ -771,7 +771,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         canvasWrapRef.current,
         {
           scale: startScale * 0.96,
-          x: fx1(0, startScale * 0.96),
+          x: fx1(isMobile ? (darkMode ? 46 : -46) : 0, startScale * 0.96),
           y: endY,
           duration: 0.32,
           ease: "power1.inOut",
@@ -941,7 +941,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             <div
               ref={wm1Ref}
               data-testid="bg-wordmark"
-              className="pointer-events-none absolute inset-x-0 top-[47%] text-center"
+              className="pointer-events-none absolute inset-x-0 top-[47%] hidden text-center sm:block"
             >
               <span className="wordmark-grad whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] opacity-50">
                 {WORDMARK}
@@ -1118,9 +1118,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       {/* kinetic headline (phase 1) — sits just above the nav dock, difference blend */}
       <div
         ref={headlineRef}
-        className={`pointer-events-none absolute inset-x-0 bottom-44 text-center sm:bottom-44 ${
-          darkMode ? "headline-glow" : "mix-blend-difference"
-        }`}
+        className="pointer-events-none absolute inset-x-0 bottom-44 text-center mix-blend-difference sm:bottom-44"
       >
         <div className="overflow-hidden px-4">
           <motion.h1
@@ -1129,9 +1127,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-1"
-            className={`font-inter text-[clamp(1.4rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.12em] sm:tracking-[0.3em] ${
-              darkMode ? "text-white" : "text-ink"
-            }`}
+            className="font-inter text-[clamp(1.4rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.12em] text-ink sm:tracking-[0.3em]"
           >
             — Build the future —
           </motion.h1>
@@ -1143,9 +1139,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-2"
-            className={`font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] sm:tracking-[0.42em] ${
-              darkMode ? "text-white/70" : "text-ink/40"
-            }`}
+            className="font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] text-ink/40 sm:tracking-[0.42em]"
           >
             one system at a time
           </motion.p>
@@ -1246,7 +1240,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         <div
           ref={storyPanelRef}
           data-theme={ch2Theme}
-          className="absolute inset-x-5 bottom-28 cut-corner bg-surface/[0.82] p-5 backdrop-blur-md sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 sm:bg-transparent sm:p-0 sm:backdrop-blur-none lg:right-[9%]"
+          className="absolute inset-x-5 bottom-28 cut-corner bg-surface/[0.70] p-5 backdrop-blur-md sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 sm:bg-transparent sm:p-0 sm:backdrop-blur-none lg:right-[9%]"
         >
           {/* story heading — section-title type, sized so it never pushes the
               paragraphs out of the viewport */}
@@ -1320,7 +1314,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 : `w-[27rem] max-w-[46vw] ${f.side === "left" ? "left-[5%]" : "right-[5%]"}`
             }`}
           >
-            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.82] p-6 pt-5 backdrop-blur-md sm:bg-surface/70 sm:p-9 sm:pt-6">
+            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.70] p-6 pt-5 backdrop-blur-md sm:bg-surface/70 sm:p-9 sm:pt-6">
               <div className="select-none font-display text-[7rem] font-light leading-[0.85] text-outline-grey">
                 {f.num}
               </div>
