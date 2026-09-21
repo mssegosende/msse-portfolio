@@ -52,8 +52,29 @@
         --wm-c: 44 48 54;
     }
 
+    /* Variables del TEMA DE LA PAGINA. Van en :root y en :root[data-theme]
+       -- no en el selector generico [data-theme='dark'] -- para que el
+       data-theme="dark" fijo de la seccion del hero no las pise. Existen para
+       que la timeline no tenga que reconstruirse al cambiar de tema: los
+       colores viven en CSS y el scroll no se entera. */
     :root {
         --radius: 0.75rem;
+
+        --page-surface: 255 255 255;   /* fondo del capitulo 2 */
+        --wall-a: 255 255 255;         /* pared al cargar */
+        --wall-b: 237 237 237;         /* pared una vez asentada */
+        --drain-b: 0.25;               /* delta de brillo del drain */
+        --drain-c: -0.1;               /* delta de contraste */
+        --lift-from: 1.6;              /* brillo inicial de la escena 2 */
+    }
+
+    :root[data-theme='dark'] {
+        --page-surface: 0 0 0;
+        --wall-a: 0 0 0;
+        --wall-b: 18 18 18;
+        --drain-b: -0.98;
+        --drain-c: 0.15;
+        --lift-from: 0.25;
     }
 }
 
@@ -186,6 +207,20 @@ body {
 /* Un halo del color de la superficie. Despega un texto tanto de la pared
    como del robot sin depender de un blend: en claro es blanco detras de
    texto oscuro, en oscuro negro detras de texto claro. */
+/* El drain y el lift se manejan por variable de progreso, no por valor
+   absoluto: la timeline tweenea --drain-t y --lift-t de 0 a 1, y el CSS
+   resuelve el filtro con los deltas del tema. Asi el tween es el mismo en
+   los dos modos y cambiar de tema no obliga a reconstruirlo. */
+.hero-drain {
+    filter:
+        brightness(calc(1 + var(--drain-b) * var(--drain-t, 0)))
+        contrast(calc(1 + var(--drain-c) * var(--drain-t, 0)));
+}
+
+.hero-lift {
+    filter: brightness(calc(var(--lift-from) + (1 - var(--lift-from)) * var(--lift-t, 0)));
+}
+
 .text-halo {
     text-shadow:
         0 0 10px rgb(var(--surface) / 0.92),

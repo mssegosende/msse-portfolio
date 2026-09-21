@@ -182,6 +182,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const botRef = useRef(null);
   const head1Ref = useRef(null);
   const heroEndRef = useRef(0);
+  // La direccion por defecto de la mirada depende del tema, pero no tiene
+  // por que reconstruir la timeline: el ticker la lee de aca en cada frame.
+  const head1BaseRef = useRef({ x: 0.05, y: 0.27 });
+  useEffect(() => {
+    // Mutado, no reemplazado: el ticker guardo esta referencia, asi que
+    // cambiarla por otro objeto lo dejaria leyendo el anterior.
+    head1BaseRef.current.y = darkMode ? -0.27 : 0.27;
+  }, [darkMode]);
 
   const sectionRef = useRef(null);
   const canvasWrapRef = useRef(null);
@@ -193,6 +201,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const splineLayerRef = useRef(null);
   const overlayRef = useRef(null);
   const wallRef = useRef(null);
+  const wallTopRef = useRef(null);
   const vignetteRef = useRef(null);
   const wm1Ref = useRef(null);
   const storyTitleRef = useRef(null);
@@ -494,41 +503,17 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // models trade slots (see slot1Url/slot2Url), so the robot you see is
       // always the real material — silver opening on black, black closing on
       // white — never a negative of the other one.
-      const tone = darkMode
-        ? {
-            wallStart: "#000000",
-            wallSettle: "#121212",
-            wmStart: "#121212",
-            wmSettle: "#000000",
-            overlay: "#000000",
-            backdrop: "#000000",
-            railOn: "#FFFFFF",
-            vignette: "0 0 0",
-            drainTo: { b: 0.02, c: 1.15 },
-            liftFrom: 0.25,
-          }
-        : {
-            wallStart: "#FFFFFF",
-            wallSettle: "#EDEDED",
-            wmStart: "#EDEDED",
-            wmSettle: "#FFFFFF",
-            overlay: "#FFFFFF",
-            backdrop: "#FFFFFF",
-            railOn: "#000000",
-            vignette: "0 0 0",
-            // white mode dips through WHITE, not black: the wash rises into
-            // the veil instead of falling into it
-            drainTo: { b: 1.25, c: 0.9 },
-            liftFrom: 1.6,
-          };
+      // tone ya no existe: el fondo, la pared, el drain y el lift salen de
+      // variables CSS del tema de la pagina, y el rail se atenua por opacidad
+      // en vez de por color. Nada de esto depende de darkMode, que es lo que
+      // permite sacar el tema de las dependencias del efecto y no reconstruir
+      // la timeline -- ni los contextos WebGL -- al cambiarlo.
 
       // The backdrop scene 2 composites against — its canvas is transparent, so
       // this is the colour the robot is actually seen on.
-      gsap.set(sectionRef.current, { backgroundColor: tone.backdrop });
-      gsap.set(overlayRef.current, { backgroundColor: tone.overlay });
-      vignetteRef.current.style.setProperty("--vignette", tone.vignette);
+      vignetteRef.current.style.setProperty("--vignette", "0 0 0");
 
-      gsap.set(wallRef.current, { backgroundColor: tone.wallStart });
+      gsap.set(wallTopRef.current, { opacity: 0 });
       // The wordmark is mix-blend-difference, so what you see is |wall - text|.
       // Against a pure white wall, white text differences to exactly zero and
       // the wordmark disappears (measured: 0 levels of spread, vs 6 at
@@ -546,7 +531,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       }
       gsap.set(vignetteRef.current, { opacity: 0 });
       gsap.set(layer2Ref.current, { opacity: 0 });
-      gsap.set(layer2InnerRef.current, { filter: `brightness(${tone.liftFrom})` });
+      layer2InnerRef.current.style.setProperty("--lift-t", 0);
       gsap.set(featuresHeaderRef.current, { opacity: 0, y: 24 });
       gsap.set(overlayRef.current, { opacity: 0 });
       storyRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 28 }));
@@ -586,14 +571,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       }
 
       // tonal drain proxy: light drains out of scene 1, no shapes
-      const drain = { b: 1, c: 1 };
+      const drain = { t: 0 };
       const applyDrain = () => {
-        canvasWrapRef.current.style.filter = `brightness(${drain.b}) contrast(${drain.c})`;
+        canvasWrapRef.current.style.setProperty("--drain-t", drain.t);
       };
       applyDrain();
-      const lift = { b: tone.liftFrom };
+      const lift = { t: 0 };
       const applyLift = () => {
-        layer2InnerRef.current.style.filter = `brightness(${lift.b})`;
+        layer2InnerRef.current.style.setProperty("--lift-t", lift.t);
       };
 
       // ---- phase 3 rig ------------------------------------------------------
@@ -719,7 +704,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // Two sine terms on periods that do not divide into each other, so the
       // drift never settles into a visible loop, and a 0.05 ease so it always
       // returns rather than snapping.
-      const HEAD1_BASE = { x: 0.05, y: darkMode ? -0.27 : 0.27 };
+      const HEAD1_BASE = head1BaseRef.current;
       const head1 = { x: HEAD1_BASE.x, y: HEAD1_BASE.y };
       let head1T = 0;
       const applyHead1 = () => {
@@ -790,12 +775,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // Grey settles in ahead of the drain, so the order reads white -> grey
       // -> black instead of white -> black.
       tl.to(vignetteRef.current, { opacity: 1, duration: 0.20 }, 0.02);
-      tl.to(wallRef.current, { backgroundColor: tone.wallSettle, duration: 0.20 }, 0.02);
+      tl.to(wallTopRef.current, { opacity: 1, duration: 0.20 }, 0.02);
 
       // PHASE 1 exit: headline leaves, light drains to black, slight drift-in
       tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
       tl.to(scrollCueRef.current, { opacity: 0, y: 20, duration: 0.06 }, 0.02);
-      tl.to(drain, { ...tone.drainTo, duration: 0.3, onUpdate: applyDrain }, 0.1);
+      tl.to(drain, { t: 1, duration: 0.3, onUpdate: applyDrain }, 0.1);
       tl.to(overlayRef.current, { opacity: 1, duration: 0.34 }, 0.1);
       tl.to(
         canvasWrapRef.current,
@@ -813,7 +798,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // PHASE 2: crossfade in darkness — chrome robot rises in EXTREME CLOSE-UP
       tl.to(splineLayerRef.current, { opacity: 0, duration: 0.12 }, 0.5);
       tl.to(layer2Ref.current, { opacity: 1, duration: 0.12 }, 0.5);
-      tl.to(lift, { b: 1, duration: 0.16, onUpdate: applyLift }, 0.5);
+      tl.to(lift, { t: 1, duration: 0.16, onUpdate: applyLift }, 0.5);
 
       // story paragraphs fade in one after another during the close-up hold
       // (long scroll lock: only the tiny idle breathing moves the robot here)
@@ -863,7 +848,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         tl.set(lineRefs.current[i], { opacity: 1 }, cardAt);
         tl.to(draw[i], { p: 1, duration: 0.14, ease: "power1.inOut" }, cardAt);
         tl.to(dotRefs.current[i], { opacity: 1, duration: 0.05 }, cardAt + 0.14);
-        tl.to(railRefs.current[i], { color: tone.railOn, duration: 0.05 }, cardAt);
+        tl.to(railRefs.current[i], { opacity: 1, duration: 0.05 }, cardAt);
       });
 
       // CLOSING: robot centres in the viewport, the head is released, and the
@@ -878,7 +863,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           tl.set(lineRefs.current[i], { opacity: 1 }, 3.16);
           tl.to(draw[i], { p: 1, duration: 0.14, ease: "power1.inOut" }, 3.16);
           tl.to(dotRefs.current[i], { opacity: 1, duration: 0.05 }, 3.30);
-          tl.to(railRefs.current[i], { color: tone.railOn, duration: 0.05 }, 3.16);
+          tl.to(railRefs.current[i], { opacity: 1, duration: 0.05 }, 3.16);
         });
       }
 
@@ -902,12 +887,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       const y = restoreScrollRef.current;
       restoreScrollRef.current = null;
       ScrollTrigger.refresh();
+      // Se insiste por rAF. Probe hacerlo sincrono y NO alcanza: el spacer
+      // del pin tarda en asentarse y una sola pasada deja la pagina en 132.
+      // Medido, sin el loop el desvio es permanente en vez de ~250ms.
       let tries = 0;
       const put = () => {
         if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true, force: true });
         else window.scrollTo(0, y);
-        // Give up once it holds, or after a handful of frames; the spacer can
-        // take a beat to settle and every frame before that clamps the value.
         if (++tries < 12 && Math.abs(window.scrollY - y) > 2) {
           restoreRaf = requestAnimationFrame(put);
         }
@@ -950,12 +936,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
     return () => {
       restoreScrollRef.current = window.scrollY;
+      if (restoreRaf) cancelAnimationFrame(restoreRaf);
       // Never keep writing rotations into an Application that is being torn
       // down: the ticker below is removed, but these refs outlive the effect.
       armsRef.current = [];
       botRef.current = null;
       head1Ref.current = null;
-      if (restoreRaf) cancelAnimationFrame(restoreRaf);
       clearTimeout(refresh);
       if (removeMouse) removeMouse();
       heroVisibility.disconnect();
@@ -963,9 +949,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       gsap.ticker.remove(applyGazeRef.current);
       ctx.revert();
     };
-    // darkMode rebuilds the timeline: every tonal value above is baked into it
-    // at construction, and the GSAP context below reverts cleanly on change.
-  }, [isMobile, darkMode]);
+    // Depende de sceneUrl, NO de darkMode. En celular la escena no cambia con
+    // el tema, asi que cambiarlo no reconstruye nada: ni la timeline, ni el
+    // pin, ni los contextos WebGL. En escritorio sceneUrl si cambia con el
+    // tema, y ahi la reconstruccion es inevitable porque se carga otra escena.
+  }, [isMobile, sceneUrl]);
 
   // The hero is a fixed cinematic: it opens on a light wall and drains into
   // darkness on its own schedule, identically in either page theme. The
@@ -979,14 +967,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       ref={sectionRef}
       data-testid="scene-section"
       data-theme="dark"
-      className="relative h-screen min-h-[640px] w-full overflow-hidden bg-surface"
+      className="relative h-screen min-h-[640px] w-full overflow-hidden bg-[rgb(var(--page-surface))]"
     >
       {/* Layer A — live dark scene + painted wordmark + silhouette occluder */}
       <div ref={splineLayerRef} className="absolute inset-0">
         <div
           ref={canvasWrapRef}
           data-testid="hero-canvas-zoom"
-          className="absolute inset-0 will-change-transform"
+          className="hero-drain absolute inset-0 will-change-transform"
         >
           {/* The wall sits OUTSIDE the drift wrappers on purpose. It used to
               live inside them, so the idle float and the mouse parallax moved
@@ -998,7 +986,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               becomes a stacking context — putting the blend under the drift
               wrappers would isolate it from the wall and the occlusion that
               makes the robot read against the wordmark would vanish. */}
-          <div ref={wallRef} className="absolute inset-0 bg-[#EDEDED]">
+          <div ref={wallRef} className="absolute inset-0 bg-[rgb(var(--wall-a))]">
+            <div
+              ref={wallTopRef}
+              className="pointer-events-none absolute inset-0 bg-[rgb(var(--wall-b))]"
+            />
             <div
               ref={wm1Ref}
               data-testid="bg-wordmark"
@@ -1047,11 +1039,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       </div>
 
       {/* soft black overlay deepening with the drain (scene 1 only) */}
-      <div ref={overlayRef} className="pointer-events-none absolute inset-0 bg-surface" />
+      <div
+        ref={overlayRef}
+        className="pointer-events-none absolute inset-0 bg-[rgb(var(--page-surface))]"
+      />
 
       {/* Layer C — chrome scene, lazily mounted, rising out of darkness */}
       <div ref={layer2Ref} className="pointer-events-none absolute inset-0">
-        <div ref={layer2InnerRef} className="absolute inset-0">
+        <div ref={layer2InnerRef} className="hero-lift absolute inset-0">
           {/* Same decoupling as scene 1: the glow and the fallback stay put
               while only the canvas drifts. The blend wrapper keeps its place
               inside layer2Inner (whose filter is the stacking context the
@@ -1421,7 +1416,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               <div key={f.num} className="flex flex-col items-center gap-3">
                 <span
                   ref={(el) => (railRefs.current[i] = el)}
-                  className="font-display text-[13px] tracking-[0.02em] text-ink/65"
+                  className="font-display text-[13px] tracking-[0.02em] text-ink opacity-[0.45]"
                 >
                   {f.num}
                 </span>
