@@ -416,7 +416,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // two offsets instead: a slow sway across the pinned sequence. It writes
     // the same refs as the mouse path and costs one assignment per tick.
     const touchParallax = (p) => {
-      if (reduce || !parallax1Ref.current) return;
+      if (reduce || isMobile || !parallax1Ref.current) return;
       const sway = Math.sin(p * Math.PI * 2.2);
       const rise = Math.cos(p * Math.PI * 1.6);
       gsap.set(parallax1Ref.current, { x: sway * 14, y: rise * 9 });
@@ -509,6 +509,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // the wall. The offset is in the wrap's local px, so the wrap's own scale
       // cancels it exactly and the mark stays centred in the viewport.
       gsap.set(wm1Ref.current, { x: ROBOT_DX_1 });
+      if (isMobile) {
+        [parallax1Ref.current, parallax2Ref.current, idle1Ref.current, idle2Ref.current].forEach(
+          (el) => el && gsap.set(el, { x: 0, y: 0, rotation: 0, scale: 1 })
+        );
+      }
       gsap.set(vignetteRef.current, { opacity: 0 });
       gsap.set(layer2Ref.current, { opacity: 0 });
       gsap.set(layer2InnerRef.current, { filter: `brightness(${tone.liftFrom})` });
@@ -524,8 +529,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       lineRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0 }));
       dotRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0 }));
 
-      // continuous idle motion: slow float (~6s loop) + subtle tilt, both scenes
-      if (!reduce) {
+      // continuous idle motion: slow float (~6s loop) + subtle tilt, both
+      // scenes. Desktop only — see the note on touchParallax above.
+      if (!reduce && !isMobile) {
         [idle1Ref.current, idle2Ref.current].forEach((el) => {
           if (!el) return;
           gsap.set(el, { y: -3, rotation: -0.2 });
@@ -721,7 +727,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           anticipatePin: 1,
           onUpdate: (self) => {
             const p = self.progress;
-            if (isTouchDevice) touchParallax(p);
+            if (isTouchDevice && !isMobile) touchParallax(p);
             if (p > 0.15 && !mount2Ref.current) {
               mount2Ref.current = true;
               setMountScene2(true);
