@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { User, FolderOpen, Cpu, Mail, Send, Sun, Moon, Home } from "lucide-react";
+import { User, FolderOpen, Cpu, Send, Sun, Moon, Home } from "lucide-react";
 import { profile } from "../data/portfolioData";
 import { scrollToId, scrollToTop } from "../hooks/useLenis";
 import { useTheme } from "../hooks/useTheme";
@@ -8,7 +8,6 @@ const links = [
   { id: "about", label: "About", icon: User, testid: "nav-about-link" },
   { id: "projects", label: "Projects", icon: FolderOpen, testid: "nav-projects-link" },
   { id: "capabilities", label: "Capabilities", icon: Cpu, testid: "nav-capabilities-link" },
-  { id: "contact", label: "Contact", icon: Mail, testid: "nav-contact-link" },
 ];
 
 export const NavigationDock = ({ visible }) => {

@@ -183,6 +183,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const applyGazeRef = useRef(null);
   const armsRef = useRef([]);
   const botRef = useRef(null);
+  const head1Ref = useRef(null);
 
   const sectionRef = useRef(null);
   const canvasWrapRef = useRef(null);
@@ -253,6 +254,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     app1Ref.current = app;
     placeBot(app);
     armsRef.current = collectArms(app);
+    head1Ref.current = app?.findObjectByName?.("Head") || null;
     glCanvasRefs.current.slot1 = canvasWrapRef.current
       ? canvasWrapRef.current.querySelector("canvas")
       : null;
@@ -316,8 +318,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // same way as the story beat: the head occupies native fraction
     // p 0.154..0.33, and putting its midpoint at 34% of an 844 frame at
     // scale 2.15 solves to y 40%.
-    const startY = reduce ? "2%" : isMobile ? "30%" : "12.6%";
-    const endY = reduce ? "3%" : isMobile ? "32%" : "14.1%";
+    const startY = reduce ? "2%" : isMobile ? "20%" : "12.6%";
+    const endY = reduce ? "3%" : isMobile ? "22%" : "14.1%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -501,7 +503,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // the wordmark disappears (measured: 0 levels of spread, vs 6 at
       // #EDEDED). Load it at #EDEDED so the delta is the same 18 levels the
       // approved treatment has, and let the two swap as the wall darkens.
-      gsap.set(wm1Ref.current.firstChild, { color: tone.wmStart });
       // The wordmark is painted on the wall, which lives INSIDE the wrap that
       // slot 1 translates to centre its robot. Without this it slides off with
       // the wall. The offset is in the wrap's local px, so the wrap's own scale
@@ -672,11 +673,36 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         bot.position.y = botRig.y;
       };
 
+      // Scene 1's head has no choreography of its own — the directed gaze
+      // only ever drove slot 2 — so it just stared straight ahead. It now
+      // holds a default direction and wanders a little around it, always
+      // easing back: right in white mode, left in dark, so the figure is
+      // turned toward the side its own theme opens on.
+      //
+      // Two sine terms on periods that do not divide into each other, so the
+      // drift never settles into a visible loop, and a 0.05 ease so it always
+      // returns rather than snapping.
+      const HEAD1_BASE = { x: 0.05, y: darkMode ? -0.27 : 0.27 };
+      const head1 = { x: HEAD1_BASE.x, y: HEAD1_BASE.y };
+      let head1T = 0;
+      const applyHead1 = () => {
+        const h = head1Ref.current;
+        if (!h) return;
+        head1T += 0.004;
+        const wy = Math.sin(head1T * 1.7) * 0.075 + Math.sin(head1T * 0.61) * 0.04;
+        const wx = Math.sin(head1T * 1.13) * 0.03;
+        head1.y += (HEAD1_BASE.y + wy - head1.y) * 0.05;
+        head1.x += (HEAD1_BASE.x + wx - head1.x) * 0.05;
+        h.rotation.y = head1.y;
+        h.rotation.x = head1.x;
+      };
+
       // The pose normaliser rides the gaze ticker rather than adding its own.
       const applyGazeAndPose = () => {
         applyGaze();
         if (armsRef.current.length) applyPose(armsRef.current);
         applyBotRig();
+        applyHead1();
       };
       applyGazeRef.current = applyGazeAndPose;
       gsap.ticker.add(applyGazeAndPose);
@@ -728,7 +754,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // -> black instead of white -> black.
       tl.to(vignetteRef.current, { opacity: 1, duration: 0.20 }, 0.02);
       tl.to(wallRef.current, { backgroundColor: tone.wallSettle, duration: 0.20 }, 0.02);
-      tl.to(wm1Ref.current.firstChild, { color: tone.wmSettle, duration: 0.20 }, 0.02);
 
       // PHASE 1 exit: headline leaves, light drains to black, slight drift-in
       tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
@@ -862,6 +887,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // down: the ticker below is removed, but these refs outlive the effect.
       armsRef.current = [];
       botRef.current = null;
+      head1Ref.current = null;
       if (restoreRaf) cancelAnimationFrame(restoreRaf);
       clearTimeout(refresh);
       if (removeMouse) removeMouse();
@@ -910,7 +936,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               data-testid="bg-wordmark"
               className="pointer-events-none absolute inset-x-0 top-[47%] text-center"
             >
-              <span className="wordmark-depth whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-ink opacity-[0.35] mix-blend-difference">
+              <span className="wordmark-grad whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em]">
                 {WORDMARK}
               </span>
             </div>
@@ -1085,7 +1111,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       {/* kinetic headline (phase 1) — sits just above the nav dock, difference blend */}
       <div
         ref={headlineRef}
-        className="pointer-events-none absolute inset-x-0 bottom-44 text-center mix-blend-difference sm:bottom-44"
+        className={`pointer-events-none absolute inset-x-0 bottom-44 text-center sm:bottom-44 ${
+          darkMode ? "headline-glow" : "mix-blend-difference"
+        }`}
       >
         <div className="overflow-hidden px-4">
           <motion.h1
@@ -1094,7 +1122,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-1"
-            className="font-inter text-[clamp(1.4rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.12em] text-ink sm:tracking-[0.3em]"
+            className={`font-inter text-[clamp(1.4rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.12em] sm:tracking-[0.3em] ${
+              darkMode ? "text-white" : "text-ink"
+            }`}
           >
             — Build the future —
           </motion.h1>
@@ -1106,7 +1136,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-2"
-            className="font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] text-ink/40 sm:tracking-[0.42em]"
+            className={`font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] sm:tracking-[0.42em] ${
+              darkMode ? "text-white/70" : "text-ink/40"
+            }`}
           >
             one system at a time
           </motion.p>
@@ -1207,7 +1239,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         <div
           ref={storyPanelRef}
           data-theme={ch2Theme}
-          className="absolute inset-x-5 bottom-28 cut-corner bg-surface/[0.93] p-5 backdrop-blur-md sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 sm:bg-transparent sm:p-0 sm:backdrop-blur-none lg:right-[9%]"
+          className="absolute inset-x-5 bottom-28 cut-corner bg-surface/[0.82] p-5 backdrop-blur-md sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 sm:bg-transparent sm:p-0 sm:backdrop-blur-none lg:right-[9%]"
         >
           {/* story heading — section-title type, sized so it never pushes the
               paragraphs out of the viewport */}
@@ -1281,7 +1313,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 : `w-[27rem] max-w-[46vw] ${f.side === "left" ? "left-[5%]" : "right-[5%]"}`
             }`}
           >
-            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.93] p-6 pt-5 backdrop-blur-md sm:bg-surface/70 sm:p-9 sm:pt-6">
+            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.82] p-6 pt-5 backdrop-blur-md sm:bg-surface/70 sm:p-9 sm:pt-6">
               <div className="select-none font-display text-[7rem] font-light leading-[0.85] text-outline-grey">
                 {f.num}
               </div>
