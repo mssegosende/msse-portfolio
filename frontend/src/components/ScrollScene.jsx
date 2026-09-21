@@ -62,6 +62,12 @@ const OVERSAMPLE = 1.7;
 // scene animates its own pose, so a single assignment drifts straight back.
 const POSE_HOME = { arm: -0.306, elbowY: -0.018, forearm: -0.471 };
 
+// En celular el acercamiento se hace ESCALANDO EL OBJETO, no el canvas. Un
+// transform CSS agranda pixeles ya renderizados; escalar el rig hace que la
+// escena se dibuje mas grande a resolucion completa. Con el canvas a escala 1
+// el buffer vale devicePixelRatio * ancho real, o sea nitidez nativa.
+const BOT_MOBILE = { scale: 1.5, y: -195 };
+
 const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 
 /**
@@ -180,12 +186,18 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const applyGazeRef = useRef(null);
   const armsRef = useRef([]);
   const botRef = useRef(null);
+  const bot1Ref = useRef(null);
   const head1Ref = useRef(null);
   const heroEndRef = useRef(0);
   // La direccion por defecto de la mirada depende del tema, pero no tiene
   // por que reconstruir la timeline: el ticker la lee de aca en cada frame.
   const head1BaseRef = useRef({ x: 0.05, y: 0.27 });
+  // El ticker necesita saber el tema, pero meterlo en el efecto que arma la
+  // timeline la haria reconstruirse en cada cambio -- que es justo lo que se
+  // saco. Va por ref, leido por frame.
+  const darkModeRef = useRef(darkMode);
   useEffect(() => {
+    darkModeRef.current = darkMode;
     // Mutado, no reemplazado: el ticker guardo esta referencia, asi que
     // cambiarla por otro objeto lo dejaria leyendo el anterior.
     head1BaseRef.current.y = darkMode ? -0.27 : 0.27;
@@ -232,9 +244,17 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   //
   // Queda el plateado porque aguanta los dos fondos; el negro desaparece
   // sobre negro. Escritorio conserva el intercambio: ahi sobrevive.
-  const sceneUrl = isMobile || darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
-  const slot1Url = sceneUrl;
-  const slot2Url = sceneUrl;
+  // ESCRITORIO: los dos slots corren la misma escena y esa escena sigue al
+  // tema, asi que cambiarlo recarga -- inevitable, ahi sobrevive.
+  //
+  // CELULAR: las dos escenas viven montadas a la vez DENTRO de la capa A, con
+  // key fija, y el tema solo decide cual se ve. Siguen siendo 2 contextos
+  // WebGL, los mismos dos de siempre: hasta ahora los dos slots renderizaban
+  // la MISMA escena, asi que esto no agrega ninguno, solo deja de desperdiciar
+  // uno. El slot 2 no se monta en celular.
+  const sceneUrl = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
+  const slot1Url = isMobile ? SPLINE_SCENE_URL : sceneUrl;
+  const slot2Url = isMobile ? SPLINE_SCENE_2_URL : sceneUrl;
 
   // The breakpoint used to be read once at mount and never again, so a page
   // that loaded under 768px — browser zoom, a narrow window, devtools docked
@@ -276,6 +296,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     placeBot(app);
     armsRef.current = collectArms(app);
     head1Ref.current = app?.findObjectByName?.("Head") || null;
+    bot1Ref.current = findBot(app);
     // Scene 1 ships an OPAQUE background, and that is the whole reason the
     // wordmark leaked: an opaque canvas can only reveal the wall underneath
     // through a blend mode, and multiply -- the only one that reveals it --
@@ -338,7 +359,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // distant. Note the overscale also keeps Spline's "Built with Spline"
     // badge out of frame — it is drawn INSIDE the WebGL canvas, not the DOM,
     // so CSS cannot reach it; anything at or below ~1.2 brings it into view.
-    const startScale = reduce ? 1 : isMobile ? 1.7 : 1.78;
+    const startScale = reduce ? 1 : isMobile ? 1 : 1.78;
     // The head cleared the top of the viewport by ~78px at 2000x1014, which
     // read as dead air. Measured off the silhouette, not the transform: -3.9%
     // of the wrap height is ~39px, so the gap halves and the head still has
@@ -397,7 +418,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // pushes the face behind the panel. Each y below pins the crown near 40px
     // from the solved form Y = (40 + 292*S - 422) / 844.
     const c2pre = isMobile
-      ? { scale: 2.2, x: "22%", y: "31%" }
+      ? { scale: startScale, x: fx1(-34, startScale), y: startY }
       : { scale: 3.0, x: fx(0, 3.0), y: "53%" };
     // STEP 1 (story) — closest, and centred. The text sits to the right.
     // STEP 1 (story) — a tight head shot, so the difference between the two
@@ -484,13 +505,17 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     }
 
     const ctx = gsap.context(() => {
-      gsap.set(canvasWrapRef.current, {
+      if (!isMobile) gsap.set(canvasWrapRef.current, {
         scale: startScale,
-        x: fx1(isMobile ? -58 : 0, startScale),
+        x: fx1(0, startScale),
         y: startY,
         transformOrigin: "50% 50%",
       });
-      gsap.set(canvas2WrapRef.current, { ...c2close, transformOrigin: "50% 50%" });
+      // En celular la capa A lleva toda la secuencia: no hay crossfade entre
+      // capitulos porque no hay dos robots que intercambiar, solo uno que la
+      // camara recorre de punta a punta.
+      const pullTarget = isMobile ? canvasWrapRef : canvas2WrapRef;
+      gsap.set(pullTarget.current, { ...c2close, transformOrigin: "50% 50%" });
       // The hero loads as white as CSS allows and only settles into the grey
       // once the scroll starts. Two of the three greys are ours: the wall is
       // #EDEDED (237) and the edge vignette is on at full strength from the
@@ -626,7 +651,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         const sc = lerp(A.scale, B.scale, f);
         const tx = lerp(parseFloat(A.x), parseFloat(B.x), f);
         const ty = lerp(parseFloat(A.y), parseFloat(B.y), f);
-        gsap.set(canvas2WrapRef.current, { scale: sc, x: `${tx}%`, y: `${ty}%` });
+        gsap.set(pullTarget.current, { scale: sc, x: `${tx}%`, y: `${ty}%` });
 
         // vector-effect="non-scaling-stroke" makes stroke-dasharray screen-space,
         // so the connector length must be measured in px, not in viewBox units
@@ -663,9 +688,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // timeline releases it on the closing beat.
       const gazeLock = { on: 1 };
       const applyGaze = () => {
-        const head = app2Ref.current && app2Ref.current.findObjectByName
-          ? app2Ref.current.findObjectByName("Head")
-          : null;
+        // En celular la escena activa la decide el tema, asi que la mirada
+        // tiene que escribir sobre la que se esta viendo.
+        const app = isMobile && !darkModeRef.current ? app1Ref.current : app2Ref.current;
+        const head = app && app.findObjectByName ? app.findObjectByName("Head") : null;
         if (!head) return;
         const fresh = !gazeLock.on && Date.now() - lastMouseRef.current < 1200;
         const tx = fresh ? mouseGazeRef.current.x : gaze.x;
@@ -685,14 +711,19 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // same with the sign flipped. Leaving a quarter of the canvas empty
       // below the feet is what keeps Spline's badge off screen once the
       // framing pans down, and that lands on s .40 / y 186.
-      const botRig = { s: 0.8, y: BOT_HOME.y };
+      const botRig = isMobile
+        ? { s: BOT_MOBILE.scale, y: BOT_MOBILE.y }
+        : { s: 0.8, y: BOT_HOME.y };
       const applyBotRig = () => {
-        const bot = botRef.current;
-        if (!bot) return;
-        bot.scale.x = botRig.s;
-        bot.scale.y = botRig.s;
-        bot.scale.z = botRig.s;
-        bot.position.y = botRig.y;
+        const bots = isMobile ? [bot1Ref.current, botRef.current] : [botRef.current];
+        for (let i = 0; i < bots.length; i++) {
+          const bot = bots[i];
+          if (!bot) continue;
+          bot.scale.x = botRig.s;
+          bot.scale.y = botRig.s;
+          bot.scale.z = botRig.s;
+          bot.position.y = botRig.y;
+        }
       };
 
       // Scene 1's head has no choreography of its own — the directed gaze
@@ -743,7 +774,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           onUpdate: (self) => {
             const p = self.progress;
             if (isTouchDevice && !isMobile) touchParallax(p);
-            if (p > 0.15 && !mount2Ref.current) {
+            if (!isMobile && p > 0.15 && !mount2Ref.current) {
               mount2Ref.current = true;
               setMountScene2(true);
             }
@@ -780,24 +811,31 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // PHASE 1 exit: headline leaves, light drains to black, slight drift-in
       tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
       tl.to(scrollCueRef.current, { opacity: 0, y: 20, duration: 0.06 }, 0.02);
-      tl.to(drain, { t: 1, duration: 0.3, onUpdate: applyDrain }, 0.1);
+      // El drain oscurecia la capa que se iba. En celular esa capa es la
+      // unica que hay, asi que apagaria al robot en el medio de la secuencia.
+      if (!isMobile) tl.to(drain, { t: 1, duration: 0.3, onUpdate: applyDrain }, 0.1);
       tl.to(overlayRef.current, { opacity: 1, duration: 0.34 }, 0.1);
-      tl.to(
-        canvasWrapRef.current,
-        {
-          scale: startScale * 0.96,
-          x: fx1(isMobile ? -58 : 0, startScale * 0.96),
-          y: endY,
-          duration: 0.32,
-          ease: "power1.inOut",
-        },
-        0.1
-      );
+      // En celular applyPull ya maneja este mismo elemento; dos tweens sobre
+      // el mismo transform se pelean.
+      if (!isMobile)
+        tl.to(
+          canvasWrapRef.current,
+          {
+            scale: startScale * 0.96,
+            x: fx1(0, startScale * 0.96),
+            y: endY,
+            duration: 0.32,
+            ease: "power1.inOut",
+          },
+          0.1
+        );
       tl.to(pillsRef.current, { opacity: 0, y: 24, duration: 0.08 }, 0.2);
 
       // PHASE 2: crossfade in darkness — chrome robot rises in EXTREME CLOSE-UP
-      tl.to(splineLayerRef.current, { opacity: 0, duration: 0.12 }, 0.5);
-      tl.to(layer2Ref.current, { opacity: 1, duration: 0.12 }, 0.5);
+      if (!isMobile) {
+        tl.to(splineLayerRef.current, { opacity: 0, duration: 0.12 }, 0.5);
+        tl.to(layer2Ref.current, { opacity: 1, duration: 0.12 }, 0.5);
+      }
       tl.to(lift, { t: 1, duration: 0.16, onUpdate: applyLift }, 0.5);
 
       // story paragraphs fade in one after another during the close-up hold
@@ -949,11 +987,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       gsap.ticker.remove(applyGazeRef.current);
       ctx.revert();
     };
-    // Depende de sceneUrl, NO de darkMode. En celular la escena no cambia con
+    // Depende de slot1Url, NO de darkMode. En celular la escena no cambia con
     // el tema, asi que cambiarlo no reconstruye nada: ni la timeline, ni el
     // pin, ni los contextos WebGL. En escritorio sceneUrl si cambia con el
     // tema, y ahi la reconstruccion es inevitable porque se carga otra escena.
-  }, [isMobile, sceneUrl]);
+  }, [isMobile, slot1Url]);
 
   // The hero is a fixed cinematic: it opens on a light wall and drains into
   // darkness on its own schedule, identically in either page theme. The
@@ -1009,15 +1047,41 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             >
               <div ref={parallax1Ref} className="absolute inset-0">
                 <div ref={idle1Ref} className="absolute inset-0">
-                  <Spline
-                    key={slot1Url}
-                    scene={slot1Url}
-                    onLoad={handleLoad}
-                    onError={() => {
-                      setFailed(true);
-                      onReady?.();
-                    }}
-                  />
+                  {/* La visibilidad se decide por clase, no desmontando: las
+                      keys son fijas, asi que cambiar de tema no remonta nada
+                      ni pide un contexto WebGL nuevo. */}
+                  <div className={`absolute inset-0 ${isMobile && darkMode ? "opacity-0" : "opacity-100"}`}>
+                    <Spline
+                      key={slot1Url}
+                      scene={slot1Url}
+                      onLoad={handleLoad}
+                      onError={() => {
+                        setFailed(true);
+                        onReady?.();
+                      }}
+                    />
+                  </div>
+                  {isMobile && (
+                    <div className={`absolute inset-0 ${darkMode ? "opacity-100" : "opacity-0"}`}>
+                      <Spline
+                        key={SPLINE_SCENE_2_URL}
+                        scene={SPLINE_SCENE_2_URL}
+                        onLoad={(app) => {
+                          app2Ref.current = app;
+                          placeBot(app);
+                          armsRef.current = collectArms(app);
+                          botRef.current = findBot(app);
+                          try {
+                            app.setBackgroundColor("rgba(0,0,0,0)");
+                          } catch (e) {
+                            /* runtime viejo */
+                          }
+                          setScene2Ready(true);
+                        }}
+                        onError={() => setScene2Failed(true)}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1169,7 +1233,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       <div
         ref={headlineRef}
         data-theme={isMobile ? ch2Theme : undefined}
-        className="pointer-events-none absolute inset-x-0 bottom-44 text-center sm:bottom-44 sm:mix-blend-difference"
+        className={`pointer-events-none absolute inset-x-0 bottom-44 text-center sm:bottom-44 sm:mix-blend-difference ${
+          isMobile ? "mix-blend-difference" : ""
+        }`}
       >
         <div className="overflow-hidden px-4">
           <motion.h1
@@ -1178,7 +1244,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-1"
-            className="font-inter text-[clamp(1.4rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.12em] text-ink sm:tracking-[0.3em]"
+            className={`font-inter text-[clamp(1.4rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.12em] sm:tracking-[0.3em] ${
+              isMobile ? "text-white" : "text-ink"
+            }`}
           >
             — Build the future —
           </motion.h1>
@@ -1190,7 +1258,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-2"
-            className="font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] text-ink sm:text-ink/40 sm:tracking-[0.42em]"
+            className={`font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] sm:text-ink/40 sm:tracking-[0.42em] ${
+              isMobile ? "text-white" : "text-ink"
+            }`}
           >
             one system at a time
           </motion.p>
@@ -1245,7 +1315,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             else window.scrollTo({ top: y + 4, behavior: "smooth" });
           }}
           data-theme={isMobile ? ch2Theme : undefined}
-          className="pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] text-ink transition-opacity duration-300 hover:text-ink sm:bottom-10 sm:text-white/70 sm:mix-blend-difference sm:hover:text-white"
+          className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] ${isMobile ? "text-white mix-blend-difference" : "text-ink"} transition-opacity duration-300 sm:bottom-10 sm:text-white/70 sm:mix-blend-difference sm:hover:text-white`}
         >
           Skip intro
         </button>
