@@ -394,7 +394,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       : { scale: 1.65, x: fx(0, 1.65), y: "11.0%" };    // L .70 — the waist
     // CLOSING — comes back in slightly, same centred position
     const c2end = isMobile
-      ? { scale: 1.15, x: "25%", y: "-1.3%" }
+      ? { scale: 1.6, x: "-11%", y: "12.5%" }
       : { scale: 1.25, x: fx(0, 1.25), y: "-2.8%" };    // L .875 — down the legs
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
@@ -406,6 +406,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       card02: { x: 0.02, y: 0.32 },     // card 02: right, middle
       card03: { x: 0.24, y: -0.26 },    // card 03: left, lower
       front: { x: 0.0, y: 0.0 },        // released at the end
+      closeMobile: { x: 0.24, y: -0.28 }, // phone close: chin down, to the left
     };
 
 
@@ -833,7 +834,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // three cards come back together with their three dashed connectors.
       const closeAt = isMobile ? 2.72 : 2.92;
       tl.to(body, { t: 5, duration: 0.30, ease: "power1.inOut" }, closeAt);
-      tl.to(gaze, { ...GAZE.front, duration: 0.16, ease: "power2.inOut" }, closeAt);
+      tl.to(gaze, { ...(isMobile ? GAZE.closeMobile : GAZE.front), duration: 0.16, ease: "power2.inOut" }, closeAt);
       tl.set(gazeLock, { on: 0 }, closeAt + 0.18);
       if (!isMobile) {
         [0, 1].forEach((i) => {
@@ -936,7 +937,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               data-testid="bg-wordmark"
               className="pointer-events-none absolute inset-x-0 top-[47%] text-center"
             >
-              <span className="wordmark-grad whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em]">
+              <span className="wordmark-grad whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] opacity-50">
                 {WORDMARK}
               </span>
             </div>
