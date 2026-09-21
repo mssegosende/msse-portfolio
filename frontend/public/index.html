@@ -28,6 +28,19 @@
         -->
         <script>
             (function () {
+                // ScrollTrigger captures history.scrollRestoration when it
+                // builds, and restores that value afterwards. A React effect
+                // runs AFTER the child's layout effect has already created the
+                // trigger, so setting it there is captured as "auto" and put
+                // straight back. It has to happen before any of that, which
+                // means here — otherwise a reload drops the visitor into the
+                // middle of the pinned sequence, on scene 2.
+                try {
+                    if ('scrollRestoration' in window.history) {
+                        window.history.scrollRestoration = 'manual';
+                    }
+                    window.scrollTo(0, 0);
+                } catch (e) {}
                 try {
                     if (localStorage.getItem('msgc-theme') === 'dark') {
                         document.documentElement.setAttribute('data-theme', 'dark');

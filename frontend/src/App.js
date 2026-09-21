@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "@/App.css";
-import { useLenis } from "@/hooks/useLenis";
+import { useLenis, pinScrollToTopOnReload } from "@/hooks/useLenis";
 import { ScrollScene } from "@/components/ScrollScene";
 import { NavigationDock } from "@/components/NavigationDock";
 import { Marquee } from "@/components/Marquee";
@@ -12,6 +12,7 @@ import { Footer } from "@/components/Footer";
 
 function App() {
   useLenis();
+  useEffect(pinScrollToTopOnReload, []);
   // The dock stays out of the way until the hero sequence has been seen once.
   // It latches on, so coming back to the top does not hide it again.
   const [journeyDone, setJourneyDone] = useState(false);

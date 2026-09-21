@@ -58,15 +58,21 @@ export const NavigationDock = ({ visible }) => {
               </span>
             </button>
           ))}
-          <span aria-hidden="true" className="mx-1 h-5 w-px shrink-0 bg-ink/15" />
+          <span aria-hidden="true" className="mx-1.5 h-5 w-px shrink-0 bg-ink/15" />
+          {/* Reads as a control, not another destination: the nav items are
+              bare icons, so this one carries a frame and a ground of its own.
+              It also states which way it goes, which a lone icon never does. */}
           <button
             data-testid="theme-toggle"
             onClick={toggle}
-            className="group flex shrink-0 items-center gap-2 px-3 py-2 text-ink/65 transition-[color,background-color] duration-300 hover:bg-ink/5 hover:text-ink"
+            className="group flex shrink-0 items-center gap-2 cut-corner border border-ink/20 bg-ink/[0.06] px-3 py-2 text-ink transition-[background-color,border-color] duration-300 hover:border-ink/45 hover:bg-ink/10"
             aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
-            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+            {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+            <span className="hidden font-display text-[12px] uppercase tracking-[0.02em] lg:block">
+              {theme === "dark" ? "Light" : "Dark"}
+            </span>
           </button>
           <button
             data-testid="nav-cta-button"

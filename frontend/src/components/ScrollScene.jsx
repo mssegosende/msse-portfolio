@@ -65,6 +65,14 @@ const POSE_HOME = { arm: -0.306, elbowY: -0.018, forearm: -0.471 };
 const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 
 /** Collect every arm joint once; findObjectByName per frame would be silly. */
+const findBot = (app) => {
+  try {
+    return app?.findObjectByName?.("Bot") || null;
+  } catch (e) {
+    return null;
+  }
+};
+
 const collectArms = (app) => {
   const out = [];
   try {
@@ -154,6 +162,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const mouseGazeRef = useRef({ x: 0, y: 0 });
   const applyGazeRef = useRef(null);
   const armsRef = useRef([]);
+  const botRef = useRef(null);
 
   const sectionRef = useRef(null);
   const canvasWrapRef = useRef(null);
@@ -342,7 +351,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       : { scale: 1.61, x: fx(0, 1.61), y: "9.5%" };     // L .715 — the waist
     // CLOSING — comes back in slightly, same centred position
     const c2end = isMobile
-      ? { scale: 1.4, x: "0%", y: "-12%" }
+      ? { scale: 1.29, x: "0%", y: "11.3%" }
       : { scale: 1.49, x: fx(0, 1.49), y: "5.4%" };     // L .76 — the hip
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
@@ -415,8 +424,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         ? {
             wallStart: "#000000",
             wallSettle: "#121212",
-            wmStart: "#121212",
-            wmSettle: "#000000",
+            wmStart: "#262626",
+            wmSettle: "#333333",
             overlay: "#000000",
             backdrop: "#000000",
             railOn: "#FFFFFF",
@@ -427,8 +436,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         : {
             wallStart: "#FFFFFF",
             wallSettle: "#EDEDED",
-            wmStart: "#EDEDED",
-            wmSettle: "#FFFFFF",
+            wmStart: "#DADADA",
+            wmSettle: "#CCCCCC",
             overlay: "#FFFFFF",
             backdrop: "#FFFFFF",
             railOn: "#000000",
@@ -602,10 +611,31 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         head.rotation.x = cur.x;
         head.rotation.y = cur.y;
       };
+      // The feet are not in the render at the rig's default scale — the
+      // camera crops at 3/4 and nothing in CSS can recover what was never
+      // drawn. The only way to end on them is to shrink the object and lift
+      // it, so the whole figure fits inside the frame the camera does draw.
+      //
+      // Solved, with the badge as the binding constraint. In native canvas px
+      // at 1014 tall: feet = 812.3 + 875*s - 2.5*(y - 25.68), head is the
+      // same with the sign flipped. Leaving a quarter of the canvas empty
+      // below the feet is what keeps Spline's badge off screen once the
+      // framing pans down, and that lands on s .40 / y 186.
+      const botRig = { s: 0.8, y: BOT_HOME.y };
+      const applyBotRig = () => {
+        const bot = botRef.current;
+        if (!bot) return;
+        bot.scale.x = botRig.s;
+        bot.scale.y = botRig.s;
+        bot.scale.z = botRig.s;
+        bot.position.y = botRig.y;
+      };
+
       // The pose normaliser rides the gaze ticker rather than adding its own.
       const applyGazeAndPose = () => {
         applyGaze();
         if (armsRef.current.length) applyPose(armsRef.current);
+        applyBotRig();
       };
       applyGazeRef.current = applyGazeAndPose;
       gsap.ticker.add(applyGazeAndPose);
@@ -749,6 +779,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         });
       }
 
+      // The phone ends on the whole figure: card 03 clears, the rig shrinks
+      // and rises so the feet exist inside the render, and the framing opens
+      // to hold head-to-feet. Desktop keeps its three-card payoff.
+      if (isMobile) {
+        tl.to(calloutRefs.current[2], { opacity: 0, y: -20, duration: 0.09 }, closeAt);
+        tl.to(botRig, { s: 0.4, y: 186, duration: 0.26, ease: "power1.inOut" }, closeAt);
+      }
+
       // hold before release. Short on a phone: there is no three-card payoff
       // to read there, so a long one just feels like the page has jammed.
       tl.to({}, { duration: isMobile ? 0.12 : 0.45 });
@@ -822,7 +860,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               data-testid="bg-wordmark"
               className="pointer-events-none absolute inset-x-0 top-[47%] text-center"
             >
-              <span className="whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] text-ink opacity-[0.35] mix-blend-difference">
+              <span className="wordmark-depth whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em]">
                 {WORDMARK}
               </span>
             </div>
@@ -830,7 +868,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
           {!failed && (
             <div
-              className={`absolute inset-0 ${darkMode ? "mix-blend-screen" : "mix-blend-multiply"}`}
+              className={`absolute inset-0 ${darkMode ? "" : "mix-blend-multiply"}`}
               data-testid="spline-canvas-wrap"
             >
               <div ref={parallax1Ref} className="absolute inset-0">
@@ -924,6 +962,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                         app2Ref.current = app;
                         placeBot(app);
                         armsRef.current = collectArms(app);
+                        botRef.current = findBot(app);
                         // Scene 1's background is baked opaque #E2E2E2, and in
                         // slot 2 it IS chapter 2's backdrop, so lift it to pure
                         // white. Scene 2 is transparent and needs nothing.
