@@ -329,7 +329,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // distant. Note the overscale also keeps Spline's "Built with Spline"
     // badge out of frame — it is drawn INSIDE the WebGL canvas, not the DOM,
     // so CSS cannot reach it; anything at or below ~1.2 brings it into view.
-    const startScale = reduce ? 1 : isMobile ? 2.15 : 1.78;
+    const startScale = reduce ? 1 : isMobile ? 1.7 : 1.78;
     // The head cleared the top of the viewport by ~78px at 2000x1014, which
     // read as dead air. Measured off the silhouette, not the transform: -3.9%
     // of the wrap height is ~39px, so the gap halves and the head still has
@@ -348,8 +348,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // Acercar sube la corona fuera de cuadro, asi que la y compensa. Un punto
     // a la fraccion nativa p cae en (p*H - H/2)*S + H/2 + Y*H; con la corona
     // en p .154 sobre 844, sostenerla a y 21 con S 2.3 despeja Y = 32%.
-    const startY = reduce ? "2%" : isMobile ? "27%" : "12.6%";
-    const endY = reduce ? "3%" : isMobile ? "29%" : "14.1%";
+    const startY = reduce ? "2%" : isMobile ? "11%" : "12.6%";
+    const endY = reduce ? "3%" : isMobile ? "13%" : "14.1%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -477,7 +477,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     const ctx = gsap.context(() => {
       gsap.set(canvasWrapRef.current, {
         scale: startScale,
-        x: fx1(0, startScale),
+        x: fx1(isMobile ? -58 : 0, startScale),
         y: startY,
         transformOrigin: "50% 50%",
       });
@@ -801,7 +801,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         canvasWrapRef.current,
         {
           scale: startScale * 0.96,
-          x: fx1(0, startScale * 0.96),
+          x: fx1(isMobile ? -58 : 0, startScale * 0.96),
           y: endY,
           duration: 0.32,
           ease: "power1.inOut",
@@ -1174,7 +1174,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       <div
         ref={headlineRef}
         data-theme={isMobile ? ch2Theme : undefined}
-        className="pointer-events-none absolute inset-x-0 bottom-44 text-center text-halo sm:bottom-44 sm:mix-blend-difference sm:[text-shadow:none]"
+        className="pointer-events-none absolute inset-x-0 bottom-44 text-center sm:bottom-44 sm:mix-blend-difference"
       >
         <div className="overflow-hidden px-4">
           <motion.h1
@@ -1195,7 +1195,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-2"
-            className="font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] text-ink/40 sm:tracking-[0.42em]"
+            className="font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] text-ink sm:text-ink/40 sm:tracking-[0.42em]"
           >
             one system at a time
           </motion.p>
@@ -1250,7 +1250,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             else window.scrollTo({ top: y + 4, behavior: "smooth" });
           }}
           data-theme={isMobile ? ch2Theme : undefined}
-          className="pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] text-ink/70 text-halo transition-opacity duration-300 hover:text-ink sm:bottom-10 sm:text-white/70 sm:mix-blend-difference sm:[text-shadow:none] sm:hover:text-white"
+          className="pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] text-ink transition-opacity duration-300 hover:text-ink sm:bottom-10 sm:text-white/70 sm:mix-blend-difference sm:hover:text-white"
         >
           Skip intro
         </button>
