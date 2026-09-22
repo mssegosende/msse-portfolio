@@ -1339,7 +1339,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       {/* Skip intro. Only before the sequence has been seen once — after
           that the dock owns this spot and the visitor already has every
           section a click away. Lands just past the pin rather than at a
-          section id, so the marquee is not skipped along with the hero. */}
+          section id, so the marquee is not skipped along with the hero.
+
+          Mismo criterio que el titular, y por el mismo motivo: cae sobre el
+          robot, y cual robot lo decide el tema en los dos anchos. Sobre el
+          NEGRO (claro) difference funciona; sobre el PLATEADO (oscuro) devuelve
+          gris medio y el boton se lava contra el torso. Ahi va blanco solido
+          -- solido de verdad, no el /70 de escritorio, que era la otra mitad
+          del lavado. */}
       {!journeyDone && (
         <button
           data-testid="skip-intro"
@@ -1348,10 +1355,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             if (window.__lenis) window.__lenis.scrollTo(y + 4, { duration: 1.1 });
             else window.scrollTo({ top: y + 4, behavior: "smooth" });
           }}
-          data-theme={isMobile ? ch2Theme : undefined}
-          className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] transition-opacity duration-300 sm:bottom-10 sm:text-white/70 sm:mix-blend-difference sm:hover:text-white ${
-            isMobile ? "text-white" : "text-ink hover:text-ink"
-          } ${isMobile && !darkMode ? "mix-blend-difference" : ""}`}
+          className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] transition-opacity duration-300 sm:bottom-10 ${
+            isMobile || darkMode
+              ? "text-white"
+              : "text-ink hover:text-ink sm:text-white/70 sm:hover:text-white"
+          } ${darkMode ? "" : "mix-blend-difference"}`}
         >
           Skip intro
         </button>
