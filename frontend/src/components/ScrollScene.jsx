@@ -34,7 +34,6 @@ const uiFade = {
   }),
 };
 
-const WORDMARK = "MSSENGINEERING";
 
 // Both scenes expose a `Bot` object, and they DO NOT ship it in the same
 // place: scene 1 has it at x -2.75, scene 2 at x +68.25 (and y 25.68 vs
@@ -226,7 +225,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const wallRef = useRef(null);
   const wallTopRef = useRef(null);
   const vignetteRef = useRef(null);
-  const wm1Ref = useRef(null);
   const storyTitleRef = useRef(null);
   const storyPanelRef = useRef(null);
   const scrollCueRef = useRef(null);
@@ -312,16 +310,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     placeBot(app);
     armsRef.current = collectArms(app);
     head1Ref.current = app?.findObjectByName?.("Head") || null;
-    // Scene 1 ships an OPAQUE background, and that is the whole reason the
-    // wordmark leaked: an opaque canvas can only reveal the wall underneath
-    // through a blend mode, and multiply -- the only one that reveals it --
-    // by definition also lets it through wherever the robot is not black.
-    // Measured: 8272 pixels of the word showing in the body's deep interior.
-    //
-    // The runtime accepts a transparent background, so the scene stops being
-    // a sheet of colour and becomes what scene 2 already was: a figure with
-    // alpha. Composited normally, the robot's own pixels cover the wall and
-    // its empty ones reveal it. No blend, no leak.
+    // Scene 1 ships an OPAQUE background, and an opaque canvas can only show
+    // the wall underneath through a blend mode. The runtime accepts a
+    // transparent one, so the scene stops being a sheet of colour and becomes
+    // what scene 2 already was: a figure with alpha. Composited normally, the
+    // robot's own pixels cover the wall and its empty ones reveal it.
     try {
       app.setBackgroundColor("rgba(0,0,0,0)");
     } catch (e) {
@@ -352,7 +345,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     armsAltRef.current = collectArms(app);
     headAltRef.current = app?.findObjectByName?.("Head") || null;
     // Misma razon que en slot 1: un fondo opaco solo deja ver la pared por
-    // blend, y el blend filtra el wordmark por dentro del cuerpo.
+    // blend, y el blend se cuela por dentro del cuerpo.
     try {
       app.setBackgroundColor("rgba(0,0,0,0)");
     } catch (e) {
@@ -590,16 +583,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       vignetteRef.current.style.setProperty("--vignette", "0 0 0");
 
       gsap.set(wallTopRef.current, { opacity: 0 });
-      // The wordmark is mix-blend-difference, so what you see is |wall - text|.
-      // Against a pure white wall, white text differences to exactly zero and
-      // the wordmark disappears (measured: 0 levels of spread, vs 6 at
-      // #EDEDED). Load it at #EDEDED so the delta is the same 18 levels the
-      // approved treatment has, and let the two swap as the wall darkens.
-      // The wordmark is painted on the wall, which lives INSIDE the wrap that
-      // slot 1 translates to centre its robot. Without this it slides off with
-      // the wall. The offset is in the wrap's local px, so the wrap's own scale
-      // cancels it exactly and the mark stays centred in the viewport.
-      gsap.set(wm1Ref.current, { x: ROBOT_DX_1 });
       if (isMobile) {
         [parallax1Ref.current, parallax2Ref.current, idle1Ref.current, idle2Ref.current].forEach(
           (el) => el && gsap.set(el, { x: 0, y: 0, rotation: 0, scale: 1 })
@@ -855,9 +838,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         },
       });
 
-      // wordmarks drift slowly through their scenes
-      tl.fromTo(wm1Ref.current, { y: 24 }, { y: -40, duration: 0.5 }, 0);
-
       // Grey settles in ahead of the drain, so the order reads white -> grey
       // -> black instead of white -> black.
       tl.to(vignetteRef.current, { opacity: 1, duration: 0.20 }, 0.02);
@@ -1061,37 +1041,21 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       data-theme="dark"
       className="relative h-screen min-h-[640px] w-full overflow-hidden bg-[rgb(var(--page-surface))]"
     >
-      {/* Layer A — live dark scene + painted wordmark + silhouette occluder */}
+      {/* Layer A — live dark scene over the painted wall */}
       <div ref={splineLayerRef} className="absolute inset-0">
         <div
           ref={canvasWrapRef}
           data-testid="hero-canvas-zoom"
           className="hero-drain absolute inset-0 will-change-transform"
         >
-          {/* The wall sits OUTSIDE the drift wrappers on purpose. It used to
-              live inside them, so the idle float and the mouse parallax moved
-              the painted wordmark along with the robot and the whole backdrop
-              swam. Only the canvas should drift.
-
-              The blend stays on the OUTER canvas element, with the transforms
-              nested inside it, because an element that GSAP gives a transform
-              becomes a stacking context — putting the blend under the drift
-              wrappers would isolate it from the wall and the occlusion that
-              makes the robot read against the wordmark would vanish. */}
+          {/* The wall sits OUTSIDE the drift wrappers on purpose: it is the
+              backdrop, not part of the scene, so the idle float and the mouse
+              parallax must not move it. Only the canvas should drift. */}
           <div ref={wallRef} className="absolute inset-0 bg-[rgb(var(--wall-a))]">
             <div
               ref={wallTopRef}
               className="pointer-events-none absolute inset-0 bg-[rgb(var(--wall-b))]"
             />
-            <div
-              ref={wm1Ref}
-              data-testid="bg-wordmark"
-              className="pointer-events-none absolute inset-x-0 top-[47%] hidden text-center sm:block"
-            >
-              <span className="wordmark-grad whitespace-nowrap font-display text-[clamp(2rem,11vw,22rem)] font-bold uppercase leading-none tracking-[-0.01em] opacity-50">
-                {WORDMARK}
-              </span>
-            </div>
           </div>
 
           {!failed && (
@@ -1284,20 +1248,27 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         </p>
       </div>
 
-      {/* kinetic headline (phase 1) — sits just above the nav dock, difference blend
+      {/* kinetic headline (phase 1) — sits just above the nav dock.
 
-          En celular el titular cae sobre el robot, y cual robot depende del
-          tema. En CLARO es el negro: blanco con difference se invierte donde
-          el fondo es claro y se queda blanco sobre el cuerpo negro, asi que
-          pasa de los dos lados del borde de la silueta. En OSCURO es el
-          plateado, y ahi difference sobre un torso claro devolveria gris
-          sucio: va blanco solido, que es ademas el token del tema. Sin halos
-          ni sombras en ninguno de los dos. */}
+          EL TRATAMIENTO LO DECIDE QUE ROBOT HAY DETRAS, no el breakpoint. Y
+          eso sale del tema en los dos anchos: claro carga el robot NEGRO
+          (escena 1) y oscuro el PLATEADO (escena 2), tanto en escritorio
+          -- donde sceneUrl sigue al tema -- como en celular, donde la capa A
+          monta las dos y el tema elige cual se ve.
+
+          Sobre el NEGRO, difference funciona: el texto se invierte contra la
+          pared clara y queda blanco sobre el cuerpo, asi que cruza el borde
+          de la silueta sin perderse de ningun lado.
+
+          Sobre el PLATEADO no puede funcionar, y no es cuestion de ajustar el
+          valor: difference contra un gris medio DEVUELVE gris medio. El
+          subtitulo desaparecia entero y el medio del titular se lavaba, que
+          es justo donde cruza el torso. Ahi va blanco solido, sin blend y sin
+          sombras. */}
       <div
         ref={headlineRef}
-        data-theme={isMobile ? ch2Theme : undefined}
-        className={`pointer-events-none absolute inset-x-0 bottom-44 text-center sm:bottom-44 sm:mix-blend-difference ${
-          isMobile && !darkMode ? "mix-blend-difference" : ""
+        className={`pointer-events-none absolute inset-x-0 bottom-44 text-center sm:bottom-44 ${
+          darkMode ? "" : "mix-blend-difference"
         }`}
       >
         <div className="overflow-hidden px-4">
@@ -1308,7 +1279,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-1"
             className={`font-inter text-[clamp(1.4rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.12em] sm:tracking-[0.3em] ${
-              isMobile ? "text-white" : "text-ink"
+              isMobile || darkMode ? "text-white" : "text-ink"
             }`}
           >
             — Build the future —
@@ -1321,8 +1292,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             initial="hidden"
             animate={revealed ? "show" : "hidden"}
             data-testid="hero-headline-2"
-            className={`font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] sm:text-ink/40 sm:tracking-[0.42em] ${
-              isMobile ? "text-white" : "text-ink"
+            className={`font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] sm:tracking-[0.42em] ${
+              isMobile || darkMode ? "text-white" : "text-ink sm:text-ink/40"
             }`}
           >
             one system at a time

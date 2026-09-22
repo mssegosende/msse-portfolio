@@ -28,11 +28,6 @@
            alpha — it is a grey that sits a fixed distance from the
            surface, so it needs its own value per theme. */
         --engrave-mid: 193 193 193;
-
-        /* wordmark gradient stops, dark -> silver -> pale on a light wall */
-        --wm-a: 116 121 128;
-        --wm-b: 172 178 186;
-        --wm-c: 223 226 230;
     }
 
     /* Deliberately not :root-only. The hero is a sequence that crosses from a
@@ -45,11 +40,6 @@
         --ink: 255 255 255;
         --surface: 0 0 0;
         --engrave-mid: 62 62 62;
-
-        /* and white -> silver -> near-black against a dark one */
-        --wm-a: 255 255 255;
-        --wm-b: 166 174 184;
-        --wm-c: 44 48 54;
     }
 
     /* Variables del TEMA DE LA PAGINA. Van en :root y en :root[data-theme]
@@ -180,28 +170,6 @@ body {
     50% {
         opacity: 0;
     }
-}
-
-/* The carve reads as depth only if the offset shadows are the
-   SURFACE colour, not a fixed black — pressed into white needs a
-   white highlight where pressed into black needs a black one. */
-/* The painted wordmark. Its colour is tweened by the timeline, so the depth
-   lives here: a soft cast in the SURFACE colour, which reads as carved into
-   the wall in light mode and lifted off it in dark, from one declaration. */
-/* The painted wordmark. The depth is INSIDE the letters — a gradient clipped
-   to the glyphs, running white into silver into near-black — rather than any
-   kind of shadow thrown behind them. */
-.wordmark-grad {
-    background-image: linear-gradient(
-        168deg,
-        rgb(var(--wm-a)) 0%,
-        rgb(var(--wm-b)) 44%,
-        rgb(var(--wm-c)) 100%
-    );
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
 }
 
 /* Un halo del color de la superficie. Despega un texto tanto de la pared

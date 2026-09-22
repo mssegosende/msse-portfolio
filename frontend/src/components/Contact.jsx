@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { terminalBoot } from "../data/portfolioData";
 import { GridField } from "./GridField";
 
@@ -21,19 +21,51 @@ const validate = ({ name, email, message }) => {
   return null;
 };
 
+// Los errores no son transcripcion: son un aviso. Viven aparte del log, con
+// una sola entrada por MENSAJE -- reenviar el formulario con el mismo campo
+// invalido reinicia su reloj en vez de apilar otra linea igual -- y se van
+// solos. Antes iban al log con push, y por eso el mismo texto se repetia una
+// vez por submit.
+const ERROR_TTL = 4200;
+
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-ink/[0.13] bg-ink/[0.03] px-4 py-3 font-kodemono text-sm text-ink placeholder:text-ink/65 outline-none transition-[border-color,box-shadow] duration-300 focus:border-ink/50 focus:shadow-[0_0_20px_rgb(var(--ink) / 0.07)]";
 
 export const Contact = () => {
   const [form, setForm] = useState({ name: "", email: "", company: "", message: "", website: "" });
   const [lines, setLines] = useState([]);
+  const [errors, setErrors] = useState([]);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
+  // Un reloj por mensaje, no uno global: dos errores distintos que aparecen
+  // con un segundo de diferencia se tienen que ir cada uno a su hora.
+  const errorTimers = useRef(new Map());
+
+  useEffect(() => {
+    const timers = errorTimers.current;
+    return () => {
+      timers.forEach((t) => clearTimeout(t));
+      timers.clear();
+    };
+  }, []);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const pushLine = (text, kind = "out") =>
     setLines((prev) => [...prev, { text, kind }]);
+
+  const showError = (text) => {
+    setErrors((prev) => (prev.some((x) => x.text === text) ? prev : [...prev, { text }]));
+    const timers = errorTimers.current;
+    clearTimeout(timers.get(text));
+    timers.set(
+      text,
+      setTimeout(() => {
+        timers.delete(text);
+        setErrors((prev) => prev.filter((x) => x.text !== text));
+      }, ERROR_TTL)
+    );
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,7 +73,7 @@ export const Contact = () => {
 
     const error = validate(form);
     if (error) {
-      pushLine(error, "err");
+      showError(error);
       return;
     }
 
@@ -58,18 +90,18 @@ export const Contact = () => {
         setDone(true);
         setForm({ name: "", email: "", company: "", message: "", website: "" });
       } else if (res.status === 429) {
-        pushLine("[ERR] RATE LIMIT — too many transmissions. Try again later.", "err");
+        showError("[ERR] RATE LIMIT — too many transmissions. Try again later.");
       } else {
-        pushLine(`[ERR] TRANSMISSION FAILED — server responded ${res.status}.`, "err");
+        showError(`[ERR] TRANSMISSION FAILED — server responded ${res.status}.`);
       }
     } catch {
-      pushLine("[ERR] NETWORK OFFLINE — message not sent. Try again.", "err");
+      showError("[ERR] NETWORK OFFLINE — message not sent. Try again.");
     } finally {
       setSending(false);
     }
   };
 
-  const lineColor = { cmd: "text-ink/[0.83]", out: "text-ink/65", ok: "text-ink", err: "text-ink/65" };
+  const lineColor = { cmd: "text-ink/[0.83]", out: "text-ink/65", ok: "text-ink" };
 
   return (
     <section
@@ -189,6 +221,36 @@ export const Contact = () => {
               >
                 {sending ? "Transmitting…" : done ? "Transmit again" : "Transmit message"}
               </button>
+
+              {/* Mismo bloque en celular y en escritorio: una sola region, sin
+                  variantes por breakpoint, asi que el comportamiento no puede
+                  divergir entre los dos.
+
+                  El contenedor se renderiza SIEMPRE y se esconde por :empty,
+                  no por errors.length. La diferencia importa: mientras la
+                  linea se esta desvaneciendo el array ya esta vacio, asi que
+                  una condicion en JS la desmontaria de golpe y la salida no se
+                  veria nunca. Con :empty el div se va recien cuando framer
+                  saco el ultimo hijo, que es cuando la animacion termino.
+                  Escondido ademas no arrastra el space-y-5 del form. */}
+              <div data-testid="contact-errors" className="space-y-1.5 empty:hidden">
+                <AnimatePresence>
+                  {errors.map((err) => (
+                    <motion.p
+                      key={err.text}
+                      role="alert"
+                      data-testid="contact-error"
+                      className="text-ink/65"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -8 }}
+                      transition={{ duration: 0.45, ease: "easeOut" }}
+                    >
+                      {err.text}
+                    </motion.p>
+                  ))}
+                </AnimatePresence>
+              </div>
             </form>
 
             {lines.length > 0 && (
