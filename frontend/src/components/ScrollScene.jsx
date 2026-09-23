@@ -257,12 +257,24 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // key fija, que convive con este dentro de la capa A -- ver HERO_ALT_URL.
   const sceneUrl = isMobile || darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
   const slot1Url = sceneUrl;
-  const slot2Url = sceneUrl;
+  // La capa 2 sigue al TEMA, no a sceneUrl. En celular sceneUrl esta clavado
+  // en la escena 2 para que el toggle no remonte el hero, y la capa 2 heredaba
+  // ese clavo: en claro el hero mostraba el robot negro y el capitulo 2 seguia
+  // plateado, dentro del mismo tema. En escritorio sceneUrl ya seguia al tema,
+  // asi que ahi esto no cambia nada.
+  //
+  // El costo es acotado a proposito: la capa 2 recien se monta pasado el 15%
+  // del pin, asi que un toggle en el hero -- que es donde se toca -- no tiene
+  // nada que remontar. Solo cambiar de tema YA dentro del capitulo 2 rehace
+  // este montaje, y es uno solo: el conteo de contextos en reposo no sube.
+  const slot2Url = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
 
   // El robot de la escena 1 es NEGRO y el de la 2 PLATEADO. En celular la capa
   // A monta los dos y el tema elige por clase: negro sobre el fondo claro,
-  // plateado sobre el oscuro. La capa 2 sigue con slot2Url fijo (plateado),
-  // que es lo que el capitulo oscuro siempre mostro.
+  // plateado sobre el oscuro. La capa 2 llega al mismo robot por otro camino
+  // -- su url sigue al tema, ver slot2Url -- asi que el modelo es UNO POR
+  // TEMA de punta a punta: negro todo el recorrido en claro, plateado todo el
+  // recorrido en oscuro.
   //
   // Cuesta un tercer contexto WebGL en el telefono. Es deliberado y esta a
   // prueba: si iOS Safari recarga, la salida es volver a plateado en los dos
@@ -373,15 +385,26 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // the mutation phase, by which point the REPLACEMENT canvas is already in
   // the tree, and the sweep kills the context that was just created.
   const glCanvasRefs = useRef({});
+  // Un efecto POR SLOT, cada uno atado a su propia url. Juntos en uno solo
+  // compartian las dependencias, asi que cambiar la url de la capa 2 corria
+  // una limpieza que tambien soltaba el contexto de slot1 -- y slot1 no se
+  // remonta en ese cambio, porque su key no cambio. Resultado: el hero se
+  // quedaba sin contexto y en negro. Ahora cada slot suelta solo el suyo, y
+  // solo cuando su escena se va de verdad.
   useLayoutEffect(() => {
     const held = glCanvasRefs.current;
     return () => {
       releaseGlContext(held.slot1);
-      releaseGlContext(held.slot2);
       held.slot1 = null;
+    };
+  }, [slot1Url]);
+  useLayoutEffect(() => {
+    const held = glCanvasRefs.current;
+    return () => {
+      releaseGlContext(held.slot2);
       held.slot2 = null;
     };
-  }, [slot1Url, slot2Url]);
+  }, [slot2Url]);
 
   // El montaje alterno no sigue a ninguna url -- su key es fija -- asi que lo
   // unico que lo desmonta es salir de celular, o irse de la pagina. Su
@@ -407,7 +430,21 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // distant. Note the overscale also keeps Spline's "Built with Spline"
     // badge out of frame — it is drawn INSIDE the WebGL canvas, not the DOM,
     // so CSS cannot reach it; anything at or below ~1.2 brings it into view.
-    const startScale = reduce ? 1 : isMobile ? 1.7 : 1.78;
+    // La MISMA regla de cintura que el capitulo 2, aplicada al hero. Medido en
+    // la apertura, antes de tocar nada:
+    //
+    //   celular     S 1.7  / y 11%    =>  L .729   la cintura esta en p .717:
+    //                                     se veian los montantes y el arranque
+    //                                     de la pelvis, unos 19px de 844
+    //   escritorio  S 1.78 / y 12.6%  =>  L .710   justo SOBRE la cintura
+    //                                     (p .709), y el float del idle mas el
+    //                                     parallax (13px juntos = .008 nativo)
+    //                                     lo empujan del otro lado
+    //
+    // Se corrige acercando, no bajando: subir la y sola habria abierto aire
+    // muerto arriba de la cabeza, que es lo que estos numeros venian de sacar.
+    // La corona queda donde estaba y el borde de abajo sube a L .675 / .680.
+    const startScale = reduce ? 1 : isMobile ? 1.86 : 1.9;
     // The head cleared the top of the viewport by ~78px at 2000x1014, which
     // read as dead air. Measured off the silhouette, not the transform: -3.9%
     // of the wrap height is ~39px, so the gap halves and the head still has
@@ -426,8 +463,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // Acercar sube la corona fuera de cuadro, asi que la y compensa. Un punto
     // a la fraccion nativa p cae en (p*H - H/2)*S + H/2 + Y*H; con la corona
     // en p .154 sobre 844, sostenerla a y 21 con S 2.3 despeja Y = 32%.
-    const startY = reduce ? "2%" : isMobile ? "11%" : "12.6%";
-    const endY = reduce ? "3%" : isMobile ? "13%" : "14.1%";
+    const startY = reduce ? "2%" : isMobile ? "16.5%" : "16.8%";
+    const endY = reduce ? "3%" : isMobile ? "17.9%" : "18.1%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -452,22 +489,37 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     const fx = (visualPx, scale) => `${((visualPx - ROBOT_DX * scale) / VW) * 100}%`;
     const fx1 = (visualPx, scale) => `${((visualPx - ROBOT_DX_1 * scale) / VW) * 100}%`;
 
-    // Scale progression 2.8 -> 2.4 -> 2.0 -> 1.6 -> 1.5: always some retreat
-    // between beats, and the closing comes back in rather than pulling further.
+    // El ritmo no cambia: siempre algo de retroceso entre pasos, y un cierre
+    // que vuelve a acercarse en vez de seguir abriendo. Lo que cambia es el
+    // rango, y quien lo fija.
     //
-    // The phone gets its own progression: 2.0 -> 1.8 -> 1.6 -> 1.4, even
-    // steps of 0.2 instead of a 0.9 drop out of the story followed by three
-    // small ones, and the head swings right / left / right / left so each
-    // card arrives against a changed frame.
+    //   escritorio  4.0 -> 2.75 -> 2.15 -> 1.835 -> 2.03
+    //   celular     1.833 -> 1.667 -> 1.5 -> 1.333 -> 1.167 -> 1.333
     //
-    // The ceiling is not taste, it is geometry: the story panel and the
-    // callouts own the lower two thirds of a phone, so the head has to live
-    // in the top ~350px. It is 178px of native render, so anything past ~2.0
-    // pushes the face behind the panel. Each y below pins the crown near 40px
-    // from the solved form Y = (40 + 292*S - 422) / 844.
+    // Los numeros del celular son MAS CHICOS que los de antes (2.2 .. 1.4) y
+    // sin embargo el robot se ve mas grande: el tamano ahora sale del rig, y
+    // el scale del canvas solo recorta. Bajarlo es justamente lo que se
+    // buscaba -- ver botRig mas abajo.
+    //
+    // ---- donde corta el cuadro -------------------------------------------
+    // Cada paso se eligio por su L: la fraccion NATIVA del canvas que queda
+    // sobre el borde INFERIOR del cuadro, L = 0.5 + (0.5 - Y) / S. Medida, no
+    // estimada: con el wrap en scale(1) se fotografia la silueta y se leen los
+    // puntos del cuerpo directo del perfil de anchos por fila.
+    //
+    //   escritorio, rig s .8      celular, rig s 1.2 (ver botRig)
+    //   corona     p .138         corona   p .05
+    //   CINTURA    p .709         CINTURA  p .936
+    //   pelvis     p .73 - .79    badge de Spline  p .92+
+    //   piernas    p .80+
+    //
+    // La regla es una sola y vale para los dos anchos: L por ENCIMA de la
+    // cintura en TODOS los pasos, y tambien en la interpolacion entre pasos
+    // -- applyPull mezcla scale/x/y linealmente y L no es lineal en esa
+    // mezcla, asi que los intermedios se verificaron aparte.
     const c2pre = isMobile
-      ? { scale: 2.2, x: "22%", y: "31%" }
-      : { scale: 3.0, x: fx(0, 3.0), y: "53%" };
+      ? { scale: 1.833, x: "0%", y: "35.0%", rx: 13.3 }   // L .582
+      : { scale: 3.0, x: fx(0, 3.0), y: "53%" };          // L .490
     // STEP 1 (story) — closest, and centred. The text sits to the right.
     // STEP 1 (story) — a tight head shot, so the difference between the two
     // robots reads at a glance instead of being a detail on a torso.
@@ -479,8 +531,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // needs S = 710/178 ≈ 4.0, and centring the head's midpoint (p 0.242)
     // then solves to Y = 103%. It steps left so the story column stays clear.
     const c2close = isMobile
-      ? { scale: 2.0, x: "22%", y: "23%" }
-      : { scale: 4.0, x: fx(-350, 4.0), y: "103%" };
+      ? { scale: 1.667, x: "0%", y: "27.5%", rx: 14.6 }   // L .635
+      : { scale: 4.0, x: fx(-350, 4.0), y: "103%" };      // L .368
     // STEP 2 (card 01, at the LEFT) — the body now sits OPPOSITE its card
     // instead of leaning into it. Leaning left put the figure and the card on
     // the same side and vacated the whole right half; that read as
@@ -488,22 +540,29 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // Card left + body right balances the frame and gives the connector a
     // span to cross.
     const c2s2 = isMobile
-      ? { scale: 1.8, x: "-22%", y: "17%" }
-      : { scale: 2.75, x: fx(150, 2.75), y: "49.1%" };   // L .48 — above the elbow
+      ? { scale: 1.5, x: "0%", y: "20.0%", rx: -16.3 }    // L .700
+      : { scale: 2.75, x: fx(150, 2.75), y: "49.1%" };   // L .503 — above the elbow
     // STEP 3 (card 02, at the RIGHT) — leans right toward its card. -520 put
     // the body hard against the left edge with a 285px void before the card;
     // it still crops, just less.
     const c2s3 = isMobile
-      ? { scale: 1.6, x: "22%", y: "10%" }
-      : { scale: 2.15, x: fx(-200, 2.15), y: "28.3%" }; // L .57 — past the elbow
-    // STEP 4 (card 03) — body centred; stays here
+      ? { scale: 1.333, x: "0%", y: "12.5%", rx: 18.3 }  // L .781
+      : { scale: 2.15, x: fx(-200, 2.15), y: "28.3%" }; // L .601 — past the elbow
+    // STEP 4 (card 03) — the WIDEST beat of the sequence, so it is the one the
+    // cintura rule binds on. Escritorio venia en 1.65/11% => L .736, que cae
+    // JUSTO sobre la cintura (.709) y por eso se veia; 1.835/17.9% lo sube a
+    // L .675, un margen de .034 nativo = 62px de pantalla a 900 de alto, que
+    // aguanta el float del idle y el parallax (±13px juntos).
     const c2far = isMobile
-      ? { scale: 1.4, x: "-14%", y: "3%" }
-      : { scale: 1.65, x: fx(0, 1.65), y: "11.0%" };    // L .70 — the waist
-    // CLOSING — comes back in slightly, same centred position
+      ? { scale: 1.167, x: "0%", y: "5.0%", rx: -13.7 }   // L .885
+      : { scale: 1.835, x: fx(0, 1.835), y: "17.9%" };   // L .675 — sobre la cintura
+    // CLOSING — vuelve a acercarse, centrado. El comentario decia "comes back
+    // in slightly" pero el numero hacia lo contrario: 1.25 era el paso MAS
+    // abierto de toda la secuencia, mas que card 03, y a L .922 mostraba
+    // pelvis y medio muslo. Ahora el cierre es de verdad un regreso.
     const c2end = isMobile
-      ? { scale: 1.6, x: "-11%", y: "12.5%" }
-      : { scale: 1.25, x: fx(0, 1.25), y: "-2.8%" };    // L .875 — down the legs
+      ? { scale: 1.333, x: "0%", y: "12.5%", rx: -9.1 } // L .781
+      : { scale: 2.03, x: fx(0, 2.03), y: "25.6%" };    // L .620 — sobre la cintura
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
     // Gaze poses, radians, capped at ±0.35. +y turns the face to the viewer's
@@ -686,6 +745,21 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         const tx = lerp(parseFloat(A.x), parseFloat(B.x), f);
         const ty = lerp(parseFloat(A.y), parseFloat(B.y), f);
         gsap.set(canvas2WrapRef.current, { scale: sc, x: `${tx}%`, y: `${ty}%` });
+        // El corrimiento lateral del celular va en el RIG, no en el transform.
+        // Con el canvas cerca de scale 1 un x en CSS lo corre hasta destapar
+        // su propio borde -- deja de cubrir el cuadro y aparece una franja
+        // transparente del lado contrario. El limite es |x| <= (S-1)/2, y a
+        // S 1.167 eso da 8%: menos que el 14% que el paso necesita. En el rig
+        // el canvas no se mueve y el limite desaparece.
+        //
+        // Las amplitudes bajaron a ~0.6 de las viejas: el mismo corrimiento en
+        // pixeles que servia con el robot chico lo saca de cuadro ahora que es
+        // un 30% mas grande. Se conserva el LADO de cada paso -- derecha,
+        // derecha, izquierda, derecha, izquierda, izquierda -- que es lo que
+        // da el vaiven entre tarjetas. En escritorio no hay rx y esto no corre.
+        if (A.rx !== undefined && B.rx !== undefined) {
+          botRig.x = BOT_HOME.x + lerp(A.rx, B.rx, f);
+        }
 
         // vector-effect="non-scaling-stroke" makes stroke-dasharray screen-space,
         // so the connector length must be measured in px, not in viewBox units
@@ -744,13 +818,28 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // same with the sign flipped. Leaving a quarter of the canvas empty
       // below the feet is what keeps Spline's badge off screen once the
       // framing pans down, and that lands on s .40 / y 186.
-      const botRig = { s: 0.8, y: BOT_HOME.y };
+      // CELULAR: el acercamiento sale del RIG, no de un transform sobre el
+      // canvas. El runtime dimensiona el buffer con devicePixelRatio *
+      // clientWidth y no ve los transforms, asi que subir el scale del canvas
+      // agranda pixeles ya renderizados; agrandar el rig los RINDE. Medido en
+      // un iPhone de 390x844 a DPR 2: el buffer es 780x1688 en los dos casos,
+      // pero con rig 1.2 el cuerpo ocupa un 50% mas de ese buffer.
+      //
+      // La y baja con el rig a proposito. El rig escala alrededor de su origen
+      // -- la cadera -- asi que agrandarlo solo empuja la corona fuera del
+      // canvas por arriba; -83.56 la devuelve a p .05, y de paso manda la
+      // CINTURA a p .936, donde ningun encuadre de la secuencia llega. No es
+      // que los pasos la eviten: a este rig no se puede mostrar.
+      const botRig = isMobile
+        ? { s: 1.2, x: BOT_HOME.x, y: -83.56 }
+        : { s: 0.8, x: BOT_HOME.x, y: BOT_HOME.y };
       const applyBotRig = () => {
         const bot = botRef.current;
         if (!bot) return;
         bot.scale.x = botRig.s;
         bot.scale.y = botRig.s;
         bot.scale.z = botRig.s;
+        bot.position.x = botRig.x;
         bot.position.y = botRig.y;
       };
 
