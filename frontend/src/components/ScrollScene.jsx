@@ -174,8 +174,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   onJourneyEndRef.current = onJourneyEnd;
   const app1Ref = useRef(null);
   const app2Ref = useRef(null);
-  const lastMouseRef = useRef(0);
-  const mouseGazeRef = useRef({ x: 0, y: 0 });
   const applyGazeRef = useRef(null);
   const armsRef = useRef([]);
   const botRef = useRef(null);
@@ -590,22 +588,21 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       if (parallax2Ref.current) gsap.set(parallax2Ref.current, { x: sway * -16, y: rise * 10 });
     };
 
-    // mouse parallax on both scenes (outside gsap.context to avoid TDZ on ctx)
+    // mouse parallax on scene 1 only (outside gsap.context to avoid TDZ on ctx).
+    // Escena 2 no escucha al cursor: el robot solo se mueve por la timeline y
+    // la cabeza solo mira la tarjeta activa. Su canvas ya es pointer-events-none
+    // (hereda de layer2Ref) y el runtime de Spline solo escucha pointermove
+    // sobre su propio canvas, asi que del lado de la escena no hay nada que
+    // apagar.
     let removeMouse = null;
     if (!reduce) {
       const px1 = gsap.quickTo(parallax1Ref.current, "x", { duration: 0.9, ease: "power2.out" });
       const py1 = gsap.quickTo(parallax1Ref.current, "y", { duration: 0.9, ease: "power2.out" });
-      const px2 = gsap.quickTo(parallax2Ref.current, "x", { duration: 0.9, ease: "power2.out" });
-      const py2 = gsap.quickTo(parallax2Ref.current, "y", { duration: 0.9, ease: "power2.out" });
       const onMouse = (e) => {
         const r = sectionRef.current.getBoundingClientRect();
         const nx = (e.clientX - r.left) / r.width - 0.5;
         const ny = (e.clientY - r.top) / r.height - 0.5;
         px1(nx * 12); py1(ny * 8);
-        px2(nx * 12); py2(ny * 8);
-        // cursor takes priority over the directed gaze for 1.2s after it moves
-        lastMouseRef.current = Date.now();
-        mouseGazeRef.current = { x: ny * 0.7, y: nx * 0.7 }; // ±0.35 rad
       };
       sectionRef.current.addEventListener("mousemove", onMouse);
       removeMouse = () => sectionRef.current?.removeEventListener("mousemove", onMouse);
@@ -788,23 +785,17 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         });
       };
 
-      // ---- directed gaze, with the cursor taking over ------------------------
+      // ---- directed gaze -----------------------------------------------------
+      // Only the timeline steers the head; the cursor never does.
       const gaze = { x: 0, y: 0 };      // target written by the timeline
       const cur = { x: 0, y: 0 };       // what is actually applied, eased
-      // While `lock` is 1 the head stays welded to the directed pose: the
-      // cursor cannot pull it away and it never drifts back to centre. The
-      // timeline releases it on the closing beat.
-      const gazeLock = { on: 1 };
       const applyGaze = () => {
         const head = app2Ref.current && app2Ref.current.findObjectByName
           ? app2Ref.current.findObjectByName("Head")
           : null;
         if (!head) return;
-        const fresh = !gazeLock.on && Date.now() - lastMouseRef.current < 1200;
-        const tx = fresh ? mouseGazeRef.current.x : gaze.x;
-        const ty = fresh ? mouseGazeRef.current.y : gaze.y;
-        cur.x += (tx - cur.x) * 0.08;
-        cur.y += (ty - cur.y) * 0.08;
+        cur.x += (gaze.x - cur.x) * 0.08;
+        cur.y += (gaze.y - cur.y) * 0.08;
         head.rotation.x = cur.x;
         head.rotation.y = cur.y;
       };
@@ -1006,12 +997,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         tl.to(railRefs.current[i], { opacity: 1, duration: 0.05 }, cardAt);
       });
 
-      // CLOSING: robot centres in the viewport, the head is released, and the
+      // CLOSING: robot centres in the viewport, the head turns front, and the
       // three cards come back together with their three dashed connectors.
       const closeAt = isMobile ? 2.72 : 2.92;
       tl.to(body, { t: 5, duration: 0.30, ease: "power1.inOut" }, closeAt);
       tl.to(gaze, { ...(isMobile ? GAZE.closeMobile : GAZE.front), duration: 0.16, ease: "power2.inOut" }, closeAt);
-      tl.set(gazeLock, { on: 0 }, closeAt + 0.18);
       if (!isMobile) {
         [0, 1].forEach((i) => {
           tl.to(calloutRefs.current[i], { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" }, 3.16);
