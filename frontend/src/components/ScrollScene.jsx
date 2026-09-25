@@ -159,7 +159,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const [scene2Failed, setScene2Failed] = useState(false);
   const [journeyDone, setJourneyDone] = useState(false);
   const readyRef = useRef(false);
-  const mount2Ref = useRef(false);
+  // Escena 2 renderiza solo cuando la capa 2 esta por aparecer; antes de eso
+  // su loop queda en pausa. Lo decide el onUpdate del pin, lo lee el onLoad.
+  const awake2Ref = useRef(false);
   const stopped1Ref = useRef(false);
   const journeyRef = useRef(false);
   // Where the visitor was when the timeline had to be rebuilt. Reverting the
@@ -374,6 +376,20 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   }, [mountScene2, scene2Ready, scene2Failed]);
 
   const revealed = loaded || failed;
+
+  // Escena 2 se monta en cuanto el hero termino de cargar, NO por scroll. El
+  // umbral viejo (p > .15) era progreso de scroll y el crossfade esta puesto
+  // en SEGUNDOS de timeline (XFADE_AT / duracion ~ p .149 en escritorio):
+  // cada beat agregado al final de la timeline lo fue adelantando hasta
+  // quedar antes del montaje, y la capa 2 aparecia sin escena -- mostrando el
+  // PNG de respaldo, negro, sin encuadre y cortado en la cadera. Desde el
+  // arranque hasta el crossfade hay poco mas de un viewport de scroll, que un
+  // flick cubre en medio segundo: no hay umbral de scroll que llegue a
+  // tiempo. Montada al cargar, su loop queda en pausa hasta acercarse (ver
+  // awake2Ref), asi que durante el hero no le cuesta GPU al telefono.
+  useEffect(() => {
+    if (revealed) setMountScene2(true);
+  }, [revealed]);
 
   // Keyed on the scene urls: when a theme flip swaps them, React unmounts the
   // old canvases, and this cleanup runs in the mutation phase — while they are
@@ -874,6 +890,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       applyGazeRef.current = applyGazeAndPose;
       gsap.ticker.add(applyGazeAndPose);
 
+      // Where layer 2 fades in, in timeline seconds. Scene 2 wakes a little
+      // before it (at 60% of the way there, in scroll progress) so its loop
+      // has been drawing the framed robot for a while by the time it shows.
+      const XFADE_AT = 0.5;
       const tl = gsap.timeline({
         defaults: { ease: "none" },
         // keeps dots/lines glued to the robot while it is still moving
@@ -888,9 +908,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           onUpdate: (self) => {
             const p = self.progress;
             if (isTouchDevice && !isMobile) touchParallax(p);
-            if (p > 0.15 && !mount2Ref.current) {
-              mount2Ref.current = true;
-              setMountScene2(true);
+            const wake2 = p > (XFADE_AT / tl.duration()) * 0.6;
+            if (wake2 !== awake2Ref.current) {
+              awake2Ref.current = wake2;
+              try {
+                if (wake2) app2Ref.current?.play();
+                else app2Ref.current?.stop();
+              } catch (e) { /* runtime without play()/stop() */ }
             }
             if (p > 0.45 && !stopped1Ref.current) {
               stopped1Ref.current = true;
@@ -942,9 +966,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       tl.to(pillsRef.current, { opacity: 0, y: 24, duration: 0.08 }, 0.2);
 
       // PHASE 2: crossfade in darkness — chrome robot rises in EXTREME CLOSE-UP
-      tl.to(splineLayerRef.current, { opacity: 0, duration: 0.12 }, 0.5);
-      tl.to(layer2Ref.current, { opacity: 1, duration: 0.12 }, 0.5);
-      tl.to(lift, { t: 1, duration: 0.16, onUpdate: applyLift }, 0.5);
+      tl.to(splineLayerRef.current, { opacity: 0, duration: 0.12 }, XFADE_AT);
+      tl.to(layer2Ref.current, { opacity: 1, duration: 0.12 }, XFADE_AT);
+      tl.to(lift, { t: 1, duration: 0.16, onUpdate: applyLift }, XFADE_AT);
 
       // story paragraphs fade in one after another during the close-up hold
       // (long scroll lock: only the tiny idle breathing moves the robot here)
@@ -1216,8 +1240,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               it rather than wrapping the whole layer. */}
           <div className="absolute left-1/2 top-1/2 h-[90vh] w-[90vh] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgb(var(--ink) / 0.07),transparent_62%)]" />
 
-          {/* fallback static render until/if the live scene fails */}
-          {(!scene2Ready || scene2Failed) && (
+          {/* Static render ONLY if the live scene fails. It used to stand in
+              while the scene was loading too, and that is what showed up in
+              the crossfade: a black, unframed robot cut at the hip, dimmed by
+              the lift filter into something that reads as a negative. While
+              loading, the layer shows its own darkness and nothing else. */}
+          {scene2Failed && (
             <div className="absolute inset-0 flex items-center justify-center">
               <img
                 src="/robot-alpha.png"
@@ -1273,7 +1301,18 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                         } catch (e) {
                           /* older runtime without setBackgroundColor */
                         }
-                        setScene2Ready(true);
+                        // Ready once it has DRAWN: two frames, so placeBot and
+                        // the rig from the ticker are in the picture before
+                        // the wrap can fade in. Then back to sleep if the
+                        // visitor is still in the hero.
+                        requestAnimationFrame(() =>
+                          requestAnimationFrame(() => {
+                            setScene2Ready(true);
+                            if (!awake2Ref.current) {
+                              try { app.stop(); } catch (e) { /* runtime without stop() */ }
+                            }
+                          })
+                        );
                       }}
                       onError={() => setScene2Failed(true)}
                     />

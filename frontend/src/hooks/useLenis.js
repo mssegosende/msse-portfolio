@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import Lenis from "lenis";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 export const useLenis = () => {
   useEffect(() => {
@@ -36,9 +37,19 @@ export const pinScrollToTopOnReload = () => {
   window.scrollTo(0, 0);
 };
 
+/**
+ * A jump, not a scroll. Scrolling there — however fast — travels back through
+ * the whole pinned sequence and plays the hero in reverse on screen. The jump
+ * alone is not enough either: the hero timeline is scrubbed (`scrub: 1`), so
+ * it would still ease backwards for a second to catch up with the new
+ * position. Forcing each scrub tween to its end lands it on the opening frame
+ * in the same paint.
+ */
 export const scrollToTop = () => {
-  if (window.__lenis) window.__lenis.scrollTo(0, { duration: 1.4 });
-  else window.scrollTo({ top: 0, behavior: "smooth" });
+  if (window.__lenis) window.__lenis.scrollTo(0, { immediate: true, force: true });
+  else window.scrollTo({ top: 0, behavior: "instant" });
+  ScrollTrigger.update();
+  ScrollTrigger.getAll().forEach((st) => st.getTween()?.progress(1));
 };
 
 export const scrollToId = (id) => {
