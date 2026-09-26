@@ -1,26 +1,14 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-const STORAGE_KEY = "msgc-theme";
-
 /**
- * White is the default: a first-time visitor with no stored choice gets the
- * light site regardless of what their OS prefers. The system preference is
- * deliberately NOT consulted — the light treatment is the designed default,
- * and dark is the opt-in.
+ * Every page load starts in light, always: the light treatment is the
+ * designed default and dark is the opt-in. The toggle works for the rest of
+ * the session, but the choice is not persisted — neither the OS preference
+ * nor a previous visit's choice is consulted.
  */
 const DEFAULT_THEME = "light";
 
 const ThemeContext = createContext({ theme: DEFAULT_THEME, toggle: () => {} });
-
-const readStored = () => {
-  try {
-    const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === "light" || v === "dark" ? v : null;
-  } catch (e) {
-    // private mode / blocked site data — fall through to the default
-    return null;
-  }
-};
 
 /**
  * The attribute goes on <html>, which is what index.css and the Tailwind
@@ -34,15 +22,10 @@ const applyTheme = (theme) => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => readStored() || DEFAULT_THEME);
+  const [theme, setTheme] = useState(DEFAULT_THEME);
 
   useEffect(() => {
     applyTheme(theme);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, theme);
-    } catch (e) {
-      // nothing to do — the choice just will not survive a reload
-    }
   }, [theme]);
 
   const toggle = useCallback(() => {

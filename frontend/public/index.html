@@ -41,13 +41,6 @@
                     }
                     window.scrollTo(0, 0);
                 } catch (e) {}
-                try {
-                    if (localStorage.getItem('msgc-theme') === 'dark') {
-                        document.documentElement.setAttribute('data-theme', 'dark');
-                        var m = document.querySelector('meta[name="theme-color"]');
-                        if (m) m.setAttribute('content', '#000000');
-                    }
-                } catch (e) {}
             })();
         </script>
         <title>MSGCENGINEER — María Sol Gosende, Full Stack Developer & AI Engineer</title>

@@ -88,11 +88,12 @@ const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 // visor a ~32%, corona todavia rozando el borde. Mas atras (.5-.6) la corona
 // entra entera con aire arriba; subir t es la unica perilla.
 const HERO_CAM_MOBILE = { x: 0, y: 208.2, z: 616 };
-// HERO ESCRITORIO: la final, 1.35x mas cerca (z 1000 -> 740; antes 806). El
-// acercamiento sale de la camara y no del scale CSS: el canvas ya va estirado
-// 1.9x, y subirlo lo ablandaria; la camara RINDE los pixeles. La corona y el
-// centrado se calculan con el alto de la ventana (ver heroY / heroDx).
-const HERO_CAM_DESKTOP = { x: 0, y: 146.98, z: 660 };
+// HERO ESCRITORIO: 1.52x mas cerca que la final (z 1000 -> 660) y mas alta
+// (y 146.98 -> 177.6), que es lo que baja el robot en el cuadro sin correr el
+// canvas. El acercamiento sale de la camara y no del scale CSS: el canvas ya
+// va estirado 1.9x, y subirlo lo ablandaria. Ver heroY / heroDx.
+const HERO_CAM_DESKTOP = { x: 0, y: 178.2, z: 660 };
+
 // CAPITULO 2: la final de la intro, la misma en los dos archivos. Todo el
 // encuadre del capitulo 2 (L, cintura, anclas) se midio con esta camara; se
 // clava solo para que la intro no la barra en el crossfade.
@@ -308,7 +309,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // perdidos en el medio. iOS Safari tiene un techo bajo y recupera la
   // memoria GPU de forma asincrona, asi que pide los nuevos mientras los
   // viejos siguen tomados, mata la pestana y recarga -- de ahi el salto
-  // arriba y el tema opuesto, que sale de localStorage al recargar.
+  // arriba (el tema ya no persiste entre recargas: siempre arranca en claro).
   //
   // Las URLs no dependen del tema en celular, y eso no cambia: son lo que
   // alimenta las keys, el efecto que libera contextos y las dependencias de la
@@ -398,6 +399,33 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       : canvasWrapRef.current
         ? canvasWrapRef.current.querySelector("canvas")
         : null;
+    // ESCRITORIO: la cabeza arranca mirando al centro de la ventana. El
+    // look-at de la escena apunta a la pose de reposo (cabeza derecha) hasta
+    // el primer evento del mouse, y en esa pose la corona queda ~3.6% del alto
+    // MAS ARRIBA que mirando al cursor en el centro: con el encuadre calibrado
+    // para el cursor al centro, al cargar la corona se cortaba. Un pointermove
+    // sintetico al centro, sobre el canvas donde escucha el look-at, la deja
+    // en la misma pose que el cursor centrado; el mouse real la toma desde ahi.
+    // (Escribir la rotacion no sirve: el look-at la pisa cada frame.)
+    if (!isMobile && glCanvasRefs.current.slot1) {
+      const cv = glCanvasRefs.current.slot1;
+      // Con demora: el runtime cachea el rect del canvas y al cargar todavia
+      // no es el definitivo; disparado en el mismo frame, la cabeza miraba
+      // hacia arriba en vez de al centro.
+      setTimeout(() => {
+        try {
+          cv.dispatchEvent(
+            new PointerEvent("pointermove", {
+              clientX: window.innerWidth / 2,
+              clientY: window.innerHeight / 2,
+              bubbles: true,
+            })
+          );
+        } catch (e) {
+          /* no PointerEvent constructor */
+        }
+      }, 600);
+    }
     if (readyRef.current) return;
     readyRef.current = true;
     setProgress(100);
@@ -540,16 +568,25 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // a la fraccion nativa p cae en (p*H - H/2)*S + H/2 + Y*H; con la corona
     // en p .154 sobre 844, sostenerla a y 21 con S 2.3 despeja Y = 32%.
     // ESCRITORIO: la corona a HERO_CROWN_TOP px del borde superior, en
-    // cualquier alto de ventana: el encuadre va en %, asi que la y se calcula
-    // con el alto, como en el cierre del capitulo 2. 57px (bajo la marca) y
-    // 36px (en la marca) todavia leian como aire de mas; 20px deja la corona
-    // por encima de la linea de la marca, con un filo minimo. Con la camara
-    // del hero (z 660) la corona cae en la fraccion nativa HERO_CROWN_P,
-    // medida sobre la silueta. El tiron del drain conserva su +1.3%.
-    const HERO_CROWN_TOP = 20;
-    const HERO_CROWN_P = -0.0042;
+    // cualquier alto de ventana.
+    //
+    // La y NO puede pasar de ~39%: el canvas y la pared van escalados 1.9x
+    // alrededor del centro, asi que su borde superior cae en (y - 45%) * alto.
+    // Con y 48% (2c2ca10) quedaba +27px ADENTRO del cuadro: la corona salia
+    // cortada en ese borde y arriba asomaba el fondo -- la franja negra. Y el
+    // tiron del drain (scale x.96, +1.3%) pide y <= 39.9% para no destaparlo.
+    // Por eso el robot se baja con la CAMARA (HERO_CAM_DESKTOP.y), y la y solo
+    // hace el ajuste fino por alto de ventana alrededor de 38%, con tope 39%.
+    // Medido a 1440x900 con y 38% y el cursor al centro (que es tambien la
+    // pose de arranque, ver el pointermove en handleLoad): la corona se mueve 6.47px por
+    // unidad de camara; con la camara en 178.2 cae a 38px, el 4.22% del alto.
+    // Siguiendo al mouse la corona recorre ~31px (cursor abajo) a ~79px
+    // (cursor arriba): nunca sale del cuadro.
+    const HERO_CROWN_TOP = 38;
+    const HERO_Y_BASE = 38;
+    const HERO_CROWN_FRAC_AT_BASE = 0.0422;
     const heroVH = window.innerHeight || 900;
-    const heroY = (HERO_CROWN_TOP / heroVH - 0.5 - (HERO_CROWN_P - 0.5) * startScale) * 100;
+    const heroY = Math.min(39, HERO_Y_BASE + (HERO_CROWN_TOP / heroVH - HERO_CROWN_FRAC_AT_BASE) * 100);
     const startY = reduce ? "2%" : isMobile ? "16.5%" : `${heroY}%`;
     const endY = reduce ? "3%" : isMobile ? "17.9%" : `${heroY + 1.3}%`;
     // Centrado sobre la silueta: el rig (BOT_HOME.x) deja la cabeza a la
