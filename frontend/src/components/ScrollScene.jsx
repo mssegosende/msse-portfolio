@@ -63,6 +63,44 @@ const POSE_HOME = { arm: -0.306, elbowY: -0.018, forearm: -0.471 };
 
 const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 
+// CAMARAS (celular). Cada escena trae su propia intro de camara: un evento
+// Start de Spline que la lleva desde la posicion guardada en el archivo hasta
+// (0, 147, 1000) en ~2.5s. Los dos archivos arrancan de camaras distintas --
+// el robot negro de (0, 249, 360), mucho mas cerca, el plateado de
+// (-7.5, 262, 588) -- y el hero se revela con la intro todavia corriendo. Asi
+// el mismo beat salia encuadrado distinto segun el tema (negro grande y con la
+// cabeza baja, plateado chico y alto), y segun cuanto tardara en cargar; y
+// HOME, que no repite la intro, aterrizaba en la camara final. El rig y la
+// camara final son iguales en los dos: lo unico que divergia era esa intro.
+//
+// La salida es sacarle la camara a la intro: se clava la posicion (la intro
+// no rota, la rotacion queda en 0.014/0/0 todo el recorrido). Mismo lugar
+// para los dos modelos => mismo encuadre, en carga fresca y despues de home.
+//
+// HERO: sobre la propia linea de la intro del robot negro, en t = .4 (de 0,
+// la guardada, a 1, la final). t ~ .3 es el encuadre de referencia -- corona
+// en el borde, visor a ~37%, titular bajo el menton --; .4 se aleja apenas:
+// visor a ~32%, corona todavia rozando el borde. Mas atras (.5-.6) la corona
+// entra entera con aire arriba; subir t es la unica perilla.
+const HERO_CAM_MOBILE = { x: 0, y: 208.2, z: 616 };
+// CAPITULO 2: la final de la intro, la misma en los dos archivos. Todo el
+// encuadre del capitulo 2 (L, cintura, anclas) se midio con esta camara; se
+// clava solo para que la intro no la barra en el crossfade.
+const CAM_FINAL = { x: 0, y: 146.98, z: 1000 };
+
+/** Pin a scene's camera so its own Start transition cannot move it. */
+const pinCamera = (app, pos) => {
+  try {
+    const p = app?._camera?.position;
+    if (!p) return;
+    ["x", "y", "z"].forEach((ax) =>
+      Object.defineProperty(p, ax, { get: () => pos[ax], set: () => {}, configurable: true })
+    );
+  } catch (e) {
+    /* runtime without an inspectable camera */
+  }
+};
+
 /**
  * Hand the GPU context back. Application.dispose() drops the renderer but the
  * context itself survives until the browser garbage-collects it, and browsers
@@ -320,6 +358,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const handleLoad = (app) => {
     app1Ref.current = app;
     placeBot(app);
+    if (isMobile) pinCamera(app, HERO_CAM_MOBILE);
     armsRef.current = collectArms(app);
     head1Ref.current = app?.findObjectByName?.("Head") || null;
     // Scene 1 ships an OPAQUE background, and an opaque canvas can only show
@@ -354,6 +393,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const handleAltLoad = (app) => {
     appAltRef.current = app;
     placeBot(app);
+    pinCamera(app, HERO_CAM_MOBILE); // solo existe en celular
     armsAltRef.current = collectArms(app);
     headAltRef.current = app?.findObjectByName?.("Head") || null;
     // Misma razon que en slot 1: un fondo opaco solo deja ver la pared por
@@ -1297,6 +1337,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                         // Head in both), so the gaze ports across the swap.
                         app2Ref.current = app;
                         placeBot(app);
+                        if (isMobile) pinCamera(app, CAM_FINAL);
                         armsRef.current = collectArms(app);
                         botRef.current = findBot(app);
                         glCanvasRefs.current.slot2 = canvas2WrapRef.current
