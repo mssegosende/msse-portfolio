@@ -240,9 +240,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const darkModeRef = useRef(darkMode);
   useEffect(() => {
     darkModeRef.current = darkMode;
-    // Mutado, no reemplazado: el ticker guardo esta referencia, asi que
-    // cambiarla por otro objeto lo dejaria leyendo el anterior.
-    head1BaseRef.current.y = darkMode ? -0.27 : 0.27;
   }, [darkMode]);
 
   const sectionRef = useRef(null);
@@ -334,6 +331,16 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     setIsMobile(mq.matches);
     return () => mq.removeEventListener("change", onChange);
   }, []);
+
+  // Direccion por defecto de la cabeza del hero. En escritorio sigue al tema:
+  // derecha en claro, izquierda en oscuro. En celular es UNA sola, la del
+  // robot negro (derecha, +0.27), en los dos temas: con la camara clavada es
+  // lo unico que seguia separando el encuadre de un tema del otro.
+  // Mutado, no reemplazado: el ticker guardo esta referencia, asi que
+  // cambiarla por otro objeto lo dejaria leyendo el anterior.
+  useEffect(() => {
+    head1BaseRef.current.y = darkMode && !isMobile ? -0.27 : 0.27;
+  }, [darkMode, isMobile]);
 
   // loader: smooth asymptotic fill to ~90% over ~2.5s, completes on scene load
   useEffect(() => {
@@ -1541,11 +1548,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           project and leaves never sees either scene, so it has to say so. It
           fades on the first beat, once the message has landed. Difference
           blend for the same reason the headline uses one: it has to stay
-          legible over the wall, over the robot and in both themes. */}
+          legible over the wall, over the robot and in both themes. On a
+          phone it sits on the RIGHT: the robot is framed to the left there,
+          so that is the side with free wall. */}
       <div
         ref={scrollCueRef}
         data-testid="scroll-cue"
-        className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 flex-col items-center gap-2 mix-blend-difference sm:left-6 sm:gap-3 lg:left-10"
+        className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 flex-col items-center gap-2 mix-blend-difference sm:left-6 sm:right-auto sm:gap-3 lg:left-10"
       >
         <span className="font-display text-[9px] uppercase tracking-[0.28em] text-white/75 [writing-mode:vertical-rl] sm:text-[11px] sm:tracking-[0.34em]">
           Scroll
