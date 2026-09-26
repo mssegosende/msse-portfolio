@@ -1,5 +1,13 @@
 import { useEffect, useRef } from "react";
 
+// One grid for the whole page, drawn in pieces. Each section that carries a
+// GridField has its own canvas, and each used to start its grid at its OWN
+// top-left -- so at every section boundary the lines jumped by the upper
+// section's height mod STEP (up to 43px on a phone). Every canvas now puts its
+// lines where the page-wide grid would have them: the origin is the top-left
+// of the DOCUMENT, and each canvas offsets by where it sits in it. The touch
+// drift is a function of page coordinates and a shared clock for the same
+// reason, so a line crossing a boundary moves as one line.
 export const GridField = ({ intensity = 1 }) => {
   const canvasRef = useRef(null);
 
@@ -16,7 +24,6 @@ export const GridField = ({ intensity = 1 }) => {
     let h = 0;
     let raf = null;
     let visible = false;
-    let t = 0;
     let grid = [];
     let cols = 0;
     let rows = 0;
@@ -47,8 +54,10 @@ export const GridField = ({ intensity = 1 }) => {
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      cols = Math.ceil(w / STEP) + 1;
-      rows = Math.ceil(h / STEP) + 1;
+      // +2: the page-aligned grid starts up to one STEP above/left of the
+      // canvas, so it needs one extra line to still reach the far edge.
+      cols = Math.ceil(w / STEP) + 2;
+      rows = Math.ceil(h / STEP) + 2;
       grid = [];
       for (let r = 0; r < rows; r++) {
         const row = [];
@@ -58,8 +67,17 @@ export const GridField = ({ intensity = 1 }) => {
     };
 
     const step = () => {
-      t += 0.004;
+      // Shared clock: every canvas reads the same t on the same frame. It is
+      // the old 0.004 per frame, expressed per millisecond at 60fps.
+      const t = performance.now() * 0.00024;
       const rect = canvas.getBoundingClientRect();
+      // Where this canvas sits in the document, and so where the page grid's
+      // lines fall inside it. Read per frame: the pin spacer, fonts and
+      // images all move sections after mount, and this rect is already here.
+      const docLeft = rect.left + window.scrollX;
+      const docTop = rect.top + window.scrollY;
+      const offX = ((docLeft % STEP) + STEP) % STEP;
+      const offY = ((docTop % STEP) + STEP) % STEP;
       mouse.x = mouse.cx - rect.left;
       mouse.y = mouse.cy - rect.top;
       mouse.active =
@@ -68,11 +86,17 @@ export const GridField = ({ intensity = 1 }) => {
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
           const p = grid[r][c];
+          p.x = c * STEP - offX;
+          p.y = r * STEP - offY;
           let tx = 0;
           let ty = 0;
           if (isTouch) {
-            tx = Math.sin(p.x * 0.012 + t) * 5;
-            ty = Math.cos(p.y * 0.014 + t * 0.8) * 5;
+            // Page coordinates, and applied directly rather than eased: a
+            // canvas that just scrolled into view must already agree with its
+            // neighbour instead of catching up to it.
+            p.ox = Math.sin((docLeft + p.x) * 0.012 + t) * 5;
+            p.oy = Math.cos((docTop + p.y) * 0.014 + t * 0.8) * 5;
+            continue;
           } else if (mouse.active) {
             const dx = p.x - mouse.x;
             const dy = p.y - mouse.y;

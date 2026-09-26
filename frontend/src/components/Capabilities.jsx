@@ -22,7 +22,7 @@ export const Capabilities = () => {
       data-testid="capabilities-section"
       className="relative overflow-hidden bg-surface px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
-      <GridField intensity={0.45} />
+      <GridField />
       {/* soft scrim: text sits on near-solid black, grid stays visible at the edges */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_65%_at_50%_45%,rgb(var(--surface) / 0.82),transparent_100%)]" />
       <div className="relative mx-auto max-w-4xl">
