@@ -63,7 +63,7 @@ const POSE_HOME = { arm: -0.306, elbowY: -0.018, forearm: -0.471 };
 
 const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 
-// CAMARAS (celular). Cada escena trae su propia intro de camara: un evento
+// CAMARAS (los dos anchos). Cada escena trae su propia intro de camara: un evento
 // Start de Spline que la lleva desde la posicion guardada en el archivo hasta
 // (0, 147, 1000) en ~2.5s. Los dos archivos arrancan de camaras distintas --
 // el robot negro de (0, 249, 360), mucho mas cerca, el plateado de
@@ -73,9 +73,14 @@ const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 // HOME, que no repite la intro, aterrizaba en la camara final. El rig y la
 // camara final son iguales en los dos: lo unico que divergia era esa intro.
 //
-// La salida es sacarle la camara a la intro: se clava la posicion (la intro
-// no rota, la rotacion queda en 0.014/0/0 todo el recorrido). Mismo lugar
-// para los dos modelos => mismo encuadre, en carga fresca y despues de home.
+// La salida es sacarle la camara a la intro: se clavan la posicion Y la
+// rotacion. La intro tambien inclina la camara -- de 0.014 a 0.007 rad en su
+// ultimo tramo --, y play() la REPITE: despues de home la escena, que estaba
+// en pausa, vuelve a disparar el Start, la inclinacion salta a 0.014 y baja a
+// 0.007 en ~2.5s, y el robot aparece ~28px mas abajo y sube hasta asentarse.
+// Clavada en el valor asentado, que es el mismo en las dos escenas y en los
+// dos anchos, el cuadro es identico en carga fresca, despues de home y en
+// los dos temas.
 //
 // HERO: sobre la propia linea de la intro del robot negro, en t = .4 (de 0,
 // la guardada, a 1, la final). t ~ .3 es el encuadre de referencia -- corona
@@ -83,19 +88,37 @@ const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 // visor a ~32%, corona todavia rozando el borde. Mas atras (.5-.6) la corona
 // entra entera con aire arriba; subir t es la unica perilla.
 const HERO_CAM_MOBILE = { x: 0, y: 208.2, z: 616 };
+// HERO ESCRITORIO: la final, 1.24x mas cerca (z 1000 -> 806). El acercamiento
+// sale de la camara y no del scale CSS: el canvas ya va estirado 1.9x, y
+// subirlo lo ablandaria; la camara RINDE los pixeles. La corona se ubica con
+// startY (42.9%): cae en la linea de la marca, 36px a 900 (4%).
+const HERO_CAM_DESKTOP = { x: 0, y: 146.98, z: 806 };
 // CAPITULO 2: la final de la intro, la misma en los dos archivos. Todo el
 // encuadre del capitulo 2 (L, cintura, anclas) se midio con esta camara; se
 // clava solo para que la intro no la barra en el crossfade.
 const CAM_FINAL = { x: 0, y: 146.98, z: 1000 };
+// La rotacion asentada de la intro, leida en vivo: igual en las tres
+// camaras, los dos temas y los dos anchos.
+const CAM_EULER_X = 0.006996317664543058;
+const CAM_QUAT = { x: 0.003498151697713782, y: 0, z: 0, w: 0.9999938814486315 };
 
-/** Pin a scene's camera so its own Start transition cannot move it. */
+/** Pin a scene's camera so its own Start transition cannot move or tilt it. */
 const pinCamera = (app, pos) => {
+  const pin = (obj, key, value) =>
+    Object.defineProperty(obj, key, { get: () => value, set: () => {}, configurable: true });
   try {
-    const p = app?._camera?.position;
-    if (!p) return;
+    const cam = app?._camera;
+    if (!cam?.position) return;
     ["x", "y", "z"].forEach((ax) =>
-      Object.defineProperty(p, ax, { get: () => pos[ax], set: () => {}, configurable: true })
+      Object.defineProperty(cam.position, ax, { get: () => pos[ax], set: () => {}, configurable: true })
     );
+    // The matrix is composed from the quaternion's backing fields, and the
+    // Euler keeps its own copy in sync from them: pin both, so neither path
+    // can bring the intro's tilt back.
+    const q = cam.quaternion;
+    if (q) ["x", "y", "z", "w"].forEach((k) => pin(q, "_" + k in q ? "_" + k : k, CAM_QUAT[k]));
+    const r = cam.rotation;
+    if (r) [["x", CAM_EULER_X], ["y", 0], ["z", 0]].forEach(([k, v]) => pin(r, "_" + k in r ? "_" + k : k, v));
   } catch (e) {
     /* runtime without an inspectable camera */
   }
@@ -365,7 +388,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const handleLoad = (app) => {
     app1Ref.current = app;
     placeBot(app);
-    if (isMobile) pinCamera(app, HERO_CAM_MOBILE);
+    pinCamera(app, isMobile ? HERO_CAM_MOBILE : HERO_CAM_DESKTOP);
     armsRef.current = collectArms(app);
     head1Ref.current = app?.findObjectByName?.("Head") || null;
     // Scene 1 ships an OPAQUE background, and an opaque canvas can only show
@@ -524,8 +547,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // Acercar sube la corona fuera de cuadro, asi que la y compensa. Un punto
     // a la fraccion nativa p cae en (p*H - H/2)*S + H/2 + Y*H; con la corona
     // en p .154 sobre 844, sostenerla a y 21 con S 2.3 despeja Y = 32%.
-    const startY = reduce ? "2%" : isMobile ? "16.5%" : "16.8%";
-    const endY = reduce ? "3%" : isMobile ? "17.9%" : "18.1%";
+    const startY = reduce ? "2%" : isMobile ? "16.5%" : "42.9%";
+    const endY = reduce ? "3%" : isMobile ? "17.9%" : "44.2%";
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -1344,7 +1367,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                         // Head in both), so the gaze ports across the swap.
                         app2Ref.current = app;
                         placeBot(app);
-                        if (isMobile) pinCamera(app, CAM_FINAL);
+                        pinCamera(app, CAM_FINAL);
                         armsRef.current = collectArms(app);
                         botRef.current = findBot(app);
                         glCanvasRefs.current.slot2 = canvas2WrapRef.current
