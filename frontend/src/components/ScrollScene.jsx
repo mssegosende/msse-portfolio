@@ -645,17 +645,33 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // abierto de toda la secuencia, mas que card 03, y a L .922 mostraba
     // pelvis y medio muslo. Ahora el cierre es de verdad un regreso.
     //
-    // Escritorio: 2.03 -> 2.28. Lo que ata el cierre NO es la cintura -- mas
-    // cerca, L solo sube por el cuerpo -- sino el conector de la tarjeta 02,
-    // que en este beat vuelve a dibujarse hasta el antebrazo (py 56.7). Con
-    // la corona entera en cuadro no se podia pasar de ~2.12. Decision: la
-    // corona cede. A 2.28/26.3% la parte alta del casco sale ~6% por arriba
-    // (~56px a 900), el antebrazo queda en y 91.6% y el pecho en 85.7%, los
-    // tres conectores en pantalla. L .604, lejos de la cintura (.709); de
-    // c2far a aca L baja monotono desde .675, sin intermedios que la crucen.
+    // Escritorio: 2.28, con la cabeza ENTERA y la corona justo debajo del
+    // titulo de la seccion ("System Features"), sin tocarlo. El titulo esta
+    // en px fijos (termina en 163px en cualquier alto) y el encuadre va en %,
+    // asi que la y se calcula con el alto de la ventana, igual que fx() usa el
+    // ancho: la corona (p .133, medida en este cuadro; la tabla dice .138 y
+    // quedaba 10px alta) cae 14px debajo del borde inferior del titulo,
+    // leido del DOM. A 900 da y 52.2%; a 720, 57.1%; a 1080, 48.9%.
+    //
+    // A esta cercania el antebrazo (py 56.7) y el centro del pecho (54.1)
+    // quedan debajo del cuadro, asi que en el cierre las tarjetas 02 y 03 se
+    // anclan mas arriba en la misma parte del cuerpo -- brazo alto y pecho
+    // alto, ver closeAnchors -- y los puntos se deslizan hasta ahi durante el
+    // acercamiento. El techo lo pone la ventana mas baja: a 720 el borde
+    // inferior cae en p .44, y los dos puntos nuevos estan en ~.39-.41.
+    //
+    // Cintura: L = .469 (720) / .490 (900) / .505 (1080), lejos de .709; de
+    // c2far a aca L baja monotono desde .675.
+    const CROWN_P = 13.3;
+    const headEl = featuresHeaderRef.current;
+    const headBottomPx = headEl ? headEl.offsetTop + headEl.offsetHeight : 163;
+    const VH = window.innerHeight || 900;
+    const crownAtPct = ((headBottomPx + 14) / VH) * 100;
+    const endScale = 2.28;
+    const closeY = crownAtPct - 50 - (CROWN_P - 50) * endScale;
     const c2end = isMobile
       ? { scale: 1.333, x: "0%", y: "12.5%", rx: -9.1 } // L .781
-      : { scale: 2.28, x: fx(0, 2.28), y: "26.3%" };    // L .604 — corona recortada a proposito
+      : { scale: endScale, x: fx(0, endScale), y: `${closeY}%` };
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
     // Gaze poses, radians, capped at ±0.35. +y turns the face to the viewer's
@@ -815,12 +831,25 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // -9 = 180px at the 2000px reference the anchors were calibrated on.
       // Constant, not VW-derived: the body no longer moves with viewport width.
       const anchorShift = -9;
+      // Closing beat, desktop only: the close-up puts the forearm and the chest
+      // plate below the frame, so cards 02 and 03 move up the SAME body part --
+      // upper arm, upper chest -- and the dots glide there during the move in.
+      // Read off the closing frame at 2.28 (1440x900): upper arm at screen
+      // (1065, 470), upper chest at (703, 500).
+      const closeAnchors = isMobile
+        ? []
+        : [
+            null,
+            { px: 69.5 + anchorShift, py: 39.4 },  // 02 HANDS -> upper arm
+            { px: 58.5 + anchorShift, py: 40.9 },  // 03 TORSO -> upper chest
+          ];
       const anchors = [
         { px: 58.5 + anchorShift, py: 26.4 },   // 01 HEAD   — visor centre
         { px: 73.3 + anchorShift, py: 56.7 },   // 02 HANDS  — right forearm (see note above)
         { px: 58.5 + anchorShift, py: 54.1 },   // 03 TORSO  — centre of the chest plate
       ].map((a, i) => ({
         ...a,
+        close: closeAnchors[i],
         fromX: systemFeatures[i].from.x,
         fromY: systemFeatures[i].from.y,
       }));
@@ -859,9 +888,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         const H = sectionRef.current ? sectionRef.current.clientHeight : 1;
 
         // re-project every anchor against the live transform
+        // 0 through card 03's beat, 1 at the closing framing, and the glide in
+        // between follows the same move the body is making.
+        const kClose = i === BODY_STEPS.length - 2 ? f : 0;
         anchors.forEach((a, i) => {
-          const x = 50 + (a.px - 50) * sc + tx;
-          const y = 50 + (a.py - 50) * sc + ty;
+          const apx = a.close ? lerp(a.px, a.close.px, kClose) : a.px;
+          const apy = a.close ? lerp(a.py, a.close.py, kClose) : a.py;
+          const x = 50 + (apx - 50) * sc + tx;
+          const y = 50 + (apy - 50) * sc + ty;
           const line = lineRefs.current[i];
           if (line) {
             // dashed connector that grows from the card toward the body part:
