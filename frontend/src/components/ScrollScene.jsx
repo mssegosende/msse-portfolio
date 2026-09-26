@@ -88,11 +88,11 @@ const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 // visor a ~32%, corona todavia rozando el borde. Mas atras (.5-.6) la corona
 // entra entera con aire arriba; subir t es la unica perilla.
 const HERO_CAM_MOBILE = { x: 0, y: 208.2, z: 616 };
-// HERO ESCRITORIO: la final, 1.24x mas cerca (z 1000 -> 806). El acercamiento
-// sale de la camara y no del scale CSS: el canvas ya va estirado 1.9x, y
-// subirlo lo ablandaria; la camara RINDE los pixeles. La corona se ubica con
-// startY (42.9%): cae en la linea de la marca, 36px a 900 (4%).
-const HERO_CAM_DESKTOP = { x: 0, y: 146.98, z: 806 };
+// HERO ESCRITORIO: la final, 1.35x mas cerca (z 1000 -> 740; antes 806). El
+// acercamiento sale de la camara y no del scale CSS: el canvas ya va estirado
+// 1.9x, y subirlo lo ablandaria; la camara RINDE los pixeles. La corona y el
+// centrado se calculan con el alto de la ventana (ver heroY / heroDx).
+const HERO_CAM_DESKTOP = { x: 0, y: 146.98, z: 740 };
 // CAPITULO 2: la final de la intro, la misma en los dos archivos. Todo el
 // encuadre del capitulo 2 (L, cintura, anclas) se midio con esta camara; se
 // clava solo para que la intro no la barra en el crossfade.
@@ -547,8 +547,25 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // Acercar sube la corona fuera de cuadro, asi que la y compensa. Un punto
     // a la fraccion nativa p cae en (p*H - H/2)*S + H/2 + Y*H; con la corona
     // en p .154 sobre 844, sostenerla a y 21 con S 2.3 despeja Y = 32%.
-    const startY = reduce ? "2%" : isMobile ? "16.5%" : "42.9%";
-    const endY = reduce ? "3%" : isMobile ? "17.9%" : "44.2%";
+    // ESCRITORIO: la corona 4px debajo del borde inferior de la marca
+    // (MSSE://), leido del DOM. La marca va en px fijos y el encuadre en %,
+    // asi que la y se calcula con el alto de la ventana, como en el cierre del
+    // capitulo 2. Con la camara del hero (z 740) la corona cae en la fraccion
+    // nativa -0.0042 -- medida: 65 / 83 / 101px con y 55% a 720 / 900 / 1080.
+    // El tiron del drain conserva su +1.3%.
+    const HERO_CROWN_P = -0.0042;
+    const heroVH = window.innerHeight || 900;
+    const brandSpan = sectionRef.current?.querySelector('[data-testid="hero-brand"]');
+    const brandBottom = brandSpan?.offsetParent
+      ? brandSpan.offsetParent.offsetTop + brandSpan.offsetTop + brandSpan.offsetHeight
+      : 53;
+    const heroY = ((brandBottom + 4) / heroVH - 0.5 - (HERO_CROWN_P - 0.5) * startScale) * 100;
+    const startY = reduce ? "2%" : isMobile ? "16.5%" : `${heroY}%`;
+    const endY = reduce ? "3%" : isMobile ? "17.9%" : `${heroY + 1.3}%`;
+    // Centrado sobre la silueta: el rig (BOT_HOME.x) deja la cabeza a la
+    // izquierda de la camara, y en pantalla eso escala con el alto -- 1.61%
+    // del alto con esta camara. Se compensa en el x del hero; celular no.
+    const heroDx = 0.0161 * heroVH;
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -731,7 +748,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     const ctx = gsap.context(() => {
       gsap.set(canvasWrapRef.current, {
         scale: startScale,
-        x: fx1(isMobile ? -58 : 0, startScale),
+        x: fx1(isMobile ? -58 : heroDx, startScale),
         y: startY,
         transformOrigin: "50% 50%",
       });
@@ -1078,7 +1095,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         canvasWrapRef.current,
         {
           scale: startScale * 0.96,
-          x: fx1(isMobile ? -58 : 0, startScale * 0.96),
+          x: fx1(isMobile ? -58 : heroDx, startScale * 0.96),
           y: endY,
           duration: 0.32,
           ease: "power1.inOut",
