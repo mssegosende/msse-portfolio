@@ -669,9 +669,18 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     const crownAtPct = ((headBottomPx + 14) / VH) * 100;
     const endScale = 2.28;
     const closeY = crownAtPct - 50 - (CROWN_P - 50) * endScale;
+    // Centrado horizontal, medido sobre la silueta del casco y no sobre el
+    // transform. x 0 centra el canvas, y el rig no deja el cuerpo en el eje:
+    // BOT_HOME.x (-2.755) con la camara en x 0 deja la cabeza a la izquierda,
+    // igual en los dos modelos. Como es un corrimiento en el MUNDO, en pantalla
+    // escala con el alto: -11.4 / -14.2 / -16.9px a 720 / 900 / 1080, un
+    // 1.58% del alto constante. Se compensa solo en este paso -- mover
+    // bot.position.x correria el cuerpo en todos los beats y descalibraria
+    // las anclas --, y los puntos lo siguen por la proyeccion.
+    const closeDx = 0.0158 * VH;
     const c2end = isMobile
       ? { scale: 1.333, x: "0%", y: "12.5%", rx: -9.1 } // L .781
-      : { scale: endScale, x: fx(0, endScale), y: `${closeY}%` };
+      : { scale: endScale, x: fx(closeDx, endScale), y: `${closeY}%` };
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
     // Gaze poses, radians, capped at ±0.35. +y turns the face to the viewer's
