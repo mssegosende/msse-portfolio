@@ -574,9 +574,18 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // in slightly" pero el numero hacia lo contrario: 1.25 era el paso MAS
     // abierto de toda la secuencia, mas que card 03, y a L .922 mostraba
     // pelvis y medio muslo. Ahora el cierre es de verdad un regreso.
+    //
+    // Escritorio: 2.03 -> 2.28. Lo que ata el cierre NO es la cintura -- mas
+    // cerca, L solo sube por el cuerpo -- sino el conector de la tarjeta 02,
+    // que en este beat vuelve a dibujarse hasta el antebrazo (py 56.7). Con
+    // la corona entera en cuadro no se podia pasar de ~2.12. Decision: la
+    // corona cede. A 2.28/26.3% la parte alta del casco sale ~6% por arriba
+    // (~56px a 900), el antebrazo queda en y 91.6% y el pecho en 85.7%, los
+    // tres conectores en pantalla. L .604, lejos de la cintura (.709); de
+    // c2far a aca L baja monotono desde .675, sin intermedios que la crucen.
     const c2end = isMobile
       ? { scale: 1.333, x: "0%", y: "12.5%", rx: -9.1 } // L .781
-      : { scale: 2.03, x: fx(0, 2.03), y: "25.6%" };    // L .620 — sobre la cintura
+      : { scale: 2.28, x: fx(0, 2.28), y: "26.3%" };    // L .604 — corona recortada a proposito
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
     // Gaze poses, radians, capped at ±0.35. +y turns the face to the viewer's
@@ -1419,22 +1428,26 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         </div>
       </div>
 
-      {/* Brand and status sit OUTSIDE the z-10 UI layer. They carry
-          mix-blend-difference, and a z-index on an ancestor makes a stacking
-          context that isolates the blend — which is exactly why they used to
-          render flat white and vanish against the light wall in white mode.
-          Out here the blend resolves against the scene: |backdrop - white| is
-          dark over the wall and white over the robot, so they read on both
-          without a single per-theme conditional. */}
+      {/* Brand and status sit OUTSIDE the z-10 UI layer: a z-index on an
+          ancestor makes a stacking context that isolates any blend.
+
+          The brand takes the headline's treatment, decided by WHICH ROBOT is
+          behind, i.e. by the theme, at both widths. Light (black robot on
+          white): white ink with mix-blend-difference, so it goes black over
+          the wall and page and white over the body. Dark (silver robot on
+          black): solid white, no blend -- difference against mid-grey metal
+          returns mid-grey. No halo either way: the old one came from
+          data-theme="light" here resolving text-halo to a white glow. */}
       <motion.div
         variants={uiFade} custom={0} initial="hidden"
         animate={revealed ? "show" : "hidden"}
-        data-theme={ch2Theme}
-        className="absolute left-6 top-6 sm:left-10 sm:top-8"
+        className={`absolute left-6 top-6 sm:left-10 sm:top-8 ${
+          darkMode ? "" : "mix-blend-difference"
+        }`}
       >
         <span
           data-testid="hero-brand"
-          className="font-orbitron text-xs font-bold tracking-[0.12em] text-ink text-halo sm:text-sm sm:tracking-[0.3em]"
+          className="font-orbitron text-xs font-bold tracking-[0.12em] text-white sm:text-sm sm:tracking-[0.3em]"
         >
           {profile.shortMark}
           <span className="hidden text-white/65 sm:inline"> {profile.markSuffix}</span>
