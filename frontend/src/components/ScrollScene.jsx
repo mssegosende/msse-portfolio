@@ -1460,7 +1460,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         data-theme={ch2Theme}
         className="absolute right-6 top-6 sm:right-10 sm:top-8 flex items-center gap-2"
       >
-        <span className="h-1.5 w-1.5 rounded-full bg-ink animate-pulse-dot" />
+        <span data-testid="hero-status-dot" className="h-1.5 w-1.5 rounded-full bg-[#2E6FF2] animate-pulse-dot" />
         <span data-testid="hero-status" className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
           STATUS: {profile.status}
         </span>
