@@ -92,7 +92,7 @@ const HERO_CAM_MOBILE = { x: 0, y: 208.2, z: 616 };
 // acercamiento sale de la camara y no del scale CSS: el canvas ya va estirado
 // 1.9x, y subirlo lo ablandaria; la camara RINDE los pixeles. La corona y el
 // centrado se calculan con el alto de la ventana (ver heroY / heroDx).
-const HERO_CAM_DESKTOP = { x: 0, y: 146.98, z: 740 };
+const HERO_CAM_DESKTOP = { x: 0, y: 146.98, z: 660 };
 // CAPITULO 2: la final de la intro, la misma en los dos archivos. Todo el
 // encuadre del capitulo 2 (L, cintura, anclas) se midio con esta camara; se
 // clava solo para que la intro no la barra en el crossfade.
@@ -254,8 +254,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const armsAltRef = useRef([]);
   const headAltRef = useRef(null);
   const altCanvasRef = useRef(null);
-  // La direccion por defecto de la mirada depende del tema, pero no tiene
-  // por que reconstruir la timeline: el ticker la lee de aca en cada frame.
+  // Direccion por defecto de la cabeza del hero, SOLO en celular: una sola,
+  // la del robot negro (derecha, +0.27), en los dos temas. En escritorio la
+  // cabeza sigue al mouse con el look-at propio de la escena (ver applyHead1).
   const head1BaseRef = useRef({ x: 0.05, y: 0.27 });
   // Mismo motivo para el tema entero: el ticker necesita saber cual de las dos
   // escenas de la capa A esta visible, y meter darkMode en el efecto que arma
@@ -355,15 +356,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
-  // Direccion por defecto de la cabeza del hero. En escritorio sigue al tema:
-  // derecha en claro, izquierda en oscuro. En celular es UNA sola, la del
-  // robot negro (derecha, +0.27), en los dos temas: con la camara clavada es
-  // lo unico que seguia separando el encuadre de un tema del otro.
-  // Mutado, no reemplazado: el ticker guardo esta referencia, asi que
-  // cambiarla por otro objeto lo dejaria leyendo el anterior.
-  useEffect(() => {
-    head1BaseRef.current.y = darkMode && !isMobile ? -0.27 : 0.27;
-  }, [darkMode, isMobile]);
 
   // loader: smooth asymptotic fill to ~90% over ~2.5s, completes on scene load
   useEffect(() => {
@@ -547,25 +539,23 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // Acercar sube la corona fuera de cuadro, asi que la y compensa. Un punto
     // a la fraccion nativa p cae en (p*H - H/2)*S + H/2 + Y*H; con la corona
     // en p .154 sobre 844, sostenerla a y 21 con S 2.3 despeja Y = 32%.
-    // ESCRITORIO: la corona 4px debajo del borde inferior de la marca
-    // (MSSE://), leido del DOM. La marca va en px fijos y el encuadre en %,
-    // asi que la y se calcula con el alto de la ventana, como en el cierre del
-    // capitulo 2. Con la camara del hero (z 740) la corona cae en la fraccion
-    // nativa -0.0042 -- medida: 65 / 83 / 101px con y 55% a 720 / 900 / 1080.
-    // El tiron del drain conserva su +1.3%.
+    // ESCRITORIO: la corona a HERO_CROWN_TOP px del borde superior, en
+    // cualquier alto de ventana: el encuadre va en %, asi que la y se calcula
+    // con el alto, como en el cierre del capitulo 2. 57px (bajo la marca) y
+    // 36px (en la marca) todavia leian como aire de mas; 20px deja la corona
+    // por encima de la linea de la marca, con un filo minimo. Con la camara
+    // del hero (z 660) la corona cae en la fraccion nativa HERO_CROWN_P,
+    // medida sobre la silueta. El tiron del drain conserva su +1.3%.
+    const HERO_CROWN_TOP = 20;
     const HERO_CROWN_P = -0.0042;
     const heroVH = window.innerHeight || 900;
-    const brandSpan = sectionRef.current?.querySelector('[data-testid="hero-brand"]');
-    const brandBottom = brandSpan?.offsetParent
-      ? brandSpan.offsetParent.offsetTop + brandSpan.offsetTop + brandSpan.offsetHeight
-      : 53;
-    const heroY = ((brandBottom + 4) / heroVH - 0.5 - (HERO_CROWN_P - 0.5) * startScale) * 100;
+    const heroY = (HERO_CROWN_TOP / heroVH - 0.5 - (HERO_CROWN_P - 0.5) * startScale) * 100;
     const startY = reduce ? "2%" : isMobile ? "16.5%" : `${heroY}%`;
     const endY = reduce ? "3%" : isMobile ? "17.9%" : `${heroY + 1.3}%`;
     // Centrado sobre la silueta: el rig (BOT_HOME.x) deja la cabeza a la
-    // izquierda de la camara, y en pantalla eso escala con el alto -- 1.61%
-    // del alto con esta camara. Se compensa en el x del hero; celular no.
-    const heroDx = 0.0161 * heroVH;
+    // izquierda de la camara, y en pantalla eso escala con el alto -- y con
+    // la cercania de la camara. Se compensa en el x del hero; celular no.
+    const heroDx = 0.0148 * heroVH;
     // phase 2 (story): extreme close-up — head + upper chest fill the frame;
     // mobile sits higher/smaller so the story paragraphs fit below the head
     // The robot is NOT centred inside the Spline scene: its body sits about
@@ -1002,6 +992,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       const head1 = { x: HEAD1_BASE.x, y: HEAD1_BASE.y };
       let head1T = 0;
       const applyHead1 = () => {
+        // ESCRITORIO: no se escribe la cabeza. La escena trae su propio
+        // look-at hacia el mouse (medido: yaw -0.27 con el cursor a la
+        // izquierda, +0.30 a la derecha, igual en los dos temas), y escribir
+        // la rotacion cada frame lo pisaba -- desde 97552c7 la cabeza se
+        // quedaba en una direccion por tema en vez de seguir al cursor.
+        if (!isMobile) return;
         // En celular la capa A tiene dos escenas montadas y el tema decide
         // cual se ve: la cabeza que hay que mover es la de esa, no la de la
         // que esta en opacity-0.
