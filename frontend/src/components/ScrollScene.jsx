@@ -420,6 +420,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const layer2Ref = useRef(null);
   const layer2InnerRef = useRef(null);
   const headlineRef = useRef(null);
+  const skipRef = useRef(null);
   const featuresHeaderRef = useRef(null);
   const storyRefs = useRef([]);
   const calloutRefs = useRef([]);
@@ -1441,6 +1442,24 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         tl.to(railRefs.current[i], { opacity: 1, duration: 0.05 }, cardAt);
       });
 
+      // CELULAR: las tarjetas van ancladas a 6rem del borde inferior y ocupan
+      // todo el ancho, justo donde vive "Skip intro". No hay otro lugar libre
+      // toda la secuencia: arriba choca con el titulo del story a 375, y abajo
+      // de las tarjetas es la franja que tapa la barra del navegador en una
+      // seccion de 100vh (por eso el boton subio a 6rem en 95f9f4e). Asi que
+      // se apaga mientras hay una tarjeta en pantalla: termina de irse cuando
+      // la tarjeta empieza a entrar y vuelve recien cuando la anterior se fue.
+      // autoAlpha: apagado queda visibility:hidden, no atrapa toques.
+      if (isMobile && skipRef.current) {
+        CARD_IN.forEach((cardAt, i) => {
+          tl.to(skipRef.current, { autoAlpha: 0, duration: 0.05 }, cardAt - 0.05);
+          // la tarjeta i se borra en STEP_AT[i + 1] + 0.02, en 0.10; la
+          // ultima se queda hasta el final de la secuencia
+          if (i < CARD_IN.length - 1)
+            tl.to(skipRef.current, { autoAlpha: 1, duration: 0.04 }, STEP_AT[i + 1] + 0.12);
+        });
+      }
+
       // CLOSING: robot centres in the viewport, the head turns front, and the
       // three cards come back together with their three dashed connectors.
       const closeAt = isMobile ? 2.72 : 2.92;
@@ -1901,13 +1920,18 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           del lavado. */}
       {!journeyDone && (
         <button
+          ref={skipRef}
           data-testid="skip-intro"
           onClick={() => {
             const y = heroEndRef.current || window.innerHeight * 10;
             if (window.__lenis) window.__lenis.scrollTo(y + 4, { duration: 1.1 });
             else window.scrollTo({ top: y + 4, behavior: "smooth" });
           }}
-          className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] transition-opacity duration-300 sm:bottom-10 ${
+          className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] sm:bottom-10 ${
+            // en celular la opacidad la lleva la timeline (se apaga con las
+            // tarjetas): una transicion CSS la haria llegar 300ms tarde
+            isMobile ? "" : "transition-opacity duration-300"
+          } ${
             isMobile || darkMode
               ? "text-white"
               : "text-ink hover:text-ink sm:text-white/70 sm:hover:text-white"
