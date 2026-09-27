@@ -47,6 +47,41 @@ const uiFade = {
 // figure jumping.
 const OVERSAMPLE = 1.7;
 
+// NITIDEZ EN ESCRITORIO. El zoom y el paneo de cada beat ya no los hace el
+// CSS: estirar el canvas 1.9-4x por CSS dejaba 0.43-0.86 pixeles renderizados
+// por pixel mostrado (medido, igual en DPR 1 y 2), o sea un render ablandado.
+// Ahora el wrap va SIEMPRE a VIEW_CSS_SCALE, sin traslado, y el resto lo hace
+// la camara: zoom = CAM_BASE_ZOOM * S / VIEW_CSS_SCALE, y el paneo va en los
+// terminos fuera de eje de la proyeccion (elementos 8 y 9), que desplazan la
+// imagen en 2D igual que un translate. Es la MISMA transformacion que antes
+// -- escala alrededor del centro y traslado --, asi que encuadres, anclas y
+// L quedan identicos; solo cambia donde se hace. Spline recalcula la
+// proyeccion al redimensionar, por eso se reaplica en cada frame.
+// 1.3 y no 1: el badge "Built with Spline" se dibuja DENTRO del canvas y por
+// debajo de ~1.2 entra en cuadro.
+const VIEW_CSS_SCALE = 1.3;
+const CAM_BASE_ZOOM = 2;
+// La escena 1 se renderiza a VIEW_CSS_SCALE para que, estirada 1.3x por el
+// wrap, quede 1:1. La 2 ya tiene OVERSAMPLE (1.7): queda en 1.31:1.
+const OVERSAMPLE_1 = VIEW_CSS_SCALE;
+
+/** Apply a CSS-equivalent zoom (scale S about the centre) and pan (x/y in %
+ *  of the frame) to a scene's camera. */
+const applyView = (app, v) => {
+  const cam = app?._camera;
+  if (!cam || !cam.projectionMatrix) return;
+  try {
+    cam.zoom = (CAM_BASE_ZOOM * v.scale) / VIEW_CSS_SCALE;
+    cam.updateProjectionMatrix?.();
+    const e = cam.projectionMatrix.elements;
+    // NDC runs -1..1 across the canvas, y up: a pan of f of the canvas is 2f.
+    e[8] = (-2 * parseFloat(v.x)) / 100 / VIEW_CSS_SCALE;
+    e[9] = (2 * parseFloat(v.y)) / 100 / VIEW_CSS_SCALE;
+  } catch (err) {
+    /* runtime without an inspectable camera */
+  }
+};
+
 // The two scenes ship the rig in different POSES, which is why the silver
 // robot never quite matched the black one even with the body in the same
 // place. Read off both rigs:
@@ -399,33 +434,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       : canvasWrapRef.current
         ? canvasWrapRef.current.querySelector("canvas")
         : null;
-    // ESCRITORIO: la cabeza arranca mirando al centro de la ventana. El
-    // look-at de la escena apunta a la pose de reposo (cabeza derecha) hasta
-    // el primer evento del mouse, y en esa pose la corona queda ~3.6% del alto
-    // MAS ARRIBA que mirando al cursor en el centro: con el encuadre calibrado
-    // para el cursor al centro, al cargar la corona se cortaba. Un pointermove
-    // sintetico al centro, sobre el canvas donde escucha el look-at, la deja
-    // en la misma pose que el cursor centrado; el mouse real la toma desde ahi.
-    // (Escribir la rotacion no sirve: el look-at la pisa cada frame.)
-    if (!isMobile && glCanvasRefs.current.slot1) {
-      const cv = glCanvasRefs.current.slot1;
-      // Con demora: el runtime cachea el rect del canvas y al cargar todavia
-      // no es el definitivo; disparado en el mismo frame, la cabeza miraba
-      // hacia arriba en vez de al centro.
-      setTimeout(() => {
-        try {
-          cv.dispatchEvent(
-            new PointerEvent("pointermove", {
-              clientX: window.innerWidth / 2,
-              clientY: window.innerHeight / 2,
-              bubbles: true,
-            })
-          );
-        } catch (e) {
-          /* no PointerEvent constructor */
-        }
-      }, 600);
-    }
     if (readyRef.current) return;
     readyRef.current = true;
     setProgress(100);
@@ -577,16 +585,23 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // tiron del drain (scale x.96, +1.3%) pide y <= 39.9% para no destaparlo.
     // Por eso el robot se baja con la CAMARA (HERO_CAM_DESKTOP.y), y la y solo
     // hace el ajuste fino por alto de ventana alrededor de 38%, con tope 39%.
-    // Medido a 1440x900 con y 38% y el cursor al centro (que es tambien la
-    // pose de arranque, ver el pointermove en handleLoad): la corona se mueve 6.47px por
-    // unidad de camara; con la camara en 178.2 cae a 38px, el 4.22% del alto.
-    // Siguiendo al mouse la corona recorre ~31px (cursor abajo) a ~79px
-    // (cursor arriba): nunca sale del cuadro.
-    const HERO_CROWN_TOP = 38;
+    // Con el wrap sin traslado (ver VIEW_CSS_SCALE), la y es un paneo de camara
+    // y ya no tiene tope. HERO_CROWN_FRAC_AT_BASE sale de medir: con la camara
+    // en 178.2 y el paneo en 38%, la corona con el cursor al centro cae al
+    // 5.0% del alto.
+    //
+    // La cabeza sigue al mouse y eso mueve la corona. En reposo (antes del
+    // primer movimiento: cabeza derecha) queda ~23px MAS ARRIBA que mirando al
+    // cursor centrado; con el cursor abajo, ~20px mas arriba; con el cursor
+    // arriba, ~30px mas abajo. La distancia reposo -> centro escala con el
+    // alto (~3.1%: 21 / 26 / 33px a 720 / 900 / 1080), asi que el objetivo
+    // al centro es 16px + 3.1% del alto: el reposo -- lo primero que se ve --
+    // conserva ~16px en cualquier ventana, y al centro da ~38 / 44 / 50px.
     const HERO_Y_BASE = 38;
-    const HERO_CROWN_FRAC_AT_BASE = 0.0422;
+    const HERO_CROWN_FRAC_AT_BASE = 0.05;
     const heroVH = window.innerHeight || 900;
-    const heroY = Math.min(39, HERO_Y_BASE + (HERO_CROWN_TOP / heroVH - HERO_CROWN_FRAC_AT_BASE) * 100);
+    const HERO_CROWN_TOP = 16 + 0.031 * heroVH;
+    const heroY = HERO_Y_BASE + (HERO_CROWN_TOP / heroVH - HERO_CROWN_FRAC_AT_BASE) * 100;
     const startY = reduce ? "2%" : isMobile ? "16.5%" : `${heroY}%`;
     const endY = reduce ? "3%" : isMobile ? "17.9%" : `${heroY + 1.3}%`;
     // Centrado sobre la silueta: el rig (BOT_HOME.x) deja la cabeza a la
@@ -772,14 +787,26 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       removeMouse = () => sectionRef.current?.removeEventListener("mousemove", onMouse);
     }
 
+    // En escritorio el encuadre del hero vive en este proxy y lo aplica la
+    // camara (ver applyView); el wrap queda fijo en VIEW_CSS_SCALE.
+    const heroView = { scale: startScale, x: fx1(heroDx, startScale), y: startY };
+    const scene2View = { scale: 1, x: "0%", y: "0%" };
+
     const ctx = gsap.context(() => {
-      gsap.set(canvasWrapRef.current, {
-        scale: startScale,
-        x: fx1(isMobile ? -58 : heroDx, startScale),
-        y: startY,
-        transformOrigin: "50% 50%",
-      });
-      gsap.set(canvas2WrapRef.current, { ...c2close, transformOrigin: "50% 50%" });
+      if (isMobile) {
+        gsap.set(canvasWrapRef.current, {
+          scale: startScale,
+          x: fx1(-58, startScale),
+          y: startY,
+          transformOrigin: "50% 50%",
+        });
+        gsap.set(canvas2WrapRef.current, { ...c2close, transformOrigin: "50% 50%" });
+      } else {
+        [canvasWrapRef.current, canvas2WrapRef.current].forEach((el) =>
+          gsap.set(el, { scale: VIEW_CSS_SCALE, x: 0, y: 0, transformOrigin: "50% 50%" })
+        );
+        Object.assign(scene2View, { scale: c2close.scale, x: c2close.x, y: c2close.y });
+      }
       // The hero loads as white as CSS allows and only settles into the grey
       // once the scroll starts. Two of the three greys are ours: the wall is
       // #EDEDED (237) and the edge vignette is on at full strength from the
@@ -825,12 +852,17 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
       // continuous idle motion: slow float (~6s loop) + subtle tilt, both
       // scenes. Desktop only — see the note on touchParallax above.
+      // Amplitudes are CSS px INSIDE the wrap, so on screen they are x1.3
+      // (VIEW_CSS_SCALE). Before, they rode each beat's whole CSS zoom -- x1.9
+      // in the hero, up to x4 in the story beat -- and read as floating: y
+      // +-5.7px in the hero, up to +-12px in scene 2. Now y +-1.6px and x
+      // +-2.1px on screen: still alive, no longer noticeable as motion.
       if (!reduce && !isMobile) {
         [idle1Ref.current, idle2Ref.current].forEach((el) => {
           if (!el) return;
-          gsap.set(el, { y: -3, rotation: -0.2 });
-          gsap.to(el, { y: 3, duration: 5, yoyo: true, repeat: -1, ease: "sine.inOut" });
-          gsap.to(el, { rotation: 0.2, duration: 6.3, yoyo: true, repeat: -1, ease: "sine.inOut" });
+          gsap.set(el, { y: -1.2, rotation: -0.08 });
+          gsap.to(el, { y: 1.2, duration: 5, yoyo: true, repeat: -1, ease: "sine.inOut" });
+          gsap.to(el, { rotation: 0.08, duration: 6.3, yoyo: true, repeat: -1, ease: "sine.inOut" });
         });
         // A slow lateral drift and a shallow breath on scene 1. Both are
         // transform-only and run on periods that do not divide into the float
@@ -838,13 +870,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         if (idle1Ref.current) {
           gsap.fromTo(
             idle1Ref.current,
-            { x: -4 },
-            { x: 4, duration: 8.7, yoyo: true, repeat: -1, ease: "sine.inOut" }
+            { x: -1.6 },
+            { x: 1.6, duration: 8.7, yoyo: true, repeat: -1, ease: "sine.inOut" }
           );
           gsap.fromTo(
             idle1Ref.current,
-            { scale: 0.997 },
-            { scale: 1.004, duration: 7.1, yoyo: true, repeat: -1, ease: "sine.inOut" }
+            { scale: 0.9988 },
+            { scale: 1.0012, duration: 7.1, yoyo: true, repeat: -1, ease: "sine.inOut" }
           );
         }
       }
@@ -918,7 +950,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         const sc = lerp(A.scale, B.scale, f);
         const tx = lerp(parseFloat(A.x), parseFloat(B.x), f);
         const ty = lerp(parseFloat(A.y), parseFloat(B.y), f);
-        gsap.set(canvas2WrapRef.current, { scale: sc, x: `${tx}%`, y: `${ty}%` });
+        if (isMobile) {
+          gsap.set(canvas2WrapRef.current, { scale: sc, x: `${tx}%`, y: `${ty}%` });
+        } else {
+          scene2View.scale = sc;
+          scene2View.x = `${tx}%`;
+          scene2View.y = `${ty}%`;
+        }
         // El corrimiento lateral del celular va en el RIG, no en el transform.
         // Con el canvas cerca de scale 1 un x en CSS lo corre hasta destapar
         // su propio borde -- deja de cubrir el cuadro y aparece una franja
@@ -1058,6 +1096,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         if (arms.length) applyPose(arms);
         applyBotRig();
         applyHead1();
+        if (!isMobile) {
+          applyView(app1Ref.current, heroView);
+          applyView(app2Ref.current, scene2View);
+        }
       };
       applyGazeRef.current = applyGazeAndPose;
       gsap.ticker.add(applyGazeAndPose);
@@ -1125,7 +1167,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       tl.to(drain, { t: 1, duration: 0.3, onUpdate: applyDrain }, 0.1);
       tl.to(overlayRef.current, { opacity: 1, duration: 0.34 }, 0.1);
       tl.to(
-        canvasWrapRef.current,
+        isMobile ? canvasWrapRef.current : heroView,
         {
           scale: startScale * 0.96,
           x: fx1(isMobile ? -58 : heroDx, startScale * 0.96),
@@ -1349,15 +1391,30 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                     ref={slot1BoxRef}
                     className={`absolute inset-0 ${showAlt ? "opacity-0" : "opacity-100"}`}
                   >
-                    <Spline
-                      key={slot1Url}
-                      scene={slot1Url}
-                      onLoad={handleLoad}
-                      onError={() => {
-                        setFailed(true);
-                        onReady?.();
-                      }}
-                    />
+                    {/* Desktop renders scene 1 at OVERSAMPLE_1 and shows it
+                        back at 1:1 under the wrap's VIEW_CSS_SCALE. */}
+                    <div
+                      className="absolute left-1/2 top-1/2"
+                      style={
+                        isMobile
+                          ? { position: "absolute", inset: 0 }
+                          : {
+                              width: `${OVERSAMPLE_1 * 100}%`,
+                              height: `${OVERSAMPLE_1 * 100}%`,
+                              transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE_1})`,
+                            }
+                      }
+                    >
+                      <Spline
+                        key={slot1Url}
+                        scene={slot1Url}
+                        onLoad={handleLoad}
+                        onError={() => {
+                          setFailed(true);
+                          onReady?.();
+                        }}
+                      />
+                    </div>
                   </div>
                   {isMobile && (
                     <div
