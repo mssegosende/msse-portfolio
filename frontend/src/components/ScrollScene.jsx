@@ -197,6 +197,40 @@ const ReleasingBox = ({ onGone, children, ...rest }) => {
   return <div {...rest}>{children}</div>;
 };
 
+// TEMPORAL, solo dev -- sacar antes del deploy. Diagnostico del fantasma
+// plateado: window.__canvasProbe() imprime cada <canvas> con su capa y su
+// escena, visibility propia, opacidad efectiva (producto de los ancestros) y
+// rect. __canvasProbe.hide(i) / .show(i) le ponen display:none a uno solo,
+// para ver en la maquina real cual dibuja que.
+if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
+  const label = (c) => {
+    const a = c.closest('[data-testid="spline-canvas-wrap"]');
+    const l2 = c.closest('[data-testid="spline2-canvas-wrap"]');
+    if (a) return [...a.querySelectorAll("canvas")].indexOf(c) === 0 ? "A slot1 SILVER" : "A alt BLACK";
+    if (l2) return [...l2.querySelectorAll("canvas")].indexOf(c) === 0 ? "L2 SILVER" : "L2 BLACK";
+    return "grid (2D)";
+  };
+  const probe = () => {
+    const rows = [...document.querySelectorAll("canvas")].map((c, i) => {
+      const r = c.getBoundingClientRect();
+      let op = 1;
+      for (let el = c; el; el = el.parentElement) op *= parseFloat(getComputedStyle(el).opacity);
+      const s = getComputedStyle(c);
+      return { i, layer: label(c), visibility: s.visibility, ownVisibility: c.style.visibility || "-",
+               display: s.display, opacity: op.toFixed(2),
+               x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
+    });
+    console.table(rows);
+    const live = rows.filter((r) => r.layer !== "grid (2D)" && r.visibility === "visible" &&
+      +r.opacity > 0 && r.w > 0 && r.h > 0);
+    if (live.length > 1) console.warn("more than one robot canvas live:", live.map((r) => r.layer).join(", "));
+    return rows;
+  };
+  probe.hide = (i) => { document.querySelectorAll("canvas")[i].style.display = "none"; };
+  probe.show = (i) => { document.querySelectorAll("canvas")[i].style.display = ""; };
+  window.__canvasProbe = probe;
+}
+
 /** Collect every arm joint once; findObjectByName per frame would be silly. */
 const findBot = (app) => {
   try {
