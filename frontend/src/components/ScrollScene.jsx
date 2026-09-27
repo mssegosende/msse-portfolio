@@ -2051,7 +2051,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 : `w-[27rem] max-w-[46vw] ${f.side === "left" ? "left-[5%]" : "right-[5%]"}`
             }`}
           >
-            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.70] p-6 pt-5 backdrop-blur-md sm:bg-surface/70 sm:p-9 sm:pt-6">
+            {/* Panel SOLIDO. Con bg-surface/70 + backdrop-blur el brazo que
+                pasaba por detras se veia a traves, gris y corrido: era el
+                "fantasma plateado". Sobre el fondo liso no cambia nada
+                (--surface es el mismo color que --page-surface). */}
+            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface p-6 pt-5 sm:p-9 sm:pt-6">
               <div className="select-none font-display text-[7rem] font-light leading-[0.85] text-outline-grey">
                 {f.num}
               </div>
