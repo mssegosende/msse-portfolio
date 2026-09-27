@@ -247,6 +247,11 @@ if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
                x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
     });
     console.table(rows);
+    // El tamano del robot en pixeles del dispositivo es proporcional a
+    // S * alto * DPR; zoom 100% en 2560x1305 con S 2.15 (card 02) = 1.000.
+    const v = window.__view2;
+    console.log(`viewport ${innerWidth}x${innerHeight} @ DPR ${devicePixelRatio}` +
+      (v ? `, capa 2 S ${(+v.scale).toFixed(3)}, robot ${((v.scale * innerHeight * devicePixelRatio) / (2.15 * 1305)).toFixed(3)} x card02@2560x1305` : ""));
     const live = rows.filter((r) => r.layer !== "grid (2D)" && r.visibility === "visible" &&
       +r.opacity > 0 && r.w > 0 && r.h > 0);
     if (live.length > 1) console.warn("more than one robot canvas live:", live.map((r) => r.layer).join(", "));
@@ -956,6 +961,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // camara (ver applyView); el wrap queda fijo en VIEW_CSS_SCALE.
     const heroView = { scale: startScale, x: fx1(heroDx, startScale), y: startY };
     const scene2View = { scale: 1, x: "0%", y: "0%" };
+    // TEMPORAL, solo dev (va con __canvasProbe): el encuadre vivo de la capa 2.
+    if (process.env.NODE_ENV !== "production") window.__view2 = scene2View;
 
     const ctx = gsap.context(() => {
       if (isMobile) {
