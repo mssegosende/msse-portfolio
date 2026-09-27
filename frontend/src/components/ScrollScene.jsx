@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Spline from "@splinetool/react-spline";
-import { FolderOpen, Send } from "lucide-react";
 import {
   SPLINE_SCENE_URL,
   SPLINE_SCENE_2_URL,
@@ -12,7 +11,6 @@ import {
   storyTitle,
   systemFeatures,
 } from "../data/portfolioData";
-import { scrollToId } from "../hooks/useLenis";
 import { useTheme } from "../hooks/useTheme";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -422,7 +420,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const layer2Ref = useRef(null);
   const layer2InnerRef = useRef(null);
   const headlineRef = useRef(null);
-  const pillsRef = useRef(null);
   const featuresHeaderRef = useRef(null);
   const storyRefs = useRef([]);
   const calloutRefs = useRef([]);
@@ -1387,7 +1384,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         },
         0.1
       );
-      tl.to(pillsRef.current, { opacity: 0, y: 24, duration: 0.08 }, 0.2);
 
       // PHASE 2: crossfade in darkness — chrome robot rises in EXTREME CLOSE-UP
       tl.to(splineLayerRef.current, { opacity: 0, duration: 0.12 }, XFADE_AT);
@@ -1946,38 +1942,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           status, headline, features header, scroll cue) live outside it. */}
       <div className="pointer-events-none absolute inset-0 z-10">
         {/* top-right status */}
-        {/* bottom-left pill buttons */}
-        <motion.div
-          variants={uiFade} custom={2} initial="hidden"
-          animate={revealed ? "show" : "hidden"}
-          className="absolute bottom-24 left-6 sm:bottom-28 sm:left-10"
-        >
-          <div
-            className={`hidden transition-opacity duration-700 sm:block ${
-              journeyDone ? "opacity-100" : "pointer-events-none opacity-0"
-            }`}
-          >
-          <div ref={pillsRef} className="pointer-events-auto flex flex-wrap gap-3">
-            <button
-              data-testid="hero-cta-projects"
-              onClick={() => scrollToId("projects")}
-              className="flex items-center gap-2 bg-ink px-5 py-2.5 font-display text-[13px] uppercase tracking-[0.02em] text-surface transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_26px_rgb(var(--ink) / 0.4)]"
-            >
-              <FolderOpen size={13} />
-              Projects
-            </button>
-            <button
-              data-testid="hero-cta-contact"
-              onClick={() => scrollToId("contact")}
-              className="flex items-center gap-2 border border-ink/25 bg-surface/40 px-5 py-2.5 font-display text-[13px] uppercase tracking-[0.02em] text-ink backdrop-blur-md transition-[border-color,background-color,transform] duration-300 hover:-translate-y-0.5 hover:border-ink/60 hover:bg-ink/10"
-            >
-              <Send size={13} />
-              Contact
-            </button>
-          </div>
-          </div>
-        </motion.div>
-
         {/* story paragraphs (phase 2) — beside the close-up robot, below it on mobile */}
         {/* At the story framing (scale 2.8) the head centres near 31% of the
             viewport; dead-centring this block left it a head below that. */}
