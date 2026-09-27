@@ -60,6 +60,8 @@ const OVERSAMPLE = 1.7;
 // 1.3 y no 1: el badge "Built with Spline" se dibuja DENTRO del canvas y por
 // debajo de ~1.2 entra en cuadro.
 const VIEW_CSS_SCALE = 1.3;
+// Escritorio, capa 2: los dos modelos montados a la vez, key fija.
+const L2_DESKTOP_URLS = [SPLINE_SCENE_2_URL, SPLINE_SCENE_URL];
 const CAM_BASE_ZOOM = 2;
 // La escena 1 se renderiza a VIEW_CSS_SCALE para que, estirada 1.3x por el
 // wrap, quede 1:1. La 2 ya tiene OVERSAMPLE (1.7): queda en 1.31:1.
@@ -180,6 +182,21 @@ const releaseGlContext = (canvas) => {
   }
 };
 
+/**
+ * A box for one Spline mount that reports when it really goes away. The GPU
+ * context is released by the caller from the canvas it recorded at LOAD, not
+ * from whatever canvas is in the box: under StrictMode the dev build mounts,
+ * unmounts and remounts every component once, and releasing on that first
+ * pretend-unmount handed react-spline an already-lost context -- the scene
+ * then failed to load and took the whole app down with it.
+ */
+const ReleasingBox = ({ onGone, children, ...rest }) => {
+  const goneRef = useRef(onGone);
+  goneRef.current = onGone;
+  useLayoutEffect(() => () => goneRef.current?.(), []);
+  return <div {...rest}>{children}</div>;
+};
+
 /** Collect every arm joint once; findObjectByName per frame would be silly. */
 const findBot = (app) => {
   try {
@@ -290,6 +307,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const armsAltRef = useRef([]);
   const headAltRef = useRef(null);
   const altCanvasRef = useRef(null);
+  // Capa 2: registro de montajes cargados, por "m:"/"d:" + url. En escritorio
+  // hay dos (negro y plateado) y todo lo que el ticker escribe -- camara,
+  // rig, pose, mirada -- va a los DOS, asi el oculto esta siempre en la pose
+  // y el beat actuales y el cambio de tema es solo de visibilidad.
+  const l2Ref = useRef({});
+  const loaded2Ref = useRef(0);
+  // Cursor normalizado sobre el hero (-0.5..0.5), para la cabeza en escritorio.
+  const mouseNRef = useRef({ x: 0, y: 0 });
   // Direccion por defecto de la cabeza del hero, SOLO en celular: una sola,
   // la del robot negro (derecha, +0.27), en los dos temas. En escritorio la
   // cabeza sigue al mouse con el look-at propio de la escena (ver applyHead1).
@@ -350,7 +375,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // alimenta las keys, el efecto que libera contextos y las dependencias de la
   // timeline. Lo que da el robot negro en claro es OTRO montaje, con su propia
   // key fija, que convive con este dentro de la capa A -- ver HERO_ALT_URL.
-  const sceneUrl = isMobile || darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
+  // ESCRITORIO TAMBIEN: la capa A monta las dos escenas en los dos anchos y
+  // el tema solo elige cual se ve. Antes, en escritorio, sceneUrl seguia al
+  // tema: cambiarlo remontaba la escena, que cargaba de cero con su transform
+  // de fabrica, y reconstruia la timeline (depende de sceneUrl) -- el robot
+  // saltaba y volvia viajando a su lugar.
+  const sceneUrl = SPLINE_SCENE_2_URL;
   const slot1Url = sceneUrl;
   // La capa 2 sigue al TEMA, no a sceneUrl. En celular sceneUrl esta clavado
   // en la escena 2 para que el toggle no remonte el hero, y la capa 2 heredaba
@@ -362,7 +392,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // del pin, asi que un toggle en el hero -- que es donde se toca -- no tiene
   // nada que remontar. Solo cambiar de tema YA dentro del capitulo 2 rehace
   // este montaje, y es uno solo: el conteo de contextos en reposo no sube.
+  // Solo el montaje de CELULAR usa esta url. En escritorio la capa 2 monta
+  // las dos escenas con key fija (ver L2_DESKTOP_URLS) y el tema elige.
   const slot2Url = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
+  const l2VisibleUrl = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
 
   // El robot de la escena 1 es NEGRO y el de la 2 PLATEADO. En celular la capa
   // A monta los dos y el tema elige por clase: negro sobre el fondo claro,
@@ -375,7 +408,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // prueba: si iOS Safari recarga, la salida es volver a plateado en los dos
   // temas borrando este montaje -- nada mas depende de el.
   const HERO_ALT_URL = SPLINE_SCENE_URL;
-  const showAlt = isMobile && !darkMode;
+  const showAlt = !darkMode;
+  // Lo que NO se ve, en escritorio, va visibility:hidden ademas de opacity 0:
+  // fuera del compositing, y fuera del hit-testing del mouse. Solo un robot
+  // visible por capa, siempre. En celular queda como estaba (solo opacity).
+  const hiddenCls = isMobile ? "opacity-0" : "invisible opacity-0";
 
   // The breakpoint used to be read once at mount and never again, so a page
   // that loaded under 768px — browser zoom, a narrow window, devtools docked
@@ -451,7 +488,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const handleAltLoad = (app) => {
     appAltRef.current = app;
     placeBot(app);
-    pinCamera(app, HERO_CAM_MOBILE); // solo existe en celular
+    pinCamera(app, isMobile ? HERO_CAM_MOBILE : HERO_CAM_DESKTOP);
     armsAltRef.current = collectArms(app);
     headAltRef.current = app?.findObjectByName?.("Head") || null;
     // Misma razon que en slot 1: un fondo opaco solo deja ver la pared por
@@ -464,6 +501,51 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     altCanvasRef.current = altBoxRef.current
       ? altBoxRef.current.querySelector("canvas")
       : null;
+  };
+
+  // Carga de un montaje de la capa 2. "m:" es el de celular (uno, sigue al
+  // tema por url); "d:" son los dos de escritorio (key fija, el tema elige).
+  const onScene2Load = (key) => (app) => {
+    placeBot(app);
+    pinCamera(app, CAM_FINAL);
+    const entry = {
+      app,
+      arms: collectArms(app),
+      bot: findBot(app),
+      head: app?.findObjectByName?.("Head") || null,
+      canvas: app?.canvas || null,
+    };
+    l2Ref.current[key] = entry;
+    if (key.startsWith("m:")) {
+      // kept: the directed gaze writes Head.rotation on it.
+      app2Ref.current = app;
+      armsRef.current = entry.arms;
+      botRef.current = entry.bot;
+      glCanvasRefs.current.slot2 = canvas2WrapRef.current
+        ? canvas2WrapRef.current.querySelector("canvas")
+        : null;
+    }
+    // Transparent here too: chapter 2's backdrop is the section's own colour,
+    // which already follows the theme, so the scene does not need to paint one.
+    try {
+      app.setBackgroundColor("rgba(0,0,0,0)");
+    } catch (e) {
+      /* older runtime without setBackgroundColor */
+    }
+    loaded2Ref.current += 1;
+    const need = key.startsWith("m:") ? 1 : L2_DESKTOP_URLS.length;
+    // Ready once it has DRAWN: two frames, so placeBot and the rig from the
+    // ticker are in the picture before the wrap can fade in -- on desktop,
+    // once BOTH models are in, so a theme change never waits on a load. Then
+    // back to sleep if the visitor is still in the hero.
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        if (key.startsWith("m:") || loaded2Ref.current >= need) setScene2Ready(true);
+        if (!awake2Ref.current) {
+          try { app.stop(); } catch (e) { /* runtime without stop() */ }
+        }
+      })
+    );
   };
 
   // scene 2: lazy load watchdog -> fallback render if it never comes up
@@ -512,9 +594,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   }, [slot1Url]);
   useLayoutEffect(() => {
     const held = glCanvasRefs.current;
+    const url = slot2Url;
     return () => {
       releaseGlContext(held.slot2);
       held.slot2 = null;
+      delete l2Ref.current["m:" + url];
     };
   }, [slot2Url]);
 
@@ -524,7 +608,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // arriba mataria los canvas de slot1/slot2, que React NO remonta cuando
   // cambia el breakpoint.
   useLayoutEffect(() => {
-    if (!isMobile) return undefined;
     return () => {
       releaseGlContext(altCanvasRef.current);
       altCanvasRef.current = null;
@@ -532,7 +615,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       headAltRef.current = null;
       armsAltRef.current = [];
     };
-  }, [isMobile]);
+  }, []);
 
   useLayoutEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -782,6 +865,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         const nx = (e.clientX - r.left) / r.width - 0.5;
         const ny = (e.clientY - r.top) / r.height - 0.5;
         px1(nx * 12); py1(ny * 8);
+        mouseNRef.current = { x: nx, y: ny };
       };
       sectionRef.current.addEventListener("mousemove", onMouse);
       removeMouse = () => sectionRef.current?.removeEventListener("mousemove", onMouse);
@@ -1005,19 +1089,29 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         });
       };
 
+      // Desktop chapter-2 mounts currently loaded (both models).
+      const l2Desktop = () =>
+        Object.keys(l2Ref.current)
+          .filter((k) => k.startsWith("d:"))
+          .map((k) => l2Ref.current[k]);
+
       // ---- directed gaze -----------------------------------------------------
       // Only the timeline steers the head; the cursor never does.
       const gaze = { x: 0, y: 0 };      // target written by the timeline
       const cur = { x: 0, y: 0 };       // what is actually applied, eased
       const applyGaze = () => {
-        const head = app2Ref.current && app2Ref.current.findObjectByName
-          ? app2Ref.current.findObjectByName("Head")
-          : null;
-        if (!head) return;
+        const heads = isMobile
+          ? [app2Ref.current && app2Ref.current.findObjectByName
+              ? app2Ref.current.findObjectByName("Head")
+              : null]
+          : l2Desktop().map((e) => e.head);
         cur.x += (gaze.x - cur.x) * 0.08;
         cur.y += (gaze.y - cur.y) * 0.08;
-        head.rotation.x = cur.x;
-        head.rotation.y = cur.y;
+        heads.forEach((head) => {
+          if (!head) return;
+          head.rotation.x = cur.x;
+          head.rotation.y = cur.y;
+        });
       };
       // The feet are not in the render at the rig's default scale — the
       // camera crops at 3/4 and nothing in CSS can recover what was never
@@ -1045,13 +1139,15 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         ? { s: 1.2, x: BOT_HOME.x, y: -83.56 }
         : { s: 0.8, x: BOT_HOME.x, y: BOT_HOME.y };
       const applyBotRig = () => {
-        const bot = botRef.current;
-        if (!bot) return;
-        bot.scale.x = botRig.s;
-        bot.scale.y = botRig.s;
-        bot.scale.z = botRig.s;
-        bot.position.x = botRig.x;
-        bot.position.y = botRig.y;
+        const bots = isMobile ? [botRef.current] : l2Desktop().map((e) => e.bot);
+        bots.forEach((bot) => {
+          if (!bot) return;
+          bot.scale.x = botRig.s;
+          bot.scale.y = botRig.s;
+          bot.scale.z = botRig.s;
+          bot.position.x = botRig.x;
+          bot.position.y = botRig.y;
+        });
       };
 
       // Scene 1's head has no choreography of its own — the directed gaze
@@ -1066,13 +1162,31 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       const HEAD1_BASE = head1BaseRef.current;
       const head1 = { x: HEAD1_BASE.x, y: HEAD1_BASE.y };
       let head1T = 0;
+      // ESCRITORIO: la cabeza sigue al mouse, escrita por nosotros en las DOS
+      // escenas de la capa A. El look-at propio de la escena solo recibe los
+      // eventos del canvas visible, asi que el oculto quedaba con la cabeza en
+      // otra pose y el cambio de tema la hacia saltar. Mismo rango que el
+      // look-at, medido: yaw -0.27 / +0.30 con el cursor a izquierda /
+      // derecha; pitch -0.02 arriba, 0.087 al centro, 0.30 abajo. Sin cursor
+      // todavia, la pose es la del centro.
+      const headD = { x: 0.087, y: 0 };
+      const applyHeadDesktop = () => {
+        const m = mouseNRef.current;
+        const tx = 0.087 + (m.y < 0 ? m.y * 0.3 : m.y * 0.42);
+        const ty = m.x * 0.57;
+        headD.x += (tx - headD.x) * 0.08;
+        headD.y += (ty - headD.y) * 0.08;
+        [head1Ref.current, headAltRef.current].forEach((h) => {
+          if (!h) return;
+          h.rotation.x = headD.x;
+          h.rotation.y = headD.y;
+        });
+      };
       const applyHead1 = () => {
-        // ESCRITORIO: no se escribe la cabeza. La escena trae su propio
-        // look-at hacia el mouse (medido: yaw -0.27 con el cursor a la
-        // izquierda, +0.30 a la derecha, igual en los dos temas), y escribir
-        // la rotacion cada frame lo pisaba -- desde 97552c7 la cabeza se
-        // quedaba en una direccion por tema en vez de seguir al cursor.
-        if (!isMobile) return;
+        if (!isMobile) {
+          applyHeadDesktop();
+          return;
+        }
         // En celular la capa A tiene dos escenas montadas y el tema decide
         // cual se ve: la cabeza que hay que mover es la de esa, no la de la
         // que esta en opacity-0.
@@ -1091,14 +1205,18 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       const applyGazeAndPose = () => {
         applyGaze();
         // Mismo criterio que applyHead1: los brazos del montaje visible.
-        const arms =
-          isMobile && !darkModeRef.current ? armsAltRef.current : armsRef.current;
-        if (arms.length) applyPose(arms);
+        if (isMobile) {
+          const arms = !darkModeRef.current ? armsAltRef.current : armsRef.current;
+          if (arms.length) applyPose(arms);
+        } else {
+          l2Desktop().forEach((e) => e.arms.length && applyPose(e.arms));
+        }
         applyBotRig();
         applyHead1();
         if (!isMobile) {
           applyView(app1Ref.current, heroView);
-          applyView(app2Ref.current, scene2View);
+          applyView(appAltRef.current, heroView);
+          l2Desktop().forEach((e) => applyView(e.app, scene2View));
         }
       };
       applyGazeRef.current = applyGazeAndPose;
@@ -1125,10 +1243,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             const wake2 = p > (XFADE_AT / tl.duration()) * 0.6;
             if (wake2 !== awake2Ref.current) {
               awake2Ref.current = wake2;
-              try {
-                if (wake2) app2Ref.current?.play();
-                else app2Ref.current?.stop();
-              } catch (e) { /* runtime without play()/stop() */ }
+              const apps = isMobile ? [app2Ref.current] : l2Desktop().map((e) => e.app);
+              apps.forEach((a) => {
+                try {
+                  if (wake2) a?.play();
+                  else a?.stop();
+                } catch (e) { /* runtime without play()/stop() */ }
+              });
             }
             if (p > 0.45 && !stopped1Ref.current) {
               stopped1Ref.current = true;
@@ -1297,8 +1418,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       ([entry]) => {
         const visible = entry.isIntersecting;
         try {
+          const l2Apps = isMobile
+            ? [app2Ref.current]
+            : Object.keys(l2Ref.current)
+                .filter((k) => k.startsWith("d:"))
+                .map((k) => l2Ref.current[k].app);
           if (visible) {
-            app2Ref.current?.play?.();
+            l2Apps.forEach((a) => a?.play?.());
             // El montaje alterno de la capa A sigue la misma regla que slot1:
             // es la otra mitad del mismo capitulo, no una escena aparte.
             if (!stopped1Ref.current) {
@@ -1308,7 +1434,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           } else {
             app1Ref.current?.stop?.();
             appAltRef.current?.stop?.();
-            app2Ref.current?.stop?.();
+            l2Apps.forEach((a) => a?.stop?.());
           }
         } catch (e) {
           /* runtime without play/stop */
@@ -1338,10 +1464,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       gsap.ticker.remove(applyGazeRef.current);
       ctx.revert();
     };
-    // Depende de sceneUrl, NO de darkMode. En celular la escena no cambia con
-    // el tema, asi que cambiarlo no reconstruye nada: ni la timeline, ni el
-    // pin, ni los contextos WebGL. En escritorio sceneUrl si cambia con el
-    // tema, y ahi la reconstruccion es inevitable porque se carga otra escena.
+    // Depende de sceneUrl, NO de darkMode, y sceneUrl ya no cambia con el
+    // tema en ningun ancho: cambiarlo no reconstruye nada -- ni la timeline,
+    // ni el pin, ni los contextos WebGL.
   }, [isMobile, sceneUrl]);
 
   // The hero is a fixed cinematic: it opens on a light wall and drains into
@@ -1389,7 +1514,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                       exactamente el bug que esto evita. */}
                   <div
                     ref={slot1BoxRef}
-                    className={`absolute inset-0 ${showAlt ? "opacity-0" : "opacity-100"}`}
+                    className={`absolute inset-0 ${showAlt ? hiddenCls : "opacity-100"}`}
                   >
                     {/* Desktop renders scene 1 at OVERSAMPLE_1 and shows it
                         back at 1:1 under the wrap's VIEW_CSS_SCALE. */}
@@ -1416,10 +1541,21 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                       />
                     </div>
                   </div>
-                  {isMobile && (
+                  <div
+                    ref={altBoxRef}
+                    className={`absolute inset-0 ${showAlt ? "opacity-100" : hiddenCls}`}
+                  >
                     <div
-                      ref={altBoxRef}
-                      className={`absolute inset-0 ${showAlt ? "opacity-100" : "opacity-0"}`}
+                      className="absolute left-1/2 top-1/2"
+                      style={
+                        isMobile
+                          ? { position: "absolute", inset: 0 }
+                          : {
+                              width: `${OVERSAMPLE_1 * 100}%`,
+                              height: `${OVERSAMPLE_1 * 100}%`,
+                              transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE_1})`,
+                            }
+                      }
                     >
                       <Spline
                         key={HERO_ALT_URL}
@@ -1432,7 +1568,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                         }}
                       />
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1496,57 +1632,40 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 <div className="absolute inset-0">
                 <div ref={parallax2Ref} className="absolute inset-0">
                   <div ref={idle2Ref} className="absolute inset-0">
-                   <div
-                    className="absolute left-1/2 top-1/2"
-                    style={
-                      isMobile
-                        ? { position: "absolute", inset: 0 }
-                        : {
-                            width: `${OVERSAMPLE * 100}%`,
-                            height: `${OVERSAMPLE * 100}%`,
-                            transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE})`,
-                          }
-                    }
-                   >
+                   {isMobile ? (
+                   <div className="absolute inset-0">
                     <Spline
                       key={slot2Url}
                       scene={slot2Url}
-                      onLoad={(app) => {
-                        // kept: the directed gaze writes Head.rotation on it.
-                        // Both scenes expose an identical rig (same 7 objects,
-                        // Head in both), so the gaze ports across the swap.
-                        app2Ref.current = app;
-                        placeBot(app);
-                        pinCamera(app, CAM_FINAL);
-                        armsRef.current = collectArms(app);
-                        botRef.current = findBot(app);
-                        glCanvasRefs.current.slot2 = canvas2WrapRef.current
-                          ? canvas2WrapRef.current.querySelector("canvas")
-                          : null;
-                        // Transparent here too: chapter 2's backdrop is the
-                        // section's own colour, which already follows the
-                        // theme, so the scene does not need to paint one.
-                        try {
-                          app.setBackgroundColor("rgba(0,0,0,0)");
-                        } catch (e) {
-                          /* older runtime without setBackgroundColor */
-                        }
-                        // Ready once it has DRAWN: two frames, so placeBot and
-                        // the rig from the ticker are in the picture before
-                        // the wrap can fade in. Then back to sleep if the
-                        // visitor is still in the hero.
-                        requestAnimationFrame(() =>
-                          requestAnimationFrame(() => {
-                            setScene2Ready(true);
-                            if (!awake2Ref.current) {
-                              try { app.stop(); } catch (e) { /* runtime without stop() */ }
-                            }
-                          })
-                        );
-                      }}
+                      onLoad={onScene2Load("m:" + slot2Url)}
                       onError={() => setScene2Failed(true)}
                     />
                    </div>
+                   ) : (
+                     L2_DESKTOP_URLS.map((url) => (
+                       <ReleasingBox
+                         key={url}
+                         onGone={() => {
+                           const e = l2Ref.current["d:" + url];
+                           if (e) releaseGlContext(e.canvas);
+                           delete l2Ref.current["d:" + url];
+                         }}
+                         className={`absolute left-1/2 top-1/2 ${url === l2VisibleUrl ? "" : "invisible opacity-0"}`}
+                         style={{
+                           width: `${OVERSAMPLE * 100}%`,
+                           height: `${OVERSAMPLE * 100}%`,
+                           transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE})`,
+                         }}
+                       >
+                         <Spline
+                           key={url}
+                           scene={url}
+                           onLoad={onScene2Load("d:" + url)}
+                           onError={() => setScene2Failed(true)}
+                         />
+                       </ReleasingBox>
+                     ))
+                   )}
                   </div>
                 </div>
               </div>
