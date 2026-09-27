@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Component, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -197,6 +197,32 @@ const ReleasingBox = ({ onGone, children, ...rest }) => {
   return <div {...rest}>{children}</div>;
 };
 
+/**
+ * One per Spline mount. react-spline has no onError: a failed load is
+ * rethrown from its render (`if (i) throw i`), and without a boundary that
+ * takes the whole page down. This catches it, renders nothing in that
+ * scene's place and tells the owner which one died. No GPU context is
+ * released here: react-spline disposes its own Application on unmount, and
+ * ours are only ever released from canvases registered at LOAD (see
+ * ReleasingBox) -- a scene that failed never registered one.
+ */
+class SceneBoundary extends Component {
+  state = { dead: false };
+
+  static getDerivedStateFromError() {
+    return { dead: true };
+  }
+
+  componentDidCatch(error) {
+    console.warn(`Spline scene failed to load (${this.props.name}):`, error);
+    this.props.onFail?.();
+  }
+
+  render() {
+    return this.state.dead ? null : this.props.children;
+  }
+}
+
 // TEMPORAL, solo dev -- sacar antes del deploy. Diagnostico del fantasma
 // plateado: window.__canvasProbe() imprime cada <canvas> con su capa y su
 // escena, visibility propia, opacidad efectiva (producto de los ancestros) y
@@ -305,6 +331,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const [mountScene2, setMountScene2] = useState(false);
   const [scene2Ready, setScene2Ready] = useState(false);
   const [scene2Failed, setScene2Failed] = useState(false);
+  // Montajes cuya carga fallo (lo reporta su SceneBoundary): "alt" y "d:" +
+  // url. El ref es para los onLoad, que react-spline captura al montar.
+  const [deadScenes, setDeadScenes] = useState({});
+  const deadScenesRef = useRef(deadScenes);
+  deadScenesRef.current = deadScenes;
+  const markDead = (key) => setDeadScenes((d) => (d[key] ? d : { ...d, [key]: true }));
   const [journeyDone, setJourneyDone] = useState(false);
   const readyRef = useRef(false);
   // Escena 2 renderiza solo cuando la capa 2 esta por aparecer; antes de eso
@@ -429,7 +461,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // Solo el montaje de CELULAR usa esta url. En escritorio la capa 2 monta
   // las dos escenas con key fija (ver L2_DESKTOP_URLS) y el tema elige.
   const slot2Url = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
-  const l2VisibleUrl = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
+  // Si el modelo del tema no cargo, se ve el otro: otro color, pero robot.
+  const l2Alive = L2_DESKTOP_URLS.filter((u) => !deadScenes["d:" + u]);
+  const l2Preferred = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
+  const l2VisibleUrl = l2Alive.includes(l2Preferred) ? l2Preferred : l2Alive[0];
 
   // El robot de la escena 1 es NEGRO y el de la 2 PLATEADO. En celular la capa
   // A monta los dos y el tema elige por clase: negro sobre el fondo claro,
@@ -442,7 +477,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // prueba: si iOS Safari recarga, la salida es volver a plateado en los dos
   // temas borrando este montaje -- nada mas depende de el.
   const HERO_ALT_URL = SPLINE_SCENE_URL;
-  const showAlt = !darkMode;
+  const showAlt = !darkMode && !deadScenes.alt;
   // Lo que NO se ve, en escritorio, va visibility:hidden ademas de opacity 0:
   // fuera del compositing, y fuera del hit-testing del mouse. Solo un robot
   // visible por capa, siempre. En celular queda como estaba (solo opacity).
@@ -567,7 +602,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       /* older runtime without setBackgroundColor */
     }
     loaded2Ref.current += 1;
-    const need = key.startsWith("m:") ? 1 : L2_DESKTOP_URLS.length;
+    const need = key.startsWith("m:")
+      ? 1
+      : L2_DESKTOP_URLS.filter((u) => !deadScenesRef.current["d:" + u]).length;
     // Ready once it has DRAWN: two frames, so placeBot and the rig from the
     // ticker are in the picture before the wrap can fade in -- on desktop,
     // once BOTH models are in, so a theme change never waits on a load. Then
@@ -581,6 +618,16 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       })
     );
   };
+
+  // Un modelo de escritorio de la capa 2 que falla ya no se espera: si el otro
+  // habia cargado, la capa queda lista con ese; si fallaron los dos, va el
+  // PNG de respaldo.
+  const l2AliveCount = l2Alive.length;
+  useEffect(() => {
+    if (isMobile || !mountScene2 || scene2Ready || scene2Failed) return;
+    if (l2AliveCount === 0) setScene2Failed(true);
+    else if (loaded2Ref.current >= l2AliveCount) setScene2Ready(true);
+  }, [isMobile, mountScene2, scene2Ready, scene2Failed, l2AliveCount]);
 
   // scene 2: lazy load watchdog -> fallback render if it never comes up
   useEffect(() => {
@@ -1224,7 +1271,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         // En celular la capa A tiene dos escenas montadas y el tema decide
         // cual se ve: la cabeza que hay que mover es la de esa, no la de la
         // que esta en opacity-0.
-        const h = isMobile && !darkModeRef.current ? headAltRef.current : head1Ref.current;
+        // Sin alterno cargado (fallo), el que se ve en claro es slot1.
+        const h = isMobile && !darkModeRef.current && headAltRef.current ? headAltRef.current : head1Ref.current;
         if (!h) return;
         head1T += 0.004;
         const wy = Math.sin(head1T * 1.7) * 0.075 + Math.sin(head1T * 0.61) * 0.04;
@@ -1240,7 +1288,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         applyGaze();
         // Mismo criterio que applyHead1: los brazos del montaje visible.
         if (isMobile) {
-          const arms = !darkModeRef.current ? armsAltRef.current : armsRef.current;
+          const arms = !darkModeRef.current && armsAltRef.current.length ? armsAltRef.current : armsRef.current;
           if (arms.length) applyPose(arms);
         } else {
           l2Desktop().forEach((e) => e.arms.length && applyPose(e.arms));
@@ -1564,15 +1612,19 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                             }
                       }
                     >
-                      <Spline
+                      {/* slot1 es el hero: la timeline, la vista y el loader
+                          cuelgan de el. Si no carga, el hero pasa al render
+                          estatico, como si hubiera vencido el watchdog. */}
+                      <SceneBoundary
                         key={slot1Url}
-                        scene={slot1Url}
-                        onLoad={handleLoad}
-                        onError={() => {
+                        name="hero slot1"
+                        onFail={() => {
                           setFailed(true);
                           onReady?.();
                         }}
-                      />
+                      >
+                        <Spline scene={slot1Url} onLoad={handleLoad} />
+                      </SceneBoundary>
                     </div>
                   </div>
                   <div
@@ -1591,16 +1643,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                             }
                       }
                     >
-                      <Spline
-                        key={HERO_ALT_URL}
-                        scene={HERO_ALT_URL}
-                        onLoad={handleAltLoad}
-                        onError={() => {
-                          /* La capa A sigue teniendo la escena de slot1 abajo,
-                             asi que perder esta no deja el hero sin robot:
-                             solo se queda plateado en claro. */
-                        }}
-                      />
+                      {/* La capa A sigue teniendo la escena de slot1 abajo,
+                          asi que perder esta no deja el hero sin robot:
+                          showAlt se apaga y en claro se ve el plateado. */}
+                      <SceneBoundary key={HERO_ALT_URL} name="hero alt" onFail={() => markDead("alt")}>
+                        <Spline scene={HERO_ALT_URL} onLoad={handleAltLoad} />
+                      </SceneBoundary>
                     </div>
                   </div>
                 </div>
@@ -1668,12 +1716,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                   <div ref={idle2Ref} className="absolute inset-0">
                    {isMobile ? (
                    <div className="absolute inset-0">
-                    <Spline
-                      key={slot2Url}
-                      scene={slot2Url}
-                      onLoad={onScene2Load("m:" + slot2Url)}
-                      onError={() => setScene2Failed(true)}
-                    />
+                    <SceneBoundary key={slot2Url} name="layer 2 mobile" onFail={() => setScene2Failed(true)}>
+                      <Spline scene={slot2Url} onLoad={onScene2Load("m:" + slot2Url)} />
+                    </SceneBoundary>
                    </div>
                    ) : (
                      L2_DESKTOP_URLS.map((url) => (
@@ -1691,12 +1736,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                            transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE})`,
                          }}
                        >
-                         <Spline
-                           key={url}
-                           scene={url}
-                           onLoad={onScene2Load("d:" + url)}
-                           onError={() => setScene2Failed(true)}
-                         />
+                         {/* Si falla uno, se ve el otro (ver l2VisibleUrl);
+                             si fallan los dos, el PNG. */}
+                         <SceneBoundary name={"layer 2 " + url} onFail={() => markDead("d:" + url)}>
+                           <Spline scene={url} onLoad={onScene2Load("d:" + url)} />
+                         </SceneBoundary>
                        </ReleasingBox>
                      ))
                    )}
