@@ -679,10 +679,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   useLayoutEffect(() => {
     const held = glCanvasRefs.current;
     const url = slot2Url;
+    // El registro se crea una vez (useRef({})) y nunca se reasigna: tomarlo
+    // aca es el mismo objeto que habria en la limpieza.
+    const entries = l2Ref.current;
     return () => {
       releaseGlContext(held.slot2);
       held.slot2 = null;
-      delete l2Ref.current["m:" + url];
+      delete entries["m:" + url];
     };
   }, [slot2Url]);
 
