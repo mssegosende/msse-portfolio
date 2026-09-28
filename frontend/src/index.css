@@ -251,6 +251,20 @@ textarea:-webkit-autofill {
     transition: background-color 5000s ease-in-out 0s;
 }
 
+/* iOS Safari zooms the page in when a field under 16px takes focus, and never
+   zooms back: the proportions stay wrong and the pinned sequence breaks. So
+   every field is 16px on phones (the mobile breakpoint) and on any touch
+   screen (iPad, phones in landscape). !important because the size lives in
+   utility classes (text-sm) that would otherwise win. User zoom stays on:
+   the viewport meta is untouched. */
+@media (max-width: 767px), (pointer: coarse) {
+    input,
+    textarea,
+    select {
+        font-size: 16px !important;
+    }
+}
+
 @layer base {
     [data-debug-wrapper="true"] {
         display: contents !important;
