@@ -37,6 +37,9 @@ const log = (msg) => {
   s.log.push(`${sec()}s ${msg}`);
   if (s.log.length > 40) s.log.shift();
 };
+// La secuencia de cambio de tema de ScrollScene escribe aca sus pasos (solo
+// existe con ?debug=1).
+window.__memProbeLog = log;
 
 // canvas -> info; `refs` es para recorrerlos sin retenerlos.
 const infoOf = new WeakMap();

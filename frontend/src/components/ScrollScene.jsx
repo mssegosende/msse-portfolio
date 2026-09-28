@@ -13,6 +13,7 @@ import {
   systemFeatures,
 } from "../data/portfolioData";
 import { useTheme } from "../hooks/useTheme";
+import { captureScene, excludeShared, releaseVideos, scrubScene } from "../lib/splineRelease";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -103,11 +104,33 @@ const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 // oscuro.
 const themeModel = (dark) => (dark ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL);
 
+// Con ?debug=1 (y solo asi), la URL ajusta el cambio de tema en celular para
+// probar en el telefono sin redeploy: swapSettle=<ms> cambia SWAP_SETTLE_MS y
+// l2=now carga la segunda capa enseguida en vez de diferirla. TEMPORAL, como
+// la lectura de ?debug=1.
+const swapDebug = (() => {
+  try {
+    const q = new URLSearchParams(window.location.search);
+    return q.get("debug") === "1" ? q : null;
+  } catch (e) {
+    return null;
+  }
+})();
+
 // Tiempos del cambio de tema en celular (ver runMobileSwap).
 const SWAP_FADE_MS = 300;
 // Despues de soltar: la GPU se recupera de forma asincrona y el GC no se puede
-// forzar; el hueco le da tiempo a iOS antes de pedir la escena nueva.
-const SWAP_SETTLE_MS = 500;
+// forzar; el hueco le da tiempo a iOS antes de pedir la escena nueva. 500ms
+// no alcanzo en el iPhone (murio en el pico de carga del segundo cambio).
+const SWAP_SETTLE_MS = (() => {
+  const v = Number(swapDebug?.get("swapSettle"));
+  return swapDebug?.has("swapSettle") && Number.isFinite(v) && v >= 0 ? Math.min(v, 10000) : 1500;
+})();
+// La capa que NO se esta viendo carga despues: a este tiempo del fundido de
+// vuelta, o antes si el scroll se acerca a ella. Asi nunca cargan dos escenas
+// a la vez. l2=now (debug) la carga enseguida, como antes.
+const SECONDARY_DELAY_MS = 2500;
+const SECONDARY_NOW = swapDebug?.get("l2") === "now";
 // Si una carga no llega, la secuencia sigue igual (los watchdogs de cada capa
 // ya ponen el render estatico).
 const SWAP_LOAD_TIMEOUT_MS = 20000;
@@ -208,6 +231,30 @@ const capMobilePixelRatio = (AP) => {
   AP.__mobileDprCap = true;
 };
 capMobilePixelRatio(Application?.prototype);
+
+// CELULAR: WEBGL, NO WEBGPU. El runtime elige WebGPU en el constructor siempre
+// que existe navigator.gpu (iOS 26+), y react-spline no deja pasar la opcion
+// `renderer`. Con WebGPU cada escena descartada queda retenida por caches de
+// modulo del pipeline de nodos de three.js (bug del runtime, ver
+// lib/splineRelease.js) que no se alcanzan desde afuera: medido, +12.5 MB de
+// heap por cambio de tema aun con todo lo demas liberado. Con WebGL, y
+// splineRelease, el heap queda plano. Visualmente, medido a 390x844: la misma
+// escena (diferencias de tono tenues, por debajo de lo que se ve). Se fuerza
+// en load(), antes de que cree el renderer, solo con el layout de celular;
+// escritorio sigue en WebGPU. API privada (_rendererBackend): ver HANDOFF.
+const forceMobileWebGL = (AP) => {
+  if (!AP || typeof AP.load !== "function" || AP.__mobileWebGL) return;
+  const load = AP.load;
+  AP.load = function (...args) {
+    if (mobileLayoutMQ?.matches) {
+      this._rendererBackend = "webgl";
+      this._rendererAuto = false;
+    }
+    return load.apply(this, args);
+  };
+  AP.__mobileWebGL = true;
+};
+forceMobileWebGL(Application?.prototype);
 
 /**
  * Hand the GPU context back. Application.dispose() drops the renderer but the
@@ -499,10 +546,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // medido en produccion (?debug=1), 3 escenas vivas a 1206x2262 cada una en
   // reposo, y el cambio de tema remontaba la capa 2 -- una cuarta escena
   // cargando mientras la vieja todavia no se recuperaba --; iOS mataba el
-  // proceso en cada cambio, con WebGPU y con WebGL. Ahora el cambio de tema
-  // es una secuencia estricta (ver runMobileSwap): fundido, desmontar y
-  // soltar, esperar, cargar el hero, despues la capa 2, fundido de vuelta.
-  // Nunca hay mas de 2 escenas; el cambio tarda lo que tarda la carga.
+  // proceso en cada cambio. Ahora el cambio de tema es una secuencia estricta
+  // (ver runMobileSwap): fundido, desmontar, soltar de verdad (el runtime
+  // retiene cada escena descartada: lib/splineRelease.js), esperar, cargar la
+  // capa que se esta viendo, fundido de vuelta, y la otra capa despues. Nunca
+  // cargan dos escenas a la vez; nunca hay mas de 2 vivas.
   //
   // sceneUrl sigue fijo: es dependencia de la timeline, y el remonte del hero
   // de celular pasa por la key (slot1Url), no por ella.
@@ -510,12 +558,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const [mobileModel, setMobileModel] = useState(() => themeModel(darkMode));
   const mobileModelRef = useRef(mobileModel);
   mobileModelRef.current = mobileModel;
-  // La capa 2 de celular carga DESPUES del hero en el cambio de tema.
+  // Cada capa de celular se monta por separado: en el cambio de tema carga
+  // primero la que se ve y la otra despues (ver runMobileSwap).
+  const [mobileHeroOn, setMobileHeroOn] = useState(true);
   const [mobileL2On, setMobileL2On] = useState(true);
   // Fundido del robot durante el cambio de tema en celular (las dos capas).
   const [swapHidden, setSwapHidden] = useState(false);
   // En celular null = desmontado (en medio del cambio de tema).
-  const slot1Url = isMobile ? mobileModel : sceneUrl;
+  const slot1Url = isMobile ? (mobileHeroOn ? mobileModel : null) : sceneUrl;
   // Solo el montaje de CELULAR usa esta url. En escritorio la capa 2 monta
   // las dos escenas con key fija (ver L2_DESKTOP_URLS) y el tema elige.
   const slot2Url = mobileL2On ? mobileModel : null;
@@ -774,15 +824,16 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     if (isMobile) dropAlt();
   }, [isMobile, dropAlt]);
 
-  // CAMBIO DE TEMA EN CELULAR, en secuencia estricta, para que nunca convivan
-  // mas de 2 escenas (ver mobileModel):
+  // CAMBIO DE TEMA EN CELULAR, en secuencia estricta, para que nunca carguen
+  // dos escenas a la vez ni convivan mas de 2 (ver mobileModel):
   //   1. fundido del robot (las dos capas)
-  //   2. desmontar hero y capa 2; tras el dispose de react-spline, soltar los
-  //      contextos registrados al cargar y todo ref que retenga la escena vieja
-  //   3. esperar (SWAP_SETTLE_MS)
-  //   4. montar el hero con el modelo nuevo y esperar a que dibuje
-  //   5. recien ahi montar la capa 2 y esperar a que dibuje
-  //   6. fundido de vuelta
+  //   2. tomar lo que el runtime va a retener (lib/splineRelease.js) y
+  //      desmontar hero y capa 2; tras el dispose de react-spline, soltar los
+  //      contextos, parar los videos y poner en null los refs propios
+  //   3. esperar (SWAP_SETTLE_MS) y vaciar lo retenido
+  //   4. montar la capa que se esta viendo y esperar a que dibuje
+  //   5. fundido de vuelta
+  //   6. la otra capa, diferida: timer o scroll (SECONDARY_DELAY_MS)
   // Si el tema cambia otra vez en el medio, al terminar vuelve a empezar hacia
   // el ultimo. Salir de celular o desmontar la corta (swapRunRef).
   const failedRef = useRef(failed);
@@ -811,13 +862,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const runMobileSwap = async () => {
     const run = ++swapRunRef.current;
     const alive = () => swapRunRef.current === run;
-    const waitLoad = (ref) =>
-      new Promise((resolve) => {
-        ref.current = resolve;
-        setTimeout(() => {
-          if (ref.current === resolve) settleWait(ref, false);
-        }, SWAP_LOAD_TIMEOUT_MS);
-      });
     swappingRef.current = true;
     try {
       while (alive() && mobileModelRef.current !== themeModel(darkModeRef.current)) {
@@ -834,31 +878,56 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
         const held = glCanvasRefs.current;
         const canvases = [held.slot1, held.slot2];
+        // Lo que el runtime de Spline retiene despues del dispose (bug suyo,
+        // ver lib/splineRelease.js): se toma ANTES de desmontar, cuando
+        // todavia se puede llegar desde la app.
+        const leftovers = [app1Ref.current, app2Ref.current].map(captureScene);
+        excludeShared(leftovers);
+        window.__memProbeLog?.(
+          "swap: captured " +
+            leftovers
+              .map((l) =>
+                l ? `${l.objects.length}o/${l.owned.length}m/${l.players.length}p/${l.videos.length}v${l.renderer ? "+r" : ""}` : "-"
+              )
+              .join(" ")
+        );
         // En null ANTES de desmontar: asi los efectos por slot de arriba no
         // sueltan nada en la fase de mutacion, antes del dispose.
         held.slot1 = null;
         held.slot2 = null;
+        clearSecondary();
         dropMobileScenes();
         setScene2Ready(false);
+        setMobileHeroOn(false);
         setMobileL2On(false);
-        setMobileModel(null);
         await waitFrames(2);
         canvases.forEach(releaseGlContext);
+        leftovers.forEach(releaseVideos);
+        window.__memProbeLog?.(`swap: released, settle ${SWAP_SETTLE_MS}ms`);
         await waitMs(SWAP_SETTLE_MS);
+        // Vaciar las cascaras recien ahora, con el trabajo asincrono del
+        // runtime ya asentado. Aunque la secuencia se haya cortado.
+        leftovers.forEach(scrubScene);
         if (!alive()) return;
 
-        const heroDrawn = failedRef.current ? null : waitLoad(heroWaitRef);
+        // Primero la capa que se esta viendo: la 2 si su loop ya esta
+        // despierto (el visitante esta en el capitulo 2 o mas abajo), si no
+        // el hero. La otra, despues (loadSecondary).
+        const l2First = awake2Ref.current;
         setMobileModel(themeModel(darkModeRef.current));
-        await heroDrawn;
-        if (!alive()) return;
-
-        const l2Drawn =
-          mountScene2Ref.current && !scene2FailedRef.current ? waitLoad(l2WaitRef) : null;
-        setMobileL2On(true);
-        await l2Drawn;
+        window.__memProbeLog?.(`swap: primary ${l2First ? "l2" : "hero"}`);
+        await (l2First ? mountL2Layer() : mountHeroLayer());
         if (!alive()) return;
 
         setSwapHidden(false);
+        if (SECONDARY_NOW) {
+          window.__memProbeLog?.(`swap: secondary ${l2First ? "hero" : "l2"} (now)`);
+          await (l2First ? mountHeroLayer() : mountL2Layer());
+          if (!alive()) return;
+        } else {
+          secondaryRef.current = { layer: l2First ? "hero" : "l2", run };
+          secondaryTimerRef.current = setTimeout(() => triggerSecondaryRef.current?.("timer"), SECONDARY_DELAY_MS);
+        }
         await waitMs(SWAP_FADE_MS);
       }
     } finally {
@@ -866,12 +935,56 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     }
   };
 
+  // Montar una capa de celular y esperar a que dibuje (o falle, o venza).
+  const waitLoad = (ref) =>
+    new Promise((resolve) => {
+      ref.current = resolve;
+      setTimeout(() => {
+        if (ref.current === resolve) settleWait(ref, false);
+      }, SWAP_LOAD_TIMEOUT_MS);
+    });
+  const mountHeroLayer = () => {
+    const drawn = failedRef.current ? null : waitLoad(heroWaitRef);
+    setMobileHeroOn(true);
+    return drawn;
+  };
+  const mountL2Layer = () => {
+    const drawn = mountScene2Ref.current && !scene2FailedRef.current ? waitLoad(l2WaitRef) : null;
+    setMobileL2On(true);
+    return drawn;
+  };
+
+  // La capa diferida del ultimo cambio de tema: { layer, run }. La dispara el
+  // timer o el scroll (onUpdate del pin, via triggerSecondaryRef), lo que
+  // llegue primero; un cambio de tema nuevo la descarta.
+  const secondaryRef = useRef(null);
+  const secondaryTimerRef = useRef(null);
+  const clearSecondary = () => {
+    clearTimeout(secondaryTimerRef.current);
+    secondaryTimerRef.current = null;
+    secondaryRef.current = null;
+  };
+  const triggerSecondaryRef = useRef(null);
+  triggerSecondaryRef.current = (why) => {
+    const pending = secondaryRef.current;
+    clearSecondary();
+    if (!pending || pending.run !== swapRunRef.current) return;
+    window.__memProbeLog?.(`swap: secondary ${pending.layer} (${why})`);
+    if (pending.layer === "hero") mountHeroLayer();
+    else mountL2Layer();
+  };
+
+  useEffect(() => {
+    window.__memProbeLog?.(`swap config: settle ${SWAP_SETTLE_MS}ms, l2 ${SECONDARY_NOW ? "now" : "lazy"}`);
+  }, []);
+
   useEffect(() => {
     const target = themeModel(darkMode);
     if (!isMobile) {
       // Escritorio no usa mobileModel; se mantiene al dia para que entrar a
       // celular monte directo el modelo del tema.
       setMobileModel(target);
+      setMobileHeroOn(true);
       setMobileL2On(true);
       setSwapHidden(false);
       return;
@@ -885,6 +998,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     () => () => {
       swapRunRef.current += 1;
       swappingRef.current = false;
+      clearTimeout(secondaryTimerRef.current);
+      secondaryRef.current = null;
       settleWait(heroWaitRef, false);
       settleWait(l2WaitRef, false);
     },
@@ -1516,6 +1631,16 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             const p = self.progress;
             if (isTouchDevice && !isMobile) touchParallax(p);
             const wake2 = p > (XFADE_AT / tl.duration()) * 0.6;
+            // Celular, despues de un cambio de tema: la capa diferida carga
+            // antes del timer si el scroll va hacia ella -- la 2 a un 30% del
+            // camino al crossfade, el hero al volver cerca de el.
+            const pending = secondaryRef.current;
+            if (pending) {
+              const xf = XFADE_AT / tl.duration();
+              if ((pending.layer === "l2" && p > xf * 0.3) || (pending.layer === "hero" && p < xf * 1.6)) {
+                triggerSecondaryRef.current?.("scroll");
+              }
+            }
             if (wake2 !== awake2Ref.current) {
               awake2Ref.current = wake2;
               const apps = isMobile ? [app2Ref.current] : l2Desktop().map((e) => e.app);

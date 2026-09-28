@@ -2707,7 +2707,7 @@
   dependencies:
     "@sinonjs/commons" "^1.7.0"
 
-"@splinetool/react-spline@^4.1.0":
+"@splinetool/react-spline@4.1.0":
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/@splinetool/react-spline/-/react-spline-4.1.0.tgz#115cde5ec0d91dfb7a1388aacb617c452fbbba09"
   integrity sha512-Y379gm17gw+1nxT/YXTCJnVIWuu7tsUH1tp/YxsYb0pZnc9Gljk7Om4Kpq7WPq0bZ4zidVCxf6xn6jgDcbHifQ==
@@ -2717,7 +2717,7 @@
     react-merge-refs "2.1.1"
     thumbhash "0.1.1"
 
-"@splinetool/runtime@^2.0.54":
+"@splinetool/runtime@2.0.54":
   version "2.0.54"
   resolved "https://registry.yarnpkg.com/@splinetool/runtime/-/runtime-2.0.54.tgz#c4a55f4a0eaa0ff8f91890f4b984b0b56b23376c"
   integrity sha512-1Edj6sPjw51qTL5JriV4pqbdRgBaM7C3AQdlq9Dfby7+juL2PnozCGf89X7UJS4silsqh+9q7vduwJeyRejjXA==
