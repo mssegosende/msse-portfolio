@@ -88,6 +88,8 @@ frontend/node_modules/.cache/default-development/6.pack
 .env
 .env.*
 *.env
+# build settings only, no secrets: it has to reach every build (Vercel too)
+!frontend/.env.production
 credentials.json
 *.key
 .credentials
