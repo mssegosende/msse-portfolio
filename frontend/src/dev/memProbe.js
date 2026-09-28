@@ -1,7 +1,8 @@
-// LECTURA DE MEMORIA PARA EL TELEFONO -- solo dev (index.js la carga detras de
-// NODE_ENV, el build de produccion no la incluye). Es para diagnosticar la
-// caida de iPhone al cambiar de tema (ver HANDOFF, PRIORIDAD 1): cuenta lo que
-// piden las escenas de Spline sin tocar ScrollScene.
+// LECTURA DE MEMORIA PARA EL TELEFONO -- TEMPORAL, hay que sacarla despues del
+// diagnostico. index.js la importa (chunk aparte) solo con ?debug=1, tambien
+// en produccion: sin el parametro no se descarga ni corre. Es para
+// diagnosticar la caida de iPhone al cambiar de tema (ver HANDOFF, PRIORIDAD
+// 1): cuenta lo que piden las escenas de Spline sin tocar ScrollScene.
 //
 // Se engancha ANTES del primer render: getContext (contextos WebGL/WebGPU/2D
 // por canvas), WEBGL_lose_context (liberados por la pagina),
