@@ -19,7 +19,7 @@ export const Footer = () => {
             <span className="text-ink/65"> {profile.markSuffix}</span>
           </button>
           <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65">
-            © 2026 {profile.name} — msse:// Software & AI Engineer
+            © 2026 {profile.name} — Software & AI Engineer
           </p>
         </div>
 
