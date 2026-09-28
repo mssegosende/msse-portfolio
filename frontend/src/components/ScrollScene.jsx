@@ -1,8 +1,9 @@
-import { Component, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Component, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Spline from "@splinetool/react-spline";
+import { Application } from "@splinetool/runtime";
 import {
   SPLINE_SCENE_URL,
   SPLINE_SCENE_2_URL,
@@ -98,6 +99,31 @@ const POSE_HOME = { arm: -0.306, elbowY: -0.018, forearm: -0.471 };
 
 const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 
+// El modelo de cada tema: negro (escena 1) en claro, plateado (escena 2) en
+// oscuro.
+const themeModel = (dark) => (dark ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL);
+
+// Tiempos del cambio de tema en celular (ver runMobileSwap).
+const SWAP_FADE_MS = 300;
+// Despues de soltar: la GPU se recupera de forma asincrona y el GC no se puede
+// forzar; el hueco le da tiempo a iOS antes de pedir la escena nueva.
+const SWAP_SETTLE_MS = 500;
+// Si una carga no llega, la secuencia sigue igual (los watchdogs de cada capa
+// ya ponen el render estatico).
+const SWAP_LOAD_TIMEOUT_MS = 20000;
+const waitMs = (ms) => new Promise((r) => setTimeout(r, ms));
+/** Resolve (once) the pending swap wait held in `ref`. */
+const settleWait = (ref, ok) => {
+  const done = ref.current;
+  ref.current = null;
+  done?.(ok);
+};
+const waitFrames = (n) =>
+  new Promise((r) => {
+    const step = (left) => (left <= 0 ? r() : requestAnimationFrame(() => step(left - 1)));
+    step(n);
+  });
+
 // CAMARAS (los dos anchos). Cada escena trae su propia intro de camara: un evento
 // Start de Spline que la lleva desde la posicion guardada en el archivo hasta
 // (0, 147, 1000) en ~2.5s. Los dos archivos arrancan de camaras distintas --
@@ -159,6 +185,29 @@ const pinCamera = (app, pos) => {
     /* runtime without an inspectable camera */
   }
 };
+
+// CELULAR: DPR TOPEADO EN 2. Los dos .splinecode traen pixelRatioMobile = 0,
+// que el runtime traduce a window.devicePixelRatio entero: en un iPhone a DPR
+// 3 cada canvas era 1206x2262 (medido en produccion), mas los render targets
+// de pantalla completa del pipeline, que escalan con el cuadrado del DPR. El
+// runtime lee la proporcion UNA vez por carga, en _getPixelRatio, y la pasa a
+// setPixelRatio antes de dimensionar los buffers: topearla ahi evita el pico
+// a resolucion completa, y los redimensionados (la barra de Safari) conservan
+// el tope. Solo con el layout de celular; escritorio queda igual. Es API
+// privada, como _camera: si el runtime la cambia, esto no hace nada.
+const MOBILE_MAX_DPR = 2;
+const mobileLayoutMQ =
+  typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)") : null;
+const capMobilePixelRatio = (AP) => {
+  if (!AP || typeof AP._getPixelRatio !== "function" || AP.__mobileDprCap) return;
+  const getPixelRatio = AP._getPixelRatio;
+  AP._getPixelRatio = function (mode) {
+    const r = getPixelRatio.call(this, mode);
+    return mobileLayoutMQ?.matches ? Math.min(r, MOBILE_MAX_DPR) : r;
+  };
+  AP.__mobileDprCap = true;
+};
+capMobilePixelRatio(Application?.prototype);
 
 /**
  * Hand the GPU context back. Application.dispose() drops the renderer but the
@@ -364,14 +413,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const botRef = useRef(null);
   const head1Ref = useRef(null);
   const heroEndRef = useRef(0);
-  // CELULAR: la capa A monta DOS escenas a la vez con key fija y el tema solo
-  // decide cual se VE, por clase. Asi el toggle no remonta nada -- que es lo
-  // que reconstruia la timeline y devolvia el salto. La capa 2 y el crossfade
-  // no se tocan: siguen exactamente como estaban.
-  //
-  // El segundo montaje tiene sus propios refs porque es OTRO modelo: la
-  // cabeza, los brazos y la app son distintos objetos, y el ticker tiene que
-  // escribir sobre el que se esta viendo, no sobre el que esta en opacity-0.
+  // ESCRITORIO: la capa A monta DOS escenas a la vez con key fija y el tema
+  // solo decide cual se VE, por clase (en celular hay un solo montaje, ver
+  // mobileModel). El segundo montaje tiene sus propios refs porque es OTRO
+  // modelo: la cabeza, los brazos y la app son distintos objetos.
   const appAltRef = useRef(null);
   const armsAltRef = useRef([]);
   const headAltRef = useRef(null);
@@ -382,6 +427,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // y el beat actuales y el cambio de tema es solo de visibilidad.
   const l2Ref = useRef({});
   const loaded2Ref = useRef(0);
+  // CELULAR: brazos del hero, aparte de armsRef (que en celular son los de
+  // la capa 2). El ticker posa estos en claro y los de la capa 2 en oscuro,
+  // como cuando el hero claro era el montaje alterno.
+  const heroArmsRef = useRef([]);
+  // Lo mantiene el IntersectionObserver del hero: una escena que carga con el
+  // hero fuera de pantalla (cambio de tema mas abajo) dibuja y se detiene.
+  const heroVisibleRef = useRef(true);
   // Cursor normalizado sobre el hero (-0.5..0.5), para la cabeza en escritorio.
   const mouseNRef = useRef({ x: 0, y: 0 });
   // Direccion por defecto de la cabeza del hero, SOLO en celular: una sola,
@@ -432,59 +484,53 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
   );
 
-  // El telefono NO cambia de escena con el tema. Cambiarla remonta los dos
-  // <Spline> (llevan key por url) y eso destruye y recrea los dos contextos
-  // WebGL: medido, cada toggle pasa de 2 contextos creados a 4, con 2
-  // perdidos en el medio. iOS Safari tiene un techo bajo y recupera la
-  // memoria GPU de forma asincrona, asi que pide los nuevos mientras los
-  // viejos siguen tomados, mata la pestana y recarga -- de ahi el salto
-  // arriba (el tema ya no persiste entre recargas: siempre arranca en claro).
+  // El robot de la escena 1 es NEGRO y el de la 2 PLATEADO. El modelo es UNO
+  // POR TEMA de punta a punta, en los dos anchos: negro todo el recorrido en
+  // claro, plateado todo el recorrido en oscuro.
   //
-  // Las URLs no dependen del tema en celular, y eso no cambia: son lo que
-  // alimenta las keys, el efecto que libera contextos y las dependencias de la
-  // timeline. Lo que da el robot negro en claro es OTRO montaje, con su propia
-  // key fija, que convive con este dentro de la capa A -- ver HERO_ALT_URL.
-  // ESCRITORIO TAMBIEN: la capa A monta las dos escenas en los dos anchos y
-  // el tema solo elige cual se ve. Antes, en escritorio, sceneUrl seguia al
-  // tema: cambiarlo remontaba la escena, que cargaba de cero con su transform
-  // de fabrica, y reconstruia la timeline (depende de sceneUrl) -- el robot
-  // saltaba y volvia viajando a su lugar.
+  // ESCRITORIO: la capa A monta las dos escenas (slot1 plateado + alterno
+  // negro, key fija) y la capa 2 tambien (L2_DESKTOP_URLS); el tema solo
+  // elige cual se ve. Antes sceneUrl seguia al tema: cambiarlo remontaba la
+  // escena, que cargaba de cero con su transform de fabrica, y reconstruia la
+  // timeline (depende de sceneUrl) -- el robot saltaba y volvia viajando.
+  //
+  // CELULAR: UN solo modelo montado, el del tema, en el hero y en la capa 2
+  // (mobileModel). Tener los dos era lo que tiraba la pagina en iPhone:
+  // medido en produccion (?debug=1), 3 escenas vivas a 1206x2262 cada una en
+  // reposo, y el cambio de tema remontaba la capa 2 -- una cuarta escena
+  // cargando mientras la vieja todavia no se recuperaba --; iOS mataba el
+  // proceso en cada cambio, con WebGPU y con WebGL. Ahora el cambio de tema
+  // es una secuencia estricta (ver runMobileSwap): fundido, desmontar y
+  // soltar, esperar, cargar el hero, despues la capa 2, fundido de vuelta.
+  // Nunca hay mas de 2 escenas; el cambio tarda lo que tarda la carga.
+  //
+  // sceneUrl sigue fijo: es dependencia de la timeline, y el remonte del hero
+  // de celular pasa por la key (slot1Url), no por ella.
   const sceneUrl = SPLINE_SCENE_2_URL;
-  const slot1Url = sceneUrl;
-  // La capa 2 sigue al TEMA, no a sceneUrl. En celular sceneUrl esta clavado
-  // en la escena 2 para que el toggle no remonte el hero, y la capa 2 heredaba
-  // ese clavo: en claro el hero mostraba el robot negro y el capitulo 2 seguia
-  // plateado, dentro del mismo tema. En escritorio sceneUrl ya seguia al tema,
-  // asi que ahi esto no cambia nada.
-  //
-  // El costo es acotado a proposito: la capa 2 recien se monta pasado el 15%
-  // del pin, asi que un toggle en el hero -- que es donde se toca -- no tiene
-  // nada que remontar. Solo cambiar de tema YA dentro del capitulo 2 rehace
-  // este montaje, y es uno solo: el conteo de contextos en reposo no sube.
+  const [mobileModel, setMobileModel] = useState(() => themeModel(darkMode));
+  const mobileModelRef = useRef(mobileModel);
+  mobileModelRef.current = mobileModel;
+  // La capa 2 de celular carga DESPUES del hero en el cambio de tema.
+  const [mobileL2On, setMobileL2On] = useState(true);
+  // Fundido del robot durante el cambio de tema en celular (las dos capas).
+  const [swapHidden, setSwapHidden] = useState(false);
+  // En celular null = desmontado (en medio del cambio de tema).
+  const slot1Url = isMobile ? mobileModel : sceneUrl;
   // Solo el montaje de CELULAR usa esta url. En escritorio la capa 2 monta
   // las dos escenas con key fija (ver L2_DESKTOP_URLS) y el tema elige.
-  const slot2Url = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
+  const slot2Url = mobileL2On ? mobileModel : null;
   // Si el modelo del tema no cargo, se ve el otro: otro color, pero robot.
   const l2Alive = L2_DESKTOP_URLS.filter((u) => !deadScenes["d:" + u]);
-  const l2Preferred = darkMode ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL;
+  const l2Preferred = themeModel(darkMode);
   const l2VisibleUrl = l2Alive.includes(l2Preferred) ? l2Preferred : l2Alive[0];
 
-  // El robot de la escena 1 es NEGRO y el de la 2 PLATEADO. En celular la capa
-  // A monta los dos y el tema elige por clase: negro sobre el fondo claro,
-  // plateado sobre el oscuro. La capa 2 llega al mismo robot por otro camino
-  // -- su url sigue al tema, ver slot2Url -- asi que el modelo es UNO POR
-  // TEMA de punta a punta: negro todo el recorrido en claro, plateado todo el
-  // recorrido en oscuro.
-  //
-  // Cuesta un tercer contexto WebGL en el telefono. Es deliberado y esta a
-  // prueba: si iOS Safari recarga, la salida es volver a plateado en los dos
-  // temas borrando este montaje -- nada mas depende de el.
+  // Solo escritorio: el robot negro de la capa A en claro.
   const HERO_ALT_URL = SPLINE_SCENE_URL;
-  const showAlt = !darkMode && !deadScenes.alt;
+  const showAlt = !isMobile && !darkMode && !deadScenes.alt;
   // Lo que NO se ve, en escritorio, va visibility:hidden ademas de opacity 0:
   // fuera del compositing, y fuera del hit-testing del mouse. Solo un robot
-  // visible por capa, siempre. En celular queda como estaba (solo opacity).
-  const hiddenCls = isMobile ? "opacity-0" : "invisible opacity-0";
+  // visible por capa, siempre.
+  const hiddenCls = "invisible opacity-0";
 
   // The breakpoint used to be read once at mount and never again, so a page
   // that loaded under 768px — browser zoom, a narrow window, devtools docked
@@ -522,11 +568,16 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Esperas de runMobileSwap: las resuelve la carga (true) o la falla (false).
+  const heroWaitRef = useRef(null);
+  const l2WaitRef = useRef(null);
+
   const handleLoad = (app) => {
     app1Ref.current = app;
     placeBot(app);
     pinCamera(app, isMobile ? HERO_CAM_MOBILE : HERO_CAM_DESKTOP);
-    armsRef.current = collectArms(app);
+    if (isMobile) heroArmsRef.current = collectArms(app);
+    else armsRef.current = collectArms(app);
     head1Ref.current = app?.findObjectByName?.("Head") || null;
     // Scene 1 ships an OPAQUE background, and an opaque canvas can only show
     // the wall underneath through a blend mode. The runtime accepts a
@@ -543,6 +594,20 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       : canvasWrapRef.current
         ? canvasWrapRef.current.querySelector("canvas")
         : null;
+    // Un hero que recarga por un cambio de tema en celular puede llegar con la
+    // secuencia ya pasada del hero (p > .45) o con el hero fuera de pantalla:
+    // dibuja un par de frames, como estaria parado, y se detiene. El scroll lo
+    // vuelve a arrancar por los caminos de siempre. (En la primera carga no
+    // pasa nada de eso, pero un toggle durante el loader tambien la espera.)
+    if (isMobile) {
+      waitFrames(2).then(() => {
+        if (app1Ref.current !== app) return;
+        if (stopped1Ref.current || !heroVisibleRef.current) {
+          try { app.stop(); } catch (e) { /* runtime without stop() */ }
+        }
+        settleWait(heroWaitRef, true);
+      });
+    }
     if (readyRef.current) return;
     readyRef.current = true;
     setProgress(100);
@@ -552,9 +617,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     }, 700);
   };
 
-  // El montaje alterno de la capa A (celular, tema claro). NO toca app1Ref ni
-  // head1Ref ni armsRef: es otro modelo, con su propia cabeza y sus propios
-  // brazos, y el ticker elige a cual escribirle segun el tema. Tampoco marca
+  // El montaje alterno de la capa A (solo escritorio, el negro). NO toca
+  // app1Ref ni head1Ref ni armsRef: es otro modelo, con su propia cabeza y sus
+  // propios brazos, y el ticker escribe a los dos. Tampoco marca
   // `loaded`: el hero ya se considera listo con slot1, asi que si esta escena
   // tarda o falla no bloquea la entrada.
   const handleAltLoad = (app) => {
@@ -575,8 +640,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       : null;
   };
 
-  // Carga de un montaje de la capa 2. "m:" es el de celular (uno, sigue al
-  // tema por url); "d:" son los dos de escritorio (key fija, el tema elige).
+  // Carga de un montaje de la capa 2. "m:" es el de celular (uno, el modelo
+  // del tema); "d:" son los dos de escritorio (key fija, el tema elige).
   const onScene2Load = (key) => (app) => {
     placeBot(app);
     pinCamera(app, CAM_FINAL);
@@ -611,13 +676,15 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // Ready once it has DRAWN: two frames, so placeBot and the rig from the
     // ticker are in the picture before the wrap can fade in -- on desktop,
     // once BOTH models are in, so a theme change never waits on a load. Then
-    // back to sleep if the visitor is still in the hero.
+    // back to sleep if the visitor is still in the hero -- or, after a theme
+    // change on mobile, if the whole hero section is off screen.
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         if (key.startsWith("m:") || loaded2Ref.current >= need) setScene2Ready(true);
-        if (!awake2Ref.current) {
+        if (!awake2Ref.current || !heroVisibleRef.current) {
           try { app.stop(); } catch (e) { /* runtime without stop() */ }
         }
+        if (key.startsWith("m:")) settleWait(l2WaitRef, true);
       })
     );
   };
@@ -689,20 +756,140 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     };
   }, [slot2Url]);
 
-  // El montaje alterno no sigue a ninguna url -- su key es fija -- asi que lo
-  // unico que lo desmonta es salir de celular, o irse de la pagina. Su
+  // El montaje alterno no sigue a ninguna url -- su key es fija -- y es solo
+  // de escritorio: lo desmonta entrar a celular, o irse de la pagina. Su
   // contexto se libera ahi y en ningun otro lado: meterlo en el efecto de
-  // arriba mataria los canvas de slot1/slot2, que React NO remonta cuando
-  // cambia el breakpoint.
-  useLayoutEffect(() => {
-    return () => {
-      releaseGlContext(altCanvasRef.current);
-      altCanvasRef.current = null;
-      appAltRef.current = null;
-      headAltRef.current = null;
-      armsAltRef.current = [];
-    };
+  // arriba mataria los canvas de slot1/slot2.
+  const dropAlt = useCallback(() => {
+    releaseGlContext(altCanvasRef.current);
+    altCanvasRef.current = null;
+    appAltRef.current = null;
+    headAltRef.current = null;
+    armsAltRef.current = [];
   }, []);
+  useLayoutEffect(() => dropAlt, [dropAlt]);
+  // Pasivo y no de layout: corre despues de la limpieza pasiva del
+  // desmontaje, donde react-spline hace el dispose.
+  useEffect(() => {
+    if (isMobile) dropAlt();
+  }, [isMobile, dropAlt]);
+
+  // CAMBIO DE TEMA EN CELULAR, en secuencia estricta, para que nunca convivan
+  // mas de 2 escenas (ver mobileModel):
+  //   1. fundido del robot (las dos capas)
+  //   2. desmontar hero y capa 2; tras el dispose de react-spline, soltar los
+  //      contextos registrados al cargar y todo ref que retenga la escena vieja
+  //   3. esperar (SWAP_SETTLE_MS)
+  //   4. montar el hero con el modelo nuevo y esperar a que dibuje
+  //   5. recien ahi montar la capa 2 y esperar a que dibuje
+  //   6. fundido de vuelta
+  // Si el tema cambia otra vez en el medio, al terminar vuelve a empezar hacia
+  // el ultimo. Salir de celular o desmontar la corta (swapRunRef).
+  const failedRef = useRef(failed);
+  failedRef.current = failed;
+  const scene2FailedRef = useRef(scene2Failed);
+  scene2FailedRef.current = scene2Failed;
+  const mountScene2Ref = useRef(mountScene2);
+  mountScene2Ref.current = mountScene2;
+  const swapRunRef = useRef(0);
+  const swappingRef = useRef(false);
+
+  // Sin estos refs en null el JS de la escena vieja (grafo, geometria,
+  // texturas decodificadas) sigue alcanzable y el GC no lo junta.
+  const dropMobileScenes = () => {
+    app1Ref.current = null;
+    head1Ref.current = null;
+    heroArmsRef.current = [];
+    app2Ref.current = null;
+    armsRef.current = [];
+    botRef.current = null;
+    Object.keys(l2Ref.current).forEach((k) => {
+      if (k.startsWith("m:")) delete l2Ref.current[k];
+    });
+  };
+
+  const runMobileSwap = async () => {
+    const run = ++swapRunRef.current;
+    const alive = () => swapRunRef.current === run;
+    const waitLoad = (ref) =>
+      new Promise((resolve) => {
+        ref.current = resolve;
+        setTimeout(() => {
+          if (ref.current === resolve) settleWait(ref, false);
+        }, SWAP_LOAD_TIMEOUT_MS);
+      });
+    swappingRef.current = true;
+    try {
+      while (alive() && mobileModelRef.current !== themeModel(darkModeRef.current)) {
+        setSwapHidden(true);
+        await waitMs(SWAP_FADE_MS);
+        if (!alive()) return;
+        // Doble toque: el tema volvio al modelo montado durante el fundido.
+        // No hay nada que recargar, solo volver.
+        if (mobileModelRef.current === themeModel(darkModeRef.current)) {
+          setSwapHidden(false);
+          await waitMs(SWAP_FADE_MS);
+          continue;
+        }
+
+        const held = glCanvasRefs.current;
+        const canvases = [held.slot1, held.slot2];
+        // En null ANTES de desmontar: asi los efectos por slot de arriba no
+        // sueltan nada en la fase de mutacion, antes del dispose.
+        held.slot1 = null;
+        held.slot2 = null;
+        dropMobileScenes();
+        setScene2Ready(false);
+        setMobileL2On(false);
+        setMobileModel(null);
+        await waitFrames(2);
+        canvases.forEach(releaseGlContext);
+        await waitMs(SWAP_SETTLE_MS);
+        if (!alive()) return;
+
+        const heroDrawn = failedRef.current ? null : waitLoad(heroWaitRef);
+        setMobileModel(themeModel(darkModeRef.current));
+        await heroDrawn;
+        if (!alive()) return;
+
+        const l2Drawn =
+          mountScene2Ref.current && !scene2FailedRef.current ? waitLoad(l2WaitRef) : null;
+        setMobileL2On(true);
+        await l2Drawn;
+        if (!alive()) return;
+
+        setSwapHidden(false);
+        await waitMs(SWAP_FADE_MS);
+      }
+    } finally {
+      if (alive()) swappingRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    const target = themeModel(darkMode);
+    if (!isMobile) {
+      // Escritorio no usa mobileModel; se mantiene al dia para que entrar a
+      // celular monte directo el modelo del tema.
+      setMobileModel(target);
+      setMobileL2On(true);
+      setSwapHidden(false);
+      return;
+    }
+    if (!swappingRef.current && mobileModelRef.current !== target) runMobileSwap();
+    // runMobileSwap lee todo por refs; lo unico que dispara es el tema.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile, darkMode]);
+
+  useEffect(
+    () => () => {
+      swapRunRef.current += 1;
+      swappingRef.current = false;
+      settleWait(heroWaitRef, false);
+      settleWait(l2WaitRef, false);
+    },
+    [isMobile]
+  );
 
   useLayoutEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -1276,11 +1463,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           applyHeadDesktop();
           return;
         }
-        // En celular la capa A tiene dos escenas montadas y el tema decide
-        // cual se ve: la cabeza que hay que mover es la de esa, no la de la
-        // que esta en opacity-0.
-        // Sin alterno cargado (fallo), el que se ve en claro es slot1.
-        const h = isMobile && !darkModeRef.current && headAltRef.current ? headAltRef.current : head1Ref.current;
+        // En celular la capa A tiene un solo montaje, el del tema.
+        const h = head1Ref.current;
         if (!h) return;
         head1T += 0.004;
         const wy = Math.sin(head1T * 1.7) * 0.075 + Math.sin(head1T * 0.61) * 0.04;
@@ -1294,9 +1478,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // The pose normaliser rides the gaze ticker rather than adding its own.
       const applyGazeAndPose = () => {
         applyGaze();
-        // Mismo criterio que applyHead1: los brazos del montaje visible.
+        // Celular: en claro los brazos del hero, en oscuro los de la capa 2 --
+        // lo mismo que cuando el hero claro era el montaje alterno.
         if (isMobile) {
-          const arms = !darkModeRef.current && armsAltRef.current.length ? armsAltRef.current : armsRef.current;
+          const arms = !darkModeRef.current ? heroArmsRef.current : armsRef.current;
           if (arms.length) applyPose(arms);
         } else {
           l2Desktop().forEach((e) => e.arms.length && applyPose(e.arms));
@@ -1343,8 +1528,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             }
             if (p > 0.45 && !stopped1Ref.current) {
               stopped1Ref.current = true;
-              // Los dos montajes de la capa A, no solo el de slot1: el
-              // alterno renderiza igual aunque este en opacity-0.
+              // Los dos montajes de la capa A (escritorio), no solo el de
+              // slot1: el alterno oculto tambien tiene su loop.
               try { app1Ref.current?.stop(); } catch (e) { /* runtime without stop() */ }
               try { appAltRef.current?.stop(); } catch (e) { /* runtime without stop() */ }
             }
@@ -1524,6 +1709,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     const heroVisibility = new IntersectionObserver(
       ([entry]) => {
         const visible = entry.isIntersecting;
+        heroVisibleRef.current = visible;
         try {
           const l2Apps = isMobile
             ? [app2Ref.current]
@@ -1562,6 +1748,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // Never keep writing rotations into an Application that is being torn
       // down: the ticker below is removed, but these refs outlive the effect.
       armsRef.current = [];
+      heroArmsRef.current = [];
       botRef.current = null;
       head1Ref.current = null;
       clearTimeout(refresh);
@@ -1614,14 +1801,21 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             >
               <div ref={parallax1Ref} className="absolute inset-0">
                 <div ref={idle1Ref} className="absolute inset-0">
-                  {/* Las dos escenas viven montadas a la vez y la visibilidad
-                      se decide por CLASE, no desmontando: las keys son fijas,
-                      asi que el toggle no remonta nada ni pide un contexto
-                      WebGL nuevo. Desmontar la que no se ve devolveria
-                      exactamente el bug que esto evita. */}
+                  {/* ESCRITORIO: las dos escenas viven montadas a la vez y la
+                      visibilidad se decide por CLASE, no desmontando: las keys
+                      son fijas, asi que el toggle no remonta nada ni pide un
+                      contexto nuevo. CELULAR: un solo montaje, el del tema; el
+                      cambio de tema lo remonta en secuencia (runMobileSwap) y
+                      esta caja hace el fundido. */}
                   <div
                     ref={slot1BoxRef}
-                    className={`absolute inset-0 ${showAlt ? hiddenCls : "opacity-100"}`}
+                    className={`absolute inset-0 ${
+                      isMobile
+                        ? `transition-opacity duration-300 ${swapHidden ? "opacity-0" : "opacity-100"}`
+                        : showAlt
+                          ? hiddenCls
+                          : "opacity-100"
+                    }`}
                   >
                     {/* Desktop renders scene 1 at OVERSAMPLE_1 and shows it
                         back at 1:1 under the wrap's VIEW_CSS_SCALE. */}
@@ -1639,43 +1833,45 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                     >
                       {/* slot1 es el hero: la timeline, la vista y el loader
                           cuelgan de el. Si no carga, el hero pasa al render
-                          estatico, como si hubiera vencido el watchdog. */}
-                      <SceneBoundary
-                        key={slot1Url}
-                        name="hero slot1"
-                        onFail={() => {
-                          setFailed(true);
-                          onReady?.();
+                          estatico, como si hubiera vencido el watchdog. En
+                          celular no hay url en medio del cambio de tema. */}
+                      {slot1Url && (
+                        <SceneBoundary
+                          key={slot1Url}
+                          name="hero slot1"
+                          onFail={() => {
+                            setFailed(true);
+                            onReady?.();
+                            settleWait(heroWaitRef, false);
+                          }}
+                        >
+                          <Spline scene={slot1Url} onLoad={handleLoad} />
+                        </SceneBoundary>
+                      )}
+                    </div>
+                  </div>
+                  {!isMobile && (
+                    <div
+                      ref={altBoxRef}
+                      className={`absolute inset-0 ${showAlt ? "opacity-100" : hiddenCls}`}
+                    >
+                      <div
+                        className="absolute left-1/2 top-1/2"
+                        style={{
+                          width: `${OVERSAMPLE_1 * 100}%`,
+                          height: `${OVERSAMPLE_1 * 100}%`,
+                          transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE_1})`,
                         }}
                       >
-                        <Spline scene={slot1Url} onLoad={handleLoad} />
-                      </SceneBoundary>
+                        {/* La capa A sigue teniendo la escena de slot1 abajo,
+                            asi que perder esta no deja el hero sin robot:
+                            showAlt se apaga y en claro se ve el plateado. */}
+                        <SceneBoundary key={HERO_ALT_URL} name="hero alt" onFail={() => markDead("alt")}>
+                          <Spline scene={HERO_ALT_URL} onLoad={handleAltLoad} />
+                        </SceneBoundary>
+                      </div>
                     </div>
-                  </div>
-                  <div
-                    ref={altBoxRef}
-                    className={`absolute inset-0 ${showAlt ? "opacity-100" : hiddenCls}`}
-                  >
-                    <div
-                      className="absolute left-1/2 top-1/2"
-                      style={
-                        isMobile
-                          ? { position: "absolute", inset: 0 }
-                          : {
-                              width: `${OVERSAMPLE_1 * 100}%`,
-                              height: `${OVERSAMPLE_1 * 100}%`,
-                              transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE_1})`,
-                            }
-                      }
-                    >
-                      {/* La capa A sigue teniendo la escena de slot1 abajo,
-                          asi que perder esta no deja el hero sin robot:
-                          showAlt se apaga y en claro se ve el plateado. */}
-                      <SceneBoundary key={HERO_ALT_URL} name="hero alt" onFail={() => markDead("alt")}>
-                        <Spline scene={HERO_ALT_URL} onLoad={handleAltLoad} />
-                      </SceneBoundary>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -1731,20 +1927,29 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           <div
             ref={canvas2WrapRef}
             data-testid="spline2-canvas-wrap"
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              scene2Ready ? "opacity-100" : "opacity-0"
-            }`}
+            className={`absolute inset-0 transition-opacity ${
+              isMobile && swapHidden ? "duration-300" : "duration-1000"
+            } ${scene2Ready && !(isMobile && swapHidden) ? "opacity-100" : "opacity-0"}`}
           >
             {mountScene2 && !scene2Failed && (
                 <div className="absolute inset-0">
                 <div ref={parallax2Ref} className="absolute inset-0">
                   <div ref={idle2Ref} className="absolute inset-0">
                    {isMobile ? (
+                   slot2Url && (
                    <div className="absolute inset-0">
-                    <SceneBoundary key={slot2Url} name="layer 2 mobile" onFail={() => setScene2Failed(true)}>
+                    <SceneBoundary
+                      key={slot2Url}
+                      name="layer 2 mobile"
+                      onFail={() => {
+                        setScene2Failed(true);
+                        settleWait(l2WaitRef, false);
+                      }}
+                    >
                       <Spline scene={slot2Url} onLoad={onScene2Load("m:" + slot2Url)} />
                     </SceneBoundary>
                    </div>
+                   )
                    ) : (
                      L2_DESKTOP_URLS.map((url) => (
                        <ReleasingBox
@@ -1823,8 +2028,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           EL TRATAMIENTO LO DECIDE QUE ROBOT HAY DETRAS, no el breakpoint. Y
           eso sale del tema en los dos anchos: claro carga el robot NEGRO
           (escena 1) y oscuro el PLATEADO (escena 2), tanto en escritorio
-          -- donde sceneUrl sigue al tema -- como en celular, donde la capa A
-          monta las dos y el tema elige cual se ve.
+          -- donde la capa A monta las dos y el tema elige cual se ve -- como
+          en celular, donde se monta solo la del tema.
 
           Sobre el NEGRO, difference funciona: el texto se invierte contra la
           pared clara y queda blanco sobre el cuerpo, asi que cruza el borde
