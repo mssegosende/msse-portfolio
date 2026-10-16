@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import Lenis from "lenis";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { pendingThemeReload } from "@/lib/themeReload";
 
 export const useLenis = () => {
   useEffect(() => {
@@ -34,6 +35,9 @@ export const useLenis = () => {
  * changed the document height after the browser settled.
  */
 export const pinScrollToTopOnReload = () => {
+  // La recarga del cambio de tema en celular vuelve a donde estaba el
+  // visitante (la restaura ScrollScene, ver lib/themeReload.js).
+  if (pendingThemeReload) return;
   window.scrollTo(0, 0);
 };
 

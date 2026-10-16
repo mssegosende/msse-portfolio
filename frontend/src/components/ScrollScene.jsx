@@ -14,6 +14,11 @@ import {
 } from "../data/portfolioData";
 import { useTheme } from "../hooks/useTheme";
 import { captureScene, excludeShared, releaseVideos, scrubScene } from "../lib/splineRelease";
+import { pendingThemeReload, restoredScrollY } from "../lib/themeReload";
+
+// La posicion de la recarga de tema se aplica una sola vez por carga, aunque
+// la timeline se rearme (StrictMode, cambio de ancho).
+let themeReloadUsed = false;
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -1804,6 +1809,15 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // has re-established the page height — without it the scroll target is
     // still clamped to the collapsed document.
     let restoreRaf = null;
+    // La recarga del cambio de tema en celular trae su posicion como progreso
+    // del pin; se pasa a px con el pin recien armado. Una sola vez por carga.
+    if (restoreScrollRef.current == null && !themeReloadUsed) {
+      themeReloadUsed = true;
+      if (pendingThemeReload) {
+        ScrollTrigger.refresh();
+        restoreScrollRef.current = restoredScrollY();
+      }
+    }
     if (restoreScrollRef.current != null) {
       const y = restoreScrollRef.current;
       restoreScrollRef.current = null;
@@ -1817,7 +1831,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         else window.scrollTo(0, y);
         if (++tries < 12 && Math.abs(window.scrollY - y) > 2) {
           restoreRaf = requestAnimationFrame(put);
+          return;
         }
+        // Que el scrub no recorra la secuencia en pantalla hasta la posicion
+        // restaurada (como HOME, ver scrollToTop).
+        ScrollTrigger.update();
+        ScrollTrigger.getAll().forEach((st) => st.getTween()?.progress(1));
       };
       put();
     }
