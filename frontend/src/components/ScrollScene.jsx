@@ -441,13 +441,15 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const deadScenesRef = useRef(deadScenes);
   deadScenesRef.current = deadScenes;
   const markDead = (key) => setDeadScenes((d) => (d[key] ? d : { ...d, [key]: true }));
-  const [journeyDone, setJourneyDone] = useState(false);
+  // La recarga del cambio de tema en celular sale del dock: la secuencia ya
+  // se vio, asi que vuelve con el dock y sin SKIP INTRO (ver lib/themeReload.js).
+  const [journeyDone, setJourneyDone] = useState(!!pendingThemeReload);
   const readyRef = useRef(false);
   // Escena 2 renderiza solo cuando la capa 2 esta por aparecer; antes de eso
   // su loop queda en pausa. Lo decide el onUpdate del pin, lo lee el onLoad.
   const awake2Ref = useRef(false);
   const stopped1Ref = useRef(false);
-  const journeyRef = useRef(false);
+  const journeyRef = useRef(!!pendingThemeReload);
   // Where the visitor was when the timeline had to be rebuilt. Reverting the
   // GSAP context removes the pin, which collapses the +1040% spacer; the page
   // suddenly gets shorter and the browser clamps the scroll, which is why
@@ -2391,18 +2393,24 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             ref={(el) => (calloutRefs.current[i] = el)}
             data-testid={`feature-callout-${f.num}`}
             data-theme={ch2Theme}
-            style={isMobile ? { bottom: "6rem" } : { top: f.top }}
+            style={isMobile ? undefined : { top: f.top }}
             className={`absolute ${
               isMobile
-                ? "left-4 right-4 w-auto"
+                ? "callout-mobile left-4 right-4 w-auto"
                 : `w-[27rem] max-w-[46vw] ${f.side === "left" ? "left-[5%]" : "right-[5%]"}`
             }`}
           >
-            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.70] p-6 pt-5 backdrop-blur-md sm:bg-surface/70 sm:p-9 sm:pt-6">
-              <div className="select-none font-display text-[7rem] font-light leading-[0.85] text-outline-grey">
+            {/* Celular: mas compacta (numero, aire, interlineado), para tapar
+                menos robot y entrar entre el titulo y el dock en un 375x667. */}
+            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.70] p-5 pt-4 backdrop-blur-md sm:bg-surface/70 sm:p-9 sm:pt-6">
+              <div
+                className={`select-none font-display font-light leading-[0.85] text-outline-grey ${
+                  isMobile ? "text-[4.5rem]" : "text-[7rem]"
+                }`}
+              >
                 {f.num}
               </div>
-              <div className="mt-7 flex items-baseline gap-3">
+              <div className={`${isMobile ? "mt-4" : "mt-7"} flex items-baseline gap-3`}>
                 <span className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
                   {f.part}
                 </span>
@@ -2410,7 +2418,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               <h3 className="mt-2.5 font-display text-2xl font-light uppercase tracking-[0.01em] text-ink">
                 {f.title}
               </h3>
-              <p className="mt-4 font-inter text-[15px] leading-[1.65] text-ink/[0.83]">
+              <p
+                className={`${isMobile ? "mt-3 leading-[1.55]" : "mt-4 leading-[1.65]"} font-inter text-[15px] text-ink/[0.83]`}
+              >
                 {f.text}
               </p>
             </div>
