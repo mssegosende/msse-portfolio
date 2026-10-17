@@ -985,6 +985,53 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     window.__memProbeLog?.(`swap config: settle ${SWAP_SETTLE_MS}ms, l2 ${SECONDARY_NOW ? "now" : "lazy"}`);
   }, []);
 
+  // CELULAR: las tarjetas se apoyan 16px encima del lugar del dock, medido en
+  // vivo. Con unidades CSS caian debajo del dock: la seccion mide 100vh (en
+  // iOS, el alto con las barras escondidas) y tiene min-h de 640px, asi que
+  // con las barras de Safari o Brave visibles, o en una pantalla baja, su
+  // borde inferior queda fuera de lo que se ve. El dock es fixed y siempre
+  // esta en el borde visible. Mientras hay una tarjeta en pantalla la seccion
+  // esta fijada con el borde de arriba en 0, asi que alcanza con su alto.
+  useEffect(() => {
+    if (!isMobile) return undefined;
+    const GAP = 16;
+    let raf = 0;
+    let last = null;
+    const placeCallouts = () => {
+      raf = 0;
+      const slot = document.querySelector("[data-dock-slot]");
+      const sec = sectionRef.current;
+      if (!slot || !sec) return;
+      const bottom = Math.max(0, Math.round(sec.offsetHeight - slot.getBoundingClientRect().top + GAP));
+      if (bottom === last) return;
+      last = bottom;
+      calloutRefs.current.forEach((el) => {
+        if (el) el.style.bottom = `${bottom}px`;
+      });
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(placeCallouts);
+    };
+    placeCallouts();
+    // Las barras del navegador aparecen y se van con el scroll: resize en
+    // unos, solo visualViewport en otros. El scroll es por las dudas; si no
+    // cambio nada no escribe.
+    const vv = window.visualViewport;
+    window.addEventListener("resize", schedule);
+    window.addEventListener("scroll", schedule, { passive: true });
+    vv?.addEventListener("resize", schedule);
+    const callouts = calloutRefs.current;
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("scroll", schedule);
+      vv?.removeEventListener("resize", schedule);
+      callouts.forEach((el) => {
+        if (el) el.style.bottom = "";
+      });
+    };
+  }, [isMobile]);
+
   useEffect(() => {
     const target = themeModel(darkMode);
     if (!isMobile) {
@@ -2400,30 +2447,42 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 : `w-[27rem] max-w-[46vw] ${f.side === "left" ? "left-[5%]" : "right-[5%]"}`
             }`}
           >
-            {/* Celular: mas compacta (numero, aire, interlineado), para tapar
-                menos robot y entrar entre el titulo y el dock en un 375x667. */}
-            <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.70] p-5 pt-4 backdrop-blur-md sm:bg-surface/70 sm:p-9 sm:pt-6">
-              <div
-                className={`select-none font-display font-light leading-[0.85] text-outline-grey ${
-                  isMobile ? "text-[4.5rem]" : "text-[7rem]"
-                }`}
-              >
-                {f.num}
+            {isMobile ? (
+              // Celular: compacta. Numero, parte y titulo en UNA fila, texto a
+              // 14px: ocupaba 43-72% de la pantalla (medido en WebKit,
+              // Firefox, Brave y Edge, 402x874 a 375x553).
+              <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.70] p-4 backdrop-blur-md">
+                <div className="flex items-center gap-4">
+                  <div className="select-none font-display text-[3.25rem] font-light leading-[0.85] text-outline-grey">
+                    {f.num}
+                  </div>
+                  <div className="min-w-0">
+                    <span className="font-display text-[12px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
+                      {f.part}
+                    </span>
+                    <h3 className="mt-0.5 font-display text-xl font-light uppercase leading-tight tracking-[0.01em] text-ink">
+                      {f.title}
+                    </h3>
+                  </div>
+                </div>
+                <p className="mt-3 font-inter text-[14px] leading-[1.5] text-ink/[0.83]">{f.text}</p>
               </div>
-              <div className={`${isMobile ? "mt-4" : "mt-7"} flex items-baseline gap-3`}>
-                <span className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
-                  {f.part}
-                </span>
+            ) : (
+              <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.70] p-6 pt-5 backdrop-blur-md sm:bg-surface/70 sm:p-9 sm:pt-6">
+                <div className="select-none font-display text-[7rem] font-light leading-[0.85] text-outline-grey">
+                  {f.num}
+                </div>
+                <div className="mt-7 flex items-baseline gap-3">
+                  <span className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
+                    {f.part}
+                  </span>
+                </div>
+                <h3 className="mt-2.5 font-display text-2xl font-light uppercase tracking-[0.01em] text-ink">
+                  {f.title}
+                </h3>
+                <p className="mt-4 font-inter text-[15px] leading-[1.65] text-ink/[0.83]">{f.text}</p>
               </div>
-              <h3 className="mt-2.5 font-display text-2xl font-light uppercase tracking-[0.01em] text-ink">
-                {f.title}
-              </h3>
-              <p
-                className={`${isMobile ? "mt-3 leading-[1.55]" : "mt-4 leading-[1.65]"} font-inter text-[15px] text-ink/[0.83]`}
-              >
-                {f.text}
-              </p>
-            </div>
+            )}
           </div>
         ))}
 

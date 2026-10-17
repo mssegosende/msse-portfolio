@@ -14,7 +14,9 @@ export const NavigationDock = ({ visible }) => {
   const { theme, toggle } = useTheme();
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-3">
+    // data-dock-slot: el lugar del dock aunque este escondido (el que se
+    // traslada es el nav de adentro). Las tarjetas de celular se apoyan aca.
+    <div data-dock-slot="" className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-3">
       <motion.nav
         data-testid="navigation-dock"
         initial={{ y: 90, opacity: 0 }}

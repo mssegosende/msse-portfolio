@@ -265,19 +265,11 @@ textarea:-webkit-autofill {
     }
 }
 
-/* Tarjetas del capitulo 2 en celular. La seccion fijada mide 100vh, que en
-   iOS es el alto con las barras de Safari ESCONDIDAS; con la barra visible,
-   los ultimos ~80px de la seccion quedan debajo de ella y la tarjeta caia
-   bajo la barra y el dock. 100lvh - 100dvh es justo lo que tapa la barra en
-   cada momento (0 con la barra escondida), asi que la tarjeta queda siempre a
-   6rem del borde VISIBLE, encima del dock (que termina a 66px). */
+/* Tarjetas del capitulo 2 en celular: valor de partida. ScrollScene las apoya
+   en vivo encima del dock (placeCallouts); ninguna unidad CSS sirve en todos
+   los navegadores (100vh, lvh/dvh y el min-h de 640px de la seccion). */
 .callout-mobile {
     bottom: 6rem;
-}
-@supports (height: 100dvh) {
-    .callout-mobile {
-        bottom: calc(6rem + 100lvh - 100dvh);
-    }
 }
 
 @layer base {
