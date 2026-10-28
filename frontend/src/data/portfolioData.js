@@ -4,7 +4,7 @@
 //
 // CONTENT STATUS: every string below is real EXCEPT entries flagged
 // `draft: true`, whose copy is placeholder text waiting on the real thing.
-// Draft entries render in `yarn start` with a DRAFT badge and are stripped
+// Draft entries render in `pnpm start` with a DRAFT badge and are stripped
 // from the production bundle (see `getProjects` below), so the published
 // site never shows invented copy. Rewrite the copy, drop the flag.
 //

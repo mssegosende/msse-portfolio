@@ -15,7 +15,7 @@ contact form backed by a small FastAPI service.
 
 **Frontend** — React 19 on Create React App with craco, Tailwind CSS, GSAP +
 ScrollTrigger, Framer Motion, Lenis for smooth scrolling, `@splinetool/react-spline`
-for the 3D scenes, and Yarn 1.22 as the package manager.
+for the 3D scenes, and pnpm 9 as the package manager.
 
 **Backend** — FastAPI with Pydantic validation and Motor (async MongoDB). It serves
 exactly one endpoint that matters, `POST /api/contact`. The site renders without it.
@@ -74,10 +74,11 @@ at 5 per IP per 10-minute sliding window. **The limiter is a process-local dict*
 resets on restart and does not hold across replicas, which is honest for a single small
 instance and would need Redis or the reverse proxy the moment this scales past one.
 
-**Yarn, not npm.**
-`npm install` fails here on a peer-dependency conflict, and more importantly it ignores
-the `resolutions` block in `package.json`, which pins around 40 transitive security
-patches. Those pins are the reason the lockfile looks the way it does.
+**pnpm, not npm or yarn.**
+`pnpm.overrides` in `package.json` pins around 40 transitive security patches, plus
+`eslint` 8.57.1: Create React App lints with eslint 8, and pnpm would otherwise hand its
+webpack plugin a newer major. The version is pinned in `packageManager`, so `corepack`
+or `npx pnpm@9.15.9` gives the same pnpm everywhere.
 
 ---
 
@@ -108,14 +109,14 @@ deployed site. Rewrite the copy, drop the flag.
 
 ```bash
 cd frontend
-yarn install
-yarn start          # http://localhost:3000
+pnpm install
+pnpm start          # http://localhost:3000
 ```
 
 Production build:
 
 ```bash
-yarn build
+pnpm build
 npx serve -s build
 ```
 
