@@ -15,6 +15,7 @@ import {
 import { useTheme } from "../hooks/useTheme";
 import { captureScene, excludeShared, releaseVideos, scrubScene } from "../lib/splineRelease";
 import { pendingThemeReload, restoredScrollY } from "../lib/themeReload";
+import { MOBILE_LAYOUT_QUERY } from "../lib/layout";
 
 // La posicion de la recarga de tema se aplica una sola vez por carga, aunque
 // la timeline se rearme (StrictMode, cambio de ancho).
@@ -249,7 +250,7 @@ const pinCamera = (app, pos) => {
 // privada, como _camera: si el runtime la cambia, esto no hace nada.
 const MOBILE_MAX_DPR = 2;
 const mobileLayoutMQ =
-  typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)") : null;
+  typeof window !== "undefined" ? window.matchMedia(MOBILE_LAYOUT_QUERY) : null;
 const capMobilePixelRatio = (AP) => {
   if (!AP || typeof AP._getPixelRatio !== "function" || AP.__mobileDprCap) return;
   const getPixelRatio = AP._getPixelRatio;
@@ -568,7 +569,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const railRefs = useRef([]);
 
   const [isMobile, setIsMobile] = useState(
-    () => typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
+    () => typeof window !== "undefined" && window.matchMedia(MOBILE_LAYOUT_QUERY).matches
   );
 
   // El robot de la escena 1 es NEGRO y el de la 2 PLATEADO. El modelo es UNO
@@ -630,7 +631,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // below already lists isMobile in its deps and reverts its GSAP context,
   // so re-running on a real breakpoint change is the path it was written for.
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
+    const mq = window.matchMedia(MOBILE_LAYOUT_QUERY);
     const onChange = (e) => setIsMobile(e.matches);
     mq.addEventListener("change", onChange);
     setIsMobile(mq.matches);
@@ -2501,19 +2502,20 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 <p className="mt-3 font-inter text-[14px] leading-[1.5] text-ink/[0.83]">{f.text}</p>
               </div>
             ) : (
-              // Escritorio: todo escala con el ALTO de la ventana, con tope en
-              // el tamano de siempre (que es el que queda en 1080 o mas). En el
+              // Escritorio: todo escala con el ALTO de la ventana (y con el
+              // ancho en tablets verticales angostas, donde la tarjeta de 46vw
+              // tiene mas renglones), con tope en el tamano de siempre. En el
               // cierre la 01 (top 6%) y la 03 (top 52%) van una arriba de la
               // otra: cada una tiene que medir menos de ~44% del alto. A tamano
               // fijo median 48-58% en una Mac (1440x900, o menos con la barra
               // de Safari): se pisaban y la 03 se cortaba abajo. Las lineas
               // salen de puntos fijos (from en portfolioData) que siguen
               // quedando dentro de la tarjeta.
-              <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/70 p-[clamp(1.25rem,3.2vh,2.25rem)] pt-[clamp(1rem,2.4vh,1.5rem)] backdrop-blur-md">
-                <div className="select-none font-display text-[clamp(3rem,8vh,7rem)] font-light leading-[0.85] text-outline-grey">
+              <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/70 p-[clamp(1.25rem,min(3.2vh,3.4vw),2.25rem)] pt-[clamp(1rem,min(2.4vh,2.5vw),1.5rem)] backdrop-blur-md">
+                <div className="select-none font-display text-[clamp(3rem,min(8vh,8vw),7rem)] font-light leading-[0.85] text-outline-grey">
                   {f.num}
                 </div>
-                <div className="mt-[clamp(0.75rem,2.6vh,1.75rem)] flex items-baseline gap-3">
+                <div className="mt-[clamp(0.75rem,min(2.6vh,2.6vw),1.75rem)] flex items-baseline gap-3">
                   <span className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
                     {f.part}
                   </span>
@@ -2521,7 +2523,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 <h3 className="mt-2 font-display text-[clamp(1.25rem,2.7vh,1.5rem)] font-light uppercase tracking-[0.01em] text-ink">
                   {f.title}
                 </h3>
-                <p className="mt-[clamp(0.5rem,1.6vh,1rem)] font-inter text-[clamp(13px,1.65vh,15px)] leading-[1.6] text-ink/[0.83]">
+                <p className="mt-[clamp(0.5rem,1.6vh,1rem)] font-inter text-[clamp(13px,min(1.65vh,1.75vw),15px)] leading-[1.6] text-ink/[0.83]">
                   {f.text}
                 </p>
               </div>

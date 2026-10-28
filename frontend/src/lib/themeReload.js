@@ -1,4 +1,5 @@
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { MOBILE_LAYOUT_QUERY } from "./layout";
 
 // CELULAR: el cambio de tema RECARGA la pagina. En iPhone las escenas de Spline
 // descartadas no se liberan nunca (medido en produccion con ?debug=1: muere
@@ -12,7 +13,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 // barra de URL entre una carga y la otra.
 
 const KEY = "theme-reload";
-const MOBILE_MQ = "(max-width: 767px)";
+
 // Un pedido mas viejo que esto no es de esta recarga (p. ej. volver a abrir la
 // pestana mas tarde): se ignora.
 const MAX_AGE_MS = 30000;
@@ -39,7 +40,7 @@ const take = () => {
 export const pendingThemeReload = typeof window !== "undefined" ? take() : null;
 
 export const themeNeedsReload = () =>
-  typeof window !== "undefined" && window.matchMedia(MOBILE_MQ).matches;
+  typeof window !== "undefined" && window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
 
 // Guarda el tema nuevo y donde esta el visitante, y recarga. Si no hay
 // sessionStorage (modo privado viejo, bloqueado) devuelve false y el que

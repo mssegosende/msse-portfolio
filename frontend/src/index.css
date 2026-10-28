@@ -265,6 +265,17 @@ textarea:-webkit-autofill {
     }
 }
 
+/* Celular y tablet trabados en vertical: en horizontal el aviso de RotateLock
+   tapa el sitio. Misma condicion que ROTATE_LOCK_QUERY en lib/layout.js. */
+.rotate-lock {
+    display: none;
+}
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+    .rotate-lock {
+        display: flex;
+    }
+}
+
 /* Tarjetas del capitulo 2 en celular: valor de partida. ScrollScene las apoya
    en vivo encima del dock (placeCallouts); ninguna unidad CSS sirve en todos
    los navegadores (100vh, lvh/dvh y el min-h de 640px de la seccion). */

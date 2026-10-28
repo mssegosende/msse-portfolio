@@ -11,6 +11,7 @@ import { Projects } from "@/components/Projects";
 import { Capabilities } from "@/components/Capabilities";
 import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
+import { RotateLock } from "@/components/RotateLock";
 
 function App() {
   useLenis();
@@ -33,6 +34,7 @@ function App() {
         <Contact />
       </main>
       <Footer />
+      <RotateLock />
     </div>
   );
 }
