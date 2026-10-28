@@ -74,16 +74,40 @@ const OVERSAMPLE_1 = VIEW_CSS_SCALE;
 
 /** Apply a CSS-equivalent zoom (scale S about the centre) and pan (x/y in %
  *  of the frame) to a scene's camera. */
+//
+// Escribirlo una vez por frame (ticker de GSAP) no alcanzaba: si algo recalcula
+// la proyeccion entre nuestra escritura y el render -- el resize de Spline, o
+// la intro de camara del archivo mientras corre -- ese frame sale sin el
+// paneo. En Safari la escena se ve antes de que termine la intro, y el robot
+// aparecia unos segundos en otro encuadre (mas alto, la cabeza cortada) y
+// despues saltaba. Ahora el paneo vive en la camara (__view) y
+// updateProjectionMatrix lo vuelve a poner cada vez que la recalcula.
 const applyView = (app, v) => {
   const cam = app?._camera;
-  if (!cam || !cam.projectionMatrix) return;
+  if (!cam || !cam.projectionMatrix || typeof cam.updateProjectionMatrix !== "function") return;
   try {
-    cam.zoom = (CAM_BASE_ZOOM * v.scale) / VIEW_CSS_SCALE;
-    cam.updateProjectionMatrix?.();
-    const e = cam.projectionMatrix.elements;
     // NDC runs -1..1 across the canvas, y up: a pan of f of the canvas is 2f.
-    e[8] = (-2 * parseFloat(v.x)) / 100 / VIEW_CSS_SCALE;
-    e[9] = (2 * parseFloat(v.y)) / 100 / VIEW_CSS_SCALE;
+    cam.__view = {
+      zoom: (CAM_BASE_ZOOM * v.scale) / VIEW_CSS_SCALE,
+      ox: (-2 * parseFloat(v.x)) / 100 / VIEW_CSS_SCALE,
+      oy: (2 * parseFloat(v.y)) / 100 / VIEW_CSS_SCALE,
+    };
+    if (!cam.__viewHooked) {
+      const update = cam.updateProjectionMatrix;
+      cam.updateProjectionMatrix = function (...args) {
+        const w = this.__view;
+        if (w) this.zoom = w.zoom;
+        const out = update.apply(this, args);
+        if (w) {
+          const e = this.projectionMatrix.elements;
+          e[8] = w.ox;
+          e[9] = w.oy;
+        }
+        return out;
+      };
+      cam.__viewHooked = true;
+    }
+    cam.updateProjectionMatrix();
   } catch (err) {
     /* runtime without an inspectable camera */
   }
@@ -245,13 +269,22 @@ capMobilePixelRatio(Application?.prototype);
 // heap por cambio de tema aun con todo lo demas liberado. Con WebGL, y
 // splineRelease, el heap queda plano. Visualmente, medido a 390x844: la misma
 // escena (diferencias de tono tenues, por debajo de lo que se ve). Se fuerza
-// en load(), antes de que cree el renderer, solo con el layout de celular;
-// escritorio sigue en WebGPU. API privada (_rendererBackend): ver HANDOFF.
+// en load(), antes de que cree el renderer, con el layout de celular.
+//
+// ESCRITORIO FUERA DE CHROMIUM (Safari, Firefox): tambien WebGL. Los ojos del
+// robot son un video (mp4 dentro del .splinecode) usado como textura; en la
+// Mac (Safari 26, WebGPU) no se veian, en el iPhone (WebGL forzado) si. Todo el
+// escritorio se midio en Chromium con WebGPU, que sigue igual; Brave forzado a
+// WebGL da el mismo encuadre y los ojos. API privada (_rendererBackend): ver
+// HANDOFF.
+const isChromium =
+  typeof navigator !== "undefined" &&
+  !!navigator.userAgentData?.brands?.some((b) => b.brand === "Chromium");
 const forceMobileWebGL = (AP) => {
   if (!AP || typeof AP.load !== "function" || AP.__mobileWebGL) return;
   const load = AP.load;
   AP.load = function (...args) {
-    if (mobileLayoutMQ?.matches) {
+    if (mobileLayoutMQ?.matches || !isChromium) {
       this._rendererBackend = "webgl";
       this._rendererAuto = false;
     }
@@ -2468,19 +2501,29 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 <p className="mt-3 font-inter text-[14px] leading-[1.5] text-ink/[0.83]">{f.text}</p>
               </div>
             ) : (
-              <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.70] p-6 pt-5 backdrop-blur-md sm:bg-surface/70 sm:p-9 sm:pt-6">
-                <div className="select-none font-display text-[7rem] font-light leading-[0.85] text-outline-grey">
+              // Escritorio: todo escala con el ALTO de la ventana, con tope en
+              // el tamano de siempre (que es el que queda en 1080 o mas). En el
+              // cierre la 01 (top 6%) y la 03 (top 52%) van una arriba de la
+              // otra: cada una tiene que medir menos de ~44% del alto. A tamano
+              // fijo median 48-58% en una Mac (1440x900, o menos con la barra
+              // de Safari): se pisaban y la 03 se cortaba abajo. Las lineas
+              // salen de puntos fijos (from en portfolioData) que siguen
+              // quedando dentro de la tarjeta.
+              <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/70 p-[clamp(1.25rem,3.2vh,2.25rem)] pt-[clamp(1rem,2.4vh,1.5rem)] backdrop-blur-md">
+                <div className="select-none font-display text-[clamp(3rem,8vh,7rem)] font-light leading-[0.85] text-outline-grey">
                   {f.num}
                 </div>
-                <div className="mt-7 flex items-baseline gap-3">
+                <div className="mt-[clamp(0.75rem,2.6vh,1.75rem)] flex items-baseline gap-3">
                   <span className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
                     {f.part}
                   </span>
                 </div>
-                <h3 className="mt-2.5 font-display text-2xl font-light uppercase tracking-[0.01em] text-ink">
+                <h3 className="mt-2 font-display text-[clamp(1.25rem,2.7vh,1.5rem)] font-light uppercase tracking-[0.01em] text-ink">
                   {f.title}
                 </h3>
-                <p className="mt-4 font-inter text-[15px] leading-[1.65] text-ink/[0.83]">{f.text}</p>
+                <p className="mt-[clamp(0.5rem,1.6vh,1rem)] font-inter text-[clamp(13px,1.65vh,15px)] leading-[1.6] text-ink/[0.83]">
+                  {f.text}
+                </p>
               </div>
             )}
           </div>
