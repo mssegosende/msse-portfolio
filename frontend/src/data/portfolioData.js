@@ -262,7 +262,7 @@ export const capabilities = [
     title: "AI Engineering",
     description:
       "Agent layers and AI-assisted features built into production services, not demos.",
-    tags: ["LangChain", "LangGraph", "LLM Agents", "Agent-consumed APIs", "Python"],
+    tags: ["LangChain", "LangGraph", "LLM Agents", "Agent-consumed APIs", "Python", "Emergent (AI app builder)"],
   },
   {
     id: "data",
