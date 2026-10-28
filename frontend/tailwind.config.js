@@ -27,21 +27,9 @@ module.exports = {
         sm: 'calc(var(--radius) - 4px)'
       },
       keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' }
-        },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' }
-        },
         marquee: {
           from: { transform: 'translateX(0)' },
           to: { transform: 'translateX(-50%)' }
-        },
-        kenburns: {
-          from: { transform: 'scale(1) translate(0, 0)' },
-          to: { transform: 'scale(1.18) translate(-2%, -2%)' }
         },
         'pulse-dot': {
           '0%, 100%': { opacity: '1' },
@@ -53,14 +41,11 @@ module.exports = {
         }
       },
       animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
         marquee: 'marquee 48s linear infinite',
-        kenburns: 'kenburns 16s ease-in-out infinite alternate',
         'pulse-dot': 'pulse-dot 2.2s ease-in-out infinite',
         'scroll-cue': 'scroll-cue 1.9s cubic-bezier(0.65, 0, 0.35, 1) infinite'
       }
     }
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [],
 };
