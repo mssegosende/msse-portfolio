@@ -1139,7 +1139,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     //
     // La y NO puede pasar de ~39%: el canvas y la pared van escalados 1.9x
     // alrededor del centro, asi que su borde superior cae en (y - 45%) * alto.
-    // Con y 48% (2c2ca10) quedaba +27px ADENTRO del cuadro: la corona salia
+    // Con y 48% (4eee350) quedaba +27px ADENTRO del cuadro: la corona salia
     // cortada en ese borde y arriba asomaba el fondo -- la franja negra. Y el
     // tiron del drain (scale x.96, +1.3%) pide y <= 39.9% para no destaparlo.
     // Por eso el robot se baja con la CAMARA (HERO_CAM_DESKTOP.y), y la y solo
@@ -1846,7 +1846,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // todo el ancho, justo donde vive "Skip intro". No hay otro lugar libre
       // toda la secuencia: arriba choca con el titulo del story a 375, y abajo
       // de las tarjetas es la franja que tapa la barra del navegador en una
-      // seccion de 100vh (por eso el boton subio a 6rem en 95f9f4e). Asi que
+      // seccion de 100vh (por eso el boton subio a 6rem en e834adb). Asi que
       // se apaga mientras hay una tarjeta en pantalla: termina de irse cuando
       // la tarjeta empieza a entrar y vuelve recien cuando la anterior se fue.
       // autoAlpha: apagado queda visibility:hidden, no atrapa toques.
