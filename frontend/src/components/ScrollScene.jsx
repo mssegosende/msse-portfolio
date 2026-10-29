@@ -11,7 +11,6 @@ import {
   systemFeatures,
 } from "../data/portfolioData";
 import { useTheme } from "../hooks/useTheme";
-import { captureScene, excludeShared, releaseVideos, scrubScene } from "../lib/splineRelease";
 import { pendingThemeReload, restoredScrollY } from "../lib/themeReload";
 import { MOBILE_LAYOUT_QUERY } from "../lib/layout";
 import { heroLineReveal as lineReveal, heroUiFade as uiFade } from "../lib/motion";
@@ -28,16 +27,6 @@ import {
 import { patchSplineRuntime, releaseGlContext } from "../lib/spline/runtime";
 import { BOT_HOME, applyPose, collectArms, findBot, placeBot } from "../lib/spline/rig";
 import { L2_DESKTOP_URLS, themeModel } from "../lib/spline/scenes";
-import {
-  SECONDARY_DELAY_MS,
-  SECONDARY_NOW,
-  SWAP_FADE_MS,
-  SWAP_LOAD_TIMEOUT_MS,
-  SWAP_SETTLE_MS,
-  settleWait,
-  waitFrames,
-  waitMs,
-} from "../lib/spline/swapTiming";
 import { ReleasingBox } from "./spline/ReleasingBox";
 import { SceneBoundary } from "./spline/SceneBoundary";
 import { FeatureCard } from "./scroll-scene/FeatureCard";
@@ -165,24 +154,16 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // picks which shows, so a toggle never reloads or rebuilds anything.
   //
   // Phones: only the theme's model is mounted, two scenes in total; more made iOS
-  // kill the page. Theme changes reload the page (lib/themeReload.js), with
-  // runMobileSwap as the in-place fallback.
+  // kill the page. Theme changes reload the page (lib/themeReload.js); only
+  // without sessionStorage does the model change in place, remounting both.
   //
   // sceneUrl is constant: it is a timeline dependency, and the phone hero
   // remounts through its key (slot1Url) instead.
   const sceneUrl = SPLINE_SCENE_2_URL;
-  const [mobileModel, setMobileModel] = useState(() => themeModel(darkMode));
-  const mobileModelRef = useRef(mobileModel);
-  mobileModelRef.current = mobileModel;
-  // Phone layers mount separately, so a swap loads the visible one first.
-  const [mobileHeroOn, setMobileHeroOn] = useState(true);
-  const [mobileL2On, setMobileL2On] = useState(true);
-  // Fades the robot during a phone swap (both layers).
-  const [swapHidden, setSwapHidden] = useState(false);
-  // On phones, null means unmounted (mid swap).
-  const slot1Url = isMobile ? (mobileHeroOn ? mobileModel : null) : sceneUrl;
+  const mobileModel = themeModel(darkMode);
+  const slot1Url = isMobile ? mobileModel : sceneUrl;
   // Phone layer 2 only; desktop layer 2 mounts L2_DESKTOP_URLS.
-  const slot2Url = mobileL2On ? mobileModel : null;
+  const slot2Url = mobileModel;
   // If the theme's model failed to load, show the other one.
   const l2Alive = L2_DESKTOP_URLS.filter((u) => !deadScenes["d:" + u]);
   const l2Preferred = themeModel(darkMode);
@@ -215,10 +196,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Pending runMobileSwap waits, resolved by load (true) or failure (false).
-  const heroWaitRef = useRef(null);
-  const l2WaitRef = useRef(null);
-
   const handleLoad = (app) => {
     app1Ref.current = app;
     placeBot(app);
@@ -241,13 +218,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // After a phone theme reload the hero may load past its part of the sequence or
     // off screen: draw a couple of frames, then stop. Scrolling back restarts it.
     if (isMobile) {
-      waitFrames(2).then(() => {
-        if (app1Ref.current !== app) return;
-        if (stopped1Ref.current || !heroVisibleRef.current) {
-          try { app.stop(); } catch (e) { /* runtime without stop() */ }
-        }
-        settleWait(heroWaitRef, true);
-      });
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (app1Ref.current !== app) return;
+          if (stopped1Ref.current || !heroVisibleRef.current) {
+            try { app.stop(); } catch (e) { /* runtime without stop() */ }
+          }
+        })
+      );
     }
     if (readyRef.current) return;
     readyRef.current = true;
@@ -319,7 +297,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         if (!awake2Ref.current || !heroVisibleRef.current) {
           try { app.stop(); } catch (e) { /* runtime without stop() */ }
         }
-        if (key.startsWith("m:")) settleWait(l2WaitRef, true);
       })
     );
   };
@@ -389,182 +366,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     if (isMobile) dropAlt();
   }, [isMobile, dropAlt]);
 
-  // In-place phone theme swap, in strict sequence so two scenes never load at
-  // once and no more than two are ever alive:
-  //   1. fade the robot out
-  //   2. capture what the runtime will retain (lib/splineRelease.js), unmount
-  //      both layers, release contexts, stop videos, null our refs
-  //   3. wait SWAP_SETTLE_MS, then empty what was retained
-  //   4. mount the visible layer and wait for it to draw
-  //   5. fade back in
-  //   6. load the other layer later (timer or scroll)
-  // A theme change mid swap restarts toward the latest theme; leaving the phone
-  // layout or unmounting cancels it (swapRunRef).
-  const failedRef = useRef(failed);
-  failedRef.current = failed;
-  const scene2FailedRef = useRef(scene2Failed);
-  scene2FailedRef.current = scene2Failed;
-  const mountScene2Ref = useRef(mountScene2);
-  mountScene2Ref.current = mountScene2;
-  const swapRunRef = useRef(0);
-  const swappingRef = useRef(false);
-
-  // Null these or the old scene's JS (graph, geometry, textures) stays reachable.
-  const dropMobileScenes = () => {
-    app1Ref.current = null;
-    head1Ref.current = null;
-    heroArmsRef.current = [];
-    app2Ref.current = null;
-    armsRef.current = [];
-    botRef.current = null;
-    Object.keys(l2Ref.current).forEach((k) => {
-      if (k.startsWith("m:")) delete l2Ref.current[k];
-    });
-  };
-
-  const runMobileSwap = async () => {
-    const run = ++swapRunRef.current;
-    const alive = () => swapRunRef.current === run;
-    swappingRef.current = true;
-    try {
-      while (alive() && mobileModelRef.current !== themeModel(darkModeRef.current)) {
-        setSwapHidden(true);
-        await waitMs(SWAP_FADE_MS);
-        if (!alive()) return;
-        // Double tap: the theme went back to the mounted model during the fade.
-        if (mobileModelRef.current === themeModel(darkModeRef.current)) {
-          setSwapHidden(false);
-          await waitMs(SWAP_FADE_MS);
-          continue;
-        }
-
-        const held = glCanvasRefs.current;
-        const canvases = [held.slot1, held.slot2];
-        // Capture before unmounting, while it is still reachable from the app.
-        const leftovers = [app1Ref.current, app2Ref.current].map(captureScene);
-        excludeShared(leftovers);
-        window.__memProbeLog?.(
-          "swap: captured " +
-            leftovers
-              .map((l) =>
-                l ? `${l.objects.length}o/${l.owned.length}m/${l.players.length}p/${l.videos.length}v${l.renderer ? "+r" : ""}` : "-"
-              )
-              .join(" ")
-        );
-        // Null before unmounting, so the per-slot effects release nothing before the
-        // dispose.
-        held.slot1 = null;
-        held.slot2 = null;
-        clearSecondary();
-        dropMobileScenes();
-        setScene2Ready(false);
-        setMobileHeroOn(false);
-        setMobileL2On(false);
-        await waitFrames(2);
-        canvases.forEach(releaseGlContext);
-        leftovers.forEach(releaseVideos);
-        window.__memProbeLog?.(`swap: released, settle ${SWAP_SETTLE_MS}ms`);
-        await waitMs(SWAP_SETTLE_MS);
-        // Empty the shells now that the runtime's async work has settled, even if the
-        // swap was cancelled.
-        leftovers.forEach(scrubScene);
-        if (!alive()) return;
-
-        // Visible layer first: layer 2 if its loop is awake (the visitor is in chapter
-        // 2 or below), otherwise the hero. The other one follows (loadSecondary).
-        const l2First = awake2Ref.current;
-        setMobileModel(themeModel(darkModeRef.current));
-        window.__memProbeLog?.(`swap: primary ${l2First ? "l2" : "hero"}`);
-        await (l2First ? mountL2Layer() : mountHeroLayer());
-        if (!alive()) return;
-
-        setSwapHidden(false);
-        if (SECONDARY_NOW) {
-          window.__memProbeLog?.(`swap: secondary ${l2First ? "hero" : "l2"} (now)`);
-          await (l2First ? mountHeroLayer() : mountL2Layer());
-          if (!alive()) return;
-        } else {
-          secondaryRef.current = { layer: l2First ? "hero" : "l2", run };
-          secondaryTimerRef.current = setTimeout(() => triggerSecondaryRef.current?.("timer"), SECONDARY_DELAY_MS);
-        }
-        await waitMs(SWAP_FADE_MS);
-      }
-    } finally {
-      if (alive()) swappingRef.current = false;
-    }
-  };
-
-  // Mount a phone layer and wait for it to draw (or fail, or time out).
-  const waitLoad = (ref) =>
-    new Promise((resolve) => {
-      ref.current = resolve;
-      setTimeout(() => {
-        if (ref.current === resolve) settleWait(ref, false);
-      }, SWAP_LOAD_TIMEOUT_MS);
-    });
-  const mountHeroLayer = () => {
-    const drawn = failedRef.current ? null : waitLoad(heroWaitRef);
-    setMobileHeroOn(true);
-    return drawn;
-  };
-  const mountL2Layer = () => {
-    const drawn = mountScene2Ref.current && !scene2FailedRef.current ? waitLoad(l2WaitRef) : null;
-    setMobileL2On(true);
-    return drawn;
-  };
-
-  // The deferred layer of the last swap: { layer, run }. Triggered by the timer or
-  // by the scroll (via triggerSecondaryRef), whichever comes first.
-  const secondaryRef = useRef(null);
-  const secondaryTimerRef = useRef(null);
-  const clearSecondary = () => {
-    clearTimeout(secondaryTimerRef.current);
-    secondaryTimerRef.current = null;
-    secondaryRef.current = null;
-  };
-  const triggerSecondaryRef = useRef(null);
-  triggerSecondaryRef.current = (why) => {
-    const pending = secondaryRef.current;
-    clearSecondary();
-    if (!pending || pending.run !== swapRunRef.current) return;
-    window.__memProbeLog?.(`swap: secondary ${pending.layer} (${why})`);
-    if (pending.layer === "hero") mountHeroLayer();
-    else mountL2Layer();
-  };
-
-  useEffect(() => {
-    window.__memProbeLog?.(`swap config: settle ${SWAP_SETTLE_MS}ms, l2 ${SECONDARY_NOW ? "now" : "lazy"}`);
-  }, []);
-
   useCalloutsAboveDock(isMobile, sectionRef, calloutRefs);
-
-  useEffect(() => {
-    const target = themeModel(darkMode);
-    if (!isMobile) {
-      // Desktop doesn't use mobileModel; kept current so entering the phone layout
-      // mounts the right model.
-      setMobileModel(target);
-      setMobileHeroOn(true);
-      setMobileL2On(true);
-      setSwapHidden(false);
-      return;
-    }
-    if (!swappingRef.current && mobileModelRef.current !== target) runMobileSwap();
-    // runMobileSwap reads everything through refs; only the theme triggers it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMobile, darkMode]);
-
-  useEffect(
-    () => () => {
-      swapRunRef.current += 1;
-      swappingRef.current = false;
-      clearTimeout(secondaryTimerRef.current);
-      secondaryRef.current = null;
-      settleWait(heroWaitRef, false);
-      settleWait(l2WaitRef, false);
-    },
-    [isMobile]
-  );
 
   useLayoutEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -586,14 +388,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // The rig leaves the head left of the camera axis, an offset that scales with
     // the window height. Desktop hero only.
     const heroDx = 0.0148 * heroVH;
-    // Framings are written as the body's visual offset from the viewport centre;
-    // fx() turns that into the transform. ROBOT_DX is 0 now that placeBot()
-    // centres the rig in scene units.
-    const ROBOT_DX = 0;
-    const ROBOT_DX_1 = 0;
+    // Framings are written as the body's offset from the viewport centre, in px;
+    // vw() turns that into a % of the viewport width for the transform.
     const VW = window.innerWidth || 2000;
-    const fx = (visualPx, scale) => `${((visualPx - ROBOT_DX * scale) / VW) * 100}%`;
-    const fx1 = (visualPx, scale) => `${((visualPx - ROBOT_DX_1 * scale) / VW) * 100}%`;
+    const vw = (px) => `${(px / VW) * 100}%`;
 
     // Chapter 2 framings. Each beat is chosen by L = 0.5 + (0.5 - y) / S, the
     // native canvas fraction at the frame's bottom edge, which must stay above the
@@ -602,24 +400,24 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // comes from the rig (botRig); the canvas scale only crops.
     const c2pre = isMobile
       ? { scale: 1.833, x: "0%", y: "35.0%", rx: 13.3 }   // L .582
-      : { scale: 3.0, x: fx(0, 3.0), y: "53%" };          // L .490
+      : { scale: 3.0, x: vw(0), y: "53%" };          // L .490
     // Story: a tight head shot (the head fills ~70% of the height), stepped left
     // to clear the text.
     const c2close = isMobile
       ? { scale: 1.667, x: "0%", y: "27.5%", rx: 14.6 }   // L .635
-      : { scale: 4.0, x: fx(-350, 4.0), y: "103%" };      // L .368
+      : { scale: 4.0, x: vw(-350), y: "103%" };      // L .368
     // Card 01 (left): the body sits opposite its card to balance the frame.
     const c2s2 = isMobile
       ? { scale: 1.5, x: "0%", y: "20.0%", rx: -16.3 }    // L .700
-      : { scale: 2.75, x: fx(150, 2.75), y: "49.1%" };   // L .503 — above the elbow
+      : { scale: 2.75, x: vw(150), y: "49.1%" };   // L .503 — above the elbow
     // Card 02 (right): leans toward its card.
     const c2s3 = isMobile
       ? { scale: 1.333, x: "0%", y: "12.5%", rx: 18.3 }  // L .781
-      : { scale: 2.15, x: fx(-200, 2.15), y: "28.3%" }; // L .601 — past the elbow
+      : { scale: 2.15, x: vw(-200), y: "28.3%" }; // L .601 — past the elbow
     // Card 03: the widest beat, so the waist rule binds here.
     const c2far = isMobile
       ? { scale: 1.167, x: "0%", y: "5.0%", rx: -13.7 }   // L .885
-      : { scale: 1.835, x: fx(0, 1.835), y: "17.9%" };   // L .675, above the waist
+      : { scale: 1.835, x: vw(0), y: "17.9%" };   // L .675, above the waist
     // Closing: comes back in. On desktop the whole head sits just under the
     // "System Features" title, whose bottom edge is read from the DOM, so y
     // depends on the window height. Cards 02 and 03 re-anchor higher on the same
@@ -637,7 +435,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     const closeDx = 0.0158 * VH;
     const c2end = isMobile
       ? { scale: 1.333, x: "0%", y: "12.5%", rx: -9.1 } // L .781
-      : { scale: endScale, x: fx(closeDx, endScale), y: `${closeY}%` };
+      : { scale: endScale, x: vw(closeDx), y: `${closeY}%` };
     const BODY_STEPS = [c2pre, c2close, c2s2, c2s3, c2far, c2end];
 
     // Gaze poses, radians, capped at ±0.35. +y turns the face to the viewer's
@@ -681,14 +479,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     }
 
     // Desktop hero framing lives in this proxy and the camera applies it (applyView).
-    const heroView = { scale: startScale, x: fx1(heroDx, startScale), y: startY };
+    const heroView = { scale: startScale, x: vw(heroDx), y: startY };
     const scene2View = { scale: 1, x: "0%", y: "0%" };
 
     const ctx = gsap.context(() => {
       if (isMobile) {
         gsap.set(canvasWrapRef.current, {
           scale: startScale,
-          x: fx1(-58, startScale),
+          x: vw(-58),
           y: startY,
           transformOrigin: "50% 50%",
         });
@@ -982,15 +780,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             const p = self.progress;
             if (isTouchDevice && !isMobile) touchParallax(p);
             const wake2 = p > (XFADE_AT / tl.duration()) * 0.6;
-            // Phones, after a swap: the deferred layer loads early when the scroll heads
-            // toward it.
-            const pending = secondaryRef.current;
-            if (pending) {
-              const xf = XFADE_AT / tl.duration();
-              if ((pending.layer === "l2" && p > xf * 0.3) || (pending.layer === "hero" && p < xf * 1.6)) {
-                triggerSecondaryRef.current?.("scroll");
-              }
-            }
             if (wake2 !== awake2Ref.current) {
               awake2Ref.current = wake2;
               const apps = isMobile ? [app2Ref.current] : l2Desktop().map((e) => e.app);
@@ -1036,7 +825,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         isMobile ? canvasWrapRef.current : heroView,
         {
           scale: startScale * 0.96,
-          x: fx1(isMobile ? -58 : heroDx, startScale * 0.96),
+          x: vw(isMobile ? -58 : heroDx),
           y: endY,
           duration: 0.32,
           ease: "power1.inOut",
@@ -1277,13 +1066,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               <div ref={parallax1Ref} className="absolute inset-0">
                 <div ref={idle1Ref} className="absolute inset-0">
                   {/* Desktop: both models stay mounted (fixed keys) and a class picks the visible
-                      one, so a toggle remounts nothing. Phones: one mount, the theme's; this box
-                      does the swap fade. */}
+                      one, so a toggle remounts nothing. Phones: one mount, the theme's. */}
                   <div
                     ref={slot1BoxRef}
                     className={`absolute inset-0 ${
                       isMobile
-                        ? `transition-opacity duration-300 ${swapHidden ? "opacity-0" : "opacity-100"}`
+                        ? "opacity-100"
                         : showAlt
                           ? hiddenCls
                           : "opacity-100"
@@ -1304,7 +1092,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                       }
                     >
                       {/* slot1 is the hero: the timeline, view and loader depend on it. If it fails,
-                          the hero falls back to the static render. Null on phones mid swap. */}
+                          the hero falls back to the static render. */}
                       {slot1Url && (
                         <SceneBoundary
                           key={slot1Url}
@@ -1312,7 +1100,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                           onFail={() => {
                             setFailed(true);
                             onReady?.();
-                            settleWait(heroWaitRef, false);
                           }}
                         >
                           <Spline scene={slot1Url} onLoad={handleLoad} />
@@ -1390,9 +1177,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           <div
             ref={canvas2WrapRef}
             data-testid="spline2-canvas-wrap"
-            className={`absolute inset-0 transition-opacity ${
-              isMobile && swapHidden ? "duration-300" : "duration-1000"
-            } ${scene2Ready && !(isMobile && swapHidden) ? "opacity-100" : "opacity-0"}`}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              scene2Ready ? "opacity-100" : "opacity-0"
+            }`}
           >
             {mountScene2 && !scene2Failed && (
                 <div className="absolute inset-0">
@@ -1404,10 +1191,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                     <SceneBoundary
                       key={slot2Url}
                       name="layer 2 mobile"
-                      onFail={() => {
-                        setScene2Failed(true);
-                        settleWait(l2WaitRef, false);
-                      }}
+                      onFail={() => setScene2Failed(true)}
                     >
                       <Spline scene={slot2Url} onLoad={onScene2Load("m:" + slot2Url)} />
                     </SceneBoundary>

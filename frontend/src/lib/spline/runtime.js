@@ -24,7 +24,7 @@ const capMobilePixelRatio = (AP) => {
 // runtime picks WebGPU whenever navigator.gpu exists, and react-spline can't
 // pass the `renderer` option.
 // - Phones: with WebGPU, node-pipeline caches inside the runtime retain every
-//   discarded scene (see lib/splineRelease.js).
+//   discarded scene.
 // - Safari/Firefox desktop: the robot's eyes are a video texture that WebGPU
 //   in Safari doesn't render. Chromium keeps WebGPU, where everything was
 //   tuned.
