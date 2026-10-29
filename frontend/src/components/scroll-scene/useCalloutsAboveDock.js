@@ -18,7 +18,10 @@ export const useCalloutsAboveDock = (enabled, sectionRef, calloutRefs) => {
       const slot = document.querySelector("[data-dock-slot]");
       const sec = sectionRef.current;
       if (!slot || !sec) return;
-      const bottom = Math.max(0, Math.round(sec.offsetHeight - slot.getBoundingClientRect().top + GAP));
+      const bottom = Math.max(
+        0,
+        Math.round(sec.offsetHeight - slot.getBoundingClientRect().top + GAP),
+      );
       if (bottom === last) return;
       last = bottom;
       calloutRefs.current.forEach((el) => {

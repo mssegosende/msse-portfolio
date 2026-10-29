@@ -4,11 +4,9 @@
 // `projectBacklog` keeps real project names that have no copy yet; it is
 // never rendered.
 
-export const SPLINE_SCENE_URL =
-  "https://prod.spline.design/f1rJJWMxGAz7LFXO/scene.splinecode";
+export const SPLINE_SCENE_URL = "https://prod.spline.design/f1rJJWMxGAz7LFXO/scene.splinecode";
 
-export const SPLINE_SCENE_2_URL =
-  "https://prod.spline.design/PU4OS9xwmiHIeZOj/scene.splinecode";
+export const SPLINE_SCENE_2_URL = "https://prod.spline.design/PU4OS9xwmiHIeZOj/scene.splinecode";
 
 export const profile = {
   name: "María Sol Gosende",
@@ -194,8 +192,7 @@ export const systemFeatures = [
     num: "01",
     part: "HEAD",
     title: "AI ENGINEERING",
-    text:
-      "LLM agents and AI-assisted features wired into services that already carry production load. I build the layer an agent actually calls: strict schemas, validation at the edge, and failure modes that degrade instead of guessing. LangChain and LangGraph orchestrate it — the contract is what decides whether the output can be trusted.",
+    text: "LLM agents and AI-assisted features wired into services that already carry production load. I build the layer an agent actually calls: strict schemas, validation at the edge, and failure modes that degrade instead of guessing. LangChain and LangGraph orchestrate it — the contract is what decides whether the output can be trusted.",
     side: "left",
     top: "9%",
     lineFrom: { x: 0.7, y: 0.5 },
@@ -205,8 +202,7 @@ export const systemFeatures = [
     num: "02",
     part: "HANDS",
     title: "FRONTEND",
-    text:
-      "React and TypeScript interfaces — motion, real-time 3D, and feedback that keeps up with the user. Typed end to end against the same contracts the backend publishes, so the UI breaks at compile time instead of in front of someone. Tailwind and Framer Motion for the everyday, Spline and Three.js when the scene has to feel alive.",
+    text: "React and TypeScript interfaces — motion, real-time 3D, and feedback that keeps up with the user. Typed end to end against the same contracts the backend publishes, so the UI breaks at compile time instead of in front of someone. Tailwind and Framer Motion for the everyday, Spline and Three.js when the scene has to feel alive.",
     side: "right",
     top: "44%",
     lineFrom: { x: 0.3, y: 0.22 },
@@ -216,8 +212,7 @@ export const systemFeatures = [
     num: "03",
     part: "TORSO",
     title: "BACKEND",
-    text:
-      "FastAPI, NestJS and .NET microservices with strict contracts and real data behind them. This is where a legacy monolith gets broken apart without stopping the business: versioned APIs, validation layers, and reconciliations that surface a disagreement before it reaches someone's balance. PostgreSQL and SQL Server underneath, Docker around it.",
+    text: "FastAPI, NestJS and .NET microservices with strict contracts and real data behind them. This is where a legacy monolith gets broken apart without stopping the business: versioned APIs, validation layers, and reconciliations that surface a disagreement before it reaches someone's balance. PostgreSQL and SQL Server underneath, Docker around it.",
     side: "left",
     top: "52%",
     lineFrom: { x: 0.7, y: 0.52 },
@@ -246,9 +241,15 @@ export const capabilities = [
     id: "ai",
     num: "03",
     title: "AI Engineering",
-    description:
-      "Agent layers and AI-assisted features built into production services, not demos.",
-    tags: ["LangChain", "LangGraph", "LLM Agents", "Agent-consumed APIs", "Python", "Emergent (AI app builder)"],
+    description: "Agent layers and AI-assisted features built into production services, not demos.",
+    tags: [
+      "LangChain",
+      "LangGraph",
+      "LLM Agents",
+      "Agent-consumed APIs",
+      "Python",
+      "Emergent (AI app builder)",
+    ],
   },
   {
     id: "data",

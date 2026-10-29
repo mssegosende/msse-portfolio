@@ -26,7 +26,8 @@ export const About = () => {
 
         <div className="mt-10 max-w-3xl">
           <motion.h2
-            variants={fadeUp} custom={1}
+            variants={fadeUp}
+            custom={1}
             {...revealOnView()}
             className="text-engraved font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
           >
@@ -38,7 +39,8 @@ export const About = () => {
           {profile.bio.map((para, i) => (
             <motion.p
               key={i}
-              variants={fadeUp} custom={2 + i}
+              variants={fadeUp}
+              custom={2 + i}
               {...revealOnView()}
               className="mt-6 font-inter text-sm leading-relaxed text-ink/[0.83] sm:text-base"
             >
@@ -47,15 +49,14 @@ export const About = () => {
           ))}
 
           <motion.div
-            variants={fadeUp} custom={4}
+            variants={fadeUp}
+            custom={4}
             {...revealOnView()}
             className="mt-12 flex flex-wrap gap-x-16 gap-y-8 border-t border-ink/[0.13] pt-8"
           >
             {profile.stats.map((s) => (
               <div key={s.label} data-testid={`about-stat-${s.label.split(" ")[1] || s.label}`}>
-                <div className="font-display text-4xl text-ink sm:text-5xl">
-                  {s.value}
-                </div>
+                <div className="font-display text-4xl text-ink sm:text-5xl">{s.value}</div>
                 <div className="mt-2 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65">
                   {s.label}
                 </div>
@@ -69,7 +70,8 @@ export const About = () => {
             <motion.article
               key={ch.num}
               data-testid={`manifesto-chapter-${ch.num}`}
-              variants={fadeUp} custom={i}
+              variants={fadeUp}
+              custom={i}
               {...revealOnView("-60px")}
               className="group corner-frame cut-corner bg-surface p-8 pt-5 transition-colors duration-500 hover:bg-ink/[0.04] sm:p-10 sm:pt-7"
             >
@@ -79,9 +81,7 @@ export const About = () => {
               <h3 className="mt-6 font-display text-sm uppercase tracking-wider text-ink">
                 {ch.title}
               </h3>
-              <p className="mt-4 font-inter text-sm leading-relaxed text-ink/65">
-                {ch.text}
-              </p>
+              <p className="mt-4 font-inter text-sm leading-relaxed text-ink/65">{ch.text}</p>
             </motion.article>
           ))}
         </div>

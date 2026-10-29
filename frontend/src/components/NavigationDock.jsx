@@ -16,7 +16,10 @@ export const NavigationDock = ({ visible }) => {
   return (
     // data-dock-slot: the dock's resting place, measured even while the nav
     // inside is hidden (useCalloutsAboveDock).
-    <div data-dock-slot="" className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-3">
+    <div
+      data-dock-slot=""
+      className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-3"
+    >
       <motion.nav
         data-testid="navigation-dock"
         initial={{ y: 90, opacity: 0 }}

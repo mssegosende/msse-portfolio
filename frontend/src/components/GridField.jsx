@@ -72,8 +72,7 @@ export const GridField = ({ intensity = 1 }) => {
       const offY = ((docTop % STEP) + STEP) % STEP;
       mouse.x = mouse.cx - rect.left;
       mouse.y = mouse.cy - rect.top;
-      mouse.active =
-        !isTouch && mouse.y > -RADIUS && mouse.y < rect.height + RADIUS;
+      mouse.active = !isTouch && mouse.y > -RADIUS && mouse.y < rect.height + RADIUS;
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {

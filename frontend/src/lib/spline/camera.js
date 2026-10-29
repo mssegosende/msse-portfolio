@@ -79,7 +79,11 @@ export const pinCamera = (app, pos) => {
     const cam = app?._camera;
     if (!cam?.position) return;
     ["x", "y", "z"].forEach((ax) =>
-      Object.defineProperty(cam.position, ax, { get: () => pos[ax], set: () => {}, configurable: true })
+      Object.defineProperty(cam.position, ax, {
+        get: () => pos[ax],
+        set: () => {},
+        configurable: true,
+      }),
     );
     // The matrix is composed from the quaternion's backing fields, and the
     // Euler keeps its own copy in sync from them: pin both, so neither path
@@ -87,7 +91,12 @@ export const pinCamera = (app, pos) => {
     const q = cam.quaternion;
     if (q) ["x", "y", "z", "w"].forEach((k) => pin(q, "_" + k in q ? "_" + k : k, CAM_QUAT[k]));
     const r = cam.rotation;
-    if (r) [["x", CAM_EULER_X], ["y", 0], ["z", 0]].forEach(([k, v]) => pin(r, "_" + k in r ? "_" + k : k, v));
+    if (r)
+      [
+        ["x", CAM_EULER_X],
+        ["y", 0],
+        ["z", 0],
+      ].forEach(([k, v]) => pin(r, "_" + k in r ? "_" + k : k, v));
   } catch {
     /* runtime without an inspectable camera */
   }

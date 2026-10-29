@@ -28,7 +28,8 @@ export const Capabilities = () => {
           04 // SYSTEM SPECIFICATIONS
         </motion.p>
         <motion.h2
-          variants={fadeUp} custom={1}
+          variants={fadeUp}
+          custom={1}
           {...revealOnView()}
           className="text-engraved mt-6 font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
         >
@@ -42,7 +43,8 @@ export const Capabilities = () => {
               <motion.div
                 key={cap.id}
                 data-testid={`capability-accordion-${cap.id}`}
-                variants={fadeUp} custom={i}
+                variants={fadeUp}
+                custom={i}
                 {...revealOnView("-60px")}
                 className={i > 0 ? "border-t border-ink/[0.13]" : ""}
               >
@@ -65,7 +67,10 @@ export const Capabilities = () => {
                   {open ? (
                     <Minus size={18} className="shrink-0 text-ink" />
                   ) : (
-                    <Plus size={18} className="shrink-0 text-ink/65 transition-colors duration-300 group-hover:text-ink" />
+                    <Plus
+                      size={18}
+                      className="shrink-0 text-ink/65 transition-colors duration-300 group-hover:text-ink"
+                    />
                   )}
                 </button>
                 <AnimatePresence initial={false}>

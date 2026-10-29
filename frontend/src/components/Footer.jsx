@@ -40,11 +40,20 @@ export const Footer = () => (
           <Github size={16} />
         </SocialLink>
         {profile.socials.linkedin && (
-          <SocialLink href={profile.socials.linkedin} label="LinkedIn" testId="footer-linkedin-link">
+          <SocialLink
+            href={profile.socials.linkedin}
+            label="LinkedIn"
+            testId="footer-linkedin-link"
+          >
             <Linkedin size={16} />
           </SocialLink>
         )}
-        <SocialLink href={`mailto:${profile.email}`} label="Email" testId="footer-email-link" external={false}>
+        <SocialLink
+          href={`mailto:${profile.email}`}
+          label="Email"
+          testId="footer-email-link"
+          external={false}
+        >
           <Mail size={16} />
         </SocialLink>
       </div>

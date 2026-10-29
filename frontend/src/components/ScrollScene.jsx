@@ -11,7 +11,11 @@ import {
   systemFeatures,
 } from "../data/portfolioData";
 import { useTheme } from "../hooks/useTheme";
-import { hasThemeReloadPosition, pendingThemeReload, takeThemeReloadScrollY } from "../lib/themeReload";
+import {
+  hasThemeReloadPosition,
+  pendingThemeReload,
+  takeThemeReloadScrollY,
+} from "../lib/themeReload";
 import { MOBILE_LAYOUT_QUERY } from "../lib/layout";
 import { heroLineReveal as lineReveal, heroUiFade as uiFade } from "../lib/motion";
 import {
@@ -217,9 +221,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         requestAnimationFrame(() => {
           if (app1Ref.current !== app) return;
           if (stopped1Ref.current || !heroVisibleRef.current) {
-            try { app.stop(); } catch { /* runtime without stop() */ }
+            try {
+              app.stop();
+            } catch {
+              /* runtime without stop() */
+            }
           }
-        })
+        }),
       );
     }
     if (readyRef.current) return;
@@ -245,9 +253,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     } catch {
       /* older runtime */
     }
-    altCanvasRef.current = altBoxRef.current
-      ? altBoxRef.current.querySelector("canvas")
-      : null;
+    altCanvasRef.current = altBoxRef.current ? altBoxRef.current.querySelector("canvas") : null;
   };
 
   // Layer 2 load. "m:" is the phone mount (the theme's model); "d:" the two
@@ -286,9 +292,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       requestAnimationFrame(() => {
         setDrawn2((d) => (d[key] ? d : { ...d, [key]: true }));
         if (!awake2Ref.current || !heroVisibleRef.current) {
-          try { app.stop(); } catch { /* runtime without stop() */ }
+          try {
+            app.stop();
+          } catch {
+            /* runtime without stop() */
+          }
         }
-      })
+      }),
     );
   };
 
@@ -384,25 +394,25 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // between beats and comes in again for the close. On phones the robot's size
     // comes from the rig (botRig); the canvas scale only crops.
     const c2pre = isMobile
-      ? { scale: 1.833, x: "0%", y: "35.0%", rx: 13.3 }   // L .582
-      : { scale: 3.0, x: vw(0), y: "53%" };          // L .490
+      ? { scale: 1.833, x: "0%", y: "35.0%", rx: 13.3 } // L .582
+      : { scale: 3.0, x: vw(0), y: "53%" }; // L .490
     // Story: a tight head shot (the head fills ~70% of the height), stepped left
     // to clear the text.
     const c2close = isMobile
-      ? { scale: 1.667, x: "0%", y: "27.5%", rx: 14.6 }   // L .635
-      : { scale: 4.0, x: vw(-350), y: "103%" };      // L .368
+      ? { scale: 1.667, x: "0%", y: "27.5%", rx: 14.6 } // L .635
+      : { scale: 4.0, x: vw(-350), y: "103%" }; // L .368
     // Card 01 (left): the body sits opposite its card to balance the frame.
     const c2s2 = isMobile
-      ? { scale: 1.5, x: "0%", y: "20.0%", rx: -16.3 }    // L .700
-      : { scale: 2.75, x: vw(150), y: "49.1%" };   // L .503 — above the elbow
+      ? { scale: 1.5, x: "0%", y: "20.0%", rx: -16.3 } // L .700
+      : { scale: 2.75, x: vw(150), y: "49.1%" }; // L .503 — above the elbow
     // Card 02 (right): leans toward its card.
     const c2s3 = isMobile
-      ? { scale: 1.333, x: "0%", y: "12.5%", rx: 18.3 }  // L .781
+      ? { scale: 1.333, x: "0%", y: "12.5%", rx: 18.3 } // L .781
       : { scale: 2.15, x: vw(-200), y: "28.3%" }; // L .601 — past the elbow
     // Card 03: the widest beat, so the waist rule binds here.
     const c2far = isMobile
-      ? { scale: 1.167, x: "0%", y: "5.0%", rx: -13.7 }   // L .885
-      : { scale: 1.835, x: vw(0), y: "17.9%" };   // L .675, above the waist
+      ? { scale: 1.167, x: "0%", y: "5.0%", rx: -13.7 } // L .885
+      : { scale: 1.835, x: vw(0), y: "17.9%" }; // L .675, above the waist
     // Closing: comes back in. On desktop the whole head sits just under the
     // "System Features" title, whose bottom edge is read from the DOM, so y
     // depends on the window height. Cards 02 and 03 re-anchor higher on the same
@@ -426,14 +436,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // Gaze poses, radians, capped at ±0.35. +y turns the face to the viewer's
     // right, +x tips it down. Each one points at where its card actually sits.
     const GAZE = {
-      text: { x: 0.26, y: 0.32 },       // story block, right — and down
-      card01: { x: -0.18, y: -0.30 },   // card 01: left, upper
-      card02: { x: 0.02, y: 0.32 },     // card 02: right, middle
-      card03: { x: 0.24, y: -0.26 },    // card 03: left, lower
-      front: { x: 0.0, y: 0.0 },        // released at the end
+      text: { x: 0.26, y: 0.32 }, // story block, right — and down
+      card01: { x: -0.18, y: -0.3 }, // card 01: left, upper
+      card02: { x: 0.02, y: 0.32 }, // card 02: right, middle
+      card03: { x: 0.24, y: -0.26 }, // card 03: left, lower
+      front: { x: 0.0, y: 0.0 }, // released at the end
       closeMobile: { x: 0.24, y: -0.28 }, // phone close: chin down, to the left
     };
-
 
     // Touch devices on the desktop layout (tablets) have no pointer, so the scroll
     // drives the parallax offsets instead.
@@ -456,7 +465,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         const r = sectionRef.current.getBoundingClientRect();
         const nx = (e.clientX - r.left) / r.width - 0.5;
         const ny = (e.clientY - r.top) / r.height - 0.5;
-        px1(nx * 12); py1(ny * 8);
+        px1(nx * 12);
+        py1(ny * 8);
         mouseNRef.current = { x: nx, y: ny };
       };
       sectionRef.current.addEventListener("mousemove", onMouse);
@@ -478,7 +488,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         gsap.set(canvas2WrapRef.current, { ...c2close, transformOrigin: "50% 50%" });
       } else {
         [canvasWrapRef.current, canvas2WrapRef.current].forEach((el) =>
-          gsap.set(el, { scale: VIEW_CSS_SCALE, x: 0, y: 0, transformOrigin: "50% 50%" })
+          gsap.set(el, { scale: VIEW_CSS_SCALE, x: 0, y: 0, transformOrigin: "50% 50%" }),
         );
         Object.assign(scene2View, { scale: c2close.scale, x: c2close.x, y: c2close.y });
       }
@@ -491,7 +501,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       gsap.set(wallTopRef.current, { opacity: 0 });
       if (isMobile) {
         [parallax1Ref.current, parallax2Ref.current, idle1Ref.current, idle2Ref.current].forEach(
-          (el) => el && gsap.set(el, { x: 0, y: 0, rotation: 0, scale: 1 })
+          (el) => el && gsap.set(el, { x: 0, y: 0, rotation: 0, scale: 1 }),
         );
       }
       gsap.set(vignetteRef.current, { opacity: 0 });
@@ -515,7 +525,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           if (!el) return;
           gsap.set(el, { y: -1.2, rotation: -0.08 });
           gsap.to(el, { y: 1.2, duration: 5, yoyo: true, repeat: -1, ease: "sine.inOut" });
-          gsap.to(el, { rotation: 0.08, duration: 6.3, yoyo: true, repeat: -1, ease: "sine.inOut" });
+          gsap.to(el, {
+            rotation: 0.08,
+            duration: 6.3,
+            yoyo: true,
+            repeat: -1,
+            ease: "sine.inOut",
+          });
         });
         // A slow lateral drift and breath on scene 1, on periods that don't divide the
         // float's, so the motion never settles into a visible loop.
@@ -523,12 +539,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           gsap.fromTo(
             idle1Ref.current,
             { x: -1.6 },
-            { x: 1.6, duration: 8.7, yoyo: true, repeat: -1, ease: "sine.inOut" }
+            { x: 1.6, duration: 8.7, yoyo: true, repeat: -1, ease: "sine.inOut" },
           );
           gsap.fromTo(
             idle1Ref.current,
             { scale: 0.9988 },
-            { scale: 1.0012, duration: 7.1, yoyo: true, repeat: -1, ease: "sine.inOut" }
+            { scale: 1.0012, duration: 7.1, yoyo: true, repeat: -1, ease: "sine.inOut" },
           );
         }
       }
@@ -560,13 +576,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         ? []
         : [
             null,
-            { px: 69.5 + anchorShift, py: 39.4 },  // 02 HANDS -> upper arm
-            { px: 58.5 + anchorShift, py: 40.9 },  // 03 TORSO -> upper chest
+            { px: 69.5 + anchorShift, py: 39.4 }, // 02 HANDS -> upper arm
+            { px: 58.5 + anchorShift, py: 40.9 }, // 03 TORSO -> upper chest
           ];
       const anchors = [
-        { px: 58.5 + anchorShift, py: 26.4 },   // 01 HEAD   — visor centre
-        { px: 73.3 + anchorShift, py: 56.7 },   // 02 HANDS  — right forearm (see note above)
-        { px: 58.5 + anchorShift, py: 54.1 },   // 03 TORSO  — centre of the chest plate
+        { px: 58.5 + anchorShift, py: 26.4 }, // 01 HEAD   — visor centre
+        { px: 73.3 + anchorShift, py: 56.7 }, // 02 HANDS  — right forearm (see note above)
+        { px: 58.5 + anchorShift, py: 54.1 }, // 03 TORSO  — centre of the chest plate
       ].map((a, i) => ({
         ...a,
         close: closeAnchors[i],
@@ -583,8 +599,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           const line = lineRefs.current[i];
           if (!card || !layer || !line) return;
           const lf = systemFeatures[i].lineFrom;
-          anchors[i].fromX = ((card.offsetLeft + lf.x * card.offsetWidth) / layer.clientWidth) * 100;
-          anchors[i].fromY = ((card.offsetTop + lf.y * card.offsetHeight) / layer.clientHeight) * 100;
+          anchors[i].fromX =
+            ((card.offsetLeft + lf.x * card.offsetWidth) / layer.clientWidth) * 100;
+          anchors[i].fromY =
+            ((card.offsetTop + lf.y * card.offsetHeight) / layer.clientHeight) * 100;
           line.setAttribute("x1", anchors[i].fromX);
           line.setAttribute("y1", anchors[i].fromY);
         });
@@ -598,7 +616,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         // Interpolate between the two framings `body.t` sits between.
         const i = Math.min(Math.floor(body.t), BODY_STEPS.length - 2);
         const f = Math.min(Math.max(body.t - i, 0), 1);
-        const A = BODY_STEPS[i], B = BODY_STEPS[i + 1];
+        const A = BODY_STEPS[i],
+          B = BODY_STEPS[i + 1];
         const sc = lerp(A.scale, B.scale, f);
         const tx = lerp(parseFloat(A.x), parseFloat(B.x), f);
         const ty = lerp(parseFloat(A.y), parseFloat(B.y), f);
@@ -648,13 +667,15 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
       // ---- directed gaze -----------------------------------------------------
       // Only the timeline steers the head; the cursor never does.
-      const gaze = { x: 0, y: 0 };      // target written by the timeline
-      const cur = { x: 0, y: 0 };       // what is actually applied, eased
+      const gaze = { x: 0, y: 0 }; // target written by the timeline
+      const cur = { x: 0, y: 0 }; // what is actually applied, eased
       const applyGaze = () => {
         const heads = isMobile
-          ? [app2Ref.current && app2Ref.current.findObjectByName
-              ? app2Ref.current.findObjectByName("Head")
-              : null]
+          ? [
+              app2Ref.current && app2Ref.current.findObjectByName
+                ? app2Ref.current.findObjectByName("Head")
+                : null,
+            ]
           : l2Desktop().map((e) => e.head);
         cur.x += (gaze.x - cur.x) * 0.08;
         cur.y += (gaze.y - cur.y) * 0.08;
@@ -767,14 +788,24 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 try {
                   if (wake2) a?.play();
                   else a?.stop();
-                } catch { /* runtime without play()/stop() */ }
+                } catch {
+                  /* runtime without play()/stop() */
+                }
               });
             }
             if (p > 0.45 && !stopped1Ref.current) {
               stopped1Ref.current = true;
               // Both desktop layer A mounts, including the hidden one.
-              try { app1Ref.current?.stop(); } catch { /* runtime without stop() */ }
-              try { appAltRef.current?.stop(); } catch { /* runtime without stop() */ }
+              try {
+                app1Ref.current?.stop();
+              } catch {
+                /* runtime without stop() */
+              }
+              try {
+                appAltRef.current?.stop();
+              } catch {
+                /* runtime without stop() */
+              }
             }
             // Latches once: the dock stays even if the visitor scrolls back up.
             if (p > 0.985 && !journeyRef.current) {
@@ -784,8 +815,16 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             }
             if (p < 0.25 && stopped1Ref.current) {
               stopped1Ref.current = false;
-              try { app1Ref.current?.play(); } catch { /* runtime without play() */ }
-              try { appAltRef.current?.play(); } catch { /* runtime without play() */ }
+              try {
+                app1Ref.current?.play();
+              } catch {
+                /* runtime without play() */
+              }
+              try {
+                appAltRef.current?.play();
+              } catch {
+                /* runtime without play() */
+              }
             }
           },
         },
@@ -793,8 +832,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
       // Grey settles in ahead of the drain, so the order reads white -> grey
       // -> black instead of white -> black.
-      tl.to(vignetteRef.current, { opacity: 1, duration: 0.20 }, 0.02);
-      tl.to(wallTopRef.current, { opacity: 1, duration: 0.20 }, 0.02);
+      tl.to(vignetteRef.current, { opacity: 1, duration: 0.2 }, 0.02);
+      tl.to(wallTopRef.current, { opacity: 1, duration: 0.2 }, 0.02);
 
       // PHASE 1 exit: headline leaves, light drains to black, slight drift-in
       tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
@@ -810,7 +849,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           duration: 0.32,
           ease: "power1.inOut",
         },
-        0.1
+        0.1,
       );
 
       // Phase 2: crossfade to chapter 2; the robot rises in close-up.
@@ -832,35 +871,39 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
       // Entry starts at 0.40, under the crossfade (0.50), so the scene is never
       // revealed frozen.
-      tl.to(body, { t: 1, duration: 0.38, ease: "power2.out" }, 0.40);
-      tl.to(gaze, { ...GAZE.text, duration: 0.10, ease: "power2.out" }, 0.46);
+      tl.to(body, { t: 1, duration: 0.38, ease: "power2.out" }, 0.4);
+      tl.to(gaze, { ...GAZE.text, duration: 0.1, ease: "power2.out" }, 0.46);
 
-      const STEP_AT = [1.10, 1.70, 2.30];  // evenly spaced, 0.60 apart
-      const CARD_IN = [1.32, 1.92, 2.52];  // card lands after the body settles
+      const STEP_AT = [1.1, 1.7, 2.3]; // evenly spaced, 0.60 apart
+      const CARD_IN = [1.32, 1.92, 2.52]; // card lands after the body settles
       const POSES = [GAZE.card01, GAZE.card02, GAZE.card03];
 
       if (storyEls.length)
-        tl.to(storyEls, { opacity: 0, y: -24, duration: 0.10, ease: "power1.in" }, 1.02);
-      tl.to(storyTitleRef.current, { opacity: 0, y: -24, duration: 0.10, ease: "power1.in" }, 1.02);
-      tl.to(storyPanelRef.current, { opacity: 0, duration: 0.10, ease: "power1.in" }, 1.04);
-      tl.to(featuresHeaderRef.current, { opacity: 1, y: 0, duration: 0.10 }, 1.10);
+        tl.to(storyEls, { opacity: 0, y: -24, duration: 0.1, ease: "power1.in" }, 1.02);
+      tl.to(storyTitleRef.current, { opacity: 0, y: -24, duration: 0.1, ease: "power1.in" }, 1.02);
+      tl.to(storyPanelRef.current, { opacity: 0, duration: 0.1, ease: "power1.in" }, 1.04);
+      tl.to(featuresHeaderRef.current, { opacity: 1, y: 0, duration: 0.1 }, 1.1);
 
       systemFeatures.forEach((f, i) => {
         const at = STEP_AT[i];
         const cardAt = CARD_IN[i];
         // The head turns first and holds for the whole step.
         tl.to(gaze, { ...POSES[i], duration: 0.14, ease: "power2.inOut" }, at);
-        tl.to(body, { t: i + 2, duration: 0.30, ease: "power1.inOut" }, at + 0.06);
+        tl.to(body, { t: i + 2, duration: 0.3, ease: "power1.inOut" }, at + 0.06);
 
         // The previous card and its connector leave with the same motion.
         if (i > 0) {
           tl.to(dotRefs.current[i - 1], { opacity: 0, duration: 0.04 }, at);
           tl.to(draw[i - 1], { p: 0, duration: 0.12, ease: "power1.inOut" }, at);
-          tl.to(calloutRefs.current[i - 1], { opacity: 0, y: -20, duration: 0.10 }, at + 0.02);
+          tl.to(calloutRefs.current[i - 1], { opacity: 0, y: -20, duration: 0.1 }, at + 0.02);
           tl.set(lineRefs.current[i - 1], { opacity: 0 }, at + 0.14);
         }
 
-        tl.to(calloutRefs.current[i], { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" }, cardAt);
+        tl.to(
+          calloutRefs.current[i],
+          { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" },
+          cardAt,
+        );
         tl.set(lineRefs.current[i], { opacity: 1 }, cardAt);
         tl.to(draw[i], { p: 1, duration: 0.14, ease: "power1.inOut" }, cardAt);
         tl.to(dotRefs.current[i], { opacity: 1, duration: 0.05 }, cardAt + 0.14);
@@ -882,19 +925,25 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // Closing: the robot centres and the head turns front; on desktop all three
       // cards come back with their connectors.
       const closeAt = isMobile ? 2.72 : 2.92;
-      tl.to(body, { t: 5, duration: 0.30, ease: "power1.inOut" }, closeAt);
-      tl.to(gaze, { ...(isMobile ? GAZE.closeMobile : GAZE.front), duration: 0.16, ease: "power2.inOut" }, closeAt);
+      tl.to(body, { t: 5, duration: 0.3, ease: "power1.inOut" }, closeAt);
+      tl.to(
+        gaze,
+        { ...(isMobile ? GAZE.closeMobile : GAZE.front), duration: 0.16, ease: "power2.inOut" },
+        closeAt,
+      );
       if (!isMobile) {
         [0, 1].forEach((i) => {
-          tl.to(calloutRefs.current[i], { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" }, 3.16);
+          tl.to(
+            calloutRefs.current[i],
+            { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" },
+            3.16,
+          );
           tl.set(lineRefs.current[i], { opacity: 1 }, 3.16);
           tl.to(draw[i], { p: 1, duration: 0.14, ease: "power1.inOut" }, 3.16);
-          tl.to(dotRefs.current[i], { opacity: 1, duration: 0.05 }, 3.30);
+          tl.to(dotRefs.current[i], { opacity: 1, duration: 0.05 }, 3.3);
           tl.to(railRefs.current[i], { opacity: 1, duration: 0.05 }, 3.16);
         });
       }
-
-
 
       // Hold before release; short on phones, where there is no three-card close.
       tl.to({}, { duration: isMobile ? 0.12 : 0.45 });
@@ -982,7 +1031,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           /* runtime without play/stop */
         }
       },
-      { rootMargin: "120px" }
+      { rootMargin: "120px" },
     );
     if (sectionRef.current) heroVisibility.observe(sectionRef.current);
 
@@ -1037,10 +1086,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           </div>
 
           {!failed && (
-            <div
-              className="absolute inset-0"
-              data-testid="spline-canvas-wrap"
-            >
+            <div className="absolute inset-0" data-testid="spline-canvas-wrap">
               <div ref={parallax1Ref} className="absolute inset-0">
                 <div ref={idle1Ref} className="absolute inset-0">
                   {/* Desktop: both models stay mounted (fixed keys) and a class picks the visible
@@ -1048,11 +1094,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                   <div
                     ref={slot1BoxRef}
                     className={`absolute inset-0 ${
-                      isMobile
-                        ? "opacity-100"
-                        : showAlt
-                          ? hiddenCls
-                          : "opacity-100"
+                      isMobile ? "opacity-100" : showAlt ? hiddenCls : "opacity-100"
                     }`}
                   >
                     {/* Desktop renders scene 1 at OVERSAMPLE_1 and shows it
@@ -1100,7 +1142,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                       >
                         {/* Losing this mount leaves slot1's robot: showAlt turns off and light mode
                             shows the silver one. */}
-                        <SceneBoundary key={HERO_ALT_URL} name="hero alt" onFail={() => markDead("alt")}>
+                        <SceneBoundary
+                          key={HERO_ALT_URL}
+                          name="hero alt"
+                          onFail={() => markDead("alt")}
+                        >
                           <Spline scene={HERO_ALT_URL} onLoad={handleAltLoad} />
                         </SceneBoundary>
                       </div>
@@ -1160,44 +1206,48 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             }`}
           >
             {mountScene2 && !scene2Dead && (
-                <div className="absolute inset-0">
+              <div className="absolute inset-0">
                 <div ref={parallax2Ref} className="absolute inset-0">
                   <div ref={idle2Ref} className="absolute inset-0">
-                   {isMobile ? (
-                   slot2Url && (
-                   <div className="absolute inset-0">
-                    <SceneBoundary
-                      key={slot2Url}
-                      name="layer 2 mobile"
-                      onFail={() => setScene2Failed(true)}
-                    >
-                      <Spline scene={slot2Url} onLoad={(app) => onScene2Load("m:" + slot2Url, app)} />
-                    </SceneBoundary>
-                   </div>
-                   )
-                   ) : (
-                     L2_DESKTOP_URLS.map((url) => (
-                       <ReleasingBox
-                         key={url}
-                         onGone={() => {
-                           const e = l2Ref.current["d:" + url];
-                           if (e) releaseGlContext(e.canvas);
-                           delete l2Ref.current["d:" + url];
-                         }}
-                         className={`absolute left-1/2 top-1/2 ${url === l2VisibleUrl ? "" : "invisible opacity-0"}`}
-                         style={{
-                           width: `${OVERSAMPLE * 100}%`,
-                           height: `${OVERSAMPLE * 100}%`,
-                           transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE})`,
-                         }}
-                       >
-                         {/* If one model fails the other shows (l2VisibleUrl); if both fail, the PNG. */}
-                         <SceneBoundary name={"layer 2 " + url} onFail={() => markDead("d:" + url)}>
-                           <Spline scene={url} onLoad={(app) => onScene2Load("d:" + url, app)} />
-                         </SceneBoundary>
-                       </ReleasingBox>
-                     ))
-                   )}
+                    {isMobile
+                      ? slot2Url && (
+                          <div className="absolute inset-0">
+                            <SceneBoundary
+                              key={slot2Url}
+                              name="layer 2 mobile"
+                              onFail={() => setScene2Failed(true)}
+                            >
+                              <Spline
+                                scene={slot2Url}
+                                onLoad={(app) => onScene2Load("m:" + slot2Url, app)}
+                              />
+                            </SceneBoundary>
+                          </div>
+                        )
+                      : L2_DESKTOP_URLS.map((url) => (
+                          <ReleasingBox
+                            key={url}
+                            onGone={() => {
+                              const e = l2Ref.current["d:" + url];
+                              if (e) releaseGlContext(e.canvas);
+                              delete l2Ref.current["d:" + url];
+                            }}
+                            className={`absolute left-1/2 top-1/2 ${url === l2VisibleUrl ? "" : "invisible opacity-0"}`}
+                            style={{
+                              width: `${OVERSAMPLE * 100}%`,
+                              height: `${OVERSAMPLE * 100}%`,
+                              transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE})`,
+                            }}
+                          >
+                            {/* If one model fails the other shows (l2VisibleUrl); if both fail, the PNG. */}
+                            <SceneBoundary
+                              name={"layer 2 " + url}
+                              onFail={() => markDead("d:" + url)}
+                            >
+                              <Spline scene={url} onLoad={(app) => onScene2Load("d:" + url, app)} />
+                            </SceneBoundary>
+                          </ReleasingBox>
+                        ))}
                   </div>
                 </div>
               </div>
@@ -1278,7 +1328,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           white with difference; dark: solid white (difference over mid-grey metal
           returns mid-grey). */}
       <motion.div
-        variants={uiFade} custom={0} initial="hidden"
+        variants={uiFade}
+        custom={0}
+        initial="hidden"
         animate={revealed ? "show" : "hidden"}
         className={`absolute left-6 top-6 sm:left-10 sm:top-8 ${
           darkMode ? "" : "mix-blend-difference"
@@ -1294,17 +1346,24 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       </motion.div>
 
       <motion.div
-        variants={uiFade} custom={1} initial="hidden"
+        variants={uiFade}
+        custom={1}
+        initial="hidden"
         animate={revealed ? "show" : "hidden"}
         data-theme={ch2Theme}
         className="absolute right-6 top-6 sm:right-10 sm:top-8 flex items-center gap-2"
       >
-        <span data-testid="hero-status-dot" className="h-1.5 w-1.5 rounded-full bg-[#2E6FF2] animate-pulse-dot" />
-        <span data-testid="hero-status" className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
+        <span
+          data-testid="hero-status-dot"
+          className="h-1.5 w-1.5 rounded-full bg-[#2E6FF2] animate-pulse-dot"
+        />
+        <span
+          data-testid="hero-status"
+          className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo"
+        >
           STATUS: {profile.status}
         </span>
       </motion.div>
-
 
       {/* Skip intro, until the sequence has been seen (then the dock takes over).
           Lands just past the pin so the marquee isn't skipped. Same treatment as the

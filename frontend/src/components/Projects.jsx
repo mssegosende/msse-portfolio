@@ -118,7 +118,8 @@ export const Projects = () => {
               03 // SELECTED WORK
             </motion.p>
             <motion.h2
-              variants={fadeUp} custom={1}
+              variants={fadeUp}
+              custom={1}
               {...revealOnView()}
               className="text-engraved mt-6 font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
             >
@@ -126,12 +127,12 @@ export const Projects = () => {
             </motion.h2>
           </div>
           <motion.p
-            variants={fadeUp} custom={2}
+            variants={fadeUp}
+            custom={2}
             {...revealOnView()}
             className="max-w-sm font-inter text-sm leading-relaxed text-ink/65"
           >
-            Products I've designed and built end to end — from the data model
-            up to the interface.
+            Products I've designed and built end to end — from the data model up to the interface.
           </motion.p>
         </div>
 
@@ -147,4 +148,3 @@ export const Projects = () => {
     </section>
   );
 };
-

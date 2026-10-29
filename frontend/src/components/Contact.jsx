@@ -68,8 +68,7 @@ export const Contact = () => {
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const pushLine = (text, kind = "out") =>
-    setLines((prev) => [...prev, { text, kind }]);
+  const pushLine = (text, kind = "out") => setLines((prev) => [...prev, { text, kind }]);
 
   const showError = (text) => {
     setErrors((prev) => (prev.some((x) => x.text === text) ? prev : [...prev, { text }]));
@@ -80,7 +79,7 @@ export const Contact = () => {
       setTimeout(() => {
         timers.delete(text);
         setErrors((prev) => prev.filter((x) => x.text !== text));
-      }, ERROR_TTL)
+      }, ERROR_TTL),
     );
   };
 
@@ -135,7 +134,8 @@ export const Contact = () => {
           05 // OPEN CHANNEL
         </motion.p>
         <motion.h2
-          variants={fadeUp} custom={1}
+          variants={fadeUp}
+          custom={1}
           {...revealOnView()}
           className="text-engraved mt-6 font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
         >
@@ -143,7 +143,8 @@ export const Contact = () => {
         </motion.h2>
 
         <motion.div
-          variants={fadeUp} custom={2}
+          variants={fadeUp}
+          custom={2}
           {...revealOnView()}
           data-testid="contact-terminal"
           className="corner-frame cut-corner mt-14 overflow-hidden border border-ink/[0.13] bg-ink/[0.04]/90 shadow-[0_0_80px_rgb(var(--ink) / 0.03)] backdrop-blur-xl"
@@ -245,7 +246,10 @@ export const Contact = () => {
             </form>
 
             {lines.length > 0 && (
-              <div data-testid="contact-status-lines" className="mt-6 space-y-1.5 border-t border-ink/[0.13] pt-5">
+              <div
+                data-testid="contact-status-lines"
+                className="mt-6 space-y-1.5 border-t border-ink/[0.13] pt-5"
+              >
                 {lines.map((line, i) => (
                   <motion.p
                     key={i}
