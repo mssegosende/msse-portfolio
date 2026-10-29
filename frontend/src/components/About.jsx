@@ -1,15 +1,9 @@
 import { motion } from "framer-motion";
+import { fadeUpVariants, revealOnView } from "../lib/motion";
 import { profile, manifesto } from "../data/portfolioData";
 import { GridField } from "./GridField";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 36 },
-  show: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.12, duration: 0.9, ease: [0.16, 1, 0.3, 1] },
-  }),
-};
+const fadeUp = fadeUpVariants({ stagger: 0.12, duration: 0.9 });
 
 export const About = () => {
   return (
@@ -23,8 +17,8 @@ export const About = () => {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_65%_at_50%_45%,rgb(var(--surface) / 0.82),transparent_100%)]" />
       <div className="relative mx-auto max-w-7xl">
         <motion.p
-          variants={fadeUp} initial="hidden" whileInView="show"
-          viewport={{ once: true, margin: "-80px" }}
+          variants={fadeUp}
+          {...revealOnView()}
           className="font-display text-[13px] uppercase tracking-[0.02em] text-ink"
         >
           02 // WHO
@@ -32,8 +26,8 @@ export const About = () => {
 
         <div className="mt-10 max-w-3xl">
           <motion.h2
-            variants={fadeUp} custom={1} initial="hidden" whileInView="show"
-            viewport={{ once: true, margin: "-80px" }}
+            variants={fadeUp} custom={1}
+            {...revealOnView()}
             className="text-engraved font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
           >
             Human behind
@@ -44,8 +38,8 @@ export const About = () => {
           {profile.bio.map((para, i) => (
             <motion.p
               key={i}
-              variants={fadeUp} custom={2 + i} initial="hidden" whileInView="show"
-              viewport={{ once: true, margin: "-80px" }}
+              variants={fadeUp} custom={2 + i}
+              {...revealOnView()}
               className="mt-6 font-inter text-sm leading-relaxed text-ink/[0.83] sm:text-base"
             >
               {para}
@@ -53,8 +47,8 @@ export const About = () => {
           ))}
 
           <motion.div
-            variants={fadeUp} custom={4} initial="hidden" whileInView="show"
-            viewport={{ once: true, margin: "-80px" }}
+            variants={fadeUp} custom={4}
+            {...revealOnView()}
             className="mt-12 flex flex-wrap gap-x-16 gap-y-8 border-t border-ink/[0.13] pt-8"
           >
             {profile.stats.map((s) => (
@@ -76,8 +70,8 @@ export const About = () => {
             <motion.article
               key={ch.num}
               data-testid={`manifesto-chapter-${ch.num}`}
-              variants={fadeUp} custom={i} initial="hidden" whileInView="show"
-              viewport={{ once: true, margin: "-60px" }}
+              variants={fadeUp} custom={i}
+              {...revealOnView("-60px")}
               className="group corner-frame cut-corner bg-surface p-8 pt-5 transition-colors duration-500 hover:bg-ink/[0.04] sm:p-10 sm:pt-7"
             >
               <div className="select-none font-display text-7xl leading-none text-outline-grey transition-all duration-500 group-hover:[-webkit-text-stroke-color:rgb(var(--ink) / 0.55)]">

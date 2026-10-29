@@ -1,16 +1,10 @@
 import { motion } from "framer-motion";
+import { EASE_OUT, fadeUpVariants, revealOnView } from "../lib/motion";
 import { Github, ExternalLink, ArrowUpRight } from "lucide-react";
 import { getProjects } from "../data/portfolioData";
 import { GridField } from "./GridField";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 36 },
-  show: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.08, duration: 0.8, ease: [0.16, 1, 0.3, 1] },
-  }),
-};
+const fadeUp = fadeUpVariants();
 
 // The cards rise as ONE block and only the fade is staggered. With `y` delayed
 // per card (and each card triggering on its own), row 1 was already ~30px up
@@ -23,8 +17,8 @@ const cardUp = {
     y: 0,
     transition: {
       duration: 0.8,
-      ease: [0.16, 1, 0.3, 1],
-      opacity: { delay: i * 0.08, duration: 0.8, ease: [0.16, 1, 0.3, 1] },
+      ease: EASE_OUT,
+      opacity: { delay: i * 0.08, duration: 0.8, ease: EASE_OUT },
     },
   }),
 };
@@ -122,23 +116,23 @@ export const Projects = () => {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <motion.p
-              variants={fadeUp} initial="hidden" whileInView="show"
-              viewport={{ once: true, margin: "-80px" }}
+              variants={fadeUp}
+              {...revealOnView()}
               className="font-display text-[13px] uppercase tracking-[0.02em] text-ink"
             >
               03 // SELECTED WORK
             </motion.p>
             <motion.h2
-              variants={fadeUp} custom={1} initial="hidden" whileInView="show"
-              viewport={{ once: true, margin: "-80px" }}
+              variants={fadeUp} custom={1}
+              {...revealOnView()}
               className="text-engraved mt-6 font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
             >
               Projects
             </motion.h2>
           </div>
           <motion.p
-            variants={fadeUp} custom={2} initial="hidden" whileInView="show"
-            viewport={{ once: true, margin: "-80px" }}
+            variants={fadeUp} custom={2}
+            {...revealOnView()}
             className="max-w-sm font-inter text-sm leading-relaxed text-ink/65"
           >
             Products I've designed and built end to end — from the data model
@@ -147,8 +141,7 @@ export const Projects = () => {
         </div>
 
         <motion.div
-          initial="hidden" whileInView="show"
-          viewport={{ once: true, margin: "-60px" }}
+          {...revealOnView("-60px")}
           className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-12 md:gap-8"
         >
           {getProjects().map((p, i) => (

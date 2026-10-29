@@ -1,61 +1,54 @@
 import { Github, Linkedin, Mail } from "lucide-react";
 import { profile } from "../data/portfolioData";
-import { scrollToId } from "../hooks/useLenis";
+import { scrollToTop } from "../hooks/useLenis";
 
-export const Footer = () => {
-  return (
-    <footer
-      data-testid="footer"
-      className="border-t border-ink/[0.13] bg-surface px-4 pb-32 pt-14 sm:px-8 md:px-12 lg:px-20"
-    >
-      <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-10 md:flex-row md:items-center">
-        <div>
-          <button
-            data-testid="footer-brand"
-            onClick={() => scrollToId("hero")}
-            className="font-orbitron text-sm font-bold tracking-[0.02em] text-ink transition-colors hover:text-ink/[0.83]"
-          >
-            {profile.shortMark}
-            <span className="text-ink/65"> {profile.markSuffix}</span>
-          </button>
-          <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65">
-            © 2026 {profile.name} — Software & AI Engineer
-          </p>
-        </div>
+const SocialLink = ({ href, label, testId, external = true, children }) => (
+  <a
+    data-testid={testId}
+    href={href}
+    aria-label={label}
+    {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+    className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/[0.13] text-ink/65 transition-[color,border-color] duration-300 hover:border-ink/40 hover:text-ink"
+  >
+    {children}
+  </a>
+);
 
-        <div className="flex items-center gap-3">
-          <a
-            data-testid="footer-github-link"
-            href={profile.socials.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="GitHub"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/[0.13] text-ink/65 transition-[color,border-color] duration-300 hover:border-ink/40 hover:text-ink"
-          >
-            <Github size={16} />
-          </a>
-          {profile.socials.linkedin && (
-            <a
-              data-testid="footer-linkedin-link"
-              href={profile.socials.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="LinkedIn"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/[0.13] text-ink/65 transition-[color,border-color] duration-300 hover:border-ink/40 hover:text-ink"
-            >
-              <Linkedin size={16} />
-            </a>
-          )}
-          <a
-            data-testid="footer-email-link"
-            href={`mailto:${profile.email}`}
-            aria-label="Email"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-ink/[0.13] text-ink/65 transition-[color,border-color] duration-300 hover:border-ink/40 hover:text-ink"
-          >
-            <Mail size={16} />
-          </a>
-        </div>
+export const Footer = () => (
+  <footer
+    data-testid="footer"
+    className="border-t border-ink/[0.13] bg-surface px-4 pb-32 pt-14 sm:px-8 md:px-12 lg:px-20"
+  >
+    <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-10 md:flex-row md:items-center">
+      <div>
+        {/* Back to the very top, like the dock's brand: the hero is pinned, so
+            scrolling to its element would land in the middle of the sequence. */}
+        <button
+          data-testid="footer-brand"
+          onClick={scrollToTop}
+          className="font-orbitron text-sm font-bold tracking-[0.02em] text-ink transition-colors hover:text-ink/[0.83]"
+        >
+          {profile.shortMark}
+          <span className="text-ink/65"> {profile.markSuffix}</span>
+        </button>
+        <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65">
+          © {new Date().getFullYear()} {profile.name} — Software & AI Engineer
+        </p>
       </div>
-    </footer>
-  );
-};
+
+      <div className="flex items-center gap-3">
+        <SocialLink href={profile.socials.github} label="GitHub" testId="footer-github-link">
+          <Github size={16} />
+        </SocialLink>
+        {profile.socials.linkedin && (
+          <SocialLink href={profile.socials.linkedin} label="LinkedIn" testId="footer-linkedin-link">
+            <Linkedin size={16} />
+          </SocialLink>
+        )}
+        <SocialLink href={`mailto:${profile.email}`} label="Email" testId="footer-email-link" external={false}>
+          <Mail size={16} />
+        </SocialLink>
+      </div>
+    </div>
+  </footer>
+);

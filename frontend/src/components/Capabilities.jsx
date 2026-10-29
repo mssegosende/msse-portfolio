@@ -1,17 +1,11 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { EASE_OUT, fadeUpVariants, revealOnView } from "../lib/motion";
 import { Plus, Minus } from "lucide-react";
 import { capabilities } from "../data/portfolioData";
 import { GridField } from "./GridField";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 36 },
-  show: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.08, duration: 0.8, ease: [0.16, 1, 0.3, 1] },
-  }),
-};
+const fadeUp = fadeUpVariants();
 
 export const Capabilities = () => {
   const [openId, setOpenId] = useState("frontend");
@@ -27,15 +21,15 @@ export const Capabilities = () => {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_65%_at_50%_45%,rgb(var(--surface) / 0.82),transparent_100%)]" />
       <div className="relative mx-auto max-w-4xl">
         <motion.p
-          variants={fadeUp} initial="hidden" whileInView="show"
-          viewport={{ once: true, margin: "-80px" }}
+          variants={fadeUp}
+          {...revealOnView()}
           className="font-display text-[13px] uppercase tracking-[0.02em] text-ink"
         >
           04 // SYSTEM SPECIFICATIONS
         </motion.p>
         <motion.h2
-          variants={fadeUp} custom={1} initial="hidden" whileInView="show"
-          viewport={{ once: true, margin: "-80px" }}
+          variants={fadeUp} custom={1}
+          {...revealOnView()}
           className="text-engraved mt-6 font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
         >
           Capabilities
@@ -48,8 +42,8 @@ export const Capabilities = () => {
               <motion.div
                 key={cap.id}
                 data-testid={`capability-accordion-${cap.id}`}
-                variants={fadeUp} custom={i} initial="hidden" whileInView="show"
-                viewport={{ once: true, margin: "-60px" }}
+                variants={fadeUp} custom={i}
+                {...revealOnView("-60px")}
                 className={i > 0 ? "border-t border-ink/[0.13]" : ""}
               >
                 <button
@@ -80,7 +74,7 @@ export const Capabilities = () => {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+                      transition={{ duration: 0.45, ease: EASE_OUT }}
                       className="overflow-hidden"
                     >
                       <div className="pb-8 sm:pl-[4.5rem]">
