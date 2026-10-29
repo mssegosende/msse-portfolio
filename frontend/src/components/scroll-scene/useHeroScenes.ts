@@ -276,14 +276,9 @@ export const useHeroScenes = (
     if (isMobile) dropAlt();
   }, [isMobile, dropAlt]);
 
-  const onLayer2Gone = (url: string) => {
-    const e = l2Ref.current["d:" + url];
-    if (e) releaseGlContext(e.canvas);
-    delete l2Ref.current["d:" + url];
-  };
-
-  return {
-    // Driven by the timeline.
+  // What the timeline drives and the playback state it shares, as one object
+  // that never changes.
+  const [refs] = useState(() => ({
     app1Ref,
     app2Ref,
     appAltRef,
@@ -293,10 +288,19 @@ export const useHeroScenes = (
     head1Ref,
     headAltRef,
     l2Ref,
-    // Playback state shared with the timeline.
     awake2Ref,
     stopped1Ref,
     heroVisibleRef,
+  }));
+
+  const onLayer2Gone = (url: string) => {
+    const e = l2Ref.current["d:" + url];
+    if (e) releaseGlContext(e.canvas);
+    delete l2Ref.current["d:" + url];
+  };
+
+  return {
+    refs,
     // For the markup.
     sceneUrl,
     slot1Url,
@@ -320,3 +324,5 @@ export const useHeroScenes = (
     onLayer2Gone,
   };
 };
+
+export type HeroSceneRefs = ReturnType<typeof useHeroScenes>["refs"];
