@@ -3,10 +3,14 @@ import Lenis from "lenis";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { pendingThemeReload } from "@/lib/themeReload";
 
+// The page's Lenis instance, while App is mounted.
+let instance = null;
+export const getLenis = () => instance;
+
 export const useLenis = () => {
   useEffect(() => {
     const lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
-    window.__lenis = lenis;
+    instance = lenis;
     let raf;
     const loop = (time) => {
       lenis.raf(time);
@@ -16,7 +20,7 @@ export const useLenis = () => {
     return () => {
       cancelAnimationFrame(raf);
       lenis.destroy();
-      window.__lenis = null;
+      instance = null;
     };
   }, []);
 };
@@ -37,7 +41,7 @@ export const pinScrollToTopOnReload = () => {
  * timeline would still ease back for a second.
  */
 export const scrollToTop = () => {
-  if (window.__lenis) window.__lenis.scrollTo(0, { immediate: true, force: true });
+  if (instance) instance.scrollTo(0, { immediate: true, force: true });
   else window.scrollTo({ top: 0, behavior: "instant" });
   ScrollTrigger.update();
   ScrollTrigger.getAll().forEach((st) => st.getTween()?.progress(1));
@@ -46,6 +50,6 @@ export const scrollToTop = () => {
 export const scrollToId = (id) => {
   const el = document.getElementById(id);
   if (!el) return;
-  if (window.__lenis) window.__lenis.scrollTo(el, { duration: 1.4 });
+  if (instance) instance.scrollTo(el, { duration: 1.4 });
   else el.scrollIntoView({ behavior: "smooth" });
 };

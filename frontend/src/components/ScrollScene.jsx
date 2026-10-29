@@ -36,6 +36,7 @@ import { HeroLoader } from "./scroll-scene/HeroLoader";
 import { StoryPanel } from "./scroll-scene/StoryPanel";
 import { useCalloutsAboveDock } from "./scroll-scene/useCalloutsAboveDock";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { getLenis } from "../hooks/useLenis";
 
 // A phone theme reload restores its scroll position once per load, even if the
 // timeline is rebuilt (StrictMode, breakpoint change).
@@ -963,7 +964,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // pass lands short.
       let tries = 0;
       const put = () => {
-        if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true, force: true });
+        const lenis = getLenis();
+        if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
         else window.scrollTo(0, y);
         if (++tries < 12 && Math.abs(window.scrollY - y) > 2) {
           restoreRaf = requestAnimationFrame(put);
@@ -1008,7 +1010,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     );
     if (sectionRef.current) heroVisibility.observe(sectionRef.current);
 
-    const lenis = window.__lenis;
+    const lenis = getLenis();
     const onScroll = () => ScrollTrigger.update();
     if (lenis) lenis.on("scroll", onScroll);
     const refresh = setTimeout(() => ScrollTrigger.refresh(), 900);
@@ -1337,7 +1339,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           data-testid="skip-intro"
           onClick={() => {
             const y = heroEndRef.current || window.innerHeight * 10;
-            if (window.__lenis) window.__lenis.scrollTo(y + 4, { duration: 1.1 });
+            const lenis = getLenis();
+            if (lenis) lenis.scrollTo(y + 4, { duration: 1.1 });
             else window.scrollTo({ top: y + 4, behavior: "smooth" });
           }}
           className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] sm:bottom-10 ${
