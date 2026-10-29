@@ -21,6 +21,9 @@ tests, Playwright for end-to-end tests. pnpm 9 as the package manager.
 **Backend** — FastAPI with Pydantic validation and Motor (async MongoDB). It serves
 exactly one endpoint that matters, `POST /api/contact`. The site renders without it.
 
+**Hosting** — AWS: a private S3 bucket behind CloudFront, defined in CloudFormation and
+deployed from GitHub Actions.
+
 ---
 
 ## Architecture decisions
@@ -122,6 +125,7 @@ instance and would need Redis or the reverse proxy past one.
 | `frontend/e2e/`                           | Playwright specs.                                                                                                                                                                                                                                                      |
 | `frontend/scripts/`                       | Regenerates chapter 2's static fallback (see below).                                                                                                                                                                                                                   |
 | `backend/server.py`                       | The whole API: one contact endpoint, validation, honeypot, rate limit.                                                                                                                                                                                                 |
+| `infra/aws/hosting.yml`                   | The AWS hosting: bucket, CloudFront distribution and the deploy role (CloudFormation).                                                                                                                                                                                 |
 
 ### Draft projects
 
@@ -169,10 +173,10 @@ uvicorn server:app --reload --port 8000
 
 Neither file is versioned; `frontend/.env.example` lists the frontend keys.
 
-| File            | Keys                                                                                                          |
-| --------------- | ------------------------------------------------------------------------------------------------------------- |
-| `frontend/.env` | `VITE_BACKEND_URL` — the contact service's base URL. Read at build time, so on Vercel it is a build variable. |
-| `backend/.env`  | `MONGO_URL`, `DB_NAME`, `CORS_ORIGINS`                                                                        |
+| File            | Keys                                                                                                                              |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `frontend/.env` | `VITE_BACKEND_URL` — the contact service's base URL. Read at build time, so for deploys it is a repository variable (see Deploy). |
+| `backend/.env`  | `MONGO_URL`, `DB_NAME`, `CORS_ORIGINS`                                                                                            |
 
 ---
 
@@ -199,7 +203,8 @@ Chromium already installed instead (Chrome, Brave, Edge), point `PW_CHROMIUM_PAT
 its executable.
 
 **CI** (`.github/workflows/ci.yml`) runs lint, typecheck, format check, unit tests
-with coverage (uploaded as an artifact), build and the e2e suite on every push to `main` and every pull request.
+with coverage (uploaded as an artifact), build and the e2e suite on every push to
+`main` and every pull request. On `main`, a green run then deploys (see below).
 
 ### Regenerating the static fallback
 
@@ -211,3 +216,44 @@ python scripts/make-alpha.py                 # keys out the background into publ
 
 The capture waits 45 s for the scene's intro to finish. `make-alpha.py` needs numpy
 and Pillow.
+
+---
+
+## Deploy
+
+The site is static: the `dist/` folder from `pnpm build` is the whole thing. It is
+served from a private S3 bucket behind CloudFront. `infra/aws/hosting.yml`
+(CloudFormation) creates the bucket, the distribution, and an IAM role that GitHub
+Actions assumes through OIDC. No AWS keys are stored anywhere: only workflows running
+on `main` of this repository can assume the role, and it can only write that bucket
+and invalidate that distribution.
+
+Every push to `main` that passes CI publishes the build that was just tested: hashed
+assets first, cached for a year, then `index.html` and the other root files with
+`no-cache`, then a CloudFront invalidation. Old hashed assets are kept, so a tab opened
+before a deploy still loads its chunks.
+
+### One-time setup
+
+1. In the AWS console, open **CloudFormation → Create stack → Upload a template file**
+   and choose `infra/aws/hosting.yml`. Use `us-east-1`: the stack works in any region, but
+   a custom domain's certificate for CloudFront has to live there.
+   - `GitHubRepo`: this repository, as `owner/name`.
+   - `GitHubOidcProviderArn`: leave empty, unless the account already has a
+     `token.actions.githubusercontent.com` provider (IAM → Identity providers).
+   - Acknowledge that the stack creates IAM resources.
+2. When it reaches `CREATE_COMPLETE`, copy its outputs into the repository's
+   **Settings → Secrets and variables → Actions → Variables**:
+
+   | Variable                         | Value                                               |
+   | -------------------------------- | --------------------------------------------------- |
+   | `AWS_REGION`                     | The stack's region.                                 |
+   | `AWS_SITE_BUCKET`                | `BucketName`                                        |
+   | `AWS_CLOUDFRONT_DISTRIBUTION_ID` | `DistributionId`                                    |
+   | `AWS_DEPLOY_ROLE_ARN`            | `DeployRoleArn`                                     |
+   | `VITE_BACKEND_URL`               | The contact service's base URL, once it's deployed. |
+
+3. Re-run the latest CI run on `main`, or push. The site is at the stack's `SiteUrl`
+   output.
+
+Until `AWS_DEPLOY_ROLE_ARN` is set, the deploy job is skipped and CI stays green.
