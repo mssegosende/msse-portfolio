@@ -10,7 +10,7 @@ const links = [
   { id: "capabilities", label: "Capabilities", icon: Cpu, testid: "nav-capabilities-link" },
 ];
 
-export const NavigationDock = ({ visible }) => {
+export const NavigationDock = ({ visible }: { visible: boolean }) => {
   const { theme, toggle } = useTheme();
 
   return (

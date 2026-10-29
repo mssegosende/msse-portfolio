@@ -1,6 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DEFAULT_THEME, ThemeContext } from "@/hooks/useTheme";
-import { pendingThemeReload, reloadWithTheme, themeNeedsReload } from "@/lib/themeReload";
+import {
+  pendingThemeReload,
+  reloadWithTheme,
+  themeNeedsReload,
+  type Theme,
+} from "@/lib/themeReload";
 
 /**
  * Every load starts in light, the designed default; the toggle lasts for the
@@ -10,7 +15,7 @@ import { pendingThemeReload, reloadWithTheme, themeNeedsReload } from "@/lib/the
 const INITIAL_THEME = pendingThemeReload?.theme || DEFAULT_THEME;
 
 /** The attribute on <html> drives both index.css and Tailwind's `dark:`. */
-const applyTheme = (theme) => {
+const applyTheme = (theme: Theme) => {
   const root = document.documentElement;
   if (theme === "dark") root.setAttribute("data-theme", "dark");
   else root.removeAttribute("data-theme");
@@ -19,7 +24,7 @@ const applyTheme = (theme) => {
 // Apply before the first paint, so a reload into dark never flashes light.
 if (typeof document !== "undefined" && INITIAL_THEME !== DEFAULT_THEME) applyTheme(INITIAL_THEME);
 
-export const ThemeProvider = ({ children }) => {
+export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState(INITIAL_THEME);
 
   useEffect(() => {

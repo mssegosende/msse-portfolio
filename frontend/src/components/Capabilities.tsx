@@ -8,7 +8,7 @@ import { GridField } from "./GridField";
 const fadeUp = fadeUpVariants();
 
 export const Capabilities = () => {
-  const [openId, setOpenId] = useState("frontend");
+  const [openId, setOpenId] = useState<string | null>("frontend");
 
   return (
     <section

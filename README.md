@@ -25,7 +25,7 @@ exactly one endpoint that matters, `POST /api/contact`. The site renders without
 ## Architecture decisions
 
 **One pinned GSAP timeline drives both Spline scenes.**
-`ScrollScene.jsx` is a single `ScrollTrigger` with `pin: true`, `end: "+=1040%"` and
+`ScrollScene.tsx` is a single `ScrollTrigger` with `pin: true`, `end: "+=1040%"` and
 `scrub: 1`. Everything — the headline exit, the light draining to black, the crossfade
 to the second scene, the four camera framings and the three feature cards — is a
 position on that one timeline. The alternative, one trigger per beat, makes every
@@ -85,7 +85,7 @@ the same pnpm everywhere.
 | Path | What it is |
 |---|---|
 | `frontend/src/data/portfolioData.ts` | All editable content — copy, projects, tags, Spline scene URLs. Single source of truth. |
-| `frontend/src/components/ScrollScene.jsx` | The pinned hero: state, the GSAP timeline, the gaze rig and the theme swap. Still the one complex file. |
+| `frontend/src/components/ScrollScene.tsx` | The pinned hero: state, the GSAP timeline, the gaze rig and the theme swap. Still the one complex file. |
 | `frontend/src/components/scroll-scene/` | The hero's presentational pieces (feature cards, connectors, rail, story panel, loader) and `useCalloutsAboveDock`. |
 | `frontend/src/components/spline/` | `SceneBoundary` (one failed scene never takes the page down) and `ReleasingBox` (GPU context release). |
 | `frontend/src/lib/spline/` | Spline helpers: camera framing and pinning, runtime patches, the robot rig, scene URLs per theme, theme-swap timing. |

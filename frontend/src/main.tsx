@@ -4,7 +4,10 @@ import "@/index.css";
 import App from "@/App";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
+const root = document.getElementById("root");
+if (!root) throw new Error("index.html has no #root");
+
+ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <ThemeProvider>
       <App />

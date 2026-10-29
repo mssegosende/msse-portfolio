@@ -2,7 +2,7 @@
 module.exports = {
   blocklist: ["overline"],
   darkMode: ["selector", "[data-theme='dark']"],
-  content: ["./src/**/*.{js,jsx,ts,tsx}", "./index.html"],
+  content: ["./src/**/*.{ts,tsx}", "./index.html"],
   theme: {
     extend: {
       fontFamily: {

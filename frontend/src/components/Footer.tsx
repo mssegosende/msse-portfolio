@@ -1,8 +1,17 @@
+import type { ReactNode } from "react";
 import { Github, Linkedin, Mail } from "lucide-react";
 import { profile } from "../data/portfolioData";
 import { scrollToTop } from "../hooks/useLenis";
 
-const SocialLink = ({ href, label, testId, external = true, children }) => (
+interface SocialLinkProps {
+  href: string;
+  label: string;
+  testId: string;
+  external?: boolean;
+  children: ReactNode;
+}
+
+const SocialLink = ({ href, label, testId, external = true, children }: SocialLinkProps) => (
   <a
     data-testid={testId}
     href={href}

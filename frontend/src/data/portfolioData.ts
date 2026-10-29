@@ -14,8 +14,8 @@ export interface Profile {
   status: string;
   location: string;
   email: string;
-  /** null hides the icon. */
-  socials: { github: string | null; linkedin: string | null };
+  /** A null linkedin hides its footer icon. */
+  socials: { github: string; linkedin: string | null };
   bio: string[];
   stats: { value: string; label: string }[];
 }

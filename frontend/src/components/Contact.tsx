@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { fadeUpVariants, revealOnView } from "../lib/motion";
 import { terminalBoot } from "../data/portfolioData";
@@ -8,7 +8,7 @@ const fadeUp = fadeUpVariants({ stagger: 0.1 });
 
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/contact`;
 
-const validate = ({ name, email, message }) => {
+const validate = ({ name, email, message }: ContactForm): string | null => {
   if (name.trim().length < 2) return "ERR: name must be at least 2 characters";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "ERR: invalid email format";
   if (message.trim().length < 10) return "ERR: message must be at least 10 characters";
@@ -20,15 +20,48 @@ const validate = ({ name, email, message }) => {
 // stacking another copy.
 const ERROR_TTL = 4200;
 
-const EMPTY_FORM = { name: "", email: "", company: "", message: "", website: "" };
+/** The request body; `website` is the honeypot. */
+interface ContactForm {
+  name: string;
+  email: string;
+  company: string;
+  message: string;
+  website: string;
+}
+
+const EMPTY_FORM: ContactForm = { name: "", email: "", company: "", message: "", website: "" };
 
 const LINE_COLOR = { cmd: "text-ink/[0.83]", out: "text-ink/65", ok: "text-ink" };
+
+interface LogLine {
+  text: string;
+  kind: keyof typeof LINE_COLOR;
+}
+
+type FieldChange = ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
+
+interface TerminalFieldProps {
+  label: string;
+  hint?: string;
+  multiline?: boolean;
+  type?: string;
+  value: string;
+  placeholder?: string;
+  onChange: (e: FieldChange) => void;
+  "data-testid"?: string;
+}
 
 const inputClass =
   "mt-1.5 w-full rounded-lg border border-ink/[0.13] bg-ink/[0.03] px-4 py-3 font-kodemono text-sm text-ink placeholder:text-ink/65 outline-none transition-[border-color,box-shadow] duration-300 focus:border-ink/50 focus:shadow-[0_0_20px_rgb(var(--ink) / 0.07)]";
 
 // One terminal prompt: "> label:" over its input (or textarea).
-const TerminalField = ({ label, hint, multiline = false, ...field }) => (
+const TerminalField = ({
+  label,
+  hint,
+  multiline = false,
+  type = "text",
+  ...field
+}: TerminalFieldProps) => (
   <label className="block">
     <span className="text-ink">
       &gt; {label}
@@ -44,19 +77,19 @@ const TerminalField = ({ label, hint, multiline = false, ...field }) => (
     {multiline ? (
       <textarea rows={4} className={`${inputClass} resize-none`} {...field} />
     ) : (
-      <input type="text" className={inputClass} {...field} />
+      <input type={type} className={inputClass} {...field} />
     )}
   </label>
 );
 
 export const Contact = () => {
   const [form, setForm] = useState(EMPTY_FORM);
-  const [lines, setLines] = useState([]);
-  const [errors, setErrors] = useState([]);
+  const [lines, setLines] = useState<LogLine[]>([]);
+  const [errors, setErrors] = useState<{ text: string }[]>([]);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   // One timer per message, so two errors expire independently.
-  const errorTimers = useRef(new Map());
+  const errorTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
 
   useEffect(() => {
     const timers = errorTimers.current;
@@ -66,11 +99,13 @@ export const Contact = () => {
     };
   }, []);
 
-  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const set = (key: keyof ContactForm) => (e: FieldChange) =>
+    setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const pushLine = (text, kind = "out") => setLines((prev) => [...prev, { text, kind }]);
+  const pushLine = (text: string, kind: LogLine["kind"] = "out") =>
+    setLines((prev) => [...prev, { text, kind }]);
 
-  const showError = (text) => {
+  const showError = (text: string) => {
     setErrors((prev) => (prev.some((x) => x.text === text) ? prev : [...prev, { text }]));
     const timers = errorTimers.current;
     clearTimeout(timers.get(text));
@@ -83,7 +118,7 @@ export const Contact = () => {
     );
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (sending) return;
 

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { EASE_OUT, fadeUpVariants, revealOnView } from "../lib/motion";
 import { Github, ExternalLink, ArrowUpRight } from "lucide-react";
-import { getProjects } from "../data/portfolioData";
+import { getProjects, type Project } from "../data/portfolioData";
 import { GridField } from "./GridField";
 
 const fadeUp = fadeUpVariants();
@@ -24,7 +24,7 @@ const cardUp = {
 // Two elements, one transform owner each: framer-motion writes `y` inline
 // every frame, and a CSS transition on the same transform would lag behind
 // it. The wrapper owns the entrance, the article the hover.
-const ProjectCard = ({ project, index }) => (
+const ProjectCard = ({ project, index }: { project: Project; index: number }) => (
   <motion.div variants={cardUp} custom={index} className={project.span}>
     <article
       data-testid={`project-card-${project.id}`}

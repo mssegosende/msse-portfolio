@@ -4,13 +4,21 @@ import { useEffect, useRef } from "react";
 // each offsets its lines by where it sits in the document so they line up
 // across section boundaries. The touch drift uses page coordinates and a
 // shared clock for the same reason.
-export const GridField = ({ intensity = 1 }) => {
-  const canvasRef = useRef(null);
+interface GridPoint {
+  x: number;
+  y: number;
+  ox: number;
+  oy: number;
+}
+
+export const GridField = ({ intensity = 1 }: { intensity?: number }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
     const isTouch = window.matchMedia("(pointer: coarse)").matches;
 
     const STEP = 56;
@@ -18,9 +26,11 @@ export const GridField = ({ intensity = 1 }) => {
     const PUSH = 26;
     let w = 0;
     let h = 0;
-    let raf = null;
+    let raf = 0;
     let visible = false;
-    let grid = [];
+    let grid: GridPoint[][] = [];
+    // In range by construction: r < rows, c < cols.
+    const pt = (r: number, c: number) => grid[r]![c]!;
     let cols = 0;
     let rows = 0;
     const mouse = { x: -9999, y: -9999, cx: 0, cy: 0, active: false };
@@ -40,7 +50,9 @@ export const GridField = ({ intensity = 1 }) => {
     });
 
     const build = () => {
-      const rect = canvas.parentElement.getBoundingClientRect();
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      const rect = parent.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = rect.width;
       h = rect.height;
@@ -54,7 +66,7 @@ export const GridField = ({ intensity = 1 }) => {
       rows = Math.ceil(h / STEP) + 2;
       grid = [];
       for (let r = 0; r < rows; r++) {
-        const row = [];
+        const row: GridPoint[] = [];
         for (let c = 0; c < cols; c++) row.push({ x: c * STEP, y: r * STEP, ox: 0, oy: 0 });
         grid.push(row);
       }
@@ -76,7 +88,7 @@ export const GridField = ({ intensity = 1 }) => {
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          const p = grid[r][c];
+          const p = pt(r, c);
           p.x = c * STEP - offX;
           p.y = r * STEP - offY;
           let tx = 0;
@@ -111,7 +123,7 @@ export const GridField = ({ intensity = 1 }) => {
       for (let r = 0; r < rows; r++) {
         ctx.beginPath();
         for (let c = 0; c < cols; c++) {
-          const p = grid[r][c];
+          const p = pt(r, c);
           if (c === 0) ctx.moveTo(p.x + p.ox, p.y + p.oy);
           else ctx.lineTo(p.x + p.ox, p.y + p.oy);
         }
@@ -120,7 +132,7 @@ export const GridField = ({ intensity = 1 }) => {
       for (let c = 0; c < cols; c++) {
         ctx.beginPath();
         for (let r = 0; r < rows; r++) {
-          const p = grid[r][c];
+          const p = pt(r, c);
           if (r === 0) ctx.moveTo(p.x + p.ox, p.y + p.oy);
           else ctx.lineTo(p.x + p.ox, p.y + p.oy);
         }
@@ -129,7 +141,7 @@ export const GridField = ({ intensity = 1 }) => {
 
       // brighten pass — segments near the pointer
       if (mouse.active) {
-        const seg = (a, b) => {
+        const seg = (a: GridPoint, b: GridPoint) => {
           const mx = (a.x + a.ox + b.x + b.ox) / 2 - mouse.x;
           const my = (a.y + a.oy + b.y + b.oy) / 2 - mouse.y;
           const d = Math.hypot(mx, my);
@@ -142,9 +154,9 @@ export const GridField = ({ intensity = 1 }) => {
           }
         };
         for (let r = 0; r < rows; r++)
-          for (let c = 0; c < cols - 1; c++) seg(grid[r][c], grid[r][c + 1]);
+          for (let c = 0; c < cols - 1; c++) seg(pt(r, c), pt(r, c + 1));
         for (let c = 0; c < cols; c++)
-          for (let r = 0; r < rows - 1; r++) seg(grid[r][c], grid[r + 1][c]);
+          for (let r = 0; r < rows - 1; r++) seg(pt(r, c), pt(r + 1, c));
       }
     };
 
@@ -155,13 +167,14 @@ export const GridField = ({ intensity = 1 }) => {
     };
 
     const io = new IntersectionObserver(([entry]) => {
+      if (!entry) return;
       visible = entry.isIntersecting;
       cancelAnimationFrame(raf);
       if (visible) raf = requestAnimationFrame(loop);
     });
     io.observe(canvas);
 
-    const onMove = (e) => {
+    const onMove = (e: MouseEvent) => {
       mouse.cx = e.clientX;
       mouse.cy = e.clientY;
     };
