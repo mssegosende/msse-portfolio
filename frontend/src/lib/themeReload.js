@@ -51,7 +51,6 @@ export const reloadWithTheme = (theme) => {
   } catch (e) {
     return false;
   }
-  window.__memProbeLog?.(`THEME -> ${theme} (reload)`);
   window.location.reload();
   return true;
 };
