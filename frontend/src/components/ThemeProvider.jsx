@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { DEFAULT_THEME, ThemeContext } from "@/hooks/useTheme";
 import { pendingThemeReload, reloadWithTheme, themeNeedsReload } from "@/lib/themeReload";
 
 /**
@@ -6,10 +7,7 @@ import { pendingThemeReload, reloadWithTheme, themeNeedsReload } from "@/lib/the
  * session and is not persisted. Exception: on phones the toggle reloads the
  * page (lib/themeReload.js), and that reload starts in the chosen theme.
  */
-const DEFAULT_THEME = "light";
 const INITIAL_THEME = pendingThemeReload?.theme || DEFAULT_THEME;
-
-const ThemeContext = createContext({ theme: DEFAULT_THEME, toggle: () => {} });
 
 /** The attribute on <html> drives both index.css and Tailwind's `dark:`. */
 const applyTheme = (theme) => {
@@ -37,5 +35,3 @@ export const ThemeProvider = ({ children }) => {
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 };
-
-export const useTheme = () => useContext(ThemeContext);

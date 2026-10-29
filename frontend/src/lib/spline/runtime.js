@@ -61,7 +61,7 @@ export const releaseGlContext = (canvas) => {
     const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
     const ext = gl && gl.getExtension("WEBGL_lose_context");
     if (ext) ext.loseContext();
-  } catch (e) {
+  } catch {
     /* context already gone */
   }
 };

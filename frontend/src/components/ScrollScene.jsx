@@ -11,7 +11,7 @@ import {
   systemFeatures,
 } from "../data/portfolioData";
 import { useTheme } from "../hooks/useTheme";
-import { pendingThemeReload, restoredScrollY } from "../lib/themeReload";
+import { hasThemeReloadPosition, pendingThemeReload, takeThemeReloadScrollY } from "../lib/themeReload";
 import { MOBILE_LAYOUT_QUERY } from "../lib/layout";
 import { heroLineReveal as lineReveal, heroUiFade as uiFade } from "../lib/motion";
 import {
@@ -38,10 +38,6 @@ import { useCalloutsAboveDock } from "./scroll-scene/useCalloutsAboveDock";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { getLenis } from "../hooks/useLenis";
 
-// A phone theme reload restores its scroll position once per load, even if the
-// timeline is rebuilt (StrictMode, breakpoint change).
-let themeReloadUsed = false;
-
 gsap.registerPlugin(ScrollTrigger);
 patchSplineRuntime(Application);
 
@@ -54,14 +50,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [mountScene2, setMountScene2] = useState(false);
-  const [scene2Ready, setScene2Ready] = useState(false);
   const [scene2Failed, setScene2Failed] = useState(false);
+  // Layer 2 mounts that have drawn their first frames, by "m:"/"d:" + url.
+  const [drawn2, setDrawn2] = useState({});
   // Mounts whose load failed (reported by SceneBoundary): "alt" and "d:" + url.
-  // Mirrored in a ref for the onLoad handlers, which react-spline captures at mount.
   const [deadScenes, setDeadScenes] = useState({});
-  const deadScenesRef = useRef(deadScenes);
-  deadScenesRef.current = deadScenes;
   const markDead = (key) => setDeadScenes((d) => (d[key] ? d : { ...d, [key]: true }));
   // A phone theme reload comes from the dock, so the sequence was already seen:
   // start with the dock shown and no SKIP INTRO.
@@ -78,7 +71,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // In a ref so the layout effect doesn't depend on it (App passes a new closure
   // every render).
   const onJourneyEndRef = useRef(onJourneyEnd);
-  onJourneyEndRef.current = onJourneyEnd;
+  useLayoutEffect(() => {
+    onJourneyEndRef.current = onJourneyEnd;
+  });
   const app1Ref = useRef(null);
   const app2Ref = useRef(null);
   const applyGazeRef = useRef(null);
@@ -97,7 +92,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // pose and gaze to both, so the hidden one is always in the current beat and a
   // theme change is visibility only.
   const l2Ref = useRef({});
-  const loaded2Ref = useRef(0);
   // Phones: the hero's arms (on phones armsRef holds layer 2's).
   const heroArmsRef = useRef([]);
   // Kept by the hero IntersectionObserver: a scene that loads with the hero off
@@ -208,7 +202,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // blend mode, which also leaks through the body.
     try {
       app.setBackgroundColor("rgba(0,0,0,0)");
-    } catch (e) {
+    } catch {
       /* older runtime */
     }
     glCanvasRefs.current.slot1 = slot1BoxRef.current
@@ -223,7 +217,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         requestAnimationFrame(() => {
           if (app1Ref.current !== app) return;
           if (stopped1Ref.current || !heroVisibleRef.current) {
-            try { app.stop(); } catch (e) { /* runtime without stop() */ }
+            try { app.stop(); } catch { /* runtime without stop() */ }
           }
         })
       );
@@ -248,7 +242,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // Transparent for the same reason as slot1.
     try {
       app.setBackgroundColor("rgba(0,0,0,0)");
-    } catch (e) {
+    } catch {
       /* older runtime */
     }
     altCanvasRef.current = altBoxRef.current
@@ -258,7 +252,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
   // Layer 2 load. "m:" is the phone mount (the theme's model); "d:" the two
   // desktop mounts.
-  const onScene2Load = (key) => (app) => {
+  const onScene2Load = (key, app) => {
     placeBot(app);
     pinCamera(app, CAM_FINAL);
     const entry = {
@@ -282,50 +276,40 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // which already follows the theme, so the scene does not need to paint one.
     try {
       app.setBackgroundColor("rgba(0,0,0,0)");
-    } catch (e) {
+    } catch {
       /* older runtime without setBackgroundColor */
     }
-    loaded2Ref.current += 1;
-    const need = key.startsWith("m:")
-      ? 1
-      : L2_DESKTOP_URLS.filter((u) => !deadScenesRef.current["d:" + u]).length;
     // Ready after two drawn frames, so the rig is in place before the fade; on
     // desktop, once both models are in. Then paused again while the visitor is
     // still in the hero, or while the hero is off screen.
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
-        if (key.startsWith("m:") || loaded2Ref.current >= need) setScene2Ready(true);
+        setDrawn2((d) => (d[key] ? d : { ...d, [key]: true }));
         if (!awake2Ref.current || !heroVisibleRef.current) {
-          try { app.stop(); } catch (e) { /* runtime without stop() */ }
+          try { app.stop(); } catch { /* runtime without stop() */ }
         }
       })
     );
   };
 
-  // A failed desktop model isn't waited for: the other one carries the layer, and
-  // if both fail the fallback PNG shows.
-  const l2AliveCount = l2Alive.length;
-  useEffect(() => {
-    if (isMobile || !mountScene2 || scene2Ready || scene2Failed) return;
-    if (l2AliveCount === 0) setScene2Failed(true);
-    else if (loaded2Ref.current >= l2AliveCount) setScene2Ready(true);
-  }, [isMobile, mountScene2, scene2Ready, scene2Failed, l2AliveCount]);
-
-  // Scene 2 watchdog: fallback render if it never comes up.
-  useEffect(() => {
-    if (!mountScene2 || scene2Ready || scene2Failed) return;
-    const t = setTimeout(() => setScene2Failed(true), 25000);
-    return () => clearTimeout(t);
-  }, [mountScene2, scene2Ready, scene2Failed]);
-
   const revealed = loaded || failed;
-
   // Scene 2 mounts as soon as the hero has loaded, not on scroll: a flick reaches
   // the crossfade in half a second, faster than any scroll threshold. Its loop
   // stays paused until near the crossfade (awake2Ref).
+  const mountScene2 = revealed;
+  // Ready once its mounts have drawn; on desktop, every model that hasn't failed
+  // (if both fail, the fallback PNG shows).
+  const scene2Ready = isMobile
+    ? !!drawn2["m:" + slot2Url]
+    : l2Alive.length > 0 && l2Alive.every((u) => drawn2["d:" + u]);
+  const scene2Dead = scene2Failed || (!isMobile && l2Alive.length === 0);
+
+  // Scene 2 watchdog: fallback render if it never comes up.
   useEffect(() => {
-    if (revealed) setMountScene2(true);
-  }, [revealed]);
+    if (!mountScene2 || scene2Ready || scene2Dead) return;
+    const t = setTimeout(() => setScene2Failed(true), 25000);
+    return () => clearTimeout(t);
+  }, [mountScene2, scene2Ready, scene2Dead]);
 
   // Release each slot's GPU context when its scene goes away, from the canvas it
   // recorded at load. Sweeping the DOM in cleanup doesn't work: by then the
@@ -631,11 +615,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           botRig.x = BOT_HOME.x + lerp(A.rx, B.rx, f);
         }
 
-        // Non-scaling strokes make the connector length screen-space, so it is
-        // measured in px, not viewBox units.
-        const W = sectionRef.current ? sectionRef.current.clientWidth : 1;
-        const H = sectionRef.current ? sectionRef.current.clientHeight : 1;
-
         // Re-project each anchor against the live transform. kClose glides the closing
         // anchors in with the body's last move.
         const kClose = i === BODY_STEPS.length - 2 ? f : 0;
@@ -788,14 +767,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 try {
                   if (wake2) a?.play();
                   else a?.stop();
-                } catch (e) { /* runtime without play()/stop() */ }
+                } catch { /* runtime without play()/stop() */ }
               });
             }
             if (p > 0.45 && !stopped1Ref.current) {
               stopped1Ref.current = true;
               // Both desktop layer A mounts, including the hidden one.
-              try { app1Ref.current?.stop(); } catch (e) { /* runtime without stop() */ }
-              try { appAltRef.current?.stop(); } catch (e) { /* runtime without stop() */ }
+              try { app1Ref.current?.stop(); } catch { /* runtime without stop() */ }
+              try { appAltRef.current?.stop(); } catch { /* runtime without stop() */ }
             }
             // Latches once: the dock stays even if the visitor scrolls back up.
             if (p > 0.985 && !journeyRef.current) {
@@ -805,8 +784,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             }
             if (p < 0.25 && stopped1Ref.current) {
               stopped1Ref.current = false;
-              try { app1Ref.current?.play(); } catch (e) { /* runtime without play() */ }
-              try { appAltRef.current?.play(); } catch (e) { /* runtime without play() */ }
+              try { app1Ref.current?.play(); } catch { /* runtime without play() */ }
+              try { appAltRef.current?.play(); } catch { /* runtime without play() */ }
             }
           },
         },
@@ -949,12 +928,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     let restoreRaf = null;
     // A phone theme reload brings its position as pin progress, converted to px
     // once the pin exists, once per load.
-    if (restoreScrollRef.current == null && !themeReloadUsed) {
-      themeReloadUsed = true;
-      if (pendingThemeReload) {
-        ScrollTrigger.refresh();
-        restoreScrollRef.current = restoredScrollY();
-      }
+    if (restoreScrollRef.current == null && hasThemeReloadPosition()) {
+      ScrollTrigger.refresh();
+      restoreScrollRef.current = takeThemeReloadScrollY();
     }
     if (restoreScrollRef.current != null) {
       const y = restoreScrollRef.current;
@@ -1002,7 +978,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             appAltRef.current?.stop?.();
             l2Apps.forEach((a) => a?.stop?.());
           }
-        } catch (e) {
+        } catch {
           /* runtime without play/stop */
         }
       },
@@ -1165,7 +1141,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
           {/* Fallback PNG only when the live scene fails; while loading, the layer
               shows nothing. */}
-          {scene2Failed && (
+          {scene2Dead && (
             <div className="absolute inset-0 flex items-center justify-center">
               <img
                 src="/robot-alpha.png"
@@ -1183,7 +1159,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               scene2Ready ? "opacity-100" : "opacity-0"
             }`}
           >
-            {mountScene2 && !scene2Failed && (
+            {mountScene2 && !scene2Dead && (
                 <div className="absolute inset-0">
                 <div ref={parallax2Ref} className="absolute inset-0">
                   <div ref={idle2Ref} className="absolute inset-0">
@@ -1195,7 +1171,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                       name="layer 2 mobile"
                       onFail={() => setScene2Failed(true)}
                     >
-                      <Spline scene={slot2Url} onLoad={onScene2Load("m:" + slot2Url)} />
+                      <Spline scene={slot2Url} onLoad={(app) => onScene2Load("m:" + slot2Url, app)} />
                     </SceneBoundary>
                    </div>
                    )
@@ -1217,7 +1193,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                        >
                          {/* If one model fails the other shows (l2VisibleUrl); if both fail, the PNG. */}
                          <SceneBoundary name={"layer 2 " + url} onFail={() => markDead("d:" + url)}>
-                           <Spline scene={url} onLoad={onScene2Load("d:" + url)} />
+                           <Spline scene={url} onLoad={(app) => onScene2Load("d:" + url, app)} />
                          </SceneBoundary>
                        </ReleasingBox>
                      ))

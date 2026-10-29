@@ -47,7 +47,7 @@ export const applyView = (app, v) => {
       cam.__viewHooked = true;
     }
     cam.updateProjectionMatrix();
-  } catch (err) {
+  } catch {
     /* runtime without an inspectable camera */
   }
 };
@@ -88,7 +88,7 @@ export const pinCamera = (app, pos) => {
     if (q) ["x", "y", "z", "w"].forEach((k) => pin(q, "_" + k in q ? "_" + k : k, CAM_QUAT[k]));
     const r = cam.rotation;
     if (r) [["x", CAM_EULER_X], ["y", 0], ["z", 0]].forEach(([k, v]) => pin(r, "_" + k in r ? "_" + k : k, v));
-  } catch (e) {
+  } catch {
     /* runtime without an inspectable camera */
   }
 };

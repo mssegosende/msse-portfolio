@@ -8,7 +8,9 @@ import { useLayoutEffect, useRef } from "react";
  */
 export const ReleasingBox = ({ onGone, children, ...rest }) => {
   const goneRef = useRef(onGone);
-  goneRef.current = onGone;
+  useLayoutEffect(() => {
+    goneRef.current = onGone;
+  });
   useLayoutEffect(() => () => goneRef.current?.(), []);
   return <div {...rest}>{children}</div>;
 };

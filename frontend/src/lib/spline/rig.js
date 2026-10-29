@@ -14,7 +14,7 @@ export const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 export const findBot = (app) => {
   try {
     return app?.findObjectByName?.("Bot") || null;
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -28,7 +28,7 @@ export const collectArms = (app) => {
       (o.children || []).forEach((ch) => walk(ch, d + 1));
     };
     walk(app?._scene || app?.scene, 0);
-  } catch (e) {
+  } catch {
     /* runtime without an inspectable graph */
   }
   return out;
@@ -55,7 +55,7 @@ export const placeBot = (app, { scale, y } = {}) => {
       bot.scale.y = scale;
       bot.scale.z = scale;
     }
-  } catch (e) {
+  } catch {
     /* older runtime, or a scene without the named rig */
   }
 };

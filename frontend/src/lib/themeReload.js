@@ -26,7 +26,7 @@ const take = () => {
     if (!data || Date.now() - data.t > MAX_AGE_MS) return null;
     if (data.theme !== "dark" && data.theme !== "light") return null;
     return data;
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -48,15 +48,23 @@ export const reloadWithTheme = (theme) => {
       : { after: y - st.end };
   try {
     window.sessionStorage.setItem(KEY, JSON.stringify({ theme, ...pos, t: Date.now() }));
-  } catch (e) {
+  } catch {
     return false;
   }
   window.location.reload();
   return true;
 };
 
-// The saved position in this load's px. Call once the pin exists.
-export const restoredScrollY = () => {
+let positionTaken = false;
+
+// Whether this load came from a theme reload whose position hasn't been
+// restored yet. The timeline can be built more than once (StrictMode, a
+// breakpoint change); the position applies once.
+export const hasThemeReloadPosition = () => !!pendingThemeReload && !positionTaken;
+
+// The saved position in this load's px, once. Call once the pin exists.
+export const takeThemeReloadScrollY = () => {
+  positionTaken = true;
   const d = pendingThemeReload;
   if (!d) return null;
   if (d.pin == null && d.after == null) return typeof d.y === "number" ? d.y : null;
