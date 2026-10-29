@@ -872,6 +872,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // sobre su propio canvas, asi que del lado de la escena no hay nada que
     // apagar.
     let removeMouse = null;
+    let removeResize = null;
     if (!reduce) {
       const px1 = gsap.quickTo(parallax1Ref.current, "x", { duration: 0.9, ease: "power2.out" });
       const py1 = gsap.quickTo(parallax1Ref.current, "y", { duration: 0.9, ease: "power2.out" });
@@ -1034,9 +1035,27 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       ].map((a, i) => ({
         ...a,
         close: closeAnchors[i],
-        fromX: systemFeatures[i].from.x,
-        fromY: systemFeatures[i].from.y,
+        fromX: 0,
+        fromY: 0,
       }));
+
+      // Where each connector starts, in % of the layer: `lineFrom` (a fraction
+      // of the card) placed on the card's own box. The cards scale with the
+      // window, so a fixed point on the screen used to fall outside them on
+      // wide screens. offsetLeft/Top ignore the y GSAP animates on the cards.
+      const measureLineOrigins = () => {
+        calloutRefs.current.forEach((card, i) => {
+          const layer = card?.offsetParent;
+          const line = lineRefs.current[i];
+          if (!card || !layer || !line) return;
+          const lf = systemFeatures[i].lineFrom;
+          anchors[i].fromX = ((card.offsetLeft + lf.x * card.offsetWidth) / layer.clientWidth) * 100;
+          anchors[i].fromY = ((card.offsetTop + lf.y * card.offsetHeight) / layer.clientHeight) * 100;
+          line.setAttribute("x1", anchors[i].fromX);
+          line.setAttribute("y1", anchors[i].fromY);
+        });
+      };
+      measureLineOrigins();
 
       const body = { t: 0 };
       const draw = systemFeatures.map(() => ({ p: 0 }));
@@ -1422,6 +1441,24 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
       // first projection, so nothing is stale before the first scroll tick
       applyPull();
+
+      // The cards resize with the window: re-measure where the lines start.
+      if (!isMobile) {
+        let raf = 0;
+        const onResize = () => {
+          if (raf) return;
+          raf = requestAnimationFrame(() => {
+            raf = 0;
+            measureLineOrigins();
+            applyPull();
+          });
+        };
+        window.addEventListener("resize", onResize);
+        removeResize = () => {
+          if (raf) cancelAnimationFrame(raf);
+          window.removeEventListener("resize", onResize);
+        };
+      }
     }, sectionRef);
 
     // Put the visitor back where they were. refresh() first so the pin spacer
@@ -1516,6 +1553,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       head1Ref.current = null;
       clearTimeout(refresh);
       if (removeMouse) removeMouse();
+      if (removeResize) removeResize();
       heroVisibility.disconnect();
       if (lenis) lenis.off("scroll", onScroll);
       gsap.ticker.remove(applyGazeRef.current);

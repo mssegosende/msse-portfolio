@@ -203,6 +203,9 @@ export const getProjects = () => {
 
 // NOTE: the pinned hero animates exactly three cards (01/02/03) at hardcoded
 // positions. Keep this array at three entries.
+// `lineFrom` is where each card's connector starts, as a fraction of the card
+// itself (x across, y down), so it stays inside the card at any size; `to` is
+// only the dot's first position, the timeline moves it onto the body part.
 export const systemFeatures = [
   {
     num: "01",
@@ -211,8 +214,8 @@ export const systemFeatures = [
     text:
       "LLM agents and AI-assisted features wired into services that already carry production load. I build the layer an agent actually calls: strict schemas, validation at the edge, and failure modes that degrade instead of guessing. LangChain and LangGraph orchestrate it — the contract is what decides whether the output can be trusted.",
     side: "left",
-    top: "6%",
-    from: { x: 26, y: 27 },
+    top: "9%",
+    lineFrom: { x: 0.7, y: 0.5 },
     to: { x: 50, y: 38 },
   },
   {
@@ -223,7 +226,7 @@ export const systemFeatures = [
       "React and TypeScript interfaces — motion, real-time 3D, and feedback that keeps up with the user. Typed end to end against the same contracts the backend publishes, so the UI breaks at compile time instead of in front of someone. Tailwind and Framer Motion for the everyday, Spline and Three.js when the scene has to feel alive.",
     side: "right",
     top: "44%",
-    from: { x: 74, y: 53 },
+    lineFrom: { x: 0.3, y: 0.22 },
     to: { x: 67, y: 86 },
   },
   {
@@ -234,7 +237,7 @@ export const systemFeatures = [
       "FastAPI, NestJS and .NET microservices with strict contracts and real data behind them. This is where a legacy monolith gets broken apart without stopping the business: versioned APIs, validation layers, and reconciliations that surface a disagreement before it reaches someone's balance. PostgreSQL and SQL Server underneath, Docker around it.",
     side: "left",
     top: "52%",
-    from: { x: 26, y: 74 },
+    lineFrom: { x: 0.7, y: 0.52 },
     to: { x: 50, y: 77 },
   },
 ];
