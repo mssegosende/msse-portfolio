@@ -5,7 +5,7 @@ import { pendingThemeReload, reloadWithTheme, themeNeedsReload } from "@/lib/the
 /**
  * Every load starts in light, the designed default; the toggle lasts for the
  * session and is not persisted. Exception: on phones the toggle reloads the
- * page (lib/themeReload.js), and that reload starts in the chosen theme.
+ * page (lib/themeReload), and that reload starts in the chosen theme.
  */
 const INITIAL_THEME = pendingThemeReload?.theme || DEFAULT_THEME;
 

@@ -4,15 +4,15 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { pendingThemeReload } from "@/lib/themeReload";
 
 // The page's Lenis instance, while App is mounted.
-let instance = null;
-export const getLenis = () => instance;
+let instance: Lenis | null = null;
+export const getLenis = (): Lenis | null => instance;
 
-export const useLenis = () => {
+export const useLenis = (): void => {
   useEffect(() => {
     const lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
     instance = lenis;
-    let raf;
-    const loop = (time) => {
+    let raf: number;
+    const loop = (time: number) => {
       lenis.raf(time);
       raf = requestAnimationFrame(loop);
     };
@@ -30,7 +30,7 @@ export const useLenis = () => {
  * browser's scroll restoration, which would land mid-sequence). Not after a
  * phone theme reload: ScrollScene restores that position.
  */
-export const pinScrollToTopOnReload = () => {
+export const pinScrollToTopOnReload = (): void => {
   if (pendingThemeReload) return;
   window.scrollTo(0, 0);
 };
@@ -40,14 +40,14 @@ export const pinScrollToTopOnReload = () => {
  * pinned sequence backwards. The scrub tweens are finished too, or the
  * timeline would still ease back for a second.
  */
-export const scrollToTop = () => {
+export const scrollToTop = (): void => {
   if (instance) instance.scrollTo(0, { immediate: true, force: true });
   else window.scrollTo({ top: 0, behavior: "instant" });
   ScrollTrigger.update();
   ScrollTrigger.getAll().forEach((st) => st.getTween()?.progress(1));
 };
 
-export const scrollToId = (id) => {
+export const scrollToId = (id: string): void => {
   const el = document.getElementById(id);
   if (!el) return;
   if (instance) instance.scrollTo(el, { duration: 1.4 });

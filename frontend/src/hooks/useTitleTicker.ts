@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-// Also the static title in public/index.html (shown before mount and kept
+// Also the static title in index.html (shown before mount and kept
 // with reduced motion).
 export const STATIC_TITLE = "msse:// Software & AI Engineer";
 
@@ -12,10 +12,14 @@ export const TICKER_TEXT =
  * Scrolls the tab title like a departure board, one character every
  * `stepMs`. Keeps the static title with prefers-reduced-motion.
  */
-export const useTitleTicker = (text = TICKER_TEXT, staticTitle = STATIC_TITLE, stepMs = 250) => {
+export const useTitleTicker = (
+  text = TICKER_TEXT,
+  staticTitle = STATIC_TITLE,
+  stepMs = 250,
+): void => {
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let id = null;
+    let id: ReturnType<typeof setInterval> | null = null;
     let i = 0;
 
     const stop = () => {

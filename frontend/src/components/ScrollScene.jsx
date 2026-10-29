@@ -153,7 +153,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // picks which shows, so a toggle never reloads or rebuilds anything.
   //
   // Phones: only the theme's model is mounted, two scenes in total; more made iOS
-  // kill the page. Theme changes reload the page (lib/themeReload.js); only
+  // kill the page. Theme changes reload the page (lib/themeReload); only
   // without sessionStorage does the model change in place, remounting both.
   //
   // sceneUrl is constant: it is a timeline dependency, and the phone hero

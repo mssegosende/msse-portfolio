@@ -18,7 +18,7 @@ function App() {
   useTitleTicker();
   useEffect(pinScrollToTopOnReload, []);
   // The dock appears once the hero sequence has been seen and then stays. A
-  // theme reload on phones (lib/themeReload.js) comes back with it shown.
+  // theme reload on phones (lib/themeReload) comes back with it shown.
   const [journeyDone, setJourneyDone] = useState(!!pendingThemeReload);
 
   return (

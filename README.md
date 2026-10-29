@@ -84,13 +84,13 @@ the same pnpm everywhere.
 
 | Path | What it is |
 |---|---|
-| `frontend/src/data/portfolioData.js` | All editable content — copy, projects, tags, Spline scene URLs. Single source of truth. |
+| `frontend/src/data/portfolioData.ts` | All editable content — copy, projects, tags, Spline scene URLs. Single source of truth. |
 | `frontend/src/components/ScrollScene.jsx` | The pinned hero: state, the GSAP timeline, the gaze rig and the theme swap. Still the one complex file. |
 | `frontend/src/components/scroll-scene/` | The hero's presentational pieces (feature cards, connectors, rail, story panel, loader) and `useCalloutsAboveDock`. |
 | `frontend/src/components/spline/` | `SceneBoundary` (one failed scene never takes the page down) and `ReleasingBox` (GPU context release). |
 | `frontend/src/lib/spline/` | Spline helpers: camera framing and pinning, runtime patches, the robot rig, scene URLs per theme, theme-swap timing. |
 | `frontend/src/components/` | The flat sections: About, Projects, Capabilities, Contact, Footer, NavigationDock, RotateLock. |
-| `frontend/src/lib/motion.js` | Shared entrance motion: easing, `fadeUpVariants`, `revealOnView`, the hero's line reveal. |
+| `frontend/src/lib/motion.ts` | Shared entrance motion: easing, `fadeUpVariants`, `revealOnView`, the hero's line reveal. |
 | `frontend/src/hooks/` | `useLenis` (smooth scroll, `scrollToTop`), `useTheme`, `useMediaQuery`, `useTitleTicker`. |
 | `frontend/src/index.css` | Theme tokens, font imports and the few rules Tailwind cannot express. |
 | `frontend/vite.config.js` | Vite config and the `@` → `src` alias. |
