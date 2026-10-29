@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, type ComponentProps } from "react";
 
 /**
  * Wraps one Spline mount and calls `onGone` on a real unmount. The caller
@@ -6,7 +6,11 @@ import { useLayoutEffect, useRef } from "react";
  * whatever canvas is in the box breaks under StrictMode's mount, unmount,
  * remount, which would hand the remounted scene a lost context.
  */
-export const ReleasingBox = ({ onGone, children, ...rest }) => {
+export const ReleasingBox = ({
+  onGone,
+  children,
+  ...rest
+}: ComponentProps<"div"> & { onGone?: () => void }) => {
   const goneRef = useRef(onGone);
   useLayoutEffect(() => {
     goneRef.current = onGone;

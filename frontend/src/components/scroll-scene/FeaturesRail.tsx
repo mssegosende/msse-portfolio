@@ -1,7 +1,14 @@
+import type { RefObject } from "react";
 import { systemFeatures } from "../../data/portfolioData";
+import type { Theme } from "../../lib/themeReload";
+
+interface FeaturesRailProps {
+  railRefs: RefObject<(HTMLSpanElement | null)[]>;
+  theme: Theme;
+}
 
 /** Desktop progress rail (01 / 02 / 03); the timeline lights each number. */
-export const FeaturesRail = ({ railRefs, theme }) => (
+export const FeaturesRail = ({ railRefs, theme }: FeaturesRailProps) => (
   <div
     data-testid="features-rail"
     data-theme={theme}
@@ -10,7 +17,9 @@ export const FeaturesRail = ({ railRefs, theme }) => (
     {systemFeatures.map((f, i) => (
       <div key={f.num} className="flex flex-col items-center gap-3">
         <span
-          ref={(el) => (railRefs.current[i] = el)}
+          ref={(el) => {
+            railRefs.current[i] = el;
+          }}
           className="font-display text-[13px] tracking-[0.02em] text-ink opacity-[0.45]"
         >
           {f.num}

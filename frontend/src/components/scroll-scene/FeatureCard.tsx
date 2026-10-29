@@ -1,10 +1,21 @@
+import type { Ref } from "react";
+import type { SystemFeature } from "../../data/portfolioData";
+import type { Theme } from "../../lib/themeReload";
+
+interface FeatureCardProps {
+  ref?: Ref<HTMLDivElement>;
+  feature: SystemFeature;
+  isMobile: boolean;
+  theme: Theme;
+}
+
 /**
  * One chapter 2 card (01 HEAD, 02 HANDS, 03 TORSO). Glass on purpose: the
  * robot's arm showing through, blurred, is the intended look. No translate
  * utilities on the outer box: GSAP animates its `y` and would wipe them.
  * On phones its `bottom` is set by useCalloutsAboveDock.
  */
-export const FeatureCard = ({ ref, feature: f, isMobile, theme }) => (
+export const FeatureCard = ({ ref, feature: f, isMobile, theme }: FeatureCardProps) => (
   <div
     ref={ref}
     data-testid={`feature-callout-${f.num}`}

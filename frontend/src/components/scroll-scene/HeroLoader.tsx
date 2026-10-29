@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { EASE_OUT } from "../../lib/motion";
 
 /** "SYSTEM BOOT": dark, a thin line filling slowly; fades out on reveal. */
-export const HeroLoader = ({ visible, progress }) => (
+export const HeroLoader = ({ visible, progress }: { visible: boolean; progress: number }) => (
   <AnimatePresence>
     {visible && (
       <motion.div

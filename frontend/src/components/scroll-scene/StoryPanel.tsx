@@ -1,7 +1,16 @@
+import type { Ref, RefObject } from "react";
 import { story, storyTitle } from "../../data/portfolioData";
+import type { Theme } from "../../lib/themeReload";
+
+interface StoryPanelProps {
+  ref?: Ref<HTMLDivElement>;
+  titleRef: Ref<HTMLDivElement>;
+  paragraphRefs: RefObject<(HTMLParagraphElement | null)[]>;
+  theme: Theme;
+}
 
 /** Chapter 2 story text; the timeline fades the title and each paragraph separately. */
-export const StoryPanel = ({ ref, titleRef, paragraphRefs, theme }) => (
+export const StoryPanel = ({ ref, titleRef, paragraphRefs, theme }: StoryPanelProps) => (
   <div
     ref={ref}
     data-theme={theme}
@@ -19,7 +28,9 @@ export const StoryPanel = ({ ref, titleRef, paragraphRefs, theme }) => (
     {story.map((para, i) => (
       <p
         key={i}
-        ref={(el) => (paragraphRefs.current[i] = el)}
+        ref={(el) => {
+          paragraphRefs.current[i] = el;
+        }}
         data-testid={`story-paragraph-${i + 1}`}
         className={`font-inter text-sm leading-relaxed text-ink/[0.83] sm:text-base ${
           i > 0 ? "mt-6" : ""

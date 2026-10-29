@@ -1,10 +1,18 @@
+import type { RefObject } from "react";
 import { systemFeatures } from "../../data/portfolioData";
+import type { Theme } from "../../lib/themeReload";
+
+interface FeatureConnectorsProps {
+  lineRefs: RefObject<(SVGLineElement | null)[]>;
+  dotRefs: RefObject<(HTMLSpanElement | null)[]>;
+  theme: Theme;
+}
 
 /**
  * Desktop connectors: one line per card, from a point inside it (`lineFrom`)
  * to the body part it names, plus that part's dot. ScrollScene positions both.
  */
-export const FeatureConnectors = ({ lineRefs, dotRefs, theme }) => (
+export const FeatureConnectors = ({ lineRefs, dotRefs, theme }: FeatureConnectorsProps) => (
   <>
     {systemFeatures.map((f, i) => (
       <svg
@@ -16,7 +24,9 @@ export const FeatureConnectors = ({ lineRefs, dotRefs, theme }) => (
         preserveAspectRatio="none"
       >
         <line
-          ref={(el) => (lineRefs.current[i] = el)}
+          ref={(el) => {
+            lineRefs.current[i] = el;
+          }}
           stroke="rgb(var(--ink) / 0.45)"
           strokeWidth="1"
           vectorEffect="non-scaling-stroke"
@@ -26,7 +36,9 @@ export const FeatureConnectors = ({ lineRefs, dotRefs, theme }) => (
     {systemFeatures.map((f, i) => (
       <span
         key={`dot-${f.num}`}
-        ref={(el) => (dotRefs.current[i] = el)}
+        ref={(el) => {
+          dotRefs.current[i] = el;
+        }}
         style={{ left: `${f.to.x}%`, top: `${f.to.y}%` }}
         data-theme={theme}
         className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink"

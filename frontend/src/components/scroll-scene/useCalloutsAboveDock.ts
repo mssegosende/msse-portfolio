@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, type RefObject } from "react";
 
 const GAP = 16;
 
@@ -8,11 +8,15 @@ const GAP = 16;
  * so with the bars showing its bottom edge is off screen. The dock is fixed
  * to the visible edge, so it is the reference.
  */
-export const useCalloutsAboveDock = (enabled, sectionRef, calloutRefs) => {
+export const useCalloutsAboveDock = (
+  enabled: boolean,
+  sectionRef: RefObject<HTMLElement | null>,
+  calloutRefs: RefObject<(HTMLElement | null)[]>,
+): void => {
   useEffect(() => {
     if (!enabled) return undefined;
     let raf = 0;
-    let last = null;
+    let last: number | null = null;
     const placeCallouts = () => {
       raf = 0;
       const slot = document.querySelector("[data-dock-slot]");
