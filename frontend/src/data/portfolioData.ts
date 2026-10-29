@@ -4,11 +4,85 @@
 // `projectBacklog` keeps real project names that have no copy yet; it is
 // never rendered.
 
+export interface Profile {
+  name: string;
+  shortMark: string;
+  markSuffix: string;
+  role: string;
+  taglineLines: string[];
+  tagline: string;
+  status: string;
+  location: string;
+  email: string;
+  /** null hides the icon. */
+  socials: { github: string | null; linkedin: string | null };
+  bio: string[];
+  stats: { value: string; label: string }[];
+}
+
+export interface ManifestoEntry {
+  num: string;
+  title: string;
+  text: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  tags: string[];
+  codeUrl: string;
+  liveUrl: string;
+  /** A literal Tailwind class, e.g. "md:col-span-7". */
+  span: string;
+  featured?: boolean;
+  draft?: boolean;
+}
+
+/** A point as fractions of an element (0..1) or percentages of the stage. */
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface SystemFeature {
+  num: string;
+  part: string;
+  title: string;
+  text: string;
+  side: "left" | "right";
+  /** CSS top of the card, e.g. "44%". */
+  top: string;
+  lineFrom: Point;
+  to: Point;
+}
+
+export interface Capability {
+  id: string;
+  num: string;
+  title: string;
+  description: string;
+  tags: string[];
+}
+
+export interface TerminalLine {
+  type: "cmd" | "out";
+  text: string;
+}
+
+export interface BacklogEntry {
+  id: string;
+  title: string;
+  category: string;
+  note: string;
+}
+
 export const SPLINE_SCENE_URL = "https://prod.spline.design/f1rJJWMxGAz7LFXO/scene.splinecode";
 
 export const SPLINE_SCENE_2_URL = "https://prod.spline.design/PU4OS9xwmiHIeZOj/scene.splinecode";
 
-export const profile = {
+export const profile: Profile = {
   name: "María Sol Gosende",
   // markSuffix, when set, follows the mark in the footer.
   shortMark: "MSSE://",
@@ -34,7 +108,7 @@ export const profile = {
 };
 
 // Draft, pending approval. ScrollScene animates exactly two paragraphs.
-export const story = [
+export const story: string[] = [
   "I started where the load is: backend infrastructure. Booking systems that couldn't drop a payment, a microservice that had to reconcile data two systems disagreed about, banking APIs written from scratch. That work taught me reliability isn't a feature you add later — it's decided in the first contract you write.",
   "Now I do it at a larger scale: breaking a legacy monolith into distributed services, and wiring AI agents into pricing systems where a wrong answer costs real money. I build my own products for the same reason — AlphardRE, so Argentine freelancers can see what their income is actually worth, and Apsis, because I wanted an assistant built to my own standards.",
 ];
@@ -45,7 +119,7 @@ export const storyTitle = {
   role: "Full Stack Developer & AI Engineer",
 };
 
-export const manifesto = [
+export const manifesto: ManifestoEntry[] = [
   {
     num: "01",
     title: "Contracts before code",
@@ -63,7 +137,7 @@ export const manifesto = [
   },
 ];
 
-export const marqueeItems = [
+export const marqueeItems: string[] = [
   "FULL STACK DEVELOPMENT",
   "DISTRIBUTED MICROSERVICES",
   "API DESIGN",
@@ -76,7 +150,7 @@ export const marqueeItems = [
 // PROJECTS. Spans: 7 + 5, then 4 + 4 + 4 on the 12-column grid. Change the
 // spans here, not the grid in Projects.jsx.
 // ------------------------------------------------------------
-export const projects = [
+export const projects: Project[] = [
   {
     id: "polaris",
     title: "POLARIS",
@@ -153,17 +227,19 @@ const SPAN_CLASS = {
   6: "md:col-span-6",
   7: "md:col-span-7",
   12: "md:col-span-12",
-};
+} as const;
+
+type Span = keyof typeof SPAN_CLASS;
 
 // Lay n cards out on the 12-column grid: a 7 + 5 hero row, then rows of
 // three, with a short trailing row widened so it never leaves a gap.
-const layoutSpans = (n) => {
+const layoutSpans = (n: number): Span[] => {
   if (n <= 0) return [];
   if (n === 1) return [12];
   if (n === 2) return [7, 5];
   if (n === 3) return [4, 4, 4];
   if (n === 4) return [7, 5, 6, 6];
-  const spans = [7, 5];
+  const spans: Span[] = [7, 5];
   let rest = n - 2;
   while (rest >= 3) {
     spans.push(4, 4, 4);
@@ -176,18 +252,21 @@ const layoutSpans = (n) => {
 
 // What the site renders. Production drops drafts and re-lays out the rest so
 // no row is left half empty.
-export const getProjects = () => {
+export const getProjects = (): Project[] => {
   const isProduction = import.meta.env.PROD;
   const visible = isProduction ? projects.filter((p) => !p.draft) : projects;
   if (visible.length === projects.length) return visible;
   const spans = layoutSpans(visible.length);
-  return visible.map((p, i) => ({ ...p, span: SPAN_CLASS[spans[i]] }));
+  return visible.map((p, i) => {
+    const span = spans[i];
+    return span ? { ...p, span: SPAN_CLASS[span] } : p;
+  });
 };
 
 // Exactly three entries: the pinned hero animates 01/02/03 at fixed positions.
 // `lineFrom`: where the card's connector starts, as a fraction of the card.
 // `to`: the dot's first position; the timeline moves it onto the body part.
-export const systemFeatures = [
+export const systemFeatures: SystemFeature[] = [
   {
     num: "01",
     part: "HEAD",
@@ -220,7 +299,7 @@ export const systemFeatures = [
   },
 ];
 
-export const capabilities = [
+export const capabilities: Capability[] = [
   {
     id: "frontend",
     num: "01",
@@ -261,7 +340,7 @@ export const capabilities = [
   },
 ];
 
-export const terminalBoot = [
+export const terminalBoot: TerminalLine[] = [
   { type: "cmd", text: "whoami" },
   { type: "out", text: "mssegosende — full stack developer & ai engineer" },
   { type: "cmd", text: "cat availability.txt" },
@@ -272,7 +351,7 @@ export const terminalBoot = [
 // PROJECT BACKLOG (not rendered). Real names awaiting a description before
 // they move into `projects`. `note` records only what was actually said.
 // ============================================================
-export const projectBacklog = [
+export const projectBacklog: BacklogEntry[] = [
   {
     id: "mira",
     title: "MIRA",

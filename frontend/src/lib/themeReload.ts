@@ -7,6 +7,19 @@ import { MOBILE_LAYOUT_QUERY } from "./layout";
 // stored as pin progress, not px: the pin is 780% of the viewport height, and
 // on iOS that height differs between loads (URL bar).
 
+export type Theme = "light" | "dark";
+
+/** What a phone theme reload carries: the theme and where the visitor was. */
+interface PendingReload {
+  theme: Theme;
+  /** When it was saved (ms since epoch). */
+  t: number;
+  /** One of: pin progress 0..1, px past the pin's end, or px when there is no pin. */
+  pin?: number;
+  after?: number;
+  y?: number;
+}
+
 const KEY = "theme-reload";
 
 // An older entry is not from this reload (e.g. the tab reopened later).
@@ -17,12 +30,12 @@ const pinTrigger = () => ScrollTrigger.getAll().find((st) => st.pin);
 
 // Read once at import: StrictMode runs initializers twice and the second
 // read would find the key already consumed.
-const take = () => {
+const take = (): PendingReload | null => {
   try {
     const raw = window.sessionStorage.getItem(KEY);
     window.sessionStorage.removeItem(KEY);
     if (!raw) return null;
-    const data = JSON.parse(raw);
+    const data = JSON.parse(raw) as PendingReload | null;
     if (!data || Date.now() - data.t > MAX_AGE_MS) return null;
     if (data.theme !== "dark" && data.theme !== "light") return null;
     return data;
@@ -31,14 +44,15 @@ const take = () => {
   }
 };
 
-export const pendingThemeReload = typeof window !== "undefined" ? take() : null;
+export const pendingThemeReload: PendingReload | null =
+  typeof window !== "undefined" ? take() : null;
 
-export const themeNeedsReload = () =>
+export const themeNeedsReload = (): boolean =>
   typeof window !== "undefined" && window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
 
 // Save the new theme and position, then reload. Returns false without
 // sessionStorage, and the caller switches the theme in place instead.
-export const reloadWithTheme = (theme) => {
+export const reloadWithTheme = (theme: Theme): boolean => {
   const y = window.scrollY;
   const st = pinTrigger();
   const pos = !st
@@ -60,15 +74,15 @@ let positionTaken = false;
 // Whether this load came from a theme reload whose position hasn't been
 // restored yet. The timeline can be built more than once (StrictMode, a
 // breakpoint change); the position applies once.
-export const hasThemeReloadPosition = () => !!pendingThemeReload && !positionTaken;
+export const hasThemeReloadPosition = (): boolean => !!pendingThemeReload && !positionTaken;
 
 // The saved position in this load's px, once. Call once the pin exists.
-export const takeThemeReloadScrollY = () => {
+export const takeThemeReloadScrollY = (): number | null => {
   positionTaken = true;
   const d = pendingThemeReload;
   if (!d) return null;
   if (d.pin == null && d.after == null) return typeof d.y === "number" ? d.y : null;
   const st = pinTrigger();
   if (!st) return null;
-  return d.pin != null ? st.start + d.pin * (st.end - st.start) : st.end + d.after;
+  return d.pin != null ? st.start + d.pin * (st.end - st.start) : st.end + (d.after ?? 0);
 };

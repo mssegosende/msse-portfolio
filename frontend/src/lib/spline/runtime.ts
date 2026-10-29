@@ -1,5 +1,15 @@
 import { MOBILE_LAYOUT_QUERY } from "../layout";
 
+/** The private parts of Application.prototype these patches touch. */
+interface PatchableApp {
+  _getPixelRatio?: (mode: unknown) => number;
+  load?: (...args: unknown[]) => unknown;
+  _rendererBackend?: string;
+  _rendererAuto?: boolean;
+  __mobileDprCap?: boolean;
+  __mobileWebGL?: boolean;
+}
+
 // Patches to the Spline runtime (private API) and GPU context release.
 // Call patchSplineRuntime() once, before any scene mounts.
 
@@ -10,10 +20,10 @@ import { MOBILE_LAYOUT_QUERY } from "../layout";
 const MOBILE_MAX_DPR = 2;
 const mobileLayoutMQ =
   typeof window !== "undefined" ? window.matchMedia(MOBILE_LAYOUT_QUERY) : null;
-const capMobilePixelRatio = (AP) => {
+const capMobilePixelRatio = (AP: PatchableApp | undefined): void => {
   if (!AP || typeof AP._getPixelRatio !== "function" || AP.__mobileDprCap) return;
   const getPixelRatio = AP._getPixelRatio;
-  AP._getPixelRatio = function (mode) {
+  AP._getPixelRatio = function (this: PatchableApp, mode: unknown) {
     const r = getPixelRatio.call(this, mode);
     return mobileLayoutMQ?.matches ? Math.min(r, MOBILE_MAX_DPR) : r;
   };
@@ -28,13 +38,15 @@ const capMobilePixelRatio = (AP) => {
 // - Safari/Firefox desktop: the robot's eyes are a video texture that WebGPU
 //   in Safari doesn't render. Chromium keeps WebGPU, where everything was
 //   tuned.
+// navigator.userAgentData is Chromium-only (and not in TypeScript's DOM types).
+type NavigatorUAData = Navigator & { userAgentData?: { brands?: { brand: string }[] } };
 const isChromium =
   typeof navigator !== "undefined" &&
-  !!navigator.userAgentData?.brands?.some((b) => b.brand === "Chromium");
-const forceMobileWebGL = (AP) => {
+  !!(navigator as NavigatorUAData).userAgentData?.brands?.some((b) => b.brand === "Chromium");
+const forceMobileWebGL = (AP: PatchableApp | undefined): void => {
   if (!AP || typeof AP.load !== "function" || AP.__mobileWebGL) return;
   const load = AP.load;
-  AP.load = function (...args) {
+  AP.load = function (this: PatchableApp, ...args: unknown[]) {
     if (mobileLayoutMQ?.matches || !isChromium) {
       this._rendererBackend = "webgl";
       this._rendererAuto = false;
@@ -45,9 +57,10 @@ const forceMobileWebGL = (AP) => {
 };
 
 /** Install both runtime patches on Application.prototype (idempotent). */
-export const patchSplineRuntime = (Application) => {
-  capMobilePixelRatio(Application?.prototype);
-  forceMobileWebGL(Application?.prototype);
+export const patchSplineRuntime = (Application: { prototype: unknown }): void => {
+  const proto = Application.prototype as PatchableApp;
+  capMobilePixelRatio(proto);
+  forceMobileWebGL(proto);
 };
 
 /**
@@ -55,10 +68,12 @@ export const patchSplineRuntime = (Application) => {
  * and browsers cap live contexts, so repeated theme flips ended in "Error
  * creating WebGL context". Safe on 2D canvases (getContext returns null).
  */
-export const releaseGlContext = (canvas) => {
+export const releaseGlContext = (canvas: HTMLCanvasElement | null | undefined): void => {
   if (!canvas) return;
   try {
-    const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+    const gl =
+      (canvas.getContext("webgl2") as WebGL2RenderingContext | null) ||
+      (canvas.getContext("webgl") as WebGLRenderingContext | null);
     const ext = gl && gl.getExtension("WEBGL_lose_context");
     if (ext) ext.loseContext();
   } catch {

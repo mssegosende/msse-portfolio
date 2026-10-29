@@ -1,3 +1,5 @@
+import type { SceneNode, SplineApp, SplineObject } from "./types";
+
 // The robot rig (`Bot` and the arm joints), shared by both scenes.
 
 // The scenes ship the rig in different poses (scene 2 holds its arms higher
@@ -11,7 +13,7 @@ const POSE_HOME = { arm: -0.306, elbowY: -0.018, forearm: -0.471 };
 export const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 
 /** Collect the arm joints once; looking them up by name every frame is wasteful. */
-export const findBot = (app) => {
+export const findBot = (app: SplineApp | null): SplineObject | null => {
   try {
     return app?.findObjectByName?.("Bot") || null;
   } catch {
@@ -19,10 +21,10 @@ export const findBot = (app) => {
   }
 };
 
-export const collectArms = (app) => {
-  const out = [];
+export const collectArms = (app: SplineApp | null): SceneNode[] => {
+  const out: SceneNode[] = [];
   try {
-    const walk = (o, d) => {
+    const walk = (o: SceneNode | undefined, d: number): void => {
       if (!o || d > 9) return;
       if (o.name === "arm" || o.name === "elbow" || o.name === "forearm") out.push(o);
       (o.children || []).forEach((ch) => walk(ch, d + 1));
@@ -34,9 +36,8 @@ export const collectArms = (app) => {
   return out;
 };
 
-export const applyPose = (joints) => {
-  for (let i = 0; i < joints.length; i++) {
-    const j = joints[i];
+export const applyPose = (joints: SceneNode[]): void => {
+  for (const j of joints) {
     if (j.name === "arm") j.rotation.x = POSE_HOME.arm;
     else if (j.name === "elbow") j.rotation.y = POSE_HOME.elbowY;
     else j.rotation.x = POSE_HOME.forearm;
@@ -44,7 +45,10 @@ export const applyPose = (joints) => {
 };
 
 /** Place a scene's rig at a known spot. */
-export const placeBot = (app, { scale, y } = {}) => {
+export const placeBot = (
+  app: SplineApp | null,
+  { scale, y }: { scale?: number; y?: number } = {},
+): void => {
   try {
     const bot = app?.findObjectByName?.("Bot");
     if (!bot) return;
