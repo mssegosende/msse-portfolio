@@ -15,11 +15,9 @@ const render = () => {
   );
 };
 
-// TEMPORAL: lectura de memoria para el telefono (ver src/dev/memProbe.js y
-// HANDOFF). Solo con ?debug=1, en cualquier build; sin el parametro ni se
-// descarga. Tiene que engancharse ANTES del primer render -- las escenas piden
-// sus contextos al montar --, asi que con el parametro el render espera al
-// import. Si el chunk no carga, la pagina arranca igual.
+// Temporary memory probe for phone debugging (dev/memProbe.js), only with
+// ?debug=1. It must hook in before the scenes request their GPU contexts, so
+// the first render waits for it.
 if (new URLSearchParams(window.location.search).get("debug") === "1") {
   import(/* webpackChunkName: "mem-probe" */ "./dev/memProbe").catch(() => {}).then(render);
 } else {

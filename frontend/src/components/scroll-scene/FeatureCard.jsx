@@ -1,10 +1,8 @@
 /**
- * One chapter-2 callout card (01 HEAD, 02 HANDS, 03 TORSO). Glass on purpose:
- * the robot's arm showing through, grey and blurred, is the intended look.
- *
- * No translate utilities on the outer box: GSAP animates its `y` and would
- * wipe a Tailwind transform. On phones its `bottom` is set live by
- * placeCallouts (ScrollScene) so it sits above the dock.
+ * One chapter 2 card (01 HEAD, 02 HANDS, 03 TORSO). Glass on purpose: the
+ * robot's arm showing through, blurred, is the intended look. No translate
+ * utilities on the outer box: GSAP animates its `y` and would wipe them.
+ * On phones its `bottom` is set by useCalloutsAboveDock.
  */
 export const FeatureCard = ({ ref, feature: f, isMobile, theme }) => (
   <div
@@ -19,9 +17,7 @@ export const FeatureCard = ({ ref, feature: f, isMobile, theme }) => (
     }`}
   >
     {isMobile ? (
-      // Celular: compacta. Numero, parte y titulo en UNA fila, texto a
-      // 14px: ocupaba 43-72% de la pantalla (medido en WebKit,
-      // Firefox, Brave y Edge, 402x874 a 375x553).
+      // Phones: number, part and title in one row to keep the card short.
       <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.70] p-4 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <div className="select-none font-display text-[3.25rem] font-light leading-[0.85] text-outline-grey">
@@ -39,14 +35,8 @@ export const FeatureCard = ({ ref, feature: f, isMobile, theme }) => (
         <p className="mt-3 font-inter text-[14px] leading-[1.5] text-ink/[0.83]">{f.text}</p>
       </div>
     ) : (
-      // Escritorio: numero, parte y titulo en UNA fila, como en celular, y
-      // ancho proporcional (26vw, entre 20 y 28rem). Con el numero de 7rem
-      // apilado arriba y 27rem fijos, cada tarjeta ocupaba 39-42% del alto
-      // en una Mac (1470x830 con la barra de Safari) y las tres tapaban casi
-      // todo alrededor del robot. Tamanos con min(vh, vw): el alto manda en
-      // notebooks, el ancho en tablets verticales. Cada linea sale de un punto
-      // relativo a su tarjeta (lineFrom en portfolioData), asi que sigue
-      // adentro con cualquier tamano.
+      // Desktop: same one-row header, width proportional to the screen, sizes
+      // via min(vh, vw) (height rules on laptops, width on portrait tablets).
       <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/70 p-[clamp(1rem,min(2.6vh,2.8vw),1.75rem)] backdrop-blur-md">
         <div className="flex items-center gap-[clamp(0.75rem,1.6vw,1.25rem)]">
           <div className="select-none font-display text-[clamp(2.75rem,min(7vh,6vw),4.5rem)] font-light leading-[0.85] text-outline-grey">

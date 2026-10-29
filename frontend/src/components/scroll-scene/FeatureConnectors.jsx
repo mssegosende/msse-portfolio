@@ -1,11 +1,8 @@
 import { systemFeatures } from "../../data/portfolioData";
 
 /**
- * Desktop only: one connector per card, from a point inside the card
- * (`lineFrom`) to the body part it names, plus the dot on that body part.
- * ScrollScene sets each line's start from its card's box (measureLineOrigins)
- * and grows the line by moving its far end; the dots are re-projected against
- * the live camera every frame (applyPull).
+ * Desktop connectors: one line per card, from a point inside it (`lineFrom`)
+ * to the body part it names, plus that part's dot. ScrollScene positions both.
  */
 export const FeatureConnectors = ({ lineRefs, dotRefs, theme }) => (
   <>

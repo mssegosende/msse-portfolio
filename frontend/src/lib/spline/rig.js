@@ -1,33 +1,16 @@
-// El rig del robot (objeto `Bot` y articulaciones de los brazos), el mismo en
-// las dos escenas.
+// The robot rig (`Bot` and the arm joints), shared by both scenes.
 
-// The two scenes ship the rig in different POSES, which is why the silver
-// robot never quite matched the black one even with the body in the same
-// place. Read off both rigs:
-//
-//            scene 1    scene 2
-//   arm.x     -0.306    -0.474   (scene 2 holds its arms higher)
-//   elbow.y   -0.018     0.179
-//   forearm.x -0.471    -0.863   (and bends them further)
-//
-// Scene 1's values are canonical, because white mode is the default and runs
-// that rig in both slots. Applied every frame rather than once at load: each
-// scene animates its own pose, so a single assignment drifts straight back.
+// The scenes ship the rig in different poses (scene 2 holds its arms higher
+// and bends them further). Scene 1's pose is canonical. It is reapplied every
+// frame because each scene animates its own pose back.
 const POSE_HOME = { arm: -0.306, elbowY: -0.018, forearm: -0.471 };
 
-// Both scenes expose a `Bot` object, and they DO NOT ship it in the same
-// place: scene 1 has it at x -2.75, scene 2 at x +68.25 (and y 25.68 vs
-// 13.68). That difference is the whole reason ROBOT_DX existed — the old fix
-// pushed the canvas sideways in CSS to compensate, which only held at one
-// viewport width because the scene's own render scale is height-limited when
-// wide and width-limited when narrow (measured: +108px at 1100, +178 at 1700,
-// flat ~182 beyond). Normalising the object itself fixes it in scene units,
-// so it holds at every width and the two themes land the robot in exactly the
-// same place — which is what makes the toggle swap in place instead of the
-// figure jumping.
+// The scenes also place `Bot` differently (x -2.75 vs +68.25). Normalizing it
+// in scene units lands the robot in the same spot in both themes at any width;
+// offsetting the canvas in CSS only held at one viewport width.
 export const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
 
-/** Collect every arm joint once; findObjectByName per frame would be silly. */
+/** Collect the arm joints once; looking them up by name every frame is wasteful. */
 export const findBot = (app) => {
   try {
     return app?.findObjectByName?.("Bot") || null;
@@ -60,7 +43,7 @@ export const applyPose = (joints) => {
   }
 };
 
-/** Place a scene's rig at a known spot. Both scenes share the same rig. */
+/** Place a scene's rig at a known spot. */
 export const placeBot = (app, { scale, y } = {}) => {
   try {
     const bot = app?.findObjectByName?.("Bot");

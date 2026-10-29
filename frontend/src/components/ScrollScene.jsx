@@ -48,8 +48,8 @@ import { StoryPanel } from "./scroll-scene/StoryPanel";
 import { useCalloutsAboveDock } from "./scroll-scene/useCalloutsAboveDock";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 
-// La posicion de la recarga de tema se aplica una sola vez por carga, aunque
-// la timeline se rearme (StrictMode, cambio de ancho).
+// A phone theme reload restores its scroll position once per load, even if the
+// timeline is rebuilt (StrictMode, breakpoint change).
 let themeReloadUsed = false;
 
 gsap.registerPlugin(ScrollTrigger);
@@ -58,9 +58,8 @@ patchSplineRuntime(Application);
 export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const { theme } = useTheme();
   const darkMode = theme === "dark";
-  // Chapter 2 shares the page's tone, so its UI scopes to the page theme. The
-  // section itself is pinned to data-theme="dark" (the hero's own wall), which
-  // is why its children need the page theme spelled out.
+  // Chapter 2's UI follows the page theme; the section itself is fixed to
+  // data-theme="dark", so its children set the page theme explicitly.
   const ch2Theme = darkMode ? "dark" : "light";
   const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
@@ -68,29 +67,26 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const [mountScene2, setMountScene2] = useState(false);
   const [scene2Ready, setScene2Ready] = useState(false);
   const [scene2Failed, setScene2Failed] = useState(false);
-  // Montajes cuya carga fallo (lo reporta su SceneBoundary): "alt" y "d:" +
-  // url. El ref es para los onLoad, que react-spline captura al montar.
+  // Mounts whose load failed (reported by SceneBoundary): "alt" and "d:" + url.
+  // Mirrored in a ref for the onLoad handlers, which react-spline captures at mount.
   const [deadScenes, setDeadScenes] = useState({});
   const deadScenesRef = useRef(deadScenes);
   deadScenesRef.current = deadScenes;
   const markDead = (key) => setDeadScenes((d) => (d[key] ? d : { ...d, [key]: true }));
-  // La recarga del cambio de tema en celular sale del dock: la secuencia ya
-  // se vio, asi que vuelve con el dock y sin SKIP INTRO (ver lib/themeReload.js).
+  // A phone theme reload comes from the dock, so the sequence was already seen:
+  // start with the dock shown and no SKIP INTRO.
   const [journeyDone, setJourneyDone] = useState(!!pendingThemeReload);
   const readyRef = useRef(false);
-  // Escena 2 renderiza solo cuando la capa 2 esta por aparecer; antes de eso
-  // su loop queda en pausa. Lo decide el onUpdate del pin, lo lee el onLoad.
+  // Scene 2 renders only when layer 2 is about to appear. Set by the pin's
+  // onUpdate, read by onLoad.
   const awake2Ref = useRef(false);
   const stopped1Ref = useRef(false);
   const journeyRef = useRef(!!pendingThemeReload);
-  // Where the visitor was when the timeline had to be rebuilt. Reverting the
-  // GSAP context removes the pin, which collapses the +1040% spacer; the page
-  // suddenly gets shorter and the browser clamps the scroll, which is why
-  // flipping the theme used to fling you into the second scene.
+  // Scroll position saved when the timeline is rebuilt: reverting the GSAP context
+  // removes the pin spacer and the browser clamps the scroll.
   const restoreScrollRef = useRef(null);
-  // Held in a ref so the layout effect does not have to list it: App passes a
-  // fresh closure every render, and rebuilding the whole timeline for that
-  // would tear down the pin mid-scroll.
+  // In a ref so the layout effect doesn't depend on it (App passes a new closure
+  // every render).
   const onJourneyEndRef = useRef(onJourneyEnd);
   onJourneyEndRef.current = onJourneyEnd;
   const app1Ref = useRef(null);
@@ -100,36 +96,30 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const botRef = useRef(null);
   const head1Ref = useRef(null);
   const heroEndRef = useRef(0);
-  // ESCRITORIO: la capa A monta DOS escenas a la vez con key fija y el tema
-  // solo decide cual se VE, por clase (en celular hay un solo montaje, ver
-  // mobileModel). El segundo montaje tiene sus propios refs porque es OTRO
-  // modelo: la cabeza, los brazos y la app son distintos objetos.
+  // Desktop layer A mounts both models with fixed keys and the theme only picks
+  // which one shows. The second mount has its own refs: a different model, with
+  // its own head, arms and app.
   const appAltRef = useRef(null);
   const armsAltRef = useRef([]);
   const headAltRef = useRef(null);
   const altCanvasRef = useRef(null);
-  // Capa 2: registro de montajes cargados, por "m:"/"d:" + url. En escritorio
-  // hay dos (negro y plateado) y todo lo que el ticker escribe -- camara,
-  // rig, pose, mirada -- va a los DOS, asi el oculto esta siempre en la pose
-  // y el beat actuales y el cambio de tema es solo de visibilidad.
+  // Layer 2 mounts by "m:"/"d:" + url. On desktop the ticker writes camera, rig,
+  // pose and gaze to both, so the hidden one is always in the current beat and a
+  // theme change is visibility only.
   const l2Ref = useRef({});
   const loaded2Ref = useRef(0);
-  // CELULAR: brazos del hero, aparte de armsRef (que en celular son los de
-  // la capa 2). El ticker posa estos en claro y los de la capa 2 en oscuro,
-  // como cuando el hero claro era el montaje alterno.
+  // Phones: the hero's arms (on phones armsRef holds layer 2's).
   const heroArmsRef = useRef([]);
-  // Lo mantiene el IntersectionObserver del hero: una escena que carga con el
-  // hero fuera de pantalla (cambio de tema mas abajo) dibuja y se detiene.
+  // Kept by the hero IntersectionObserver: a scene that loads with the hero off
+  // screen draws once and stops.
   const heroVisibleRef = useRef(true);
-  // Cursor normalizado sobre el hero (-0.5..0.5), para la cabeza en escritorio.
+  // Normalized cursor over the hero (-0.5..0.5), for the desktop head.
   const mouseNRef = useRef({ x: 0, y: 0 });
-  // Direccion por defecto de la cabeza del hero, SOLO en celular: una sola,
-  // la del robot negro (derecha, +0.27), en los dos temas. En escritorio la
-  // cabeza sigue al mouse con el look-at propio de la escena (ver applyHead1).
+  // Phone hero head's default direction (the black robot's, to the right) in both
+  // themes. On desktop the head follows the mouse (applyHeadDesktop).
   const head1BaseRef = useRef({ x: 0.05, y: 0.27 });
-  // Mismo motivo para el tema entero: el ticker necesita saber cual de las dos
-  // escenas de la capa A esta visible, y meter darkMode en el efecto que arma
-  // la timeline la haria reconstruirse en cada cambio.
+  // The ticker needs the theme, but as an effect dependency it would rebuild the
+  // timeline on every toggle.
   const darkModeRef = useRef(darkMode);
   useEffect(() => {
     darkModeRef.current = darkMode;
@@ -142,10 +132,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const parallax2Ref = useRef(null);
   const idle1Ref = useRef(null);
   const idle2Ref = useRef(null);
-  // Cada montaje de la capa A tiene su propia caja: con dos canvas adentro,
-  // un querySelector sobre canvasWrapRef devuelve el primero que este en el
-  // DOM, no el que cargo, y el efecto que libera contextos terminaria
-  // matando el equivocado.
+  // Each layer A mount gets its own box: with two canvases in canvasWrapRef, a
+  // querySelector would release the wrong one.
   const slot1BoxRef = useRef(null);
   const altBoxRef = useRef(null);
   const splineLayerRef = useRef(null);
@@ -167,62 +155,47 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const dotRefs = useRef([]);
   const railRefs = useRef([]);
 
-  // Re-evaluated whenever the breakpoint flips (see useMediaQuery); the layout
-  // effect lists isMobile in its deps and rebuilds the timeline for it.
+  // A breakpoint flip rebuilds the timeline (isMobile is an effect dependency).
   const isMobile = useMediaQuery(MOBILE_LAYOUT_QUERY);
 
-  // El robot de la escena 1 es NEGRO y el de la 2 PLATEADO. El modelo es UNO
-  // POR TEMA de punta a punta, en los dos anchos: negro todo el recorrido en
-  // claro, plateado todo el recorrido en oscuro.
+  // One model per theme throughout: the black robot (scene 1) in light, the
+  // silver one (scene 2) in dark.
   //
-  // ESCRITORIO: la capa A monta las dos escenas (slot1 plateado + alterno
-  // negro, key fija) y la capa 2 tambien (L2_DESKTOP_URLS); el tema solo
-  // elige cual se ve. Antes sceneUrl seguia al tema: cambiarlo remontaba la
-  // escena, que cargaba de cero con su transform de fabrica, y reconstruia la
-  // timeline (depende de sceneUrl) -- el robot saltaba y volvia viajando.
+  // Desktop: layers A and 2 mount both models with fixed keys and the theme only
+  // picks which shows, so a toggle never reloads or rebuilds anything.
   //
-  // CELULAR: UN solo modelo montado, el del tema, en el hero y en la capa 2
-  // (mobileModel). Tener los dos era lo que tiraba la pagina en iPhone:
-  // medido en produccion (?debug=1), 3 escenas vivas a 1206x2262 cada una en
-  // reposo, y el cambio de tema remontaba la capa 2 -- una cuarta escena
-  // cargando mientras la vieja todavia no se recuperaba --; iOS mataba el
-  // proceso en cada cambio. Ahora el cambio de tema es una secuencia estricta
-  // (ver runMobileSwap): fundido, desmontar, soltar de verdad (el runtime
-  // retiene cada escena descartada: lib/splineRelease.js), esperar, cargar la
-  // capa que se esta viendo, fundido de vuelta, y la otra capa despues. Nunca
-  // cargan dos escenas a la vez; nunca hay mas de 2 vivas.
+  // Phones: only the theme's model is mounted, two scenes in total; more made iOS
+  // kill the page. Theme changes reload the page (lib/themeReload.js), with
+  // runMobileSwap as the in-place fallback.
   //
-  // sceneUrl sigue fijo: es dependencia de la timeline, y el remonte del hero
-  // de celular pasa por la key (slot1Url), no por ella.
+  // sceneUrl is constant: it is a timeline dependency, and the phone hero
+  // remounts through its key (slot1Url) instead.
   const sceneUrl = SPLINE_SCENE_2_URL;
   const [mobileModel, setMobileModel] = useState(() => themeModel(darkMode));
   const mobileModelRef = useRef(mobileModel);
   mobileModelRef.current = mobileModel;
-  // Cada capa de celular se monta por separado: en el cambio de tema carga
-  // primero la que se ve y la otra despues (ver runMobileSwap).
+  // Phone layers mount separately, so a swap loads the visible one first.
   const [mobileHeroOn, setMobileHeroOn] = useState(true);
   const [mobileL2On, setMobileL2On] = useState(true);
-  // Fundido del robot durante el cambio de tema en celular (las dos capas).
+  // Fades the robot during a phone swap (both layers).
   const [swapHidden, setSwapHidden] = useState(false);
-  // En celular null = desmontado (en medio del cambio de tema).
+  // On phones, null means unmounted (mid swap).
   const slot1Url = isMobile ? (mobileHeroOn ? mobileModel : null) : sceneUrl;
-  // Solo el montaje de CELULAR usa esta url. En escritorio la capa 2 monta
-  // las dos escenas con key fija (ver L2_DESKTOP_URLS) y el tema elige.
+  // Phone layer 2 only; desktop layer 2 mounts L2_DESKTOP_URLS.
   const slot2Url = mobileL2On ? mobileModel : null;
-  // Si el modelo del tema no cargo, se ve el otro: otro color, pero robot.
+  // If the theme's model failed to load, show the other one.
   const l2Alive = L2_DESKTOP_URLS.filter((u) => !deadScenes["d:" + u]);
   const l2Preferred = themeModel(darkMode);
   const l2VisibleUrl = l2Alive.includes(l2Preferred) ? l2Preferred : l2Alive[0];
 
-  // Solo escritorio: el robot negro de la capa A en claro.
+  // Desktop only: layer A's black robot, shown in light.
   const HERO_ALT_URL = SPLINE_SCENE_URL;
   const showAlt = !isMobile && !darkMode && !deadScenes.alt;
-  // Lo que NO se ve, en escritorio, va visibility:hidden ademas de opacity 0:
-  // fuera del compositing, y fuera del hit-testing del mouse. Solo un robot
-  // visible por capa, siempre.
+  // Hidden desktop mounts also get visibility:hidden, which takes them out of
+  // compositing and hit-testing: one live robot per layer.
   const hiddenCls = "invisible opacity-0";
 
-  // loader: smooth asymptotic fill to ~90% over ~2.5s, completes on scene load
+  // Loader: eases toward 90% until the scene loads.
   useEffect(() => {
     if (loaded || failed) return;
     const t = setInterval(() => {
@@ -242,7 +215,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Esperas de runMobileSwap: las resuelve la carga (true) o la falla (false).
+  // Pending runMobileSwap waits, resolved by load (true) or failure (false).
   const heroWaitRef = useRef(null);
   const l2WaitRef = useRef(null);
 
@@ -253,11 +226,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     if (isMobile) heroArmsRef.current = collectArms(app);
     else armsRef.current = collectArms(app);
     head1Ref.current = app?.findObjectByName?.("Head") || null;
-    // Scene 1 ships an OPAQUE background, and an opaque canvas can only show
-    // the wall underneath through a blend mode. The runtime accepts a
-    // transparent one, so the scene stops being a sheet of colour and becomes
-    // what scene 2 already was: a figure with alpha. Composited normally, the
-    // robot's own pixels cover the wall and its empty ones reveal it.
+    // Transparent background: an opaque canvas could only show the wall through a
+    // blend mode, which also leaks through the body.
     try {
       app.setBackgroundColor("rgba(0,0,0,0)");
     } catch (e) {
@@ -268,11 +238,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       : canvasWrapRef.current
         ? canvasWrapRef.current.querySelector("canvas")
         : null;
-    // Un hero que recarga por un cambio de tema en celular puede llegar con la
-    // secuencia ya pasada del hero (p > .45) o con el hero fuera de pantalla:
-    // dibuja un par de frames, como estaria parado, y se detiene. El scroll lo
-    // vuelve a arrancar por los caminos de siempre. (En la primera carga no
-    // pasa nada de eso, pero un toggle durante el loader tambien la espera.)
+    // After a phone theme reload the hero may load past its part of the sequence or
+    // off screen: draw a couple of frames, then stop. Scrolling back restarts it.
     if (isMobile) {
       waitFrames(2).then(() => {
         if (app1Ref.current !== app) return;
@@ -291,31 +258,27 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     }, 700);
   };
 
-  // El montaje alterno de la capa A (solo escritorio, el negro). NO toca
-  // app1Ref ni head1Ref ni armsRef: es otro modelo, con su propia cabeza y sus
-  // propios brazos, y el ticker escribe a los dos. Tampoco marca
-  // `loaded`: el hero ya se considera listo con slot1, asi que si esta escena
-  // tarda o falla no bloquea la entrada.
+  // Desktop layer A's alternate mount (the black robot). It has its own head and
+  // arms, and doesn't gate `loaded`: the hero is ready once slot1 is.
   const handleAltLoad = (app) => {
     appAltRef.current = app;
     placeBot(app);
     pinCamera(app, isMobile ? HERO_CAM_MOBILE : HERO_CAM_DESKTOP);
     armsAltRef.current = collectArms(app);
     headAltRef.current = app?.findObjectByName?.("Head") || null;
-    // Misma razon que en slot 1: un fondo opaco solo deja ver la pared por
-    // blend, y el blend se cuela por dentro del cuerpo.
+    // Transparent for the same reason as slot1.
     try {
       app.setBackgroundColor("rgba(0,0,0,0)");
     } catch (e) {
-      /* runtime viejo */
+      /* older runtime */
     }
     altCanvasRef.current = altBoxRef.current
       ? altBoxRef.current.querySelector("canvas")
       : null;
   };
 
-  // Carga de un montaje de la capa 2. "m:" es el de celular (uno, el modelo
-  // del tema); "d:" son los dos de escritorio (key fija, el tema elige).
+  // Layer 2 load. "m:" is the phone mount (the theme's model); "d:" the two
+  // desktop mounts.
   const onScene2Load = (key) => (app) => {
     placeBot(app);
     pinCamera(app, CAM_FINAL);
@@ -347,11 +310,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     const need = key.startsWith("m:")
       ? 1
       : L2_DESKTOP_URLS.filter((u) => !deadScenesRef.current["d:" + u]).length;
-    // Ready once it has DRAWN: two frames, so placeBot and the rig from the
-    // ticker are in the picture before the wrap can fade in -- on desktop,
-    // once BOTH models are in, so a theme change never waits on a load. Then
-    // back to sleep if the visitor is still in the hero -- or, after a theme
-    // change on mobile, if the whole hero section is off screen.
+    // Ready after two drawn frames, so the rig is in place before the fade; on
+    // desktop, once both models are in. Then paused again while the visitor is
+    // still in the hero, or while the hero is off screen.
     requestAnimationFrame(() =>
       requestAnimationFrame(() => {
         if (key.startsWith("m:") || loaded2Ref.current >= need) setScene2Ready(true);
@@ -363,9 +324,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     );
   };
 
-  // Un modelo de escritorio de la capa 2 que falla ya no se espera: si el otro
-  // habia cargado, la capa queda lista con ese; si fallaron los dos, va el
-  // PNG de respaldo.
+  // A failed desktop model isn't waited for: the other one carries the layer, and
+  // if both fail the fallback PNG shows.
   const l2AliveCount = l2Alive.length;
   useEffect(() => {
     if (isMobile || !mountScene2 || scene2Ready || scene2Failed) return;
@@ -373,7 +333,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     else if (loaded2Ref.current >= l2AliveCount) setScene2Ready(true);
   }, [isMobile, mountScene2, scene2Ready, scene2Failed, l2AliveCount]);
 
-  // scene 2: lazy load watchdog -> fallback render if it never comes up
+  // Scene 2 watchdog: fallback render if it never comes up.
   useEffect(() => {
     if (!mountScene2 || scene2Ready || scene2Failed) return;
     const t = setTimeout(() => setScene2Failed(true), 25000);
@@ -382,34 +342,19 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
   const revealed = loaded || failed;
 
-  // Escena 2 se monta en cuanto el hero termino de cargar, NO por scroll. El
-  // umbral viejo (p > .15) era progreso de scroll y el crossfade esta puesto
-  // en SEGUNDOS de timeline (XFADE_AT / duracion ~ p .149 en escritorio):
-  // cada beat agregado al final de la timeline lo fue adelantando hasta
-  // quedar antes del montaje, y la capa 2 aparecia sin escena -- mostrando el
-  // PNG de respaldo, negro, sin encuadre y cortado en la cadera. Desde el
-  // arranque hasta el crossfade hay poco mas de un viewport de scroll, que un
-  // flick cubre en medio segundo: no hay umbral de scroll que llegue a
-  // tiempo. Montada al cargar, su loop queda en pausa hasta acercarse (ver
-  // awake2Ref), asi que durante el hero no le cuesta GPU al telefono.
+  // Scene 2 mounts as soon as the hero has loaded, not on scroll: a flick reaches
+  // the crossfade in half a second, faster than any scroll threshold. Its loop
+  // stays paused until near the crossfade (awake2Ref).
   useEffect(() => {
     if (revealed) setMountScene2(true);
   }, [revealed]);
 
-  // Keyed on the scene urls: when a theme flip swaps them, React unmounts the
-  // old canvases, and this cleanup runs in the mutation phase — while they are
-  // still in the DOM and can still be asked to release their context.
-  // Each slot records the canvas its scene actually took, at load. Sweeping
-  // the DOM in the cleanup does not work: React runs destroy functions during
-  // the mutation phase, by which point the REPLACEMENT canvas is already in
-  // the tree, and the sweep kills the context that was just created.
+  // Release each slot's GPU context when its scene goes away, from the canvas it
+  // recorded at load. Sweeping the DOM in cleanup doesn't work: by then the
+  // replacement canvas is already in the tree.
   const glCanvasRefs = useRef({});
-  // Un efecto POR SLOT, cada uno atado a su propia url. Juntos en uno solo
-  // compartian las dependencias, asi que cambiar la url de la capa 2 corria
-  // una limpieza que tambien soltaba el contexto de slot1 -- y slot1 no se
-  // remonta en ese cambio, porque su key no cambio. Resultado: el hero se
-  // quedaba sin contexto y en negro. Ahora cada slot suelta solo el suyo, y
-  // solo cuando su escena se va de verdad.
+  // One effect per slot: a shared one released slot1's context whenever layer 2's
+  // url changed, even though slot1 hadn't remounted.
   useLayoutEffect(() => {
     const held = glCanvasRefs.current;
     return () => {
@@ -420,8 +365,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   useLayoutEffect(() => {
     const held = glCanvasRefs.current;
     const url = slot2Url;
-    // El registro se crea una vez (useRef({})) y nunca se reasigna: tomarlo
-    // aca es el mismo objeto que habria en la limpieza.
+    // Captured here; the registry object is never reassigned.
     const entries = l2Ref.current;
     return () => {
       releaseGlContext(held.slot2);
@@ -430,10 +374,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     };
   }, [slot2Url]);
 
-  // El montaje alterno no sigue a ninguna url -- su key es fija -- y es solo
-  // de escritorio: lo desmonta entrar a celular, o irse de la pagina. Su
-  // contexto se libera ahi y en ningun otro lado: meterlo en el efecto de
-  // arriba mataria los canvas de slot1/slot2.
+  // The alternate mount has a fixed key and is desktop only: its context is
+  // released only when it unmounts (entering the phone layout, or leaving).
   const dropAlt = useCallback(() => {
     releaseGlContext(altCanvasRef.current);
     altCanvasRef.current = null;
@@ -442,24 +384,22 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     armsAltRef.current = [];
   }, []);
   useLayoutEffect(() => dropAlt, [dropAlt]);
-  // Pasivo y no de layout: corre despues de la limpieza pasiva del
-  // desmontaje, donde react-spline hace el dispose.
+  // Passive, not layout: runs after react-spline's dispose on unmount.
   useEffect(() => {
     if (isMobile) dropAlt();
   }, [isMobile, dropAlt]);
 
-  // CAMBIO DE TEMA EN CELULAR, en secuencia estricta, para que nunca carguen
-  // dos escenas a la vez ni convivan mas de 2 (ver mobileModel):
-  //   1. fundido del robot (las dos capas)
-  //   2. tomar lo que el runtime va a retener (lib/splineRelease.js) y
-  //      desmontar hero y capa 2; tras el dispose de react-spline, soltar los
-  //      contextos, parar los videos y poner en null los refs propios
-  //   3. esperar (SWAP_SETTLE_MS) y vaciar lo retenido
-  //   4. montar la capa que se esta viendo y esperar a que dibuje
-  //   5. fundido de vuelta
-  //   6. la otra capa, diferida: timer o scroll (SECONDARY_DELAY_MS)
-  // Si el tema cambia otra vez en el medio, al terminar vuelve a empezar hacia
-  // el ultimo. Salir de celular o desmontar la corta (swapRunRef).
+  // In-place phone theme swap, in strict sequence so two scenes never load at
+  // once and no more than two are ever alive:
+  //   1. fade the robot out
+  //   2. capture what the runtime will retain (lib/splineRelease.js), unmount
+  //      both layers, release contexts, stop videos, null our refs
+  //   3. wait SWAP_SETTLE_MS, then empty what was retained
+  //   4. mount the visible layer and wait for it to draw
+  //   5. fade back in
+  //   6. load the other layer later (timer or scroll)
+  // A theme change mid swap restarts toward the latest theme; leaving the phone
+  // layout or unmounting cancels it (swapRunRef).
   const failedRef = useRef(failed);
   failedRef.current = failed;
   const scene2FailedRef = useRef(scene2Failed);
@@ -469,8 +409,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const swapRunRef = useRef(0);
   const swappingRef = useRef(false);
 
-  // Sin estos refs en null el JS de la escena vieja (grafo, geometria,
-  // texturas decodificadas) sigue alcanzable y el GC no lo junta.
+  // Null these or the old scene's JS (graph, geometry, textures) stays reachable.
   const dropMobileScenes = () => {
     app1Ref.current = null;
     head1Ref.current = null;
@@ -492,8 +431,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         setSwapHidden(true);
         await waitMs(SWAP_FADE_MS);
         if (!alive()) return;
-        // Doble toque: el tema volvio al modelo montado durante el fundido.
-        // No hay nada que recargar, solo volver.
+        // Double tap: the theme went back to the mounted model during the fade.
         if (mobileModelRef.current === themeModel(darkModeRef.current)) {
           setSwapHidden(false);
           await waitMs(SWAP_FADE_MS);
@@ -502,9 +440,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
         const held = glCanvasRefs.current;
         const canvases = [held.slot1, held.slot2];
-        // Lo que el runtime de Spline retiene despues del dispose (bug suyo,
-        // ver lib/splineRelease.js): se toma ANTES de desmontar, cuando
-        // todavia se puede llegar desde la app.
+        // Capture before unmounting, while it is still reachable from the app.
         const leftovers = [app1Ref.current, app2Ref.current].map(captureScene);
         excludeShared(leftovers);
         window.__memProbeLog?.(
@@ -515,8 +451,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
               )
               .join(" ")
         );
-        // En null ANTES de desmontar: asi los efectos por slot de arriba no
-        // sueltan nada en la fase de mutacion, antes del dispose.
+        // Null before unmounting, so the per-slot effects release nothing before the
+        // dispose.
         held.slot1 = null;
         held.slot2 = null;
         clearSecondary();
@@ -529,14 +465,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         leftovers.forEach(releaseVideos);
         window.__memProbeLog?.(`swap: released, settle ${SWAP_SETTLE_MS}ms`);
         await waitMs(SWAP_SETTLE_MS);
-        // Vaciar las cascaras recien ahora, con el trabajo asincrono del
-        // runtime ya asentado. Aunque la secuencia se haya cortado.
+        // Empty the shells now that the runtime's async work has settled, even if the
+        // swap was cancelled.
         leftovers.forEach(scrubScene);
         if (!alive()) return;
 
-        // Primero la capa que se esta viendo: la 2 si su loop ya esta
-        // despierto (el visitante esta en el capitulo 2 o mas abajo), si no
-        // el hero. La otra, despues (loadSecondary).
+        // Visible layer first: layer 2 if its loop is awake (the visitor is in chapter
+        // 2 or below), otherwise the hero. The other one follows (loadSecondary).
         const l2First = awake2Ref.current;
         setMobileModel(themeModel(darkModeRef.current));
         window.__memProbeLog?.(`swap: primary ${l2First ? "l2" : "hero"}`);
@@ -559,7 +494,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     }
   };
 
-  // Montar una capa de celular y esperar a que dibuje (o falle, o venza).
+  // Mount a phone layer and wait for it to draw (or fail, or time out).
   const waitLoad = (ref) =>
     new Promise((resolve) => {
       ref.current = resolve;
@@ -578,9 +513,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     return drawn;
   };
 
-  // La capa diferida del ultimo cambio de tema: { layer, run }. La dispara el
-  // timer o el scroll (onUpdate del pin, via triggerSecondaryRef), lo que
-  // llegue primero; un cambio de tema nuevo la descarta.
+  // The deferred layer of the last swap: { layer, run }. Triggered by the timer or
+  // by the scroll (via triggerSecondaryRef), whichever comes first.
   const secondaryRef = useRef(null);
   const secondaryTimerRef = useRef(null);
   const clearSecondary = () => {
@@ -607,8 +541,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   useEffect(() => {
     const target = themeModel(darkMode);
     if (!isMobile) {
-      // Escritorio no usa mobileModel; se mantiene al dia para que entrar a
-      // celular monte directo el modelo del tema.
+      // Desktop doesn't use mobileModel; kept current so entering the phone layout
+      // mounts the right model.
       setMobileModel(target);
       setMobileHeroOn(true);
       setMobileL2On(true);
@@ -616,7 +550,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       return;
     }
     if (!swappingRef.current && mobileModelRef.current !== target) runMobileSwap();
-    // runMobileSwap lee todo por refs; lo unico que dispara es el tema.
+    // runMobileSwap reads everything through refs; only the theme triggers it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile, darkMode]);
 
@@ -635,66 +569,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   useLayoutEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
-    // middle ground: camera closer, robot vertically centered, little air above the head
-    // Back to the approved close-up. The wide full-body framing read as too
-    // distant. Note the overscale also keeps Spline's "Built with Spline"
-    // badge out of frame — it is drawn INSIDE the WebGL canvas, not the DOM,
-    // so CSS cannot reach it; anything at or below ~1.2 brings it into view.
-    // La MISMA regla de cintura que el capitulo 2, aplicada al hero. Medido en
-    // la apertura, antes de tocar nada:
-    //
-    //   celular     S 1.7  / y 11%    =>  L .729   la cintura esta en p .717:
-    //                                     se veian los montantes y el arranque
-    //                                     de la pelvis, unos 19px de 844
-    //   escritorio  S 1.78 / y 12.6%  =>  L .710   justo SOBRE la cintura
-    //                                     (p .709), y el float del idle mas el
-    //                                     parallax (13px juntos = .008 nativo)
-    //                                     lo empujan del otro lado
-    //
-    // Se corrige acercando, no bajando: subir la y sola habria abierto aire
-    // muerto arriba de la cabeza, que es lo que estos numeros venian de sacar.
-    // La corona queda donde estaba y el borde de abajo sube a L .675 / .680.
+    // Hero start scale. It also keeps Spline's in-canvas badge out of frame (it
+    // shows below ~1.2).
     const startScale = reduce ? 1 : isMobile ? 1.86 : 1.9;
-    // The head cleared the top of the viewport by ~78px at 2000x1014, which
-    // read as dead air. Measured off the silhouette, not the transform: -3.9%
-    // of the wrap height is ~39px, so the gap halves and the head still has
-    // room. The wall is inside the same scaled wrap (1.45 => 228px of bleed
-    // past each edge), so moving it up cannot expose an edge.
-    // Zooming in pushes the crown off the top: scaling about the centre moves
-    // a point at y40 to (40-507)*1.78/1.45+507 = -66 at 2000x1014. 66px of a
-    // 1014 frame is 6.5%, so the framing steps down by that much to put the
-    // head back where it was.
-    // A phone is a portrait frame, so scene 1 is composed as a portrait: head
-    // and shoulders, big and centred, with the headline under it — rather
-    // than a mid-torso crop that reads as neither close nor wide. Derived the
-    // same way as the story beat: the head occupies native fraction
-    // p 0.154..0.33, and putting its midpoint at 34% of an 844 frame at
-    // scale 2.15 solves to y 40%.
-    // Acercar sube la corona fuera de cuadro, asi que la y compensa. Un punto
-    // a la fraccion nativa p cae en (p*H - H/2)*S + H/2 + Y*H; con la corona
-    // en p .154 sobre 844, sostenerla a y 21 con S 2.3 despeja Y = 32%.
-    // ESCRITORIO: la corona a HERO_CROWN_TOP px del borde superior, en
-    // cualquier alto de ventana.
-    //
-    // La y NO puede pasar de ~39%: el canvas y la pared van escalados 1.9x
-    // alrededor del centro, asi que su borde superior cae en (y - 45%) * alto.
-    // Con y 48% (b0cebdf) quedaba +27px ADENTRO del cuadro: la corona salia
-    // cortada en ese borde y arriba asomaba el fondo -- la franja negra. Y el
-    // tiron del drain (scale x.96, +1.3%) pide y <= 39.9% para no destaparlo.
-    // Por eso el robot se baja con la CAMARA (HERO_CAM_DESKTOP.y), y la y solo
-    // hace el ajuste fino por alto de ventana alrededor de 38%, con tope 39%.
-    // Con el wrap sin traslado (ver VIEW_CSS_SCALE), la y es un paneo de camara
-    // y ya no tiene tope. HERO_CROWN_FRAC_AT_BASE sale de medir: con la camara
-    // en 178.2 y el paneo en 38%, la corona con el cursor al centro cae al
-    // 5.0% del alto.
-    //
-    // La cabeza sigue al mouse y eso mueve la corona. En reposo (antes del
-    // primer movimiento: cabeza derecha) queda ~23px MAS ARRIBA que mirando al
-    // cursor centrado; con el cursor abajo, ~20px mas arriba; con el cursor
-    // arriba, ~30px mas abajo. La distancia reposo -> centro escala con el
-    // alto (~3.1%: 21 / 26 / 33px a 720 / 900 / 1080), asi que el objetivo
-    // al centro es 16px + 3.1% del alto: el reposo -- lo primero que se ve --
-    // conserva ~16px en cualquier ventana, y al centro da ~38 / 44 / 50px.
+    // Desktop hero: the crown sits HERO_CROWN_TOP px from the top at any window
+    // height. The head follows the cursor and moves the crown; 16px + 3.1% of the
+    // height leaves ~16px with the head at rest. The y is a camera pan;
+    // HERO_CROWN_FRAC_AT_BASE is the crown's measured position at a 38% pan.
     const HERO_Y_BASE = 38;
     const HERO_CROWN_FRAC_AT_BASE = 0.05;
     const heroVH = window.innerHeight || 900;
@@ -702,123 +583,47 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     const heroY = HERO_Y_BASE + (HERO_CROWN_TOP / heroVH - HERO_CROWN_FRAC_AT_BASE) * 100;
     const startY = reduce ? "2%" : isMobile ? "16.5%" : `${heroY}%`;
     const endY = reduce ? "3%" : isMobile ? "17.9%" : `${heroY + 1.3}%`;
-    // Centrado sobre la silueta: el rig (BOT_HOME.x) deja la cabeza a la
-    // izquierda de la camara, y en pantalla eso escala con el alto -- y con
-    // la cercania de la camara. Se compensa en el x del hero; celular no.
+    // The rig leaves the head left of the camera axis, an offset that scales with
+    // the window height. Desktop hero only.
     const heroDx = 0.0148 * heroVH;
-    // phase 2 (story): extreme close-up — head + upper chest fill the frame;
-    // mobile sits higher/smaller so the story paragraphs fit below the head
-    // The robot is NOT centred inside the Spline scene: its body sits about
-    // 180px (unscaled) right of the canvas centre, so x:0 centres the CANVAS,
-    // not the robot. Measured off the rendered silhouette at two scales
-    // (+258px at 1.35, +208px at 1.15 => ~180px unscaled), not off the
-    // transform. Every framing below is expressed as the visual offset of the
-    // BODY from the viewport centre; fx() converts it into the transform.
-    // ROBOT_DX is a property of the MODEL in slot 2, not of the slot. Measured
-    // off the rendered silhouette's centroid at 2000px, default camera:
-    //   scene 2's robot  +177.8px  (the calibrated 180 below)
-    //   scene 1's robot    -6.5px  (centred — it is a different model)
-    // So when dark mode puts scene 1's robot in slot 2, the correction has to
-    // go to ~0 or every framing lands 180px off.
-    // Zero now, in both themes: placeBot() centres the rig in SCENE units, so
-    // there is nothing left for CSS to compensate and nothing that drifts with
-    // viewport width. Kept as a named constant because every framing below is
-    // still expressed as "where the BODY goes", not where the canvas goes.
+    // Framings are written as the body's visual offset from the viewport centre;
+    // fx() turns that into the transform. ROBOT_DX is 0 now that placeBot()
+    // centres the rig in scene units.
     const ROBOT_DX = 0;
     const ROBOT_DX_1 = 0;
     const VW = window.innerWidth || 2000;
     const fx = (visualPx, scale) => `${((visualPx - ROBOT_DX * scale) / VW) * 100}%`;
     const fx1 = (visualPx, scale) => `${((visualPx - ROBOT_DX_1 * scale) / VW) * 100}%`;
 
-    // El ritmo no cambia: siempre algo de retroceso entre pasos, y un cierre
-    // que vuelve a acercarse en vez de seguir abriendo. Lo que cambia es el
-    // rango, y quien lo fija.
-    //
-    //   escritorio  4.0 -> 2.75 -> 2.15 -> 1.835 -> 2.03
-    //   celular     1.833 -> 1.667 -> 1.5 -> 1.333 -> 1.167 -> 1.333
-    //
-    // Los numeros del celular son MAS CHICOS que los de antes (2.2 .. 1.4) y
-    // sin embargo el robot se ve mas grande: el tamano ahora sale del rig, y
-    // el scale del canvas solo recorta. Bajarlo es justamente lo que se
-    // buscaba -- ver botRig mas abajo.
-    //
-    // ---- donde corta el cuadro -------------------------------------------
-    // Cada paso se eligio por su L: la fraccion NATIVA del canvas que queda
-    // sobre el borde INFERIOR del cuadro, L = 0.5 + (0.5 - Y) / S. Medida, no
-    // estimada: con el wrap en scale(1) se fotografia la silueta y se leen los
-    // puntos del cuerpo directo del perfil de anchos por fila.
-    //
-    //   escritorio, rig s .8      celular, rig s 1.2 (ver botRig)
-    //   corona     p .138         corona   p .05
-    //   CINTURA    p .709         CINTURA  p .936
-    //   pelvis     p .73 - .79    badge de Spline  p .92+
-    //   piernas    p .80+
-    //
-    // La regla es una sola y vale para los dos anchos: L por ENCIMA de la
-    // cintura en TODOS los pasos, y tambien en la interpolacion entre pasos
-    // -- applyPull mezcla scale/x/y linealmente y L no es lineal en esa
-    // mezcla, asi que los intermedios se verificaron aparte.
+    // Chapter 2 framings. Each beat is chosen by L = 0.5 + (0.5 - y) / S, the
+    // native canvas fraction at the frame's bottom edge, which must stay above the
+    // waist (desktop p .709) on every beat and in between. The scale steps back
+    // between beats and comes in again for the close. On phones the robot's size
+    // comes from the rig (botRig); the canvas scale only crops.
     const c2pre = isMobile
       ? { scale: 1.833, x: "0%", y: "35.0%", rx: 13.3 }   // L .582
       : { scale: 3.0, x: fx(0, 3.0), y: "53%" };          // L .490
-    // STEP 1 (story) — closest, and centred. The text sits to the right.
-    // STEP 1 (story) — a tight head shot, so the difference between the two
-    // robots reads at a glance instead of being a detail on a torso.
-    //
-    // Solved from the projection, not guessed. A point at native-canvas
-    // fraction p lands at (p*H - H/2)*S + H/2 + Y*H. At the old 2.8/47% the
-    // crown sat on the top edge and the chin at ~500, which puts the head at
-    // p 0.154..0.33 — 178px of native render. Filling ~70% of a 1014 frame
-    // needs S = 710/178 ≈ 4.0, and centring the head's midpoint (p 0.242)
-    // then solves to Y = 103%. It steps left so the story column stays clear.
+    // Story: a tight head shot (the head fills ~70% of the height), stepped left
+    // to clear the text.
     const c2close = isMobile
       ? { scale: 1.667, x: "0%", y: "27.5%", rx: 14.6 }   // L .635
       : { scale: 4.0, x: fx(-350, 4.0), y: "103%" };      // L .368
-    // STEP 2 (card 01, at the LEFT) — the body now sits OPPOSITE its card
-    // instead of leaning into it. Leaning left put the figure and the card on
-    // the same side and vacated the whole right half; that read as
-    // atmospheric when the ground was black, but on white it is just a hole.
-    // Card left + body right balances the frame and gives the connector a
-    // span to cross.
+    // Card 01 (left): the body sits opposite its card to balance the frame.
     const c2s2 = isMobile
       ? { scale: 1.5, x: "0%", y: "20.0%", rx: -16.3 }    // L .700
       : { scale: 2.75, x: fx(150, 2.75), y: "49.1%" };   // L .503 — above the elbow
-    // STEP 3 (card 02, at the RIGHT) — leans right toward its card. -520 put
-    // the body hard against the left edge with a 285px void before the card;
-    // it still crops, just less.
+    // Card 02 (right): leans toward its card.
     const c2s3 = isMobile
       ? { scale: 1.333, x: "0%", y: "12.5%", rx: 18.3 }  // L .781
       : { scale: 2.15, x: fx(-200, 2.15), y: "28.3%" }; // L .601 — past the elbow
-    // STEP 4 (card 03) — the WIDEST beat of the sequence, so it is the one the
-    // cintura rule binds on. Escritorio venia en 1.65/11% => L .736, que cae
-    // JUSTO sobre la cintura (.709) y por eso se veia; 1.835/17.9% lo sube a
-    // L .675, un margen de .034 nativo = 62px de pantalla a 900 de alto, que
-    // aguanta el float del idle y el parallax (±13px juntos).
+    // Card 03: the widest beat, so the waist rule binds here.
     const c2far = isMobile
       ? { scale: 1.167, x: "0%", y: "5.0%", rx: -13.7 }   // L .885
-      : { scale: 1.835, x: fx(0, 1.835), y: "17.9%" };   // L .675 — sobre la cintura
-    // CLOSING — vuelve a acercarse, centrado. El comentario decia "comes back
-    // in slightly" pero el numero hacia lo contrario: 1.25 era el paso MAS
-    // abierto de toda la secuencia, mas que card 03, y a L .922 mostraba
-    // pelvis y medio muslo. Ahora el cierre es de verdad un regreso.
-    //
-    // Escritorio: 2.28, con la cabeza ENTERA y la corona justo debajo del
-    // titulo de la seccion ("System Features"), sin tocarlo. El titulo esta
-    // en px fijos (termina en 163px en cualquier alto) y el encuadre va en %,
-    // asi que la y se calcula con el alto de la ventana, igual que fx() usa el
-    // ancho: la corona (p .133, medida en este cuadro; la tabla dice .138 y
-    // quedaba 10px alta) cae 14px debajo del borde inferior del titulo,
-    // leido del DOM. A 900 da y 52.2%; a 720, 57.1%; a 1080, 48.9%.
-    //
-    // A esta cercania el antebrazo (py 56.7) y el centro del pecho (54.1)
-    // quedan debajo del cuadro, asi que en el cierre las tarjetas 02 y 03 se
-    // anclan mas arriba en la misma parte del cuerpo -- brazo alto y pecho
-    // alto, ver closeAnchors -- y los puntos se deslizan hasta ahi durante el
-    // acercamiento. El techo lo pone la ventana mas baja: a 720 el borde
-    // inferior cae en p .44, y los dos puntos nuevos estan en ~.39-.41.
-    //
-    // Cintura: L = .469 (720) / .490 (900) / .505 (1080), lejos de .709; de
-    // c2far a aca L baja monotono desde .675.
+      : { scale: 1.835, x: fx(0, 1.835), y: "17.9%" };   // L .675, above the waist
+    // Closing: comes back in. On desktop the whole head sits just under the
+    // "System Features" title, whose bottom edge is read from the DOM, so y
+    // depends on the window height. Cards 02 and 03 re-anchor higher on the same
+    // body parts (closeAnchors).
     const CROWN_P = 13.3;
     const headEl = featuresHeaderRef.current;
     const headBottomPx = headEl ? headEl.offsetTop + headEl.offsetHeight : 163;
@@ -826,14 +631,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     const crownAtPct = ((headBottomPx + 14) / VH) * 100;
     const endScale = 2.28;
     const closeY = crownAtPct - 50 - (CROWN_P - 50) * endScale;
-    // Centrado horizontal, medido sobre la silueta del casco y no sobre el
-    // transform. x 0 centra el canvas, y el rig no deja el cuerpo en el eje:
-    // BOT_HOME.x (-2.755) con la camara en x 0 deja la cabeza a la izquierda,
-    // igual en los dos modelos. Como es un corrimiento en el MUNDO, en pantalla
-    // escala con el alto: -11.4 / -14.2 / -16.9px a 720 / 900 / 1080, un
-    // 1.58% del alto constante. Se compensa solo en este paso -- mover
-    // bot.position.x correria el cuerpo en todos los beats y descalibraria
-    // las anclas --, y los puntos lo siguen por la proyeccion.
+    // The rig leaves the head left of the camera axis, an offset that scales with
+    // the window height. Compensated on the closing beat only, so the anchors stay
+    // calibrated everywhere else.
     const closeDx = 0.0158 * VH;
     const c2end = isMobile
       ? { scale: 1.333, x: "0%", y: "12.5%", rx: -9.1 } // L .781
@@ -852,11 +652,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     };
 
 
-    // A phone has no pointer, so the parallax that gives the scenes their
-    // depth on desktop never fires there — which is why they felt flatter.
-    // Scroll is the only continuous input a phone has, so it drives the same
-    // two offsets instead: a slow sway across the pinned sequence. It writes
-    // the same refs as the mouse path and costs one assignment per tick.
+    // Touch devices on the desktop layout (tablets) have no pointer, so the scroll
+    // drives the parallax offsets instead.
     const touchParallax = (p) => {
       if (reduce || isMobile || !parallax1Ref.current) return;
       const sway = Math.sin(p * Math.PI * 2.2);
@@ -865,12 +662,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       if (parallax2Ref.current) gsap.set(parallax2Ref.current, { x: sway * -16, y: rise * 10 });
     };
 
-    // mouse parallax on scene 1 only (outside gsap.context to avoid TDZ on ctx).
-    // Escena 2 no escucha al cursor: el robot solo se mueve por la timeline y
-    // la cabeza solo mira la tarjeta activa. Su canvas ya es pointer-events-none
-    // (hereda de layer2Ref) y el runtime de Spline solo escucha pointermove
-    // sobre su propio canvas, asi que del lado de la escena no hay nada que
-    // apagar.
+    // Mouse parallax on scene 1 only (set up outside gsap.context). Scene 2 ignores
+    // the cursor: its canvas inherits pointer-events-none.
     let removeMouse = null;
     let removeResize = null;
     if (!reduce) {
@@ -887,8 +680,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       removeMouse = () => sectionRef.current?.removeEventListener("mousemove", onMouse);
     }
 
-    // En escritorio el encuadre del hero vive en este proxy y lo aplica la
-    // camara (ver applyView); el wrap queda fijo en VIEW_CSS_SCALE.
+    // Desktop hero framing lives in this proxy and the camera applies it (applyView).
     const heroView = { scale: startScale, x: fx1(heroDx, startScale), y: startY };
     const scene2View = { scale: 1, x: "0%", y: "0%" };
 
@@ -907,26 +699,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         );
         Object.assign(scene2View, { scale: c2close.scale, x: c2close.x, y: c2close.y });
       }
-      // The hero loads as white as CSS allows and only settles into the grey
-      // once the scroll starts. Two of the three greys are ours: the wall is
-      // #EDEDED (237) and the edge vignette is on at full strength from the
-      // first paint. The third is not — the Spline canvas composites with
-      // mix-blend-multiply over its own light-grey backdrop, which costs a
-      // flat ~27 levels everywhere and cannot come off without losing the
-      // occlusion that makes the robot read against the wall.
-      // ---- tone ------------------------------------------------------------
-      // Dark mode runs the same sequence against the opposite tone. The two
-      // models trade slots (see slot1Url/slot2Url), so the robot you see is
-      // always the real material — silver opening on black, black closing on
-      // white — never a negative of the other one.
-      // tone ya no existe: el fondo, la pared, el drain y el lift salen de
-      // variables CSS del tema de la pagina, y el rail se atenua por opacidad
-      // en vez de por color. Nada de esto depende de darkMode, que es lo que
-      // permite sacar el tema de las dependencias del efecto y no reconstruir
-      // la timeline -- ni los contextos WebGL -- al cambiarlo.
+      // Initial state. Colours come from page-theme CSS variables, so nothing here
+      // depends on the theme.
 
-      // The backdrop scene 2 composites against — its canvas is transparent, so
-      // this is the colour the robot is actually seen on.
+      // Vignette tint.
       vignetteRef.current.style.setProperty("--vignette", "0 0 0");
 
       gsap.set(wallTopRef.current, { opacity: 0 });
@@ -942,21 +718,15 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       gsap.set(overlayRef.current, { opacity: 0 });
       storyRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 28 }));
       gsap.set(storyTitleRef.current, { opacity: 0, y: 28 });
-      // The panel that carries the mobile backdrop fades as one with the text
-      // it sits behind; without this its translucent ground is painted over
-      // the robot from the first frame.
+      // The story panel fades with its text; otherwise its translucent ground would
+      // cover the robot from the first frame.
       gsap.set(storyPanelRef.current, { opacity: 0 });
       calloutRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0, y: 36 }));
       lineRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0 }));
       dotRefs.current.forEach((el) => el && gsap.set(el, { opacity: 0 }));
 
-      // continuous idle motion: slow float (~6s loop) + subtle tilt, both
-      // scenes. Desktop only — see the note on touchParallax above.
-      // Amplitudes are CSS px INSIDE the wrap, so on screen they are x1.3
-      // (VIEW_CSS_SCALE). Before, they rode each beat's whole CSS zoom -- x1.9
-      // in the hero, up to x4 in the story beat -- and read as floating: y
-      // +-5.7px in the hero, up to +-12px in scene 2. Now y +-1.6px and x
-      // +-2.1px on screen: still alive, no longer noticeable as motion.
+      // Idle float and tilt, desktop only. Amplitudes are px inside the 1.3x wrap:
+      // alive without reading as floating.
       if (!reduce && !isMobile) {
         [idle1Ref.current, idle2Ref.current].forEach((el) => {
           if (!el) return;
@@ -964,9 +734,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           gsap.to(el, { y: 1.2, duration: 5, yoyo: true, repeat: -1, ease: "sine.inOut" });
           gsap.to(el, { rotation: 0.08, duration: 6.3, yoyo: true, repeat: -1, ease: "sine.inOut" });
         });
-        // A slow lateral drift and a shallow breath on scene 1. Both are
-        // transform-only and run on periods that do not divide into the float
-        // above, so the motion never settles into an obvious loop.
+        // A slow lateral drift and breath on scene 1, on periods that don't divide the
+        // float's, so the motion never settles into a visible loop.
         if (idle1Ref.current) {
           gsap.fromTo(
             idle1Ref.current,
@@ -981,7 +750,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         }
       }
 
-      // tonal drain proxy: light drains out of scene 1, no shapes
+      // Tonal drain: light drains out of scene 1.
       const drain = { t: 0 };
       const applyDrain = () => {
         canvasWrapRef.current.style.setProperty("--drain-t", drain.t);
@@ -997,30 +766,13 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // against whatever scale/offset that lands on, never against the final one.
       const lerp = (a, b, t) => a + (b - a) * t;
 
-      // Anchors in the robot's OWN space (percent of the untransformed layer).
-      // Re-derived by inverting the projection below against the closing
-      // framing (scale 1.5, x -13.5%, y 8%) with the body parts measured off
-      // the bare silhouette, because the previous set was authored for a
-      // framing that no longer exists: "head" landed on the chest, "hands" on
-      // the lower torso and "torso" below the robot entirely.
-      //
-      // The literal hands sit at py ~77.7. At card 02's scale of 2.0 that
-      // projects to y ~128% — 288px BELOW the viewport — so card 02 anchors
-      // to the forearm instead, which is the nearest point on the same limb
-      // that stays on screen at every beat it appears in.
-      // The anchor percentages below were calibrated against scene 2's robot,
-      // whose body centre sits ROBOT_DX right of the layer centre. Swapping the
-      // model moves that centre, so every anchor shifts by the same delta
-      // expressed in layer percent. In white mode this evaluates to 0 and the
-      // calibrated numbers are used untouched.
-      // -9 = 180px at the 2000px reference the anchors were calibrated on.
-      // Constant, not VW-derived: the body no longer moves with viewport width.
+      // Anchors in the robot's own space (% of the untransformed layer), measured off
+      // the silhouette at the closing framing. Card 02 anchors to the forearm: the
+      // hand falls below the frame at its scale. anchorShift moves anchors measured
+      // with the body 180px right of centre onto the now-centred rig.
       const anchorShift = -9;
-      // Closing beat, desktop only: the close-up puts the forearm and the chest
-      // plate below the frame, so cards 02 and 03 move up the SAME body part --
-      // upper arm, upper chest -- and the dots glide there during the move in.
-      // Read off the closing frame at 2.28 (1440x900): upper arm at screen
-      // (1065, 470), upper chest at (703, 500).
+      // Closing beat (desktop): the forearm and chest plate fall below the frame, so
+      // cards 02 and 03 move up the same body parts and their dots glide there.
       const closeAnchors = isMobile
         ? []
         : [
@@ -1039,10 +791,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         fromY: 0,
       }));
 
-      // Where each connector starts, in % of the layer: `lineFrom` (a fraction
-      // of the card) placed on the card's own box. The cards scale with the
-      // window, so a fixed point on the screen used to fall outside them on
-      // wide screens. offsetLeft/Top ignore the y GSAP animates on the cards.
+      // Where each connector starts, in % of the layer: `lineFrom` placed on the
+      // card's own box (cards scale with the window). offsetLeft/Top ignore the y
+      // GSAP animates on the cards.
       const measureLineOrigins = () => {
         calloutRefs.current.forEach((card, i) => {
           const layer = card?.offsetParent;
@@ -1061,7 +812,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       const draw = systemFeatures.map(() => ({ p: 0 }));
 
       const applyPull = () => {
-        // interpolate between the two framings `body.t` currently sits between
+        // Interpolate between the two framings `body.t` sits between.
         const i = Math.min(Math.floor(body.t), BODY_STEPS.length - 2);
         const f = Math.min(Math.max(body.t - i, 0), 1);
         const A = BODY_STEPS[i], B = BODY_STEPS[i + 1];
@@ -1075,30 +826,19 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           scene2View.x = `${tx}%`;
           scene2View.y = `${ty}%`;
         }
-        // El corrimiento lateral del celular va en el RIG, no en el transform.
-        // Con el canvas cerca de scale 1 un x en CSS lo corre hasta destapar
-        // su propio borde -- deja de cubrir el cuadro y aparece una franja
-        // transparente del lado contrario. El limite es |x| <= (S-1)/2, y a
-        // S 1.167 eso da 8%: menos que el 14% que el paso necesita. En el rig
-        // el canvas no se mueve y el limite desaparece.
-        //
-        // Las amplitudes bajaron a ~0.6 de las viejas: el mismo corrimiento en
-        // pixeles que servia con el robot chico lo saca de cuadro ahora que es
-        // un 30% mas grande. Se conserva el LADO de cada paso -- derecha,
-        // derecha, izquierda, derecha, izquierda, izquierda -- que es lo que
-        // da el vaiven entre tarjetas. En escritorio no hay rx y esto no corre.
+        // Phones shift the body through the rig (rx), not the canvas: near scale 1 a CSS
+        // x would uncover the canvas edge. Desktop beats have no rx.
         if (A.rx !== undefined && B.rx !== undefined) {
           botRig.x = BOT_HOME.x + lerp(A.rx, B.rx, f);
         }
 
-        // vector-effect="non-scaling-stroke" makes stroke-dasharray screen-space,
-        // so the connector length must be measured in px, not in viewBox units
+        // Non-scaling strokes make the connector length screen-space, so it is
+        // measured in px, not viewBox units.
         const W = sectionRef.current ? sectionRef.current.clientWidth : 1;
         const H = sectionRef.current ? sectionRef.current.clientHeight : 1;
 
-        // re-project every anchor against the live transform
-        // 0 through card 03's beat, 1 at the closing framing, and the glide in
-        // between follows the same move the body is making.
+        // Re-project each anchor against the live transform. kClose glides the closing
+        // anchors in with the body's last move.
         const kClose = i === BODY_STEPS.length - 2 ? f : 0;
         anchors.forEach((a, i) => {
           const apx = a.close ? lerp(a.px, a.close.px, kClose) : a.px;
@@ -1107,9 +847,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           const y = 50 + (apy - 50) * sc + ty;
           const line = lineRefs.current[i];
           if (line) {
-            // dashed connector that grows from the card toward the body part:
-            // the endpoint itself is interpolated, so the dash pattern stays put
-            // instead of marching. Reversing draw[i].p erases it the same way.
+            // The line grows by moving its endpoint, so the stroke never marches;
+            // reversing draw[i].p erases it the same way.
             const ex = lerp(a.fromX, x, draw[i].p);
             const ey = lerp(a.fromY, y, draw[i].p);
             line.setAttribute("x2", ex);
@@ -1147,28 +886,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           head.rotation.y = cur.y;
         });
       };
-      // The feet are not in the render at the rig's default scale — the
-      // camera crops at 3/4 and nothing in CSS can recover what was never
-      // drawn. The only way to end on them is to shrink the object and lift
-      // it, so the whole figure fits inside the frame the camera does draw.
-      //
-      // Solved, with the badge as the binding constraint. In native canvas px
-      // at 1014 tall: feet = 812.3 + 875*s - 2.5*(y - 25.68), head is the
-      // same with the sign flipped. Leaving a quarter of the canvas empty
-      // below the feet is what keeps Spline's badge off screen once the
-      // framing pans down, and that lands on s .40 / y 186.
-      // CELULAR: el acercamiento sale del RIG, no de un transform sobre el
-      // canvas. El runtime dimensiona el buffer con devicePixelRatio *
-      // clientWidth y no ve los transforms, asi que subir el scale del canvas
-      // agranda pixeles ya renderizados; agrandar el rig los RINDE. Medido en
-      // un iPhone de 390x844 a DPR 2: el buffer es 780x1688 en los dos casos,
-      // pero con rig 1.2 el cuerpo ocupa un 50% mas de ese buffer.
-      //
-      // La y baja con el rig a proposito. El rig escala alrededor de su origen
-      // -- la cadera -- asi que agrandarlo solo empuja la corona fuera del
-      // canvas por arriba; -83.56 la devuelve a p .05, y de paso manda la
-      // CINTURA a p .936, donde ningun encuadre de la secuencia llega. No es
-      // que los pasos la eviten: a este rig no se puede mostrar.
+      // Rig scale and height per layout. Phones zoom through the rig, not the canvas:
+      // the runtime sizes its buffer from the layout box, so a bigger rig renders
+      // more pixels instead of stretching them. The rig scales about the hip, so its
+      // y comes down to keep the crown in frame (and the waist out of reach).
       const botRig = isMobile
         ? { s: 1.2, x: BOT_HOME.x, y: -83.56 }
         : { s: 0.8, x: BOT_HOME.x, y: BOT_HOME.y };
@@ -1184,25 +905,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         });
       };
 
-      // Scene 1's head has no choreography of its own — the directed gaze
-      // only ever drove slot 2 — so it just stared straight ahead. It now
-      // holds a default direction and wanders a little around it, always
-      // easing back: right in white mode, left in dark, so the figure is
-      // turned toward the side its own theme opens on.
-      //
-      // Two sine terms on periods that do not divide into each other, so the
-      // drift never settles into a visible loop, and a 0.05 ease so it always
-      // returns rather than snapping.
+      // Phone hero head: holds its default direction and wanders around it (two sines
+      // on periods that don't divide each other, eased back).
       const HEAD1_BASE = head1BaseRef.current;
       const head1 = { x: HEAD1_BASE.x, y: HEAD1_BASE.y };
       let head1T = 0;
-      // ESCRITORIO: la cabeza sigue al mouse, escrita por nosotros en las DOS
-      // escenas de la capa A. El look-at propio de la escena solo recibe los
-      // eventos del canvas visible, asi que el oculto quedaba con la cabeza en
-      // otra pose y el cambio de tema la hacia saltar. Mismo rango que el
-      // look-at, medido: yaw -0.27 / +0.30 con el cursor a izquierda /
-      // derecha; pitch -0.02 arriba, 0.087 al centro, 0.30 abajo. Sin cursor
-      // todavia, la pose es la del centro.
+      // Desktop: both layer A heads follow the mouse, written by us. Spline's own
+      // look-at only hears the visible canvas, so the hidden head drifted. Same range
+      // as the look-at; centre pose until the cursor moves.
       const headD = { x: 0.087, y: 0 };
       const applyHeadDesktop = () => {
         const m = mouseNRef.current;
@@ -1221,7 +931,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           applyHeadDesktop();
           return;
         }
-        // En celular la capa A tiene un solo montaje, el del tema.
+        // Phones mount a single model in layer A.
         const h = head1Ref.current;
         if (!h) return;
         head1T += 0.004;
@@ -1236,8 +946,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       // The pose normaliser rides the gaze ticker rather than adding its own.
       const applyGazeAndPose = () => {
         applyGaze();
-        // Celular: en claro los brazos del hero, en oscuro los de la capa 2 --
-        // lo mismo que cuando el hero claro era el montaje alterno.
+        // Phones: the hero's arms in light, layer 2's in dark.
         if (isMobile) {
           const arms = !darkModeRef.current ? heroArmsRef.current : armsRef.current;
           if (arms.length) applyPose(arms);
@@ -1255,13 +964,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       applyGazeRef.current = applyGazeAndPose;
       gsap.ticker.add(applyGazeAndPose);
 
-      // Where layer 2 fades in, in timeline seconds. Scene 2 wakes a little
-      // before it (at 60% of the way there, in scroll progress) so its loop
-      // has been drawing the framed robot for a while by the time it shows.
+      // Where layer 2 fades in, in timeline seconds. Scene 2 wakes a little earlier
+      // (60% of the way there) so it has drawn the framed robot by the time it shows.
       const XFADE_AT = 0.5;
       const tl = gsap.timeline({
         defaults: { ease: "none" },
-        // keeps dots/lines glued to the robot while it is still moving
+        // Keeps dots and lines on the robot while it moves.
         onUpdate: applyPull,
         scrollTrigger: {
           trigger: sectionRef.current,
@@ -1274,9 +982,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             const p = self.progress;
             if (isTouchDevice && !isMobile) touchParallax(p);
             const wake2 = p > (XFADE_AT / tl.duration()) * 0.6;
-            // Celular, despues de un cambio de tema: la capa diferida carga
-            // antes del timer si el scroll va hacia ella -- la 2 a un 30% del
-            // camino al crossfade, el hero al volver cerca de el.
+            // Phones, after a swap: the deferred layer loads early when the scroll heads
+            // toward it.
             const pending = secondaryRef.current;
             if (pending) {
               const xf = XFADE_AT / tl.duration();
@@ -1296,16 +1003,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             }
             if (p > 0.45 && !stopped1Ref.current) {
               stopped1Ref.current = true;
-              // Los dos montajes de la capa A (escritorio), no solo el de
-              // slot1: el alterno oculto tambien tiene su loop.
+              // Both desktop layer A mounts, including the hidden one.
               try { app1Ref.current?.stop(); } catch (e) { /* runtime without stop() */ }
               try { appAltRef.current?.stop(); } catch (e) { /* runtime without stop() */ }
             }
-            // Latches once and never unlatches: the dock and the calls to
-            // action appear when the sequence has been seen, and stay put.
-            // Scrolling back to the top must not hide them again, or the
-            // visitor has to sit through both scenes a second time to get
-            // the nav back.
+            // Latches once: the dock stays even if the visitor scrolls back up.
             if (p > 0.985 && !journeyRef.current) {
               journeyRef.current = true;
               setJourneyDone(true);
@@ -1342,13 +1044,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         0.1
       );
 
-      // PHASE 2: crossfade in darkness — chrome robot rises in EXTREME CLOSE-UP
+      // Phase 2: crossfade to chapter 2; the robot rises in close-up.
       tl.to(splineLayerRef.current, { opacity: 0, duration: 0.12 }, XFADE_AT);
       tl.to(layer2Ref.current, { opacity: 1, duration: 0.12 }, XFADE_AT);
       tl.to(lift, { t: 1, duration: 0.16, onUpdate: applyLift }, XFADE_AT);
 
-      // story paragraphs fade in one after another during the close-up hold
-      // (long scroll lock: only the tiny idle breathing moves the robot here)
+      // Story paragraphs fade in one after another during the close-up hold.
       tl.to(storyPanelRef.current, { opacity: 1, duration: 0.07, ease: "power1.out" }, 0.54);
       tl.to(storyTitleRef.current, { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.56);
       if (storyRefs.current[0])
@@ -1356,13 +1057,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       if (storyRefs.current[1])
         tl.to(storyRefs.current[1], { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.78);
 
-      // PHASE 3 — the robot is ALREADY moving when the crossfade reveals it,
-      // then four evenly spaced steps and a closing beat. Each card gets the
-      // same slice of scroll so none of them feels rushed against the others.
+      // Phase 3: the robot is already moving when revealed, then four evenly spaced
+      // steps and a closing beat.
       const storyEls = storyRefs.current.filter(Boolean);
 
-      // ENTRY: starts at 0.40, under the crossfade (0.50), so the scene is
-      // never revealed frozen. One continuous eased move into the story framing.
+      // Entry starts at 0.40, under the crossfade (0.50), so the scene is never
+      // revealed frozen.
       tl.to(body, { t: 1, duration: 0.38, ease: "power2.out" }, 0.40);
       tl.to(gaze, { ...GAZE.text, duration: 0.10, ease: "power2.out" }, 0.46);
 
@@ -1379,11 +1079,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       systemFeatures.forEach((f, i) => {
         const at = STEP_AT[i];
         const cardAt = CARD_IN[i];
-        // head turns FIRST, and holds there for the whole step
+        // The head turns first and holds for the whole step.
         tl.to(gaze, { ...POSES[i], duration: 0.14, ease: "power2.inOut" }, at);
         tl.to(body, { t: i + 2, duration: 0.30, ease: "power1.inOut" }, at + 0.06);
 
-        // the previous card and its connector are erased with the same motion
+        // The previous card and its connector leave with the same motion.
         if (i > 0) {
           tl.to(dotRefs.current[i - 1], { opacity: 0, duration: 0.04 }, at);
           tl.to(draw[i - 1], { p: 0, duration: 0.12, ease: "power1.inOut" }, at);
@@ -1398,26 +1098,20 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         tl.to(railRefs.current[i], { opacity: 1, duration: 0.05 }, cardAt);
       });
 
-      // CELULAR: las tarjetas van ancladas a 6rem del borde inferior y ocupan
-      // todo el ancho, justo donde vive "Skip intro". No hay otro lugar libre
-      // toda la secuencia: arriba choca con el titulo del story a 375, y abajo
-      // de las tarjetas es la franja que tapa la barra del navegador en una
-      // seccion de 100vh (por eso el boton subio a 6rem en 684c0df). Asi que
-      // se apaga mientras hay una tarjeta en pantalla: termina de irse cuando
-      // la tarjeta empieza a entrar y vuelve recien cuando la anterior se fue.
-      // autoAlpha: apagado queda visibility:hidden, no atrapa toques.
+      // Phones: SKIP INTRO shares the cards' spot (nothing else is free through the
+      // whole sequence), so it hides while a card is on screen. autoAlpha also stops
+      // it catching taps.
       if (isMobile && skipRef.current) {
         CARD_IN.forEach((cardAt, i) => {
           tl.to(skipRef.current, { autoAlpha: 0, duration: 0.05 }, cardAt - 0.05);
-          // la tarjeta i se borra en STEP_AT[i + 1] + 0.02, en 0.10; la
-          // ultima se queda hasta el final de la secuencia
+          // Card i leaves at STEP_AT[i + 1]; the last one stays to the end.
           if (i < CARD_IN.length - 1)
             tl.to(skipRef.current, { autoAlpha: 1, duration: 0.04 }, STEP_AT[i + 1] + 0.12);
         });
       }
 
-      // CLOSING: robot centres in the viewport, the head turns front, and the
-      // three cards come back together with their three dashed connectors.
+      // Closing: the robot centres and the head turns front; on desktop all three
+      // cards come back with their connectors.
       const closeAt = isMobile ? 2.72 : 2.92;
       tl.to(body, { t: 5, duration: 0.30, ease: "power1.inOut" }, closeAt);
       tl.to(gaze, { ...(isMobile ? GAZE.closeMobile : GAZE.front), duration: 0.16, ease: "power2.inOut" }, closeAt);
@@ -1433,13 +1127,12 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
 
 
 
-      // hold before release. Short on a phone: there is no three-card payoff
-      // to read there, so a long one just feels like the page has jammed.
+      // Hold before release; short on phones, where there is no three-card close.
       tl.to({}, { duration: isMobile ? 0.12 : 0.45 });
 
       if (tl.scrollTrigger) heroEndRef.current = tl.scrollTrigger.end;
 
-      // first projection, so nothing is stale before the first scroll tick
+      // First projection, so nothing is stale before the first scroll tick.
       applyPull();
 
       // The cards resize with the window: re-measure where the lines start.
@@ -1461,12 +1154,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       }
     }, sectionRef);
 
-    // Put the visitor back where they were. refresh() first so the pin spacer
-    // has re-established the page height — without it the scroll target is
-    // still clamped to the collapsed document.
+    // Restore the visitor's position. refresh() first, so the pin spacer restores
+    // the page height before scrolling.
     let restoreRaf = null;
-    // La recarga del cambio de tema en celular trae su posicion como progreso
-    // del pin; se pasa a px con el pin recien armado. Una sola vez por carga.
+    // A phone theme reload brings its position as pin progress, converted to px
+    // once the pin exists, once per load.
     if (restoreScrollRef.current == null && !themeReloadUsed) {
       themeReloadUsed = true;
       if (pendingThemeReload) {
@@ -1478,9 +1170,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       const y = restoreScrollRef.current;
       restoreScrollRef.current = null;
       ScrollTrigger.refresh();
-      // Se insiste por rAF. Probe hacerlo sincrono y NO alcanza: el spacer
-      // del pin tarda en asentarse y una sola pasada deja la pagina en 132.
-      // Medido, sin el loop el desvio es permanente en vez de ~250ms.
+      // Retried via rAF: the pin spacer takes a few frames to settle and a single
+      // pass lands short.
       let tries = 0;
       const put = () => {
         if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true, force: true });
@@ -1489,23 +1180,15 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           restoreRaf = requestAnimationFrame(put);
           return;
         }
-        // Que el scrub no recorra la secuencia en pantalla hasta la posicion
-        // restaurada (como HOME, ver scrollToTop).
+        // Finish the scrub so the sequence doesn't play up to the restored position.
         ScrollTrigger.update();
         ScrollTrigger.getAll().forEach((st) => st.getTween()?.progress(1));
       };
       put();
     }
 
-    // Scene 1 was already stopped past 45% of the sequence, but scene 2 was
-    // never stopped at all: once the visitor scrolled past the hero into the
-    // text sections, a WebGL context went on rendering at full rate, off
-    // screen, for the rest of the session. That is the expensive thing here —
-    // not the cards, which are plain DOM.
-    //
-    // Both runtimes now idle whenever the hero is out of view. Coming back,
-    // scene 2 always resumes; scene 1 only if the sequence has not already
-    // parked it, so the two rules do not fight.
+    // Both runtimes idle while the hero is off screen. Coming back, scene 2 always
+    // resumes; scene 1 only if the sequence hasn't parked it.
     const heroVisibility = new IntersectionObserver(
       ([entry]) => {
         const visible = entry.isIntersecting;
@@ -1518,8 +1201,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                 .map((k) => l2Ref.current[k].app);
           if (visible) {
             l2Apps.forEach((a) => a?.play?.());
-            // El montaje alterno de la capa A sigue la misma regla que slot1:
-            // es la otra mitad del mismo capitulo, no una escena aparte.
+            // The alternate mount follows slot1's rule.
             if (!stopped1Ref.current) {
               app1Ref.current?.play?.();
               appAltRef.current?.play?.();
@@ -1545,8 +1227,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     return () => {
       restoreScrollRef.current = window.scrollY;
       if (restoreRaf) cancelAnimationFrame(restoreRaf);
-      // Never keep writing rotations into an Application that is being torn
-      // down: the ticker below is removed, but these refs outlive the effect.
+      // Stop writing rotations into apps being torn down: these refs outlive the
+      // effect.
       armsRef.current = [];
       heroArmsRef.current = [];
       botRef.current = null;
@@ -1559,17 +1241,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       gsap.ticker.remove(applyGazeRef.current);
       ctx.revert();
     };
-    // Depende de sceneUrl, NO de darkMode, y sceneUrl ya no cambia con el
-    // tema en ningun ancho: cambiarlo no reconstruye nada -- ni la timeline,
-    // ni el pin, ni los contextos WebGL.
+    // Depends on sceneUrl, not darkMode: a theme change rebuilds nothing.
   }, [isMobile, sceneUrl]);
 
-  // The hero is a fixed cinematic: it opens on a light wall and drains into
-  // darkness on its own schedule, identically in either page theme. The
-  // data-theme="dark" below is what keeps that true — every token inside
-  // resolves back to the value it had before the site became themeable
-  // (ink/65 -> #A6A6A6 over black, ink/[0.13] -> #222, surface -> #000), so the
-  // sequence is untouched while the page around it flips.
+  // The section is fixed to data-theme="dark", so its own tokens never change
+  // with the page theme; elements that follow the page set data-theme themselves.
   return (
     <section
       id="hero"
@@ -1578,16 +1254,14 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       data-theme="dark"
       className="relative h-screen min-h-[640px] w-full overflow-hidden bg-[rgb(var(--page-surface))]"
     >
-      {/* Layer A — live dark scene over the painted wall */}
+      {/* Layer A: the hero scene over the painted wall */}
       <div ref={splineLayerRef} className="absolute inset-0">
         <div
           ref={canvasWrapRef}
           data-testid="hero-canvas-zoom"
           className="hero-drain absolute inset-0 will-change-transform"
         >
-          {/* The wall sits OUTSIDE the drift wrappers on purpose: it is the
-              backdrop, not part of the scene, so the idle float and the mouse
-              parallax must not move it. Only the canvas should drift. */}
+          {/* The wall stays outside the drift wrappers: only the canvas drifts. */}
           <div ref={wallRef} className="absolute inset-0 bg-[rgb(var(--wall-a))]">
             <div
               ref={wallTopRef}
@@ -1602,12 +1276,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             >
               <div ref={parallax1Ref} className="absolute inset-0">
                 <div ref={idle1Ref} className="absolute inset-0">
-                  {/* ESCRITORIO: las dos escenas viven montadas a la vez y la
-                      visibilidad se decide por CLASE, no desmontando: las keys
-                      son fijas, asi que el toggle no remonta nada ni pide un
-                      contexto nuevo. CELULAR: un solo montaje, el del tema; el
-                      cambio de tema lo remonta en secuencia (runMobileSwap) y
-                      esta caja hace el fundido. */}
+                  {/* Desktop: both models stay mounted (fixed keys) and a class picks the visible
+                      one, so a toggle remounts nothing. Phones: one mount, the theme's; this box
+                      does the swap fade. */}
                   <div
                     ref={slot1BoxRef}
                     className={`absolute inset-0 ${
@@ -1632,10 +1303,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                             }
                       }
                     >
-                      {/* slot1 es el hero: la timeline, la vista y el loader
-                          cuelgan de el. Si no carga, el hero pasa al render
-                          estatico, como si hubiera vencido el watchdog. En
-                          celular no hay url en medio del cambio de tema. */}
+                      {/* slot1 is the hero: the timeline, view and loader depend on it. If it fails,
+                          the hero falls back to the static render. Null on phones mid swap. */}
                       {slot1Url && (
                         <SceneBoundary
                           key={slot1Url}
@@ -1664,9 +1333,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                           transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE_1})`,
                         }}
                       >
-                        {/* La capa A sigue teniendo la escena de slot1 abajo,
-                            asi que perder esta no deja el hero sin robot:
-                            showAlt se apaga y en claro se ve el plateado. */}
+                        {/* Losing this mount leaves slot1's robot: showAlt turns off and light mode
+                            shows the silver one. */}
                         <SceneBoundary key={HERO_ALT_URL} name="hero alt" onFail={() => markDead("alt")}>
                           <Spline scene={HERO_ALT_URL} onLoad={handleAltLoad} />
                         </SceneBoundary>
@@ -1693,27 +1361,21 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         </div>
       </div>
 
-      {/* soft black overlay deepening with the drain (scene 1 only) */}
+      {/* Overlay that deepens with the drain (scene 1 only) */}
       <div
         ref={overlayRef}
         className="pointer-events-none absolute inset-0 bg-[rgb(var(--page-surface))]"
       />
 
-      {/* Layer C — chrome scene, lazily mounted, rising out of darkness */}
+      {/* Layer C: the chapter 2 scene */}
       <div ref={layer2Ref} className="pointer-events-none absolute inset-0">
         <div ref={layer2InnerRef} className="hero-lift absolute inset-0">
-          {/* Same decoupling as scene 1: the glow and the fallback stay put
-              while only the canvas drifts. The blend wrapper keeps its place
-              inside layer2Inner (whose filter is the stacking context the
-              blend resolves against), with the drift transforms nested inside
-              it rather than wrapping the whole layer. */}
+          {/* Same decoupling as scene 1: only the canvas drifts. The drift transforms
+              nest inside the blend wrapper, which resolves against layer2Inner's filter. */}
           <div className="absolute left-1/2 top-1/2 h-[90vh] w-[90vh] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgb(var(--ink) / 0.07),transparent_62%)]" />
 
-          {/* Static render ONLY if the live scene fails. It used to stand in
-              while the scene was loading too, and that is what showed up in
-              the crossfade: a black, unframed robot cut at the hip, dimmed by
-              the lift filter into something that reads as a negative. While
-              loading, the layer shows its own darkness and nothing else. */}
+          {/* Fallback PNG only when the live scene fails; while loading, the layer
+              shows nothing. */}
           {scene2Failed && (
             <div className="absolute inset-0 flex items-center justify-center">
               <img
@@ -1767,8 +1429,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
                            transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE})`,
                          }}
                        >
-                         {/* Si falla uno, se ve el otro (ver l2VisibleUrl);
-                             si fallan los dos, el PNG. */}
+                         {/* If one model fails the other shows (l2VisibleUrl); if both fail, the PNG. */}
                          <SceneBoundary name={"layer 2 " + url} onFail={() => markDead("d:" + url)}>
                            <Spline scene={url} onLoad={onScene2Load("d:" + url)} />
                          </SceneBoundary>
@@ -1783,29 +1444,17 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         </div>
       </div>
 
-      {/* gentle edge vignette — faded in by the timeline, not on at load */}
+      {/* Edge vignette, faded in by the timeline */}
       <div
         ref={vignetteRef}
         data-testid="hero-vignette"
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgb(var(--vignette,0_0_0) / 0.55)_100%)]"
       />
 
-      {/* Layer C2 — the kinetic headline lives OUTSIDE the z-indexed UI layer on
-          purpose. Its mix-blend-difference must blend against the 3D scene below
-          (letters go dark over the light wall, white over the robot), and any
-          z-index on an ancestor would create a stacking context that isolates the
-          blend and flattens the text to plain white. DOM order already paints it
-          above the scenes. */}
-      {/* Features header (phase 3). Lives OUTSIDE the z-10 UI layer for the same
-          reason the kinetic headline does: mix-blend-difference has to blend
-          against the scene below it, and any z-index on an ancestor makes a
-          stacking context that isolates the blend and flattens the text to a
-          flat colour. DOM order already paints it above the scenes.
-
-          The blend is what makes it readable where it crosses the robot: the
-          letters go white over the dark body and dark over the light ground,
-          instead of matching whatever is behind them. The engraved shadow is
-          dropped here — its offsets blend too and come out muddy. */}
+      {/* The headline lives outside the z-indexed UI layer: its blend must resolve
+          against the scene, and a z-index on an ancestor would cut it off from it. */}
+      {/* Features header, outside the z-10 layer for the same reason: the difference
+          blend keeps it readable over both the body and the ground. */}
       <div
         ref={featuresHeaderRef}
         className="pointer-events-none absolute inset-x-0 top-8 hidden text-center mix-blend-difference sm:block sm:top-12"
@@ -1824,23 +1473,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         </p>
       </div>
 
-      {/* kinetic headline (phase 1) — sits just above the nav dock.
-
-          EL TRATAMIENTO LO DECIDE QUE ROBOT HAY DETRAS, no el breakpoint. Y
-          eso sale del tema en los dos anchos: claro carga el robot NEGRO
-          (escena 1) y oscuro el PLATEADO (escena 2), tanto en escritorio
-          -- donde la capa A monta las dos y el tema elige cual se ve -- como
-          en celular, donde se monta solo la del tema.
-
-          Sobre el NEGRO, difference funciona: el texto se invierte contra la
-          pared clara y queda blanco sobre el cuerpo, asi que cruza el borde
-          de la silueta sin perderse de ningun lado.
-
-          Sobre el PLATEADO no puede funcionar, y no es cuestion de ajustar el
-          valor: difference contra un gris medio DEVUELVE gris medio. El
-          subtitulo desaparecia entero y el medio del titular se lavaba, que
-          es justo donde cruza el torso. Ahi va blanco solido, sin blend y sin
-          sombras. */}
+      {/* Hero headline. Its treatment depends on the robot behind it, i.e. the theme.
+          Over the black robot, difference reads on both wall and body. Over the silver
+          one, difference returns mid-grey, so dark mode uses solid white. */}
       <div
         ref={headlineRef}
         className={`pointer-events-none absolute inset-x-0 bottom-44 text-center sm:bottom-44 ${
@@ -1877,16 +1512,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         </div>
       </div>
 
-      {/* Brand and status sit OUTSIDE the z-10 UI layer: a z-index on an
-          ancestor makes a stacking context that isolates any blend.
-
-          The brand takes the headline's treatment, decided by WHICH ROBOT is
-          behind, i.e. by the theme, at both widths. Light (black robot on
-          white): white ink with mix-blend-difference, so it goes black over
-          the wall and page and white over the body. Dark (silver robot on
-          black): solid white, no blend -- difference against mid-grey metal
-          returns mid-grey. No halo either way: the old one came from
-          data-theme="light" here resolving text-halo to a white glow. */}
+      {/* Brand and status sit outside the z-10 layer so their blend works. Light:
+          white with difference; dark: solid white (difference over mid-grey metal
+          returns mid-grey). */}
       <motion.div
         variants={uiFade} custom={0} initial="hidden"
         animate={revealed ? "show" : "hidden"}
@@ -1916,17 +1544,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
       </motion.div>
 
 
-      {/* Skip intro. Only before the sequence has been seen once — after
-          that the dock owns this spot and the visitor already has every
-          section a click away. Lands just past the pin rather than at a
-          section id, so the marquee is not skipped along with the hero.
-
-          Mismo criterio que el titular, y por el mismo motivo: cae sobre el
-          robot, y cual robot lo decide el tema en los dos anchos. Sobre el
-          NEGRO (claro) difference funciona; sobre el PLATEADO (oscuro) devuelve
-          gris medio y el boton se lava contra el torso. Ahi va blanco solido
-          -- solido de verdad, no el /70 de escritorio, que era la otra mitad
-          del lavado. */}
+      {/* Skip intro, until the sequence has been seen (then the dock takes over).
+          Lands just past the pin so the marquee isn't skipped. Same treatment as the
+          headline: difference over the black robot, solid white over the silver one. */}
       {!journeyDone && (
         <button
           ref={skipRef}
@@ -1937,8 +1557,8 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
             else window.scrollTo({ top: y + 4, behavior: "smooth" });
           }}
           className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] sm:bottom-10 ${
-            // en celular la opacidad la lleva la timeline (se apaga con las
-            // tarjetas): una transicion CSS la haria llegar 300ms tarde
+            // On phones the timeline drives its opacity (it hides with the cards); a CSS
+            // transition would lag behind it.
             isMobile ? "" : "transition-opacity duration-300"
           } ${
             isMobile || darkMode
@@ -1950,13 +1570,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         </button>
       )}
 
-      {/* Scroll cue. The hero IS the scroll — a visitor who lands, clicks a
-          project and leaves never sees either scene, so it has to say so. It
-          fades on the first beat, once the message has landed. Difference
-          blend for the same reason the headline uses one: it has to stay
-          legible over the wall, over the robot and in both themes. On a
-          phone it sits on the RIGHT: the robot is framed to the left there,
-          so that is the side with free wall. */}
+      {/* Scroll cue: the hero is the scroll, so say so. Fades on the first beat;
+          difference keeps it legible on the wall, on the robot and in both themes.
+          On phones it sits on the right, the side with free wall. */}
       <div
         ref={scrollCueRef}
         data-testid="scroll-cue"
@@ -1970,11 +1586,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
         </span>
       </div>
 
-      {/* Layer D — UI. The z-10 is what keeps the cards and the rail from
-          blending into the scene; the marks that DO need to blend (brand,
-          status, headline, features header, scroll cue) live outside it. */}
+      {/* Layer D: UI. z-10 keeps the cards and rail from blending; the marks that
+          must blend live outside it. */}
       <div className="pointer-events-none absolute inset-0 z-10">
-        {/* story paragraphs (phase 2) — beside the close-up robot, below it on mobile */}
+        {/* Story paragraphs (phase 2) */}
         <StoryPanel
           ref={storyPanelRef}
           titleRef={storyTitleRef}
@@ -1982,10 +1597,10 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           theme={ch2Theme}
         />
 
-        {/* connector lines + dots (desktop) */}
+        {/* Connector lines and dots (desktop) */}
         {!isMobile && <FeatureConnectors lineRefs={lineRefs} dotRefs={dotRefs} theme={ch2Theme} />}
 
-        {/* callout cards */}
+        {/* Feature cards */}
         {systemFeatures.map((f, i) => (
           <FeatureCard
             key={f.num}
@@ -1996,11 +1611,11 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           />
         ))}
 
-        {/* progress rail (desktop) */}
+        {/* Progress rail (desktop) */}
         {!isMobile && <FeaturesRail railRefs={railRefs} theme={ch2Theme} />}
       </div>
 
-      {/* Loader — dark, thin line, slow fill */}
+      {/* Loader */}
       <HeroLoader visible={!revealed} progress={progress} />
     </section>
   );

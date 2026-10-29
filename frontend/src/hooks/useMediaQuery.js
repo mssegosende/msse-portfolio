@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 
-/**
- * Whether a media query matches, kept live. Listens to the query's `change`
- * event (it only fires when the result flips), not to resize: a page that
- * loaded at phone width and was then widened must not keep the phone layout.
- */
+/** Live result of a media query, via its `change` event (fires only when the result flips). */
 export const useMediaQuery = (query) => {
   const [matches, setMatches] = useState(
     () => typeof window !== "undefined" && window.matchMedia(query).matches

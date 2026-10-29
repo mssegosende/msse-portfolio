@@ -1,28 +1,22 @@
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { MOBILE_LAYOUT_QUERY } from "./layout";
 
-// CELULAR: el cambio de tema RECARGA la pagina. En iPhone las escenas de Spline
-// descartadas no se liberan nunca (medido en produccion con ?debug=1: muere
-// en el segundo cambio, aun con 25s entre los dos y con 0 escenas vivas),
-// asi que cualquier cambio en el lugar junta basura hasta que iOS mata el
-// proceso. Recargar es lo unico que garantiza memoria limpia. Ver HANDOFF.
-//
-// El tema y la posicion viajan en sessionStorage, de un solo uso. La posicion
-// va como progreso del pin (o distancia pasado su final), no en px: el largo
-// del pin es +=780% del alto de ventana, y en iOS ese alto cambia con la
-// barra de URL entre una carga y la otra.
+// Phones change theme by reloading the page: iOS never frees discarded Spline
+// scenes, so swapping them in place leaks until the tab is killed. The theme
+// and scroll position ride along in sessionStorage, once. The position is
+// stored as pin progress, not px: the pin is 780% of the viewport height, and
+// on iOS that height differs between loads (URL bar).
 
 const KEY = "theme-reload";
 
-// Un pedido mas viejo que esto no es de esta recarga (p. ej. volver a abrir la
-// pestana mas tarde): se ignora.
+// An older entry is not from this reload (e.g. the tab reopened later).
 const MAX_AGE_MS = 30000;
 
-// El unico pin de la pagina es la secuencia de ScrollScene.
+// The only pin on the page is ScrollScene's sequence.
 const pinTrigger = () => ScrollTrigger.getAll().find((st) => st.pin);
 
-// Se lee UNA vez, al importar el modulo: StrictMode corre los inicializadores
-// dos veces y la segunda ya no encontraria la clave.
+// Read once at import: StrictMode runs initializers twice and the second
+// read would find the key already consumed.
 const take = () => {
   try {
     const raw = window.sessionStorage.getItem(KEY);
@@ -42,9 +36,8 @@ export const pendingThemeReload = typeof window !== "undefined" ? take() : null;
 export const themeNeedsReload = () =>
   typeof window !== "undefined" && window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
 
-// Guarda el tema nuevo y donde esta el visitante, y recarga. Si no hay
-// sessionStorage (modo privado viejo, bloqueado) devuelve false y el que
-// llama cambia el tema en el lugar, como antes.
+// Save the new theme and position, then reload. Returns false without
+// sessionStorage, and the caller switches the theme in place instead.
 export const reloadWithTheme = (theme) => {
   const y = window.scrollY;
   const st = pinTrigger();
@@ -63,7 +56,7 @@ export const reloadWithTheme = (theme) => {
   return true;
 };
 
-// La posicion guardada, en px de ESTA carga. Se llama con el pin ya armado.
+// The saved position in this load's px. Call once the pin exists.
 export const restoredScrollY = () => {
   const d = pendingThemeReload;
   if (!d) return null;

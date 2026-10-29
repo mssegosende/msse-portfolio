@@ -4,58 +4,40 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================================
-   THEME TOKENS
-
-   The palette is two colours and their alphas. `--ink` and
-   `--surface` are stored as space-separated RGB channels, not as
-   hex, so every translucent value in this file can be written
-   rgb(var(--ink) / 0.08) and invert with the theme for free —
-   that is what keeps ~40 hairline/grid/scanline alphas from
-   needing a hand-written counterpart per mode.
-
-   White is the default and lives on bare :root, so a page with no
-   data-theme attribute renders light. The dark mode overrides only
-   the channels; nothing else in the file is duplicated.
-   ============================================================ */
+/* Theme tokens. --ink and --surface are RGB channels, so any alpha can be
+   written rgb(var(--ink) / 0.08) and inverts with the theme. Light is the
+   default on bare :root; dark only overrides the channels. */
 @layer base {
     :root,
     [data-theme='light'] {
         --ink: 0 0 0;
         --surface: 255 255 255;
 
-        /* The engraved headline's mid-tone offset. It is not ink at an
-           alpha — it is a grey that sits a fixed distance from the
-           surface, so it needs its own value per theme. */
+        /* The engraved headline's mid-tone: a grey at a fixed distance from
+           the surface, not an alpha of ink. */
         --engrave-mid: 193 193 193;
     }
 
-    /* Deliberately not :root-only. The hero is a sequence that crosses from a
-       light wall into darkness on its own schedule, independent of the page
-       theme, so its dark chapter carries data-theme="dark" on the section
-       itself and everything inside it inverts by inheritance. Scoping the
-       tokens this way is what stops the hero's story text and cards from
-       coming out black-on-black in light mode. */
+    /* Not :root-only: the hero section carries data-theme="dark" itself, and
+       everything inside it inherits the dark tokens. */
     [data-theme='dark'] {
         --ink: 255 255 255;
         --surface: 0 0 0;
         --engrave-mid: 62 62 62;
     }
 
-    /* Variables del TEMA DE LA PAGINA. Van en :root y en :root[data-theme]
-       -- no en el selector generico [data-theme='dark'] -- para que el
-       data-theme="dark" fijo de la seccion del hero no las pise. Existen para
-       que la timeline no tenga que reconstruirse al cambiar de tema: los
-       colores viven en CSS y el scroll no se entera. */
+    /* Page-theme variables, on :root only so the hero's fixed
+       data-theme="dark" can't override them. Colours live here so a theme
+       change never rebuilds the scroll timeline. */
     :root {
         --radius: 0.75rem;
 
-        --page-surface: 255 255 255;   /* fondo del capitulo 2 */
-        --wall-a: 255 255 255;         /* pared al cargar */
-        --wall-b: 237 237 237;         /* pared una vez asentada */
-        --drain-b: 0.25;               /* delta de brillo del drain */
-        --drain-c: -0.1;               /* delta de contraste */
-        --lift-from: 1.6;              /* brillo inicial de la escena 2 */
+        --page-surface: 255 255 255;   /* chapter 2 background */
+        --wall-a: 255 255 255;         /* wall on load */
+        --wall-b: 237 237 237;         /* wall once settled */
+        --drain-b: 0.25;               /* drain brightness delta */
+        --drain-c: -0.1;               /* drain contrast delta */
+        --lift-from: 1.6;              /* scene 2 starting brightness */
     }
 
     :root[data-theme='dark'] {
@@ -172,13 +154,8 @@ body {
     }
 }
 
-/* Un halo del color de la superficie. Despega un texto tanto de la pared
-   como del robot sin depender de un blend: en claro es blanco detras de
-   texto oscuro, en oscuro negro detras de texto claro. */
-/* El drain y el lift se manejan por variable de progreso, no por valor
-   absoluto: la timeline tweenea --drain-t y --lift-t de 0 a 1, y el CSS
-   resuelve el filtro con los deltas del tema. Asi el tween es el mismo en
-   los dos modos y cambiar de tema no obliga a reconstruirlo. */
+/* The timeline tweens --drain-t and --lift-t from 0 to 1 and each theme
+   supplies the deltas, so the same tween works in both themes. */
 .hero-drain {
     filter:
         brightness(calc(1 + var(--drain-b) * var(--drain-t, 0)))
@@ -189,14 +166,15 @@ body {
     filter: brightness(calc(var(--lift-from) + (1 - var(--lift-from)) * var(--lift-t, 0)));
 }
 
+/* A surface-coloured halo that lifts text off both the wall and the robot
+   without a blend mode. */
 .text-halo {
     text-shadow:
         0 0 10px rgb(var(--surface) / 0.92),
         0 0 26px rgb(var(--surface) / 0.75);
 }
 
-/* Keeps the kinetic headline off the silver body in dark mode, where plain
-   white alone still sits too close to polished metal. */
+/* Keeps the headline readable over the silver body in dark mode. */
 .headline-glow {
     text-shadow:
         0 1px 12px rgba(0, 0, 0, 0.75),
@@ -251,12 +229,9 @@ textarea:-webkit-autofill {
     transition: background-color 5000s ease-in-out 0s;
 }
 
-/* iOS Safari zooms the page in when a field under 16px takes focus, and never
-   zooms back: the proportions stay wrong and the pinned sequence breaks. So
-   every field is 16px on phones (the mobile breakpoint) and on any touch
-   screen (iPad, phones in landscape). !important because the size lives in
-   utility classes (text-sm) that would otherwise win. User zoom stays on:
-   the viewport meta is untouched. */
+/* iOS Safari zooms in when a field under 16px takes focus, and never zooms
+   back, which breaks the pinned sequence. !important beats the text-sm
+   utilities. The viewport meta is left alone so pinch zoom keeps working. */
 @media (max-width: 767px), (pointer: coarse) {
     input,
     textarea,
@@ -265,8 +240,7 @@ textarea:-webkit-autofill {
     }
 }
 
-/* Celular y tablet trabados en vertical: en horizontal el aviso de RotateLock
-   tapa el sitio. Misma condicion que ROTATE_LOCK_QUERY en lib/layout.js. */
+/* Phones and tablets are portrait-only: RotateLock covers landscape. */
 .rotate-lock {
     display: none;
 }
@@ -276,9 +250,7 @@ textarea:-webkit-autofill {
     }
 }
 
-/* Tarjetas del capitulo 2 en celular: valor de partida. ScrollScene las apoya
-   en vivo encima del dock (placeCallouts); ninguna unidad CSS sirve en todos
-   los navegadores (100vh, lvh/dvh y el min-h de 640px de la seccion). */
+/* Phone cards' starting position; useCalloutsAboveDock sets the real one. */
 .callout-mobile {
     bottom: 6rem;
 }

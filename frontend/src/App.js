@@ -17,9 +17,8 @@ function App() {
   useLenis();
   useTitleTicker();
   useEffect(pinScrollToTopOnReload, []);
-  // The dock stays out of the way until the hero sequence has been seen once.
-  // It latches on, so coming back to the top does not hide it again.
-  // La recarga del cambio de tema en celular vuelve con el dock (lib/themeReload.js).
+  // The dock appears once the hero sequence has been seen and then stays. A
+  // theme reload on phones (lib/themeReload.js) comes back with it shown.
   const [journeyDone, setJourneyDone] = useState(!!pendingThemeReload);
 
   return (

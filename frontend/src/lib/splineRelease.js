@@ -1,48 +1,23 @@
-// SOLTAR DE VERDAD UNA ESCENA DE SPLINE DESPUES DEL DISPOSE.
+// Free a Spline scene for real after dispose().
 //
-// BUG DEL RUNTIME DE SPLINE (@splinetool/runtime 2.0.54): Application.dispose()
-// no alcanza para que el GC junte la escena. Medido con heap snapshots (build
-// de produccion, camino de celular, 5 cambios de tema): cada escena que se
-// cargo queda viva para siempre, por dos registros a nivel de modulo del
-// runtime que nunca se vacian:
+// @splinetool/runtime 2.0.54 keeps every disposed scene alive through two
+// module-level registries that are never emptied:
+//   1. WebGPU only: three.js node-pipeline caches retain each renderer, and
+//      the renderer retains its Application.
+//   2. Both backends: the video module keeps every video player (and through
+//      it the whole scene) in a global Map.
+// Those registries are out of reach, so this empties what they point to:
+// captureScene() before unmount, then releaseVideos() and scrubScene() after
+// dispose. Emptying the graph leaves any surviving reference holding a shell.
 //
-//   1. Solo WebGPU: caches globales del pipeline de nodos de three.js (la
-//      textura compartida DFG_LUT, con un listener "dispose" por renderer
-//      que no se saca nunca; un WeakMap de luces/sombras; el cache de render
-//      targets de AO) retienen cada renderer, y el renderer retiene su
-//      Application por el closure de onBackgroundWorkReady.
-//   2. Los dos backends: el modulo de video (runtime-video-*.js) mete cada
-//      reproductor en un Map global que solo crece. El reproductor guarda
-//      `object` (el Object3D del video -> parent -> la escena entera) y el
-//      <video> en loop, que ademas retiene los assets compartidos por su
-//      onloadeddata.
+// Objects shared by every scene (e.g. the DFG_LUT texture) must never be
+// emptied; excludeShared() detects them by comparing two loaded scenes.
 //
-// Esos registros no se pueden alcanzar desde afuera, asi que se vacia lo que
-// retienen: antes de desmontar se toma (captureScene) el renderer, su backend,
-// el gestor de assets compartidos, los reproductores/videos y TODOS los
-// objetos del grafo de la escena; despues del dispose, releaseVideos para los
-// videos y scrubScene para el resto. Vaciar el grafo es lo que corta de raiz:
-// cualquier cache que todavia apunte a un objeto (una luz, el Object3D de un
-// reproductor que no se encontro) se queda con una cascara aislada, no con la
-// escena entera. En WebGPU hace falta ademas vaciar materiales, geometrias y
-// texturas: un closure de nodo cacheado retiene el ultimo NodeBuilder de cada
-// renderer, y el builder apunta al material y la geometria que compilaba.
-//
-// Cuidado con lo COMPARTIDO: el pipeline tiene objetos de modulo que usan
-// todas las escenas (p. ej. la textura DFG_LUT); vaciar uno romperia las
-// escenas que vengan. Por eso excludeShared compara las capturas del hero y
-// de la capa 2 -- el mismo archivo cargado en dos Application --: lo que
-// aparece en las dos es compartido y no se toca nunca. Hasta que no hubo una
-// comparacion asi, materiales/geometrias/texturas no se vacian.
-//
-// TOCA INTERNOS PRIVADOS DEL RUNTIME (_renderer, backend, isPlayVideoAction,
-// videoElement, object). Hay que volver a verificarlo -- el test de heap con
-// 5 cambios de tema, ver HANDOFF -- cada vez que se actualice
-// @splinetool/runtime o @splinetool/react-spline. Si los nombres cambian, esto
-// deja de encontrar cosas y no rompe nada: la fuga vuelve.
+// Relies on private runtime internals. Re-run the heap test in HANDOFF.md
+// whenever @splinetool/runtime or @splinetool/react-spline changes; if the
+// names change this finds nothing and the leak returns (nothing breaks).
 
-// Tope de objetos a recorrer al buscar reproductores de video: una escena de
-// Spline tiene unos miles; el tope solo evita un recorrido sin fin.
+// Safety cap for the player search; a scene has a few thousand objects.
 const WALK_BUDGET = 200000;
 
 const plainTags = new Set(["[object Object]", "[object Array]", "[object Map]", "[object Set]"]);
@@ -173,8 +148,7 @@ export const captureScene = (app) => {
   return { app, renderer, backend, assets, objects, owned, players, videos };
 };
 
-// Objetos vistos en dos escenas a la vez: compartidos por el runtime. Nunca se
-// vacian (ver arriba).
+// Objects seen in two scenes at once: shared by the runtime, never emptied.
 const sharedObjects = new WeakSet();
 let sharedKnown = false;
 

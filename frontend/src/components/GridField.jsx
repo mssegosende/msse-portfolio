@@ -1,13 +1,9 @@
 import { useEffect, useRef } from "react";
 
-// One grid for the whole page, drawn in pieces. Each section that carries a
-// GridField has its own canvas, and each used to start its grid at its OWN
-// top-left -- so at every section boundary the lines jumped by the upper
-// section's height mod STEP (up to 43px on a phone). Every canvas now puts its
-// lines where the page-wide grid would have them: the origin is the top-left
-// of the DOCUMENT, and each canvas offsets by where it sits in it. The touch
-// drift is a function of page coordinates and a shared clock for the same
-// reason, so a line crossing a boundary moves as one line.
+// One page-wide grid drawn in pieces: each section has its own canvas, and
+// each offsets its lines by where it sits in the document so they line up
+// across section boundaries. The touch drift uses page coordinates and a
+// shared clock for the same reason.
 export const GridField = ({ intensity = 1 }) => {
   const canvasRef = useRef(null);
 
@@ -29,9 +25,8 @@ export const GridField = ({ intensity = 1 }) => {
     let rows = 0;
     const mouse = { x: -9999, y: -9999, cx: 0, cy: 0, active: false };
 
-    // 2D canvas takes no CSS classes, so the grid colour has to be read off
-    // the root token. getComputedStyle is far too slow to call per frame, so
-    // it is cached here and invalidated when the theme attribute flips.
+    // A 2D canvas can't use CSS classes, so the colour is read from the root
+    // token, cached, and invalidated when the theme attribute changes.
     let inkChannels = "255 255 255";
     const readInk = () => {
       const v = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim();
@@ -54,8 +49,7 @@ export const GridField = ({ intensity = 1 }) => {
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // +2: the page-aligned grid starts up to one STEP above/left of the
-      // canvas, so it needs one extra line to still reach the far edge.
+      // +2: the page-aligned grid starts up to one STEP before the canvas.
       cols = Math.ceil(w / STEP) + 2;
       rows = Math.ceil(h / STEP) + 2;
       grid = [];
@@ -67,13 +61,11 @@ export const GridField = ({ intensity = 1 }) => {
     };
 
     const step = () => {
-      // Shared clock: every canvas reads the same t on the same frame. It is
-      // the old 0.004 per frame, expressed per millisecond at 60fps.
+      // Shared clock, so every canvas reads the same t on the same frame.
       const t = performance.now() * 0.00024;
       const rect = canvas.getBoundingClientRect();
-      // Where this canvas sits in the document, and so where the page grid's
-      // lines fall inside it. Read per frame: the pin spacer, fonts and
-      // images all move sections after mount, and this rect is already here.
+      // Read every frame: the pin spacer, fonts and images move sections
+      // after mount.
       const docLeft = rect.left + window.scrollX;
       const docTop = rect.top + window.scrollY;
       const offX = ((docLeft % STEP) + STEP) % STEP;
@@ -91,9 +83,8 @@ export const GridField = ({ intensity = 1 }) => {
           let tx = 0;
           let ty = 0;
           if (isTouch) {
-            // Page coordinates, and applied directly rather than eased: a
-            // canvas that just scrolled into view must already agree with its
-            // neighbour instead of catching up to it.
+            // Applied directly, not eased: a canvas scrolling into view must
+            // already match its neighbour.
             p.ox = Math.sin((docLeft + p.x) * 0.012 + t) * 5;
             p.oy = Math.cos((docTop + p.y) * 0.014 + t * 0.8) * 5;
             continue;

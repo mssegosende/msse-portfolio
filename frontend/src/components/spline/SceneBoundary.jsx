@@ -1,13 +1,9 @@
 import { Component } from "react";
 
 /**
- * One per Spline mount. react-spline has no onError: a failed load is
- * rethrown from its render (`if (i) throw i`), and without a boundary that
- * takes the whole page down. This catches it, renders nothing in that
- * scene's place and tells the owner which one died. No GPU context is
- * released here: react-spline disposes its own Application on unmount, and
- * ours are only ever released from canvases registered at LOAD (see
- * ReleasingBox) -- a scene that failed never registered one.
+ * One per Spline mount. react-spline has no onError and rethrows load
+ * failures from render, so without this one failed scene takes the page
+ * down. It releases no GPU context: a failed scene never recorded one.
  */
 export class SceneBoundary extends Component {
   state = { dead: false };

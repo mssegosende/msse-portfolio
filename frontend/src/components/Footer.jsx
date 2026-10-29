@@ -21,8 +21,7 @@ export const Footer = () => (
   >
     <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-10 md:flex-row md:items-center">
       <div>
-        {/* Back to the very top, like the dock's brand: the hero is pinned, so
-            scrolling to its element would land in the middle of the sequence. */}
+        {/* To the very top: the hero is pinned, so its element would land mid-sequence. */}
         <button
           data-testid="footer-brand"
           onClick={scrollToTop}

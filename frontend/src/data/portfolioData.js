@@ -1,16 +1,8 @@
-// ============================================================
-// PORTFOLIO DATA — edit this single file to update the site.
-// ============================================================
-//
-// CONTENT STATUS: every string below is real EXCEPT entries flagged
-// `draft: true`, whose copy is placeholder text waiting on the real thing.
-// Draft entries render in `pnpm start` with a DRAFT badge and are stripped
-// from the production bundle (see `getProjects` below), so the published
-// site never shows invented copy. Rewrite the copy, drop the flag.
-//
-// `projectBacklog` at the bottom holds real project NAMES with no copy at
-// all — never rendered, in any environment.
-// ============================================================
+// Portfolio content: edit this file to update the site.
+// Entries with `draft: true` hold placeholder copy. They show in development
+// with a DRAFT badge and are stripped from production (getProjects).
+// `projectBacklog` keeps real project names that have no copy yet; it is
+// never rendered.
 
 export const SPLINE_SCENE_URL =
   "https://prod.spline.design/f1rJJWMxGAz7LFXO/scene.splinecode";
@@ -20,8 +12,7 @@ export const SPLINE_SCENE_2_URL =
 
 export const profile = {
   name: "María Sol Gosende",
-  // Two parts: the dock shows the mark alone, the hero and the footer show
-  // the mark stands alone — no suffix.
+  // markSuffix, when set, follows the mark in the footer.
   shortMark: "MSSE://",
   markSuffix: "",
   role: "Full Stack Developer & AI Engineer",
@@ -33,20 +24,18 @@ export const profile = {
   email: "10021msse@gmail.com",
   socials: {
     github: "https://github.com/mssegosende",
-    // TODO — give me the real URL and the footer icon appears. Null hides it.
+    // TODO: the real URL. null hides the footer icon.
     linkedin: null,
   },
   bio: [
     "I'm María Sol — a full stack developer and AI engineer based in Buenos Aires. I've spent the last five years building the systems other people's businesses run on: backend infrastructure and payment workflows for a functional-medicine booking platform in Los Angeles, a microservice that resolved scheduling conflicts and data discrepancies between systems that disagreed with each other, and REST APIs written from scratch for a core-banking simulation platform.",
     "Right now I'm architecting the migration of a legacy C# monolith into distributed polyglot microservices, and building FastAPI services that power AI-assisted pricing features consumed by an agent layer. I work across Python, TypeScript and C#, and I care most about the unglamorous parts — strict API contracts, validation layers, data that reconciles — because those are what decide whether a system survives in production.",
   ],
-  // Years only — Aug 2021 → present, continuous. No job-derived counts.
+  // Years only: Aug 2021 to present.
   stats: [{ value: "5+", label: "Years shipping code" }],
 };
 
-// Hero story paragraphs — DRAFT from real history, pending approval.
-// NOTE: ScrollScene animates exactly two paragraphs (storyRefs 0 and 1) at
-// fixed timeline positions. A third would never fade in — keep this at two.
+// Draft, pending approval. ScrollScene animates exactly two paragraphs.
 export const story = [
   "I started where the load is: backend infrastructure. Booking systems that couldn't drop a payment, a microservice that had to reconcile data two systems disagreed about, banking APIs written from scratch. That work taught me reliability isn't a feature you add later — it's decided in the first contract you write.",
   "Now I do it at a larger scale: breaking a legacy monolith into distributed services, and wiring AI agents into pricing systems where a wrong answer costs real money. I build my own products for the same reason — AlphardRE, so Argentine freelancers can see what their income is actually worth, and Apsis, because I wanted an assistant built to my own standards.",
@@ -86,16 +75,15 @@ export const marqueeItems = [
 ];
 
 // ------------------------------------------------------------
-// PROJECTS — 5 cards. Authored spans are 7 + 5 on the first row and
-// 4 + 4 + 4 on the second, matching the 12-column grid in Projects.jsx.
-// Do not change the grid in the component; change the spans here.
+// PROJECTS. Spans: 7 + 5, then 4 + 4 + 4 on the 12-column grid. Change the
+// spans here, not the grid in Projects.jsx.
 // ------------------------------------------------------------
 export const projects = [
   {
     id: "polaris",
     title: "POLARIS",
     subtitle: "AI Engineering — Agent Orchestration",
-    // DRAFT — need: the real problem it solves, what was built, the stack.
+    // DRAFT: needs the real problem it solves, what was built and the stack.
     description:
       "A multi-step agent runtime that plans a task, calls the services it needs and reports what it could not resolve instead of guessing. Every tool the agent reaches for sits behind a typed contract, so a malformed call fails at the edge rather than halfway through a run. State is persisted per run, which makes a failed step replayable instead of a restart.",
     tags: ["Python", "FastAPI", "LangGraph", "PostgreSQL", "Docker"],
@@ -109,8 +97,8 @@ export const projects = [
     id: "ethos",
     title: "ETHOS",
     subtitle: "Backend — Functional Medicine Platform",
-    // DRAFT — need: what it does, the stack, and whether this is personal
-    // work or the Los Angeles booking platform from the 2021–22 role.
+    // DRAFT: needs what it does, the stack, and whether it is personal work
+    // or the 2021-22 Los Angeles booking platform.
     description:
       "Booking and patient-record infrastructure for a functional-medicine practice, where a dropped appointment and a dropped payment are the same incident. The API keeps scheduling, billing and clinical records reconciled behind one set of contracts, so the three never disagree about the same visit.",
     tags: ["Python", "FastAPI", "PostgreSQL", "Docker"],
@@ -123,8 +111,8 @@ export const projects = [
     id: "vega",
     title: "VEGA",
     subtitle: "Data — Ingestion Pipeline",
-    // DRAFT — placeholder name for the star-named pipeline. Need: the real
-    // name, what it ingests, and where the output goes.
+    // DRAFT: placeholder name. Needs the real name, what it ingests and where
+    // the output goes.
     description:
       "An ingestion pipeline that pulls from sources that disagree about their own schema and lands them in one normalised model. Each stage validates before it writes, so bad input is quarantined with the reason attached instead of silently reshaping the table downstream.",
     tags: ["Python", "PostgreSQL", "Docker"],
@@ -140,7 +128,7 @@ export const projects = [
     description:
       "An assistant I'm building for my own workflow, one module at a time. Modular React + TypeScript frontend on a Vite build, FastAPI backend, with an LLM agent planned behind each module — the first reads incoming job proposals and drafts the replies.",
     tags: ["React", "TypeScript", "Vite", "FastAPI", "LLM Agents"],
-    // TODO(confirm) — public repo / live URL, if there is one.
+    // TODO: public repo or live URL, if any.
     codeUrl: "",
     liveUrl: "",
     span: "md:col-span-4",
@@ -149,7 +137,7 @@ export const projects = [
     id: "project-05",
     title: "PROJECT 05",
     subtitle: "Full Stack — Internal Tooling",
-    // DRAFT — placeholder slot. Needs a real project, or delete the entry.
+    // DRAFT: placeholder slot. Needs a real project, or remove it.
     description:
       "A small internal tool that replaced a spreadsheet three people were editing at once. React and TypeScript on the front, a FastAPI service and a relational model behind it, containerised so it runs the same on any machine that needs it.",
     tags: ["React", "TypeScript", "FastAPI", "PostgreSQL", "Docker"],
@@ -160,8 +148,7 @@ export const projects = [
   },
 ];
 
-// Static class strings so Tailwind's scanner can see every span it may emit.
-// A template literal here would be silently dropped from the stylesheet.
+// Static class strings: Tailwind only keeps classes it can find verbatim.
 const SPAN_CLASS = {
   4: "md:col-span-4",
   5: "md:col-span-5",
@@ -189,10 +176,8 @@ const layoutSpans = (n) => {
   return spans;
 };
 
-// The list the site actually renders. In development every card shows and
-// keeps its authored span; in the production build drafts are stripped and
-// the survivors are re-laid out so one card goes full width instead of
-// sitting in a 7-column box with 5 columns of nothing beside it.
+// What the site renders. Production drops drafts and re-lays out the rest so
+// no row is left half empty.
 export const getProjects = () => {
   const isProduction = process.env.NODE_ENV === "production";
   const visible = isProduction ? projects.filter((p) => !p.draft) : projects;
@@ -201,11 +186,9 @@ export const getProjects = () => {
   return visible.map((p, i) => ({ ...p, span: SPAN_CLASS[spans[i]] }));
 };
 
-// NOTE: the pinned hero animates exactly three cards (01/02/03) at hardcoded
-// positions. Keep this array at three entries.
-// `lineFrom` is where each card's connector starts, as a fraction of the card
-// itself (x across, y down), so it stays inside the card at any size; `to` is
-// only the dot's first position, the timeline moves it onto the body part.
+// Exactly three entries: the pinned hero animates 01/02/03 at fixed positions.
+// `lineFrom`: where the card's connector starts, as a fraction of the card.
+// `to`: the dot's first position; the timeline moves it onto the body part.
 export const systemFeatures = [
   {
     num: "01",
@@ -285,12 +268,8 @@ export const terminalBoot = [
 ];
 
 // ============================================================
-// PROJECT BACKLOG — NOT RENDERED ON THE SITE.
-// Real project names, captured so they aren't lost. Each needs a
-// description before it can move into `projects` above — even as a draft.
-// Nothing here is guessed: `note` records only what was actually said.
-// ETHOS and POLARIS moved up into `projects` as drafts; their open
-// questions now live as TODO comments on those entries.
+// PROJECT BACKLOG (not rendered). Real names awaiting a description before
+// they move into `projects`. `note` records only what was actually said.
 // ============================================================
 export const projectBacklog = [
   {

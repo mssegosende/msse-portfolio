@@ -1,7 +1,5 @@
-// Cuando la pagina usa el layout de celular. Ademas del ancho, un celular
-// ACOSTADO (tactil, horizontal, poco alto) sigue en el layout de celular: el
-// sitio esta trabado en vertical (RotateLock lo tapa en horizontal), y si al
-// girarlo pasara al layout de escritorio montaria las 4 escenas de escritorio,
-// que es la carga que tiraba el iPhone.
+// Phone layout: narrow screens, plus a phone held sideways. The site is
+// portrait-only (RotateLock), and switching a rotated phone to the desktop
+// layout would mount the four desktop scenes, more than iOS can hold.
 export const MOBILE_LAYOUT_QUERY =
   "(max-width: 767px), (hover: none) and (pointer: coarse) and (orientation: landscape) and (max-height: 500px)";

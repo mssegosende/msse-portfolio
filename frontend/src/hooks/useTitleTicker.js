@@ -1,21 +1,16 @@
 import { useEffect } from "react";
 
-// The static title lives in public/index.html too: it is what the tab shows
-// before the app mounts, and what a reduced-motion visitor keeps.
+// Also the static title in public/index.html (shown before mount and kept
+// with reduced motion).
 export const STATIC_TITLE = "msse:// Software & AI Engineer";
 
-// The trailing " | " is the loop separator: rotated, the end runs straight
-// back into the start with no gap.
+// The trailing " | " separates the end from the start when it wraps.
 export const TICKER_TEXT =
   "msse:// software & ai engineering | python | fastapi | react | typescript | llm | agents | ";
 
 /**
- * Turns the tab title into an endless ticker, like a departure board: one
- * character every `stepMs`, forever. With prefers-reduced-motion the static
- * title stays instead, and the choice follows the setting if it changes.
- *
- * One interval at a time: the cleanup clears it, so StrictMode's dev-only
- * mount / unmount / remount never leaves two tickers running.
+ * Scrolls the tab title like a departure board, one character every
+ * `stepMs`. Keeps the static title with prefers-reduced-motion.
  */
 export const useTitleTicker = (text = TICKER_TEXT, staticTitle = STATIC_TITLE, stepMs = 250) => {
   useEffect(() => {

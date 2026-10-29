@@ -12,32 +12,12 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600&display=swap" rel="stylesheet" />
         <!--
-        manifest.json provides metadata used when your web app is installed on a
-        user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-        -->
-        <!--
-        Notice the use of %PUBLIC_URL% in the tags above.
-        It will be replaced with the URL of the `public` folder during the build.
-        Only files inside the `public` folder can be referenced from the HTML.
-
-        Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-        work correctly both with client-side routing and a non-root public URL.
-        Learn how to configure a non-root public URL by running `npm run build`.
-        -->
-        <!--
-        Applied before first paint so a stored dark choice never shows a
-        white flash. Kept inline and dependency-free for that reason; React
-        takes over the attribute once it mounts.
+        Disable the browser's scroll restoration before anything else runs: a
+        reload would otherwise land in the middle of the pinned sequence, and a
+        React effect is too late (ScrollTrigger captures the value when built).
         -->
         <script>
             (function () {
-                // ScrollTrigger captures history.scrollRestoration when it
-                // builds, and restores that value afterwards. A React effect
-                // runs AFTER the child's layout effect has already created the
-                // trigger, so setting it there is captured as "auto" and put
-                // straight back. It has to happen before any of that, which
-                // means here — otherwise a reload drops the visitor into the
-                // middle of the pinned sequence, on scene 2.
                 try {
                     if ('scrollRestoration' in window.history) {
                         window.history.scrollRestoration = 'manual';
@@ -51,15 +31,5 @@
     <body>
         <noscript>You need to enable JavaScript to run this app.</noscript>
         <div id="root"></div>
-        <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
     </body>
 </html>

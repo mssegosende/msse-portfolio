@@ -1,24 +1,15 @@
-// LECTURA DE MEMORIA PARA EL TELEFONO -- TEMPORAL, hay que sacarla despues del
-// diagnostico. index.js la importa (chunk aparte) solo con ?debug=1, tambien
-// en produccion: sin el parametro no se descarga ni corre. Es para
-// diagnosticar la caida de iPhone al cambiar de tema (ver HANDOFF, PRIORIDAD
-// 1): cuenta lo que piden las escenas de Spline sin tocar ScrollScene.
+// Temporary phone memory probe (remove after the iPhone diagnosis). Loaded by
+// index.js only with ?debug=1, in any build.
 //
-// Se engancha ANTES del primer render: getContext (contextos WebGL/WebGPU/2D
-// por canvas), WEBGL_lose_context (liberados por la pagina),
-// webglcontextlost (perdidos, y cuales no los pidio la pagina), requestDevice
-// / destroy / lost de WebGPU, y load / dispose de la Application de Spline
-// (escenas vivas). Los canvas se siguen con WeakRef: una referencia fuerte
-// retendria justo la memoria que se esta midiendo.
+// Hooks in before the first render: context creation and loss (WebGL, WebGPU,
+// 2D), context release, and Spline scene load/dispose. Canvases are tracked
+// with WeakRef so the probe doesn't retain the memory it measures.
 //
-// Recarga: cada medio segundo guarda una foto en localStorage con `alive`, y
-// pagehide la baja. Si al cargar la foto anterior sigue `alive`, la pagina
-// anterior murio sin descargarse -- lo que hace iOS cuando mata el proceso --
-// y la foto es el estado de ~0.5s antes de morir. Se guardan las ultimas 3
-// caidas (Safari puede caer y recargar varias veces seguidas: la que importa
-// no es siempre la ultima) hasta que se borren.
+// Every 0.5s it saves a snapshot marked `alive`; pagehide clears the mark. A
+// snapshot still `alive` on the next load means iOS killed the page, and it
+// shows the state ~0.5s before the crash (last three crashes kept).
 //
-// Tocar el panel: compacto -> expandido (registro y ultima caida) -> minimo.
+// Tap the panel to cycle: compact, expanded (log and crashes), minimal.
 import { Application } from "@splinetool/runtime";
 
 const KEY = "__memProbe";
@@ -37,11 +28,10 @@ const log = (msg) => {
   s.log.push(`${sec()}s ${msg}`);
   if (s.log.length > 40) s.log.shift();
 };
-// La secuencia de cambio de tema de ScrollScene escribe aca sus pasos (solo
-// existe con ?debug=1).
+// ScrollScene's theme swap logs its steps here (only exists with ?debug=1).
 window.__memProbeLog = log;
 
-// canvas -> info; `refs` es para recorrerlos sin retenerlos.
+// canvas -> info; `refs` iterates them without retaining them.
 const infoOf = new WeakMap();
 const refs = [];
 const is3D = (t) => t === "webgl" || t === "webgl2" || t === "experimental-webgl" || t === "webgpu";
@@ -77,8 +67,8 @@ HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
   return ctx;
 };
 
-// Liberado por la pagina: releaseGlContext de ScrollScene y el
-// forceContextLoss del runtime pasan los dos por esta extension.
+// Released by the page: releaseGlContext and the runtime's
+// forceContextLoss both go through this extension.
 const patchedExt = new WeakSet();
 [window.WebGLRenderingContext, window.WebGL2RenderingContext].forEach((C) => {
   if (!C) return;
@@ -136,7 +126,7 @@ if (window.GPUAdapter && window.GPUDevice) {
   }
 }
 
-// Escenas: load empieza, resuelve o falla; dispose las saca en cualquier estado.
+// Scenes: load starts, resolves or fails; dispose removes them in any state.
 const appState = new WeakMap();
 const AP = Application?.prototype;
 const appsHooked = !!(AP?.load && AP?.dispose);
@@ -190,7 +180,7 @@ new MutationObserver(() => {
   log(`THEME -> ${t}`);
 }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-// Recarga / caida de la carga anterior.
+// Reload, or crash of the previous load.
 let stored = null;
 try {
   stored = JSON.parse(localStorage.getItem(KEY));
@@ -262,8 +252,8 @@ const snapshot = () => {
   return lines;
 };
 
-// Entre pagehide y la descarga real todavia puede correr un tick: sin esto
-// volveria a escribir `alive` y la proxima carga se leeria como caida.
+// A tick may still run between pagehide and unload; without this it would
+// mark the page `alive` again and the next load would read as a crash.
 let leaving = false;
 let mode = 0; // 0 compacto, 1 expandido, 2 minimo
 const panel = document.createElement("div");
@@ -349,7 +339,7 @@ const mount = () => {
 if (document.body) mount();
 else document.addEventListener("DOMContentLoaded", mount);
 
-// pagehide = la pagina se fue por las suyas (recarga, navegacion): no es caida.
+// pagehide means the page left on its own (reload, navigation), not a crash.
 window.addEventListener("pagehide", () => {
   leaving = true;
   try {

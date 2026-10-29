@@ -13,7 +13,7 @@ export const About = () => {
       className="relative overflow-hidden bg-surface px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
       <GridField />
-      {/* soft scrim: text sits on near-solid black, grid stays visible at the edges */}
+      {/* Scrim: the text sits on near-solid surface, the grid shows at the edges. */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_65%_at_50%_45%,rgb(var(--surface) / 0.82),transparent_100%)]" />
       <div className="relative mx-auto max-w-7xl">
         <motion.p
@@ -64,7 +64,6 @@ export const About = () => {
           </motion.div>
         </div>
 
-        {/* Numbered manifesto chapters */}
         <div className="mt-28 grid grid-cols-1 gap-px border border-ink/[0.13] bg-ink/[0.13] md:grid-cols-3">
           {manifesto.map((ch, i) => (
             <motion.article

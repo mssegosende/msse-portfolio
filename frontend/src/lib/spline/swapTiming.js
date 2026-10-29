@@ -1,11 +1,9 @@
-// Tiempos y esperas del cambio de tema en celular (runMobileSwap en
-// ScrollScene). Desde la recarga de tema (lib/themeReload.js) solo corre si no
-// hay sessionStorage.
+// Timing of the in-place theme swap on phones (runMobileSwap). Since theme
+// changes reload the page (lib/themeReload.js), it only runs without
+// sessionStorage.
 
-// Con ?debug=1 (y solo asi), la URL ajusta el cambio de tema en celular para
-// probar en el telefono sin redeploy: swapSettle=<ms> cambia SWAP_SETTLE_MS y
-// l2=now carga la segunda capa enseguida en vez de diferirla. TEMPORAL, como
-// la lectura de ?debug=1.
+// Temporary: with ?debug=1, swapSettle=<ms> and l2=now tune the swap for
+// testing on a phone without a redeploy.
 const swapDebug = (() => {
   try {
     const q = new URLSearchParams(window.location.search);
@@ -15,22 +13,19 @@ const swapDebug = (() => {
   }
 })();
 
-// Tiempos del cambio de tema en celular (ver runMobileSwap).
 export const SWAP_FADE_MS = 300;
-// Despues de soltar: la GPU se recupera de forma asincrona y el GC no se puede
-// forzar; el hueco le da tiempo a iOS antes de pedir la escena nueva. 500ms
-// no alcanzo en el iPhone (murio en el pico de carga del segundo cambio).
+// Gap between releasing the old scenes and loading the new one. GPU memory
+// is freed asynchronously and GC can't be forced; 500ms was not enough on iOS.
 export const SWAP_SETTLE_MS = (() => {
   const v = Number(swapDebug?.get("swapSettle"));
   return swapDebug?.has("swapSettle") && Number.isFinite(v) && v >= 0 ? Math.min(v, 10000) : 1500;
 })();
-// La capa que NO se esta viendo carga despues: a este tiempo del fundido de
-// vuelta, o antes si el scroll se acerca a ella. Asi nunca cargan dos escenas
-// a la vez. l2=now (debug) la carga enseguida, como antes.
+// The layer not on screen loads after this delay, or sooner if the scroll
+// approaches it, so two scenes never load at once.
 export const SECONDARY_DELAY_MS = 2500;
 export const SECONDARY_NOW = swapDebug?.get("l2") === "now";
-// Si una carga no llega, la secuencia sigue igual (los watchdogs de cada capa
-// ya ponen el render estatico).
+// A load that never arrives doesn't stall the swap; each layer's watchdog
+// already falls back to the static render.
 export const SWAP_LOAD_TIMEOUT_MS = 20000;
 export const waitMs = (ms) => new Promise((r) => setTimeout(r, ms));
 /** Resolve (once) the pending swap wait held in `ref`. */

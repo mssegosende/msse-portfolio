@@ -1,9 +1,7 @@
-// craco.config.js
 const path = require("path");
 
-// react-scripts 5 configures webpack-dev-server 4, but the security pins in
-// pnpm.overrides move it to 5, which renamed or dropped several options. This
-// maps the v4-style config CRA produces onto the v5 shape.
+// react-scripts 5 configures webpack-dev-server 4; the pnpm.overrides
+// security pins move it to 5. This maps CRA's v4-style options to v5.
 function makeDevServerV5Compatible(devServerConfig) {
   const {
     https,

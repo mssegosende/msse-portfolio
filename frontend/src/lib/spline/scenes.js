@@ -1,8 +1,7 @@
 import { SPLINE_SCENE_URL, SPLINE_SCENE_2_URL } from "../../data/portfolioData";
 
-// El modelo de cada tema: negro (escena 1) en claro, plateado (escena 2) en
-// oscuro.
+// One model per theme: the black robot (scene 1) in light, the silver one in dark.
 export const themeModel = (dark) => (dark ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL);
 
-// Escritorio, capa 2: los dos modelos montados a la vez, key fija.
+// Desktop chapter 2 mounts both models; the theme only picks which one shows.
 export const L2_DESKTOP_URLS = [SPLINE_SCENE_2_URL, SPLINE_SCENE_URL];

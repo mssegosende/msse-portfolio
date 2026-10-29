@@ -6,10 +6,8 @@ import { GridField } from "./GridField";
 
 const fadeUp = fadeUpVariants();
 
-// The cards rise as ONE block and only the fade is staggered. With `y` delayed
-// per card (and each card triggering on its own), row 1 was already ~30px up
-// before row 2 left, so the gap between rows opened to ~58px mid-entrance.
-// Shared y, one trigger on the grid, and the gaps never change.
+// The cards rise as one block and only the fade is staggered; per-card `y`
+// opened the gap between rows mid-entrance.
 const cardUp = {
   hidden: { opacity: 0, y: 36 },
   show: (i = 0) => ({
@@ -23,10 +21,9 @@ const cardUp = {
   }),
 };
 
-// Two elements, one transform owner each. framer-motion writes the entrance
-// `y` inline on every frame; a CSS transition on the same element's transform
-// restarts on each of those writes and drags the card up to ~25px behind
-// where framer put it. The wrapper owns the entrance, the article the hover.
+// Two elements, one transform owner each: framer-motion writes `y` inline
+// every frame, and a CSS transition on the same transform would lag behind
+// it. The wrapper owns the entrance, the article the hover.
 const ProjectCard = ({ project, index }) => (
   <motion.div variants={cardUp} custom={index} className={project.span}>
     <article
@@ -36,9 +33,7 @@ const ProjectCard = ({ project, index }) => (
       <div className="relative">
         <div className="flex items-start justify-between gap-4">
           <div>
-            {/* Dev-only: drafts never reach the production bundle, so this needs
-                no environment check of its own. Sits above the subtitle rather
-                than in the corner, where it would land under the arrow icon. */}
+            {/* Drafts never reach production (getProjects), so no env check here. */}
             {project.draft && (
               <span
                 data-testid={`project-draft-badge-${project.id}`}

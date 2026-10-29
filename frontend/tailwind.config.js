@@ -14,9 +14,8 @@ module.exports = {
         kodemono: ['"Kode Mono"', 'monospace'],
         display: ['Rajdhani', 'sans-serif'],
       },
-      // The whole palette is two channel-triplet tokens plus their alphas.
-      // <alpha-value> lets `text-ink/65` and `border-ink/10` resolve against
-      // the same variable the raw CSS uses, so a theme flip is one attribute.
+      // Two channel tokens; <alpha-value> lets `text-ink/65` use the same CSS
+      // variable as the raw CSS, so a theme flip is one attribute.
       colors: {
         ink: 'rgb(var(--ink) / <alpha-value>)',
         surface: 'rgb(var(--surface) / <alpha-value>)',

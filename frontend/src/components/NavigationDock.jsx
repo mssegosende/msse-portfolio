@@ -14,8 +14,8 @@ export const NavigationDock = ({ visible }) => {
   const { theme, toggle } = useTheme();
 
   return (
-    // data-dock-slot: el lugar del dock aunque este escondido (el que se
-    // traslada es el nav de adentro). Las tarjetas de celular se apoyan aca.
+    // data-dock-slot: the dock's resting place, measured even while the nav
+    // inside is hidden (useCalloutsAboveDock).
     <div data-dock-slot="" className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-3">
       <motion.nav
         data-testid="navigation-dock"
@@ -25,9 +25,7 @@ export const NavigationDock = ({ visible }) => {
         className="pointer-events-auto"
       >
         <div className="glass flex max-w-[calc(100vw-1.5rem)] items-center gap-1 px-2 py-2 shadow-[0_8px_40px_rgb(var(--surface) / 0.6)] sm:px-3 cut-corner overflow-x-auto">
-          {/* The wordmark is the way back to the top, but it is hidden below
-              sm — which left a phone with no way back to the start of the
-              sequence at all. Same action, an icon at phone width. */}
+          {/* The brand is hidden below sm, so phones get the same action as an icon. */}
           <button
             data-testid="nav-home"
             onClick={scrollToTop}
@@ -60,9 +58,7 @@ export const NavigationDock = ({ visible }) => {
             </button>
           ))}
           <span aria-hidden="true" className="mx-1.5 h-5 w-px shrink-0 bg-ink/15" />
-          {/* Reads as a control, not another destination: the nav items are
-              bare icons, so this one carries a frame and a ground of its own.
-              It also states which way it goes, which a lone icon never does. */}
+          {/* Framed so it reads as a control, not another destination. */}
           <button
             data-testid="theme-toggle"
             onClick={toggle}

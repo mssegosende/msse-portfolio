@@ -1,12 +1,9 @@
 import { RotateCw } from "lucide-react";
 
 /**
- * The site is portrait-only on phones and tablets. No browser lets a page
- * lock orientation in a normal tab (Safari never, Chrome only in fullscreen),
- * so in landscape this covers the page and asks for the device to be turned
- * back. Shown purely by CSS (.rotate-lock in index.css), so it is right from
- * the first paint and follows the rotation without any JS. Installed as an
- * app, manifest.json already pins portrait.
+ * Phones and tablets are portrait-only. A tab cannot lock orientation, so
+ * landscape is covered instead. Visibility is pure CSS (.rotate-lock), right
+ * from the first paint; manifest.json pins portrait for installed apps.
  */
 export const RotateLock = () => (
   <div

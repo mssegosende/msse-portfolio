@@ -3,13 +3,10 @@ import { useEffect } from "react";
 const GAP = 16;
 
 /**
- * CELULAR: las tarjetas se apoyan 16px encima del lugar del dock, medido en
- * vivo. Con unidades CSS caian debajo del dock: la seccion mide 100vh (en
- * iOS, el alto con las barras escondidas) y tiene min-h de 640px, asi que
- * con las barras de Safari o Brave visibles, o en una pantalla baja, su
- * borde inferior queda fuera de lo que se ve. El dock es fixed y siempre
- * esta en el borde visible. Mientras hay una tarjeta en pantalla la seccion
- * esta fijada con el borde de arriba en 0, asi que alcanza con su alto.
+ * Phones: keeps the feature cards 16px above the dock. CSS units can't: the
+ * pinned section is 100vh (on iOS, the height with the browser bars hidden),
+ * so with the bars showing its bottom edge is off screen. The dock is fixed
+ * to the visible edge, so it is the reference.
  */
 export const useCalloutsAboveDock = (enabled, sectionRef, calloutRefs) => {
   useEffect(() => {
@@ -32,9 +29,8 @@ export const useCalloutsAboveDock = (enabled, sectionRef, calloutRefs) => {
       if (!raf) raf = requestAnimationFrame(placeCallouts);
     };
     placeCallouts();
-    // Las barras del navegador aparecen y se van con el scroll: resize en
-    // unos, solo visualViewport en otros. El scroll es por las dudas; si no
-    // cambio nada no escribe.
+    // Browser bars come and go on scroll; some browsers fire resize, others
+    // only visualViewport.
     const vv = window.visualViewport;
     window.addEventListener("resize", schedule);
     window.addEventListener("scroll", schedule, { passive: true });

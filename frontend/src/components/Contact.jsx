@@ -15,11 +15,9 @@ const validate = ({ name, email, message }) => {
   return null;
 };
 
-// Los errores no son transcripcion: son un aviso. Viven aparte del log, con
-// una sola entrada por MENSAJE -- reenviar el formulario con el mismo campo
-// invalido reinicia su reloj en vez de apilar otra linea igual -- y se van
-// solos. Antes iban al log con push, y por eso el mismo texto se repetia una
-// vez por submit.
+// Errors are notices, not transcript: one entry per message, kept apart from
+// the log. Resubmitting the same invalid field restarts its timer instead of
+// stacking another copy.
 const ERROR_TTL = 4200;
 
 const EMPTY_FORM = { name: "", email: "", company: "", message: "", website: "" };
@@ -57,8 +55,7 @@ export const Contact = () => {
   const [errors, setErrors] = useState([]);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
-  // Un reloj por mensaje, no uno global: dos errores distintos que aparecen
-  // con un segundo de diferencia se tienen que ir cada uno a su hora.
+  // One timer per message, so two errors expire independently.
   const errorTimers = useRef(new Map());
 
   useEffect(() => {
@@ -224,17 +221,9 @@ export const Contact = () => {
                 {sending ? "Transmitting…" : done ? "Transmit again" : "Transmit message"}
               </button>
 
-              {/* Mismo bloque en celular y en escritorio: una sola region, sin
-                  variantes por breakpoint, asi que el comportamiento no puede
-                  divergir entre los dos.
-
-                  El contenedor se renderiza SIEMPRE y se esconde por :empty,
-                  no por errors.length. La diferencia importa: mientras la
-                  linea se esta desvaneciendo el array ya esta vacio, asi que
-                  una condicion en JS la desmontaria de golpe y la salida no se
-                  veria nunca. Con :empty el div se va recien cuando framer
-                  saco el ultimo hijo, que es cuando la animacion termino.
-                  Escondido ademas no arrastra el space-y-5 del form. */}
+              {/* Hidden with :empty rather than errors.length: the array is
+                  already empty while the last line fades out, and a JS
+                  condition would unmount it mid-animation. */}
               <div data-testid="contact-errors" className="space-y-1.5 empty:hidden">
                 <AnimatePresence>
                   {errors.map((err) => (
