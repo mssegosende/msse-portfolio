@@ -6,10 +6,13 @@ import prettier from "eslint-config-prettier";
 import tseslint from "typescript-eslint";
 
 export default [
-  { ignores: ["dist", "coverage"] },
+  { ignores: ["dist", "coverage", "playwright-report", "test-results"] },
   js.configs.recommended,
   reactHooks.configs.flat.recommended,
-  ...tseslint.configs.recommended.map((config) => ({ ...config, files: ["src/**/*.{ts,tsx}"] })),
+  ...tseslint.configs.recommended.map((config) => ({
+    ...config,
+    files: ["src/**/*.{ts,tsx}", "e2e/**/*.ts", "*.config.ts"],
+  })),
   {
     files: ["src/**/*.{ts,tsx}"],
     languageOptions: {
@@ -24,7 +27,7 @@ export default [
     },
   },
   {
-    files: ["*.config.{js,cjs}", "vite.config.js"],
+    files: ["*.config.{js,cjs,ts}", "e2e/**/*.ts"],
     languageOptions: { globals: globals.node },
   },
   prettier,

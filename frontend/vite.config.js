@@ -16,6 +16,8 @@ export default defineConfig({
     chunkSizeWarningLimit: 2500,
   },
   test: {
+    // e2e/ holds the Playwright specs.
+    include: ["src/**/*.test.{ts,tsx}"],
     environment: "jsdom",
     setupFiles: ["src/test/setup.ts"],
     env: { VITE_BACKEND_URL: "http://api.test" },
