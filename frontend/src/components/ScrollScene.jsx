@@ -1,5 +1,5 @@
-import { Component, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Spline from "@splinetool/react-spline";
@@ -8,461 +8,60 @@ import {
   SPLINE_SCENE_URL,
   SPLINE_SCENE_2_URL,
   profile,
-  story,
-  storyTitle,
   systemFeatures,
 } from "../data/portfolioData";
 import { useTheme } from "../hooks/useTheme";
 import { captureScene, excludeShared, releaseVideos, scrubScene } from "../lib/splineRelease";
 import { pendingThemeReload, restoredScrollY } from "../lib/themeReload";
 import { MOBILE_LAYOUT_QUERY } from "../lib/layout";
+import { heroLineReveal as lineReveal, heroUiFade as uiFade } from "../lib/motion";
+import {
+  HERO_CAM_DESKTOP,
+  HERO_CAM_MOBILE,
+  CAM_FINAL,
+  OVERSAMPLE,
+  OVERSAMPLE_1,
+  VIEW_CSS_SCALE,
+  applyView,
+  pinCamera,
+} from "../lib/spline/camera";
+import { patchSplineRuntime, releaseGlContext } from "../lib/spline/runtime";
+import { BOT_HOME, applyPose, collectArms, findBot, placeBot } from "../lib/spline/rig";
+import { L2_DESKTOP_URLS, themeModel } from "../lib/spline/scenes";
+import {
+  SECONDARY_DELAY_MS,
+  SECONDARY_NOW,
+  SWAP_FADE_MS,
+  SWAP_LOAD_TIMEOUT_MS,
+  SWAP_SETTLE_MS,
+  settleWait,
+  waitFrames,
+  waitMs,
+} from "../lib/spline/swapTiming";
+import { ReleasingBox } from "./spline/ReleasingBox";
+import { SceneBoundary } from "./spline/SceneBoundary";
+import { FeatureCard } from "./scroll-scene/FeatureCard";
+import { FeatureConnectors } from "./scroll-scene/FeatureConnectors";
+import { FeaturesRail } from "./scroll-scene/FeaturesRail";
+import { HeroLoader } from "./scroll-scene/HeroLoader";
+import { StoryPanel } from "./scroll-scene/StoryPanel";
+import { useCalloutsAboveDock } from "./scroll-scene/useCalloutsAboveDock";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 
 // La posicion de la recarga de tema se aplica una sola vez por carga, aunque
 // la timeline se rearme (StrictMode, cambio de ancho).
 let themeReloadUsed = false;
 
 gsap.registerPlugin(ScrollTrigger);
-
-const lineReveal = {
-  hidden: { y: "110%" },
-  show: (i) => ({
-    y: "0%",
-    transition: { delay: 0.2 + i * 0.18, duration: 1, ease: [0.16, 1, 0.3, 1] },
-  }),
-};
-
-const uiFade = {
-  hidden: { opacity: 0, y: 14 },
-  show: (i) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: 0.7 + i * 0.15, duration: 0.8, ease: [0.16, 1, 0.3, 1] },
-  }),
-};
-
-
-// Both scenes expose a `Bot` object, and they DO NOT ship it in the same
-// place: scene 1 has it at x -2.75, scene 2 at x +68.25 (and y 25.68 vs
-// 13.68). That difference is the whole reason ROBOT_DX existed — the old fix
-// pushed the canvas sideways in CSS to compensate, which only held at one
-// viewport width because the scene's own render scale is height-limited when
-// wide and width-limited when narrow (measured: +108px at 1100, +178 at 1700,
-// flat ~182 beyond). Normalising the object itself fixes it in scene units,
-// so it holds at every width and the two themes land the robot in exactly the
-// same place — which is what makes the toggle swap in place instead of the
-// figure jumping.
-const OVERSAMPLE = 1.7;
-
-// NITIDEZ EN ESCRITORIO. El zoom y el paneo de cada beat ya no los hace el
-// CSS: estirar el canvas 1.9-4x por CSS dejaba 0.43-0.86 pixeles renderizados
-// por pixel mostrado (medido, igual en DPR 1 y 2), o sea un render ablandado.
-// Ahora el wrap va SIEMPRE a VIEW_CSS_SCALE, sin traslado, y el resto lo hace
-// la camara: zoom = CAM_BASE_ZOOM * S / VIEW_CSS_SCALE, y el paneo va en los
-// terminos fuera de eje de la proyeccion (elementos 8 y 9), que desplazan la
-// imagen en 2D igual que un translate. Es la MISMA transformacion que antes
-// -- escala alrededor del centro y traslado --, asi que encuadres, anclas y
-// L quedan identicos; solo cambia donde se hace. Spline recalcula la
-// proyeccion al redimensionar, por eso se reaplica en cada frame.
-// 1.3 y no 1: el badge "Built with Spline" se dibuja DENTRO del canvas y por
-// debajo de ~1.2 entra en cuadro.
-const VIEW_CSS_SCALE = 1.3;
-// Escritorio, capa 2: los dos modelos montados a la vez, key fija.
-const L2_DESKTOP_URLS = [SPLINE_SCENE_2_URL, SPLINE_SCENE_URL];
-const CAM_BASE_ZOOM = 2;
-// La escena 1 se renderiza a VIEW_CSS_SCALE para que, estirada 1.3x por el
-// wrap, quede 1:1. La 2 ya tiene OVERSAMPLE (1.7): queda en 1.31:1.
-const OVERSAMPLE_1 = VIEW_CSS_SCALE;
-
-/** Apply a CSS-equivalent zoom (scale S about the centre) and pan (x/y in %
- *  of the frame) to a scene's camera. */
-//
-// Escribirlo una vez por frame (ticker de GSAP) no alcanzaba: si algo recalcula
-// la proyeccion entre nuestra escritura y el render -- el resize de Spline, o
-// la intro de camara del archivo mientras corre -- ese frame sale sin el
-// paneo. En Safari la escena se ve antes de que termine la intro, y el robot
-// aparecia unos segundos en otro encuadre (mas alto, la cabeza cortada) y
-// despues saltaba. Ahora el paneo vive en la camara (__view) y
-// updateProjectionMatrix lo vuelve a poner cada vez que la recalcula.
-const applyView = (app, v) => {
-  const cam = app?._camera;
-  if (!cam || !cam.projectionMatrix || typeof cam.updateProjectionMatrix !== "function") return;
-  try {
-    // NDC runs -1..1 across the canvas, y up: a pan of f of the canvas is 2f.
-    cam.__view = {
-      zoom: (CAM_BASE_ZOOM * v.scale) / VIEW_CSS_SCALE,
-      ox: (-2 * parseFloat(v.x)) / 100 / VIEW_CSS_SCALE,
-      oy: (2 * parseFloat(v.y)) / 100 / VIEW_CSS_SCALE,
-    };
-    if (!cam.__viewHooked) {
-      const update = cam.updateProjectionMatrix;
-      cam.updateProjectionMatrix = function (...args) {
-        const w = this.__view;
-        if (w) this.zoom = w.zoom;
-        const out = update.apply(this, args);
-        if (w) {
-          const e = this.projectionMatrix.elements;
-          e[8] = w.ox;
-          e[9] = w.oy;
-        }
-        return out;
-      };
-      cam.__viewHooked = true;
-    }
-    cam.updateProjectionMatrix();
-  } catch (err) {
-    /* runtime without an inspectable camera */
-  }
-};
-
-// The two scenes ship the rig in different POSES, which is why the silver
-// robot never quite matched the black one even with the body in the same
-// place. Read off both rigs:
-//
-//            scene 1    scene 2
-//   arm.x     -0.306    -0.474   (scene 2 holds its arms higher)
-//   elbow.y   -0.018     0.179
-//   forearm.x -0.471    -0.863   (and bends them further)
-//
-// Scene 1's values are canonical, because white mode is the default and runs
-// that rig in both slots. Applied every frame rather than once at load: each
-// scene animates its own pose, so a single assignment drifts straight back.
-const POSE_HOME = { arm: -0.306, elbowY: -0.018, forearm: -0.471 };
-
-const BOT_HOME = { x: -2.75477817251231, y: 25.67686585695104 };
-
-// El modelo de cada tema: negro (escena 1) en claro, plateado (escena 2) en
-// oscuro.
-const themeModel = (dark) => (dark ? SPLINE_SCENE_2_URL : SPLINE_SCENE_URL);
-
-// Con ?debug=1 (y solo asi), la URL ajusta el cambio de tema en celular para
-// probar en el telefono sin redeploy: swapSettle=<ms> cambia SWAP_SETTLE_MS y
-// l2=now carga la segunda capa enseguida en vez de diferirla. TEMPORAL, como
-// la lectura de ?debug=1.
-const swapDebug = (() => {
-  try {
-    const q = new URLSearchParams(window.location.search);
-    return q.get("debug") === "1" ? q : null;
-  } catch (e) {
-    return null;
-  }
-})();
-
-// Tiempos del cambio de tema en celular (ver runMobileSwap).
-const SWAP_FADE_MS = 300;
-// Despues de soltar: la GPU se recupera de forma asincrona y el GC no se puede
-// forzar; el hueco le da tiempo a iOS antes de pedir la escena nueva. 500ms
-// no alcanzo en el iPhone (murio en el pico de carga del segundo cambio).
-const SWAP_SETTLE_MS = (() => {
-  const v = Number(swapDebug?.get("swapSettle"));
-  return swapDebug?.has("swapSettle") && Number.isFinite(v) && v >= 0 ? Math.min(v, 10000) : 1500;
-})();
-// La capa que NO se esta viendo carga despues: a este tiempo del fundido de
-// vuelta, o antes si el scroll se acerca a ella. Asi nunca cargan dos escenas
-// a la vez. l2=now (debug) la carga enseguida, como antes.
-const SECONDARY_DELAY_MS = 2500;
-const SECONDARY_NOW = swapDebug?.get("l2") === "now";
-// Si una carga no llega, la secuencia sigue igual (los watchdogs de cada capa
-// ya ponen el render estatico).
-const SWAP_LOAD_TIMEOUT_MS = 20000;
-const waitMs = (ms) => new Promise((r) => setTimeout(r, ms));
-/** Resolve (once) the pending swap wait held in `ref`. */
-const settleWait = (ref, ok) => {
-  const done = ref.current;
-  ref.current = null;
-  done?.(ok);
-};
-const waitFrames = (n) =>
-  new Promise((r) => {
-    const step = (left) => (left <= 0 ? r() : requestAnimationFrame(() => step(left - 1)));
-    step(n);
-  });
-
-// CAMARAS (los dos anchos). Cada escena trae su propia intro de camara: un evento
-// Start de Spline que la lleva desde la posicion guardada en el archivo hasta
-// (0, 147, 1000) en ~2.5s. Los dos archivos arrancan de camaras distintas --
-// el robot negro de (0, 249, 360), mucho mas cerca, el plateado de
-// (-7.5, 262, 588) -- y el hero se revela con la intro todavia corriendo. Asi
-// el mismo beat salia encuadrado distinto segun el tema (negro grande y con la
-// cabeza baja, plateado chico y alto), y segun cuanto tardara en cargar; y
-// HOME, que no repite la intro, aterrizaba en la camara final. El rig y la
-// camara final son iguales en los dos: lo unico que divergia era esa intro.
-//
-// La salida es sacarle la camara a la intro: se clavan la posicion Y la
-// rotacion. La intro tambien inclina la camara -- de 0.014 a 0.007 rad en su
-// ultimo tramo --, y play() la REPITE: despues de home la escena, que estaba
-// en pausa, vuelve a disparar el Start, la inclinacion salta a 0.014 y baja a
-// 0.007 en ~2.5s, y el robot aparece ~28px mas abajo y sube hasta asentarse.
-// Clavada en el valor asentado, que es el mismo en las dos escenas y en los
-// dos anchos, el cuadro es identico en carga fresca, despues de home y en
-// los dos temas.
-//
-// HERO: sobre la propia linea de la intro del robot negro, en t = .4 (de 0,
-// la guardada, a 1, la final). t ~ .3 es el encuadre de referencia -- corona
-// en el borde, visor a ~37%, titular bajo el menton --; .4 se aleja apenas:
-// visor a ~32%, corona todavia rozando el borde. Mas atras (.5-.6) la corona
-// entra entera con aire arriba; subir t es la unica perilla.
-const HERO_CAM_MOBILE = { x: 0, y: 208.2, z: 616 };
-// HERO ESCRITORIO: 1.52x mas cerca que la final (z 1000 -> 660) y mas alta
-// (y 146.98 -> 177.6), que es lo que baja el robot en el cuadro sin correr el
-// canvas. El acercamiento sale de la camara y no del scale CSS: el canvas ya
-// va estirado 1.9x, y subirlo lo ablandaria. Ver heroY / heroDx.
-const HERO_CAM_DESKTOP = { x: 0, y: 178.2, z: 660 };
-
-// CAPITULO 2: la final de la intro, la misma en los dos archivos. Todo el
-// encuadre del capitulo 2 (L, cintura, anclas) se midio con esta camara; se
-// clava solo para que la intro no la barra en el crossfade.
-const CAM_FINAL = { x: 0, y: 146.98, z: 1000 };
-// La rotacion asentada de la intro, leida en vivo: igual en las tres
-// camaras, los dos temas y los dos anchos.
-const CAM_EULER_X = 0.006996317664543058;
-const CAM_QUAT = { x: 0.003498151697713782, y: 0, z: 0, w: 0.9999938814486315 };
-
-/** Pin a scene's camera so its own Start transition cannot move or tilt it. */
-const pinCamera = (app, pos) => {
-  const pin = (obj, key, value) =>
-    Object.defineProperty(obj, key, { get: () => value, set: () => {}, configurable: true });
-  try {
-    const cam = app?._camera;
-    if (!cam?.position) return;
-    ["x", "y", "z"].forEach((ax) =>
-      Object.defineProperty(cam.position, ax, { get: () => pos[ax], set: () => {}, configurable: true })
-    );
-    // The matrix is composed from the quaternion's backing fields, and the
-    // Euler keeps its own copy in sync from them: pin both, so neither path
-    // can bring the intro's tilt back.
-    const q = cam.quaternion;
-    if (q) ["x", "y", "z", "w"].forEach((k) => pin(q, "_" + k in q ? "_" + k : k, CAM_QUAT[k]));
-    const r = cam.rotation;
-    if (r) [["x", CAM_EULER_X], ["y", 0], ["z", 0]].forEach(([k, v]) => pin(r, "_" + k in r ? "_" + k : k, v));
-  } catch (e) {
-    /* runtime without an inspectable camera */
-  }
-};
-
-// CELULAR: DPR TOPEADO EN 2. Los dos .splinecode traen pixelRatioMobile = 0,
-// que el runtime traduce a window.devicePixelRatio entero: en un iPhone a DPR
-// 3 cada canvas era 1206x2262 (medido en produccion), mas los render targets
-// de pantalla completa del pipeline, que escalan con el cuadrado del DPR. El
-// runtime lee la proporcion UNA vez por carga, en _getPixelRatio, y la pasa a
-// setPixelRatio antes de dimensionar los buffers: topearla ahi evita el pico
-// a resolucion completa, y los redimensionados (la barra de Safari) conservan
-// el tope. Solo con el layout de celular; escritorio queda igual. Es API
-// privada, como _camera: si el runtime la cambia, esto no hace nada.
-const MOBILE_MAX_DPR = 2;
-const mobileLayoutMQ =
-  typeof window !== "undefined" ? window.matchMedia(MOBILE_LAYOUT_QUERY) : null;
-const capMobilePixelRatio = (AP) => {
-  if (!AP || typeof AP._getPixelRatio !== "function" || AP.__mobileDprCap) return;
-  const getPixelRatio = AP._getPixelRatio;
-  AP._getPixelRatio = function (mode) {
-    const r = getPixelRatio.call(this, mode);
-    return mobileLayoutMQ?.matches ? Math.min(r, MOBILE_MAX_DPR) : r;
-  };
-  AP.__mobileDprCap = true;
-};
-capMobilePixelRatio(Application?.prototype);
-
-// CELULAR: WEBGL, NO WEBGPU. El runtime elige WebGPU en el constructor siempre
-// que existe navigator.gpu (iOS 26+), y react-spline no deja pasar la opcion
-// `renderer`. Con WebGPU cada escena descartada queda retenida por caches de
-// modulo del pipeline de nodos de three.js (bug del runtime, ver
-// lib/splineRelease.js) que no se alcanzan desde afuera: medido, +12.5 MB de
-// heap por cambio de tema aun con todo lo demas liberado. Con WebGL, y
-// splineRelease, el heap queda plano. Visualmente, medido a 390x844: la misma
-// escena (diferencias de tono tenues, por debajo de lo que se ve). Se fuerza
-// en load(), antes de que cree el renderer, con el layout de celular.
-//
-// ESCRITORIO FUERA DE CHROMIUM (Safari, Firefox): tambien WebGL. Los ojos del
-// robot son un video (mp4 dentro del .splinecode) usado como textura; en la
-// Mac (Safari 26, WebGPU) no se veian, en el iPhone (WebGL forzado) si. Todo el
-// escritorio se midio en Chromium con WebGPU, que sigue igual; Brave forzado a
-// WebGL da el mismo encuadre y los ojos. API privada (_rendererBackend): ver
-// HANDOFF.
-const isChromium =
-  typeof navigator !== "undefined" &&
-  !!navigator.userAgentData?.brands?.some((b) => b.brand === "Chromium");
-const forceMobileWebGL = (AP) => {
-  if (!AP || typeof AP.load !== "function" || AP.__mobileWebGL) return;
-  const load = AP.load;
-  AP.load = function (...args) {
-    if (mobileLayoutMQ?.matches || !isChromium) {
-      this._rendererBackend = "webgl";
-      this._rendererAuto = false;
-    }
-    return load.apply(this, args);
-  };
-  AP.__mobileWebGL = true;
-};
-forceMobileWebGL(Application?.prototype);
-
-/**
- * Hand the GPU context back. Application.dispose() drops the renderer but the
- * context itself survives until the browser garbage-collects it, and browsers
- * cap how many may be alive at once — so a handful of theme flips reaches
- * "Too many active WebGL contexts. Oldest context will be lost." and then the
- * next scene fails outright with "Error creating WebGL context".
- * WEBGL_lose_context is the only way to release one on demand. Safe on the 2D
- * grid canvas: asking a 2D canvas for a webgl context returns null.
- */
-const releaseGlContext = (canvas) => {
-  if (!canvas) return;
-  try {
-    const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
-    const ext = gl && gl.getExtension("WEBGL_lose_context");
-    if (ext) ext.loseContext();
-  } catch (e) {
-    /* context already gone */
-  }
-};
-
-/**
- * A box for one Spline mount that reports when it really goes away. The GPU
- * context is released by the caller from the canvas it recorded at LOAD, not
- * from whatever canvas is in the box: under StrictMode the dev build mounts,
- * unmounts and remounts every component once, and releasing on that first
- * pretend-unmount handed react-spline an already-lost context -- the scene
- * then failed to load and took the whole app down with it.
- */
-const ReleasingBox = ({ onGone, children, ...rest }) => {
-  const goneRef = useRef(onGone);
-  goneRef.current = onGone;
-  useLayoutEffect(() => () => goneRef.current?.(), []);
-  return <div {...rest}>{children}</div>;
-};
-
-/**
- * One per Spline mount. react-spline has no onError: a failed load is
- * rethrown from its render (`if (i) throw i`), and without a boundary that
- * takes the whole page down. This catches it, renders nothing in that
- * scene's place and tells the owner which one died. No GPU context is
- * released here: react-spline disposes its own Application on unmount, and
- * ours are only ever released from canvases registered at LOAD (see
- * ReleasingBox) -- a scene that failed never registered one.
- */
-class SceneBoundary extends Component {
-  state = { dead: false };
-
-  static getDerivedStateFromError() {
-    return { dead: true };
-  }
-
-  componentDidCatch(error) {
-    console.warn(`Spline scene failed to load (${this.props.name}):`, error);
-    this.props.onFail?.();
-  }
-
-  render() {
-    return this.state.dead ? null : this.props.children;
-  }
-}
-
-// TEMPORAL, solo dev -- sacar antes del deploy. Diagnostico del fantasma
-// plateado: window.__canvasProbe() imprime cada <canvas> con su capa y su
-// escena, visibility propia, opacidad efectiva (producto de los ancestros) y
-// rect. __canvasProbe.hide(i) / .show(i) le ponen display:none a uno solo,
-// para ver en la maquina real cual dibuja que.
-if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
-  const label = (c) => {
-    const a = c.closest('[data-testid="spline-canvas-wrap"]');
-    const l2 = c.closest('[data-testid="spline2-canvas-wrap"]');
-    if (a) return [...a.querySelectorAll("canvas")].indexOf(c) === 0 ? "A slot1 SILVER" : "A alt BLACK";
-    if (l2) return [...l2.querySelectorAll("canvas")].indexOf(c) === 0 ? "L2 SILVER" : "L2 BLACK";
-    return "grid (2D)";
-  };
-  const probe = () => {
-    const rows = [...document.querySelectorAll("canvas")].map((c, i) => {
-      const r = c.getBoundingClientRect();
-      let op = 1;
-      for (let el = c; el; el = el.parentElement) op *= parseFloat(getComputedStyle(el).opacity);
-      const s = getComputedStyle(c);
-      return { i, layer: label(c), visibility: s.visibility, ownVisibility: c.style.visibility || "-",
-               display: s.display, opacity: op.toFixed(2),
-               x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) };
-    });
-    console.table(rows);
-    // El tamano del robot en pixeles del dispositivo es proporcional a
-    // S * alto * DPR; zoom 100% en 2560x1305 con S 2.15 (card 02) = 1.000.
-    const v = window.__view2;
-    console.log(`viewport ${innerWidth}x${innerHeight} @ DPR ${devicePixelRatio}` +
-      (v ? `, capa 2 S ${(+v.scale).toFixed(3)}, robot ${((v.scale * innerHeight * devicePixelRatio) / (2.15 * 1305)).toFixed(3)} x card02@2560x1305` : ""));
-    const live = rows.filter((r) => r.layer !== "grid (2D)" && r.visibility === "visible" &&
-      +r.opacity > 0 && r.w > 0 && r.h > 0);
-    if (live.length > 1) console.warn("more than one robot canvas live:", live.map((r) => r.layer).join(", "));
-    return rows;
-  };
-  probe.hide = (i) => { document.querySelectorAll("canvas")[i].style.display = "none"; };
-  probe.show = (i) => { document.querySelectorAll("canvas")[i].style.display = ""; };
-  window.__canvasProbe = probe;
-}
-
-/** Collect every arm joint once; findObjectByName per frame would be silly. */
-const findBot = (app) => {
-  try {
-    return app?.findObjectByName?.("Bot") || null;
-  } catch (e) {
-    return null;
-  }
-};
-
-const collectArms = (app) => {
-  const out = [];
-  try {
-    const walk = (o, d) => {
-      if (!o || d > 9) return;
-      if (o.name === "arm" || o.name === "elbow" || o.name === "forearm") out.push(o);
-      (o.children || []).forEach((ch) => walk(ch, d + 1));
-    };
-    walk(app?._scene || app?.scene, 0);
-  } catch (e) {
-    /* runtime without an inspectable graph */
-  }
-  return out;
-};
-
-const applyPose = (joints) => {
-  for (let i = 0; i < joints.length; i++) {
-    const j = joints[i];
-    if (j.name === "arm") j.rotation.x = POSE_HOME.arm;
-    else if (j.name === "elbow") j.rotation.y = POSE_HOME.elbowY;
-    else j.rotation.x = POSE_HOME.forearm;
-  }
-};
-
-/** Place a scene's rig at a known spot. Both scenes share the same rig. */
-const placeBot = (app, { scale, y } = {}) => {
-  try {
-    const bot = app?.findObjectByName?.("Bot");
-    if (!bot) return;
-    bot.position.x = BOT_HOME.x;
-    bot.position.y = y === undefined ? BOT_HOME.y : y;
-    if (scale !== undefined) {
-      bot.scale.x = scale;
-      bot.scale.y = scale;
-      bot.scale.z = scale;
-    }
-  } catch (e) {
-    /* older runtime, or a scene without the named rig */
-  }
-};
-
-// Where each callout lands. The gaze turns toward these in order, so the
-// positions and the head poses in GAZE must stay in sync.
-// No translate utilities here: GSAP animates `y` on these nodes and would
-// wipe a Tailwind transform, so card 03 centres with mx-auto instead.
+patchSplineRuntime(Application);
 
 export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const { theme } = useTheme();
   const darkMode = theme === "dark";
-  // Chapter 2 plays against the OPPOSITE tone from the page: black behind the
-  // scene in white mode, white in dark mode. Its text therefore scopes to the
-  // inverse of the page theme, or it comes out matching its own backdrop.
-  // Chapter 2 now shares the page's tone instead of opposing it, so its text
-  // scopes to the page theme rather than the inverse.
+  // Chapter 2 shares the page's tone, so its UI scopes to the page theme. The
+  // section itself is pinned to data-theme="dark" (the hero's own wall), which
+  // is why its children need the page theme spelled out.
   const ch2Theme = darkMode ? "dark" : "light";
-  // ONE robot per theme, the whole way through. The theme picks the model and
-  // both slots run it, so the figure you meet in the opening shot is the same
-  // one that carries the feature cards — white mode is the black robot on
-  // white throughout, dark mode the silver robot on black throughout.
   const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -568,9 +167,9 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   const dotRefs = useRef([]);
   const railRefs = useRef([]);
 
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== "undefined" && window.matchMedia(MOBILE_LAYOUT_QUERY).matches
-  );
+  // Re-evaluated whenever the breakpoint flips (see useMediaQuery); the layout
+  // effect lists isMobile in its deps and rebuilds the timeline for it.
+  const isMobile = useMediaQuery(MOBILE_LAYOUT_QUERY);
 
   // El robot de la escena 1 es NEGRO y el de la 2 PLATEADO. El modelo es UNO
   // POR TEMA de punta a punta, en los dos anchos: negro todo el recorrido en
@@ -622,22 +221,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
   // fuera del compositing, y fuera del hit-testing del mouse. Solo un robot
   // visible por capa, siempre.
   const hiddenCls = "invisible opacity-0";
-
-  // The breakpoint used to be read once at mount and never again, so a page
-  // that loaded under 768px — browser zoom, a narrow window, devtools docked
-  // to the side — kept the mobile layout (full-width cards pinned to the
-  // bottom, no connectors, no progress rail) even after the viewport went
-  // back to desktop width. Only a reload recovered it. The layout effect
-  // below already lists isMobile in its deps and reverts its GSAP context,
-  // so re-running on a real breakpoint change is the path it was written for.
-  useEffect(() => {
-    const mq = window.matchMedia(MOBILE_LAYOUT_QUERY);
-    const onChange = (e) => setIsMobile(e.matches);
-    mq.addEventListener("change", onChange);
-    setIsMobile(mq.matches);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
 
   // loader: smooth asymptotic fill to ~90% over ~2.5s, completes on scene load
   useEffect(() => {
@@ -1019,52 +602,7 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     window.__memProbeLog?.(`swap config: settle ${SWAP_SETTLE_MS}ms, l2 ${SECONDARY_NOW ? "now" : "lazy"}`);
   }, []);
 
-  // CELULAR: las tarjetas se apoyan 16px encima del lugar del dock, medido en
-  // vivo. Con unidades CSS caian debajo del dock: la seccion mide 100vh (en
-  // iOS, el alto con las barras escondidas) y tiene min-h de 640px, asi que
-  // con las barras de Safari o Brave visibles, o en una pantalla baja, su
-  // borde inferior queda fuera de lo que se ve. El dock es fixed y siempre
-  // esta en el borde visible. Mientras hay una tarjeta en pantalla la seccion
-  // esta fijada con el borde de arriba en 0, asi que alcanza con su alto.
-  useEffect(() => {
-    if (!isMobile) return undefined;
-    const GAP = 16;
-    let raf = 0;
-    let last = null;
-    const placeCallouts = () => {
-      raf = 0;
-      const slot = document.querySelector("[data-dock-slot]");
-      const sec = sectionRef.current;
-      if (!slot || !sec) return;
-      const bottom = Math.max(0, Math.round(sec.offsetHeight - slot.getBoundingClientRect().top + GAP));
-      if (bottom === last) return;
-      last = bottom;
-      calloutRefs.current.forEach((el) => {
-        if (el) el.style.bottom = `${bottom}px`;
-      });
-    };
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(placeCallouts);
-    };
-    placeCallouts();
-    // Las barras del navegador aparecen y se van con el scroll: resize en
-    // unos, solo visualViewport en otros. El scroll es por las dudas; si no
-    // cambio nada no escribe.
-    const vv = window.visualViewport;
-    window.addEventListener("resize", schedule);
-    window.addEventListener("scroll", schedule, { passive: true });
-    vv?.addEventListener("resize", schedule);
-    const callouts = calloutRefs.current;
-    return () => {
-      if (raf) cancelAnimationFrame(raf);
-      window.removeEventListener("resize", schedule);
-      window.removeEventListener("scroll", schedule);
-      vv?.removeEventListener("resize", schedule);
-      callouts.forEach((el) => {
-        if (el) el.style.bottom = "";
-      });
-    };
-  }, [isMobile]);
+  useCalloutsAboveDock(isMobile, sectionRef, calloutRefs);
 
   useEffect(() => {
     const target = themeModel(darkMode);
@@ -1352,8 +890,6 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
     // camara (ver applyView); el wrap queda fijo en VIEW_CSS_SCALE.
     const heroView = { scale: startScale, x: fx1(heroDx, startScale), y: startY };
     const scene2View = { scale: 1, x: "0%", y: "0%" };
-    // TEMPORAL, solo dev (va con __canvasProbe): el encuadre vivo de la capa 2.
-    if (process.env.NODE_ENV !== "production") window.__view2 = scene2View;
 
     const ctx = gsap.context(() => {
       if (isMobile) {
@@ -2400,184 +1936,34 @@ export const ScrollScene = ({ onReady, onJourneyEnd }) => {
           blending into the scene; the marks that DO need to blend (brand,
           status, headline, features header, scroll cue) live outside it. */}
       <div className="pointer-events-none absolute inset-0 z-10">
-        {/* top-right status */}
         {/* story paragraphs (phase 2) — beside the close-up robot, below it on mobile */}
-        {/* At the story framing (scale 2.8) the head centres near 31% of the
-            viewport; dead-centring this block left it a head below that. */}
-        <div
+        <StoryPanel
           ref={storyPanelRef}
-          data-theme={ch2Theme}
-          className="absolute inset-x-5 bottom-28 cut-corner bg-surface/[0.70] p-5 backdrop-blur-md sm:inset-x-auto sm:bottom-auto sm:right-[6%] sm:top-[40%] sm:w-[24rem] sm:-translate-y-1/2 sm:bg-transparent sm:p-0 sm:backdrop-blur-none lg:right-[9%]"
-        >
-          {/* story heading — section-title type, sized so it never pushes the
-              paragraphs out of the viewport */}
-          <div ref={storyTitleRef} className="mb-6" data-testid="story-title">
-            <h2 className="font-display text-xl font-light uppercase leading-tight tracking-[0.02em] text-ink sm:text-[1.75rem]">
-              {storyTitle.name}
-            </h2>
-            <p className="mt-1.5 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65">
-              {storyTitle.role}
-            </p>
-          </div>
-          {story.map((para, i) => (
-            <p
-              key={i}
-              ref={(el) => (storyRefs.current[i] = el)}
-              data-testid={`story-paragraph-${i + 1}`}
-              className={`font-inter text-sm leading-relaxed text-ink/[0.83] sm:text-base ${
-                i > 0 ? "mt-6" : ""
-              }`}
-            >
-              {para}
-            </p>
-          ))}
-        </div>
+          titleRef={storyTitleRef}
+          paragraphRefs={storyRefs}
+          theme={ch2Theme}
+        />
 
         {/* connector lines + dots (desktop) */}
-        {!isMobile &&
-          systemFeatures.map((f, i) => (
-            <svg
-              key={`line-${f.num}`}
-              data-testid={`feature-line-${f.num}`}
-              data-theme={ch2Theme}
-              className="pointer-events-none absolute inset-0 h-full w-full"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-            >
-              <line
-                ref={(el) => (lineRefs.current[i] = el)}
-                x1={f.from.x}
-                y1={f.from.y}
-                x2={f.from.x}
-                y2={f.from.y}
-                stroke="rgb(var(--ink) / 0.45)"
-                strokeWidth="1"
-                vectorEffect="non-scaling-stroke"
-              />
-            </svg>
-          ))}
-        {!isMobile &&
-          systemFeatures.map((f, i) => (
-            <span
-              key={`dot-${f.num}`}
-              ref={(el) => (dotRefs.current[i] = el)}
-              style={{ left: `${f.to.x}%`, top: `${f.to.y}%` }}
-              data-theme={ch2Theme}
-              className="pointer-events-none absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink"
-            />
-          ))}
+        {!isMobile && <FeatureConnectors lineRefs={lineRefs} dotRefs={dotRefs} theme={ch2Theme} />}
 
         {/* callout cards */}
         {systemFeatures.map((f, i) => (
-          <div
+          <FeatureCard
             key={f.num}
             ref={(el) => (calloutRefs.current[i] = el)}
-            data-testid={`feature-callout-${f.num}`}
-            data-theme={ch2Theme}
-            style={isMobile ? undefined : { top: f.top }}
-            className={`absolute ${
-              isMobile
-                ? "callout-mobile left-4 right-4 w-auto"
-                : `w-[27rem] max-w-[46vw] ${f.side === "left" ? "left-[5%]" : "right-[5%]"}`
-            }`}
-          >
-            {isMobile ? (
-              // Celular: compacta. Numero, parte y titulo en UNA fila, texto a
-              // 14px: ocupaba 43-72% de la pantalla (medido en WebKit,
-              // Firefox, Brave y Edge, 402x874 a 375x553).
-              <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.70] p-4 backdrop-blur-md">
-                <div className="flex items-center gap-4">
-                  <div className="select-none font-display text-[3.25rem] font-light leading-[0.85] text-outline-grey">
-                    {f.num}
-                  </div>
-                  <div className="min-w-0">
-                    <span className="font-display text-[12px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
-                      {f.part}
-                    </span>
-                    <h3 className="mt-0.5 font-display text-xl font-light uppercase leading-tight tracking-[0.01em] text-ink">
-                      {f.title}
-                    </h3>
-                  </div>
-                </div>
-                <p className="mt-3 font-inter text-[14px] leading-[1.5] text-ink/[0.83]">{f.text}</p>
-              </div>
-            ) : (
-              // Escritorio: todo escala con el ALTO de la ventana (y con el
-              // ancho en tablets verticales angostas, donde la tarjeta de 46vw
-              // tiene mas renglones), con tope en el tamano de siempre. En el
-              // cierre la 01 (top 6%) y la 03 (top 52%) van una arriba de la
-              // otra: cada una tiene que medir menos de ~44% del alto. A tamano
-              // fijo median 48-58% en una Mac (1440x900, o menos con la barra
-              // de Safari): se pisaban y la 03 se cortaba abajo. Las lineas
-              // salen de puntos fijos (from en portfolioData) que siguen
-              // quedando dentro de la tarjeta.
-              <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/70 p-[clamp(1.25rem,min(3.2vh,3.4vw),2.25rem)] pt-[clamp(1rem,min(2.4vh,2.5vw),1.5rem)] backdrop-blur-md">
-                <div className="select-none font-display text-[clamp(3rem,min(8vh,8vw),7rem)] font-light leading-[0.85] text-outline-grey">
-                  {f.num}
-                </div>
-                <div className="mt-[clamp(0.75rem,min(2.6vh,2.6vw),1.75rem)] flex items-baseline gap-3">
-                  <span className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
-                    {f.part}
-                  </span>
-                </div>
-                <h3 className="mt-2 font-display text-[clamp(1.25rem,2.7vh,1.5rem)] font-light uppercase tracking-[0.01em] text-ink">
-                  {f.title}
-                </h3>
-                <p className="mt-[clamp(0.5rem,1.6vh,1rem)] font-inter text-[clamp(13px,min(1.65vh,1.75vw),15px)] leading-[1.6] text-ink/[0.83]">
-                  {f.text}
-                </p>
-              </div>
-            )}
-          </div>
+            feature={f}
+            isMobile={isMobile}
+            theme={ch2Theme}
+          />
         ))}
 
         {/* progress rail (desktop) */}
-        {!isMobile && (
-          <div
-            data-testid="features-rail"
-            data-theme={ch2Theme}
-            className="absolute right-6 top-1/2 flex -translate-y-1/2 flex-col items-center gap-3 lg:right-10"
-          >
-            {systemFeatures.map((f, i) => (
-              <div key={f.num} className="flex flex-col items-center gap-3">
-                <span
-                  ref={(el) => (railRefs.current[i] = el)}
-                  className="font-display text-[13px] tracking-[0.02em] text-ink opacity-[0.45]"
-                >
-                  {f.num}
-                </span>
-                {i < systemFeatures.length - 1 && <span className="h-6 w-px bg-ink/20" />}
-              </div>
-            ))}
-          </div>
-        )}
+        {!isMobile && <FeaturesRail railRefs={railRefs} theme={ch2Theme} />}
       </div>
 
       {/* Loader — dark, thin line, slow fill */}
-      <AnimatePresence>
-        {!revealed && (
-          <motion.div
-            data-testid="hero-loader"
-            exit={{ opacity: 0, transition: { duration: 0.9 } }}
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-surface"
-          >
-            <p className="font-display text-[13px] font-light uppercase tracking-[0.02em] text-ink/65">
-              System boot
-            </p>
-            <div className="mt-6 h-px w-56 bg-ink/[0.13]">
-              <motion.div
-                className="h-px bg-ink/[0.83]"
-                initial={{ width: "0%" }}
-                animate={{ width: `${progress}%` }}
-                transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.3 }}
-              />
-            </div>
-            <p className="mt-4 font-display text-[13px] tracking-[0.02em] text-ink/65">
-              {Math.round(progress)}%
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <HeroLoader visible={!revealed} progress={progress} />
     </section>
   );
 };

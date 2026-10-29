@@ -87,11 +87,15 @@ or `npx pnpm@9.15.9` gives the same pnpm everywhere.
 | Path | What it is |
 |---|---|
 | `frontend/src/data/portfolioData.js` | All editable content — copy, projects, tags, Spline scene URLs. Single source of truth. |
-| `frontend/src/components/ScrollScene.jsx` | The pinned hero: both Spline scenes, the timeline, the gaze rig and the connectors. The one complex file. |
-| `frontend/src/components/` | The flat sections: About, Projects, Capabilities, Contact, Footer, NavigationDock. |
-| `frontend/src/hooks/useLenis.js` | Smooth-scroll setup and the `scrollToId` helper the nav uses. |
-| `frontend/src/index.css` | Font imports and `.text-engraved`. |
-| `frontend/craco.config.js` | Webpack overrides and the `@` → `src` alias. |
+| `frontend/src/components/ScrollScene.jsx` | The pinned hero: state, the GSAP timeline, the gaze rig and the theme swap. Still the one complex file. |
+| `frontend/src/components/scroll-scene/` | The hero's presentational pieces (feature cards, connectors, rail, story panel, loader) and `useCalloutsAboveDock`. |
+| `frontend/src/components/spline/` | `SceneBoundary` (one failed scene never takes the page down) and `ReleasingBox` (GPU context release). |
+| `frontend/src/lib/spline/` | Spline helpers: camera framing and pinning, runtime patches, the robot rig, scene URLs per theme, theme-swap timing. |
+| `frontend/src/components/` | The flat sections: About, Projects, Capabilities, Contact, Footer, NavigationDock, RotateLock. |
+| `frontend/src/lib/motion.js` | Shared entrance motion: easing, `fadeUpVariants`, `revealOnView`, the hero's line reveal. |
+| `frontend/src/hooks/` | `useLenis` (smooth scroll, `scrollToTop`), `useTheme`, `useMediaQuery`, `useTitleTicker`. |
+| `frontend/src/index.css` | Theme tokens, font imports and the few rules Tailwind cannot express. |
+| `frontend/craco.config.js` | The `@` → `src` alias, lint rules and the webpack-dev-server 5 adapter. |
 | `backend/server.py` | The whole API: one contact endpoint, validation, honeypot, rate limit. |
 
 ### Draft projects
