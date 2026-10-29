@@ -94,5 +94,5 @@ credentials.json
 frontend/node_modules/.cache/default-development/5.pack
 frontend/node_modules/.cache/default-development/7.pack
 
-# Session handoff notes — local only, never published
+# Local notes (HANDOFF, context docs) — never published
 .notes/

@@ -13,9 +13,10 @@
 // Objects shared by every scene (e.g. the DFG_LUT texture) must never be
 // emptied; excludeShared() detects them by comparing two loaded scenes.
 //
-// Relies on private runtime internals. Re-run the heap test in HANDOFF.md
-// whenever @splinetool/runtime or @splinetool/react-spline changes; if the
-// names change this finds nothing and the leak returns (nothing breaks).
+// Relies on private runtime internals. Whenever @splinetool/runtime or
+// @splinetool/react-spline changes, re-check with a heap test (phone layout,
+// five theme swaps, forced GC between them: heap and ArrayBuffers must stay
+// flat). If the names change this finds nothing and the leak returns.
 
 // Safety cap for the player search; a scene has a few thousand objects.
 const WALK_BUDGET = 200000;
