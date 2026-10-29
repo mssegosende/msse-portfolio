@@ -233,7 +233,7 @@ type Span = keyof typeof SPAN_CLASS;
 
 // Lay n cards out on the 12-column grid: a 7 + 5 hero row, then rows of
 // three, with a short trailing row widened so it never leaves a gap.
-const layoutSpans = (n: number): Span[] => {
+export const layoutSpans = (n: number): Span[] => {
   if (n <= 0) return [];
   if (n === 1) return [12];
   if (n === 2) return [7, 5];

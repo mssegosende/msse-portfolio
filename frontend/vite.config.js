@@ -15,4 +15,9 @@ export default defineConfig({
     // The Spline runtime alone is ~1.5 MB; it loads once and is cached.
     chunkSizeWarningLimit: 2500,
   },
+  test: {
+    environment: "jsdom",
+    setupFiles: ["src/test/setup.ts"],
+    env: { VITE_BACKEND_URL: "http://api.test" },
+  },
 });
