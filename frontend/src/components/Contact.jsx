@@ -6,7 +6,7 @@ import { GridField } from "./GridField";
 
 const fadeUp = fadeUpVariants({ stagger: 0.1 });
 
-const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api/contact`;
+const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/contact`;
 
 const validate = ({ name, email, message }) => {
   if (name.trim().length < 2) return "ERR: name must be at least 2 characters";

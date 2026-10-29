@@ -179,7 +179,7 @@ const layoutSpans = (n) => {
 // What the site renders. Production drops drafts and re-lays out the rest so
 // no row is left half empty.
 export const getProjects = () => {
-  const isProduction = process.env.NODE_ENV === "production";
+  const isProduction = import.meta.env.PROD;
   const visible = isProduction ? projects.filter((p) => !p.draft) : projects;
   if (visible.length === projects.length) return visible;
   const spans = layoutSpans(visible.length);

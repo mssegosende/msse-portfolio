@@ -13,7 +13,7 @@ contact form backed by a small FastAPI service.
 
 ## Stack
 
-**Frontend** — React 19 on Create React App with craco, Tailwind CSS, GSAP +
+**Frontend** — React 19 on Vite, Tailwind CSS, GSAP +
 ScrollTrigger, Framer Motion, Lenis for smooth scrolling, `@splinetool/react-spline`
 for the 3D scenes, and pnpm 9 as the package manager.
 
@@ -75,10 +75,8 @@ resets on restart and does not hold across replicas, which is honest for a singl
 instance and would need Redis or the reverse proxy the moment this scales past one.
 
 **pnpm, not npm or yarn.**
-`pnpm.overrides` in `package.json` pins around 40 transitive security patches, plus
-`eslint` 8.57.1: Create React App lints with eslint 8, and pnpm would otherwise hand its
-webpack plugin a newer major. The version is pinned in `packageManager`, so `corepack`
-or `npx pnpm@9.15.9` gives the same pnpm everywhere.
+The version is pinned in `packageManager`, so `corepack` or `npx pnpm@9.15.9` gives
+the same pnpm everywhere.
 
 ---
 
@@ -95,7 +93,7 @@ or `npx pnpm@9.15.9` gives the same pnpm everywhere.
 | `frontend/src/lib/motion.js` | Shared entrance motion: easing, `fadeUpVariants`, `revealOnView`, the hero's line reveal. |
 | `frontend/src/hooks/` | `useLenis` (smooth scroll, `scrollToTop`), `useTheme`, `useMediaQuery`, `useTitleTicker`. |
 | `frontend/src/index.css` | Theme tokens, font imports and the few rules Tailwind cannot express. |
-| `frontend/craco.config.js` | The `@` → `src` alias, lint rules and the webpack-dev-server 5 adapter. |
+| `frontend/vite.config.js` | Vite config and the `@` → `src` alias. |
 | `backend/server.py` | The whole API: one contact endpoint, validation, honeypot, rate limit. |
 
 ### Draft projects
@@ -114,14 +112,14 @@ deployed site. Rewrite the copy, drop the flag.
 ```bash
 cd frontend
 pnpm install
-pnpm start          # http://localhost:3000
+pnpm dev            # http://localhost:3000
 ```
 
 Production build:
 
 ```bash
 pnpm build
-npx serve -s build
+pnpm preview
 ```
 
 **Backend** — only for the contact form, and it needs a MongoDB instance:
@@ -136,9 +134,9 @@ uvicorn server:app --reload --port 8000
 
 ### Environment
 
-Neither file is versioned.
+Neither file is versioned; `frontend/.env.example` lists the frontend keys.
 
 | File | Keys |
 |---|---|
-| `frontend/.env` | `REACT_APP_BACKEND_URL` |
+| `frontend/.env` | `VITE_BACKEND_URL` |
 | `backend/.env` | `MONGO_URL`, `DB_NAME`, `CORS_ORIGINS` |
