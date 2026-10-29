@@ -21,5 +21,12 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["src/test/setup.ts"],
     env: { VITE_BACKEND_URL: "http://api.test" },
+    coverage: {
+      provider: "v8",
+      // Listed explicitly so files no test imports still show, at 0%.
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/test/**", "src/main.tsx", "src/vite-env.d.ts"],
+      reporter: ["text", "html"],
+    },
   },
 });

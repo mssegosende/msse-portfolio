@@ -34,8 +34,14 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm format:check
-      - run: pnpm test
+      - run: pnpm test:coverage
       - run: pnpm build
+
+      - uses: actions/upload-artifact@v5
+        with:
+          name: coverage
+          path: frontend/coverage
+          retention-days: 7
 
       - run: pnpm exec playwright install --with-deps chromium
       # scenes.spec loads the real Spline scenes, so this step needs the network.

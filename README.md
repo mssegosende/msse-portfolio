@@ -144,15 +144,16 @@ pnpm install
 pnpm dev            # http://localhost:3000
 ```
 
-| Command                             | What it does                                               |
-| ----------------------------------- | ---------------------------------------------------------- |
-| `pnpm build`                        | Type-checks, then builds to `dist/`.                       |
-| `pnpm preview`                      | Serves the build.                                          |
-| `pnpm lint`                         | ESLint.                                                    |
-| `pnpm typecheck`                    | `tsc` over the app and over the e2e specs.                 |
-| `pnpm format` / `pnpm format:check` | Prettier.                                                  |
-| `pnpm test`                         | Unit tests (Vitest). `pnpm test:watch` keeps them running. |
-| `pnpm test:e2e`                     | End-to-end tests (Playwright). Run `pnpm build` first.     |
+| Command                             | What it does                                                                     |
+| ----------------------------------- | -------------------------------------------------------------------------------- |
+| `pnpm build`                        | Type-checks, then builds to `dist/`.                                             |
+| `pnpm preview`                      | Serves the build.                                                                |
+| `pnpm lint`                         | ESLint.                                                                          |
+| `pnpm typecheck`                    | `tsc` over the app and over the e2e specs.                                       |
+| `pnpm format` / `pnpm format:check` | Prettier.                                                                        |
+| `pnpm test`                         | Unit tests (Vitest). `pnpm test:watch` keeps them running.                       |
+| `pnpm test:coverage`                | Unit tests with a coverage report: a table in the terminal, HTML in `coverage/`. |
+| `pnpm test:e2e`                     | End-to-end tests (Playwright). Run `pnpm build` first.                           |
 
 **Backend** — only for the contact form, and it needs a MongoDB instance:
 
@@ -184,6 +185,9 @@ projection, the choreography's framings, the project grid and draft stripping,
 validation. `src/test/` provides a controllable `matchMedia` and an
 `IntersectionObserver` stub.
 
+`pnpm test:coverage` reports coverage for all of `src/`. Expect it low overall: the
+scenes, the timeline and the sections are covered by the e2e suite, not here.
+
 **End-to-end tests** (`e2e/`) run against the production build. The layout specs block
 the Spline CDN, so they are deterministic: the feature cards at the closing beat
 across viewports, the cards clearing the dock on phones, navigation, the theme toggle
@@ -194,8 +198,8 @@ Playwright uses its own Chromium (`pnpm exec playwright install chromium`). To u
 Chromium already installed instead (Chrome, Brave, Edge), point `PW_CHROMIUM_PATH` at
 its executable.
 
-**CI** (`.github/workflows/ci.yml`) runs lint, typecheck, format check, unit tests,
-build and the e2e suite on every push to `main` and every pull request.
+**CI** (`.github/workflows/ci.yml`) runs lint, typecheck, format check, unit tests
+with coverage (uploaded as an artifact), build and the e2e suite on every push to `main` and every pull request.
 
 ### Regenerating the static fallback
 
