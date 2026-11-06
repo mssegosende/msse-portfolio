@@ -5,19 +5,23 @@ import { CapabilityCard } from "./CapabilityCard";
 
 // Desktop placement at 1440 x 900 (design/HANDOFF.md): 324 x 463, 110px from
 // the left, centred between the title and the dock. Other sizes scale the
-// whole card, never its fonts alone.
+// whole card, never its fonts alone. CARD_SCALE: María Sol's review shrank the
+// card to 85 % of the mock, frame and type together.
 const CARD_W = 324;
 const CARD_H = 463;
+const CARD_SCALE = 0.85;
 const LEFT = 110;
 const TITLE_BOTTOM = 180;
 const DOCK_CLEAR = 100;
 const ROTATE_MS = 5000;
 
 const fitCard = (w: number, h: number) => {
-  const s = Math.min(
-    1.25,
-    Math.max(0.72, Math.min(h / 900, w / 1440, (h - TITLE_BOTTOM - DOCK_CLEAR) / CARD_H)),
-  );
+  const s =
+    CARD_SCALE *
+    Math.min(
+      1.25,
+      Math.max(0.72, Math.min(h / 900, w / 1440, (h - TITLE_BOTTOM - DOCK_CLEAR) / CARD_H)),
+    );
   const free = h - TITLE_BOTTOM - DOCK_CLEAR - CARD_H * s;
   return { s, left: LEFT * Math.min(1, w / 1440), top: TITLE_BOTTOM + Math.max(0, free / 2) };
 };

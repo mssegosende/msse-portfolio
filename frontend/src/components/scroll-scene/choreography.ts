@@ -59,7 +59,9 @@ export const SCENE1 = { video: 0.1, check: 0.25, headline: 0.4, scroll: 0.55, en
 /**
  * Scene 2: the giant head, one fixed shot for the whole scene (it moves with
  * the idle sway and the cursor, not with the scroll). Desktop at 1440 x 900:
- * head ~745px wide, centred at ~66% of the width, crown cut above the top edge.
+ * head ~670px wide (90 % of the handoff's, María Sol's review), centred at
+ * ~68.5% of the width so it clears the card, its right edge ~40px short of the
+ * section index; eye line at the same height as before, crown cut above the top.
  * TODO(polish): measured on the black robot at 1440 x 900 only.
  * Phones keep a tight head shot until P5; their rig shifts by `rx` instead of
  * the canvas moving.
@@ -71,7 +73,7 @@ export const giantHeadFraming = (isMobile: boolean, viewport: Viewport): Framing
     : { scale: GIANT.scale, x: vw(GIANT.dx * viewport.height), y: `${GIANT.y}%` };
 };
 // dx scales with the window height, like the rig's own offset.
-const GIANT = { scale: 5.4, dx: 0.303, y: 121.1 };
+const GIANT = { scale: 4.86, dx: 0.342, y: 106.8 };
 
 // Timeline positions, in timeline seconds.
 
