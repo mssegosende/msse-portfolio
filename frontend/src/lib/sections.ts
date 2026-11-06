@@ -1,4 +1,4 @@
-import { BEATS } from "@/components/scroll-scene/choreography";
+import { BEATS, SCENE1 } from "@/components/scroll-scene/choreography";
 
 export type SectionId = "hero" | "capabilities" | "projects" | "about" | "contact";
 
@@ -29,7 +29,7 @@ export interface SectionRange {
 // The hero timeline's length in its own units (useHeroTimeline): the chapter
 // 2 cards are its last three beats, so they are Ø2.1-Ø2.3.
 // TODO(P2): read these from the new timeline instead.
-const HERO_TL_END = 3.45;
+const HERO_TL_END = 3.45 + SCENE1.end;
 // A normal section counts as reached when its top passes this share of the viewport.
 const PROBE = 0.4;
 
@@ -52,16 +52,24 @@ const evenSteps = (from: number, to: number, n: number) =>
 export const measureSections = (): (SectionRange | null)[] => {
   const vh = window.innerHeight;
   const pin = heroPin();
-  const capStart = BEATS[0]?.at ?? 1.1;
+  const capStart = SCENE1.end + (BEATS[0]?.at ?? 1.1);
   return SECTIONS.map((s) => {
     if (s.id === "hero") {
       if (!pin) return null;
-      const stepAt = evenSteps(pin.start, pin.at(capStart), s.steps);
-      return { start: pin.start, stepAt, targets: [0, ...stepAt.slice(1)] };
+      const stepAt = [0, SCENE1.check, SCENE1.headline].map((t) => (t ? pin.at(t) : pin.start));
+      return {
+        start: pin.start,
+        stepAt,
+        targets: [SCENE1.video, SCENE1.check, SCENE1.headline].map((t) => pin.at(t + 0.08)),
+      };
     }
     if (s.id === "capabilities" && pin) {
-      const stepAt = BEATS.map((b) => pin.at(b.at));
-      return { start: stepAt[0]!, stepAt, targets: BEATS.map((b) => pin.at(b.cardAt + 0.1)) };
+      const stepAt = BEATS.map((b) => pin.at(SCENE1.end + b.at));
+      return {
+        start: pin.at(capStart),
+        stepAt,
+        targets: BEATS.map((b) => pin.at(SCENE1.end + b.cardAt + 0.1)),
+      };
     }
     const el = document.getElementById(s.id);
     if (!el) return null;

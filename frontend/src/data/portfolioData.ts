@@ -113,6 +113,15 @@ export const story: string[] = [
   "Piano taught me the thing I use most: different logics share patterns. Once I see the pattern, a new language or framework stops being foreign — that's how I learn, and how I walk into a system I've never seen.",
 ];
 
+// Scene 1's SYSTEM CHECK panel (Ø1.2), line by line.
+export const systemCheck: string[] = [
+  "OPERATOR: M. S. GOSENDE",
+  "CORE: PYTHON / TS",
+  "AGENTS: LANGGRAPH",
+  "LOC: −34.60 −58.38",
+  "STATUS: OPEN TO WORK",
+];
+
 // Title above the story block in the pinned hero.
 export const storyTitle = {
   name: "María Sol Gosende Centurión",

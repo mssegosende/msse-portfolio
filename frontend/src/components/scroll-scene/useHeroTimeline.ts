@@ -15,6 +15,7 @@ import {
 import {
   BEATS,
   GAZE,
+  SCENE1,
   XFADE_AT,
   XFADE_DURATION,
   chapterTwoFramings,
@@ -48,8 +49,11 @@ export const useHeroElements = () =>
     idle2Ref: createRef<HTMLDivElement>(),
     splineLayerRef: createRef<HTMLDivElement>(),
     overlayRef: createRef<HTMLDivElement>(),
-    wallRef: createRef<HTMLDivElement>(),
-    wallTopRef: createRef<HTMLDivElement>(),
+    bg1Ref: createRef<HTMLDivElement>(),
+    wordmarkRef: createRef<HTMLDivElement>(),
+    topBarRef: createRef<HTMLDivElement>(),
+    introRef: createRef<HTMLDivElement>(),
+    checkRef: createRef<HTMLDivElement>(),
     vignetteRef: createRef<HTMLDivElement>(),
     storyTitleRef: createRef<HTMLDivElement>(),
     storyPanelRef: createRef<HTMLDivElement>(),
@@ -128,7 +132,11 @@ export const useHeroTimeline = ({
       idle2Ref,
       splineLayerRef,
       overlayRef,
-      wallTopRef,
+      bg1Ref,
+      wordmarkRef,
+      topBarRef,
+      introRef,
+      checkRef,
       vignetteRef,
       storyTitleRef,
       storyPanelRef,
@@ -226,7 +234,9 @@ export const useHeroTimeline = ({
       // Vignette tint.
       vignetteRef.current?.style.setProperty("--vignette", "0 0 0");
 
-      gsap.set(wallTopRef.current, { opacity: 0 });
+      // Scene 1's HUD windows wait for their scroll steps.
+      const hud1 = [introRef.current, checkRef.current, headlineRef.current, scrollCueRef.current];
+      hud1.forEach((el) => el && gsap.set(el, { autoAlpha: 0, y: 12 }));
       if (isMobile) {
         [parallax1Ref.current, parallax2Ref.current, idle1Ref.current, idle2Ref.current].forEach(
           (el) => el && gsap.set(el, { x: 0, y: 0, rotation: 0, scale: 1 }),
@@ -503,16 +513,24 @@ export const useHeroTimeline = ({
         },
       });
 
-      // Grey settles in ahead of the drain, so the order reads white -> grey
-      // -> black instead of white -> black.
-      tl.to(vignetteRef.current, { opacity: 1, duration: 0.2 }, 0.02);
-      tl.to(wallTopRef.current, { opacity: 1, duration: 0.2 }, 0.02);
+      // Scene 1: each HUD window appears on its own step, then SCROLL; it holds.
+      const rise = { autoAlpha: 1, y: 0, duration: 0.06, ease: "power1.out" };
+      tl.to(introRef.current, rise, SCENE1.video);
+      tl.to(checkRef.current, rise, SCENE1.check);
+      tl.to(headlineRef.current, rise, SCENE1.headline);
+      tl.to(scrollCueRef.current, rise, SCENE1.scroll);
 
-      // PHASE 1 exit: headline leaves, light drains to black, slight drift-in
-      tl.to(headlineRef.current, { opacity: 0, y: -140, duration: 0.1 }, 0.06);
-      tl.to(scrollCueRef.current, { opacity: 0, y: 20, duration: 0.06 }, 0.02);
-      tl.to(drain, { t: 1, duration: 0.3, onUpdate: applyDrain }, 0.1);
-      tl.to(overlayRef.current, { opacity: 1, duration: 0.34 }, 0.1);
+      // Scene 1 exit. TODO(P2 scene 2): the old chapter 2 follows, shifted by C2.
+      const C2 = SCENE1.end;
+      tl.to(
+        [...hud1, topBarRef.current, wordmarkRef.current],
+        { autoAlpha: 0, duration: 0.06 },
+        C2,
+      );
+      tl.to(bg1Ref.current, { opacity: 0, duration: 0.3 }, C2 + 0.1);
+      tl.to(vignetteRef.current, { opacity: 1, duration: 0.2 }, C2 + 0.02);
+      tl.to(drain, { t: 1, duration: 0.3, onUpdate: applyDrain }, C2 + 0.1);
+      tl.to(overlayRef.current, { opacity: 1, duration: 0.34 }, C2 + 0.1);
       tl.to(
         isMobile ? canvasWrapRef.current : heroView,
         {
@@ -522,7 +540,7 @@ export const useHeroTimeline = ({
           duration: 0.32,
           ease: "power1.inOut",
         },
-        0.1,
+        C2 + 0.1,
       );
 
       // Only what is on screen renders: every scene is a full-screen GPU load, and
@@ -549,8 +567,8 @@ export const useHeroTimeline = ({
         const shown = tl.time();
         const scrolled = (tl.scrollTrigger?.progress ?? 0) * tl.duration();
         const hero =
-          heroVisibleRef.current && Math.min(shown, scrolled) < XFADE_AT + XFADE_DURATION;
-        const layer2 = heroVisibleRef.current && Math.max(shown, scrolled) > XFADE_AT * 0.9;
+          heroVisibleRef.current && Math.min(shown, scrolled) < C2 + XFADE_AT + XFADE_DURATION;
+        const layer2 = heroVisibleRef.current && Math.max(shown, scrolled) > C2 + XFADE_AT * 0.9;
         setRunning(app1Ref.current, hero && !showAltRef.current);
         setRunning(appAltRef.current, hero && showAltRef.current);
         setRunning(app2Ref.current, layer2);
@@ -562,17 +580,29 @@ export const useHeroTimeline = ({
       };
 
       // Phase 2: crossfade to chapter 2; the robot rises in close-up.
-      tl.to(splineLayerRef.current, { opacity: 0, duration: XFADE_DURATION }, XFADE_AT);
-      tl.to(layer2Ref.current, { opacity: 1, duration: XFADE_DURATION }, XFADE_AT);
-      tl.to(lift, { t: 1, duration: 0.16, onUpdate: applyLift }, XFADE_AT);
+      tl.to(splineLayerRef.current, { opacity: 0, duration: XFADE_DURATION }, C2 + XFADE_AT);
+      tl.to(layer2Ref.current, { opacity: 1, duration: XFADE_DURATION }, C2 + XFADE_AT);
+      tl.to(lift, { t: 1, duration: 0.16, onUpdate: applyLift }, C2 + XFADE_AT);
 
       // Story paragraphs fade in one after another during the close-up hold.
-      tl.to(storyPanelRef.current, { opacity: 1, duration: 0.07, ease: "power1.out" }, 0.54);
-      tl.to(storyTitleRef.current, { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.56);
+      tl.to(storyPanelRef.current, { opacity: 1, duration: 0.07, ease: "power1.out" }, C2 + 0.54);
+      tl.to(
+        storyTitleRef.current,
+        { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" },
+        C2 + 0.56,
+      );
       if (storyRefs.current[0])
-        tl.to(storyRefs.current[0], { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.62);
+        tl.to(
+          storyRefs.current[0],
+          { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" },
+          C2 + 0.62,
+        );
       if (storyRefs.current[1])
-        tl.to(storyRefs.current[1], { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" }, 0.78);
+        tl.to(
+          storyRefs.current[1],
+          { opacity: 1, y: 0, duration: 0.07, ease: "power1.out" },
+          C2 + 0.78,
+        );
 
       // Phase 3: the robot is already moving when revealed, then four evenly spaced
       // steps and a closing beat.
@@ -580,35 +610,39 @@ export const useHeroTimeline = ({
 
       // Entry starts at 0.40, under the crossfade (0.50), so the scene is never
       // revealed frozen.
-      tl.to(body, { t: 1, duration: 0.38, ease: "power2.out" }, 0.4);
-      tl.to(gaze, { ...GAZE.text, duration: 0.1, ease: "power2.out" }, 0.46);
+      tl.to(body, { t: 1, duration: 0.38, ease: "power2.out" }, C2 + 0.4);
+      tl.to(gaze, { ...GAZE.text, duration: 0.1, ease: "power2.out" }, C2 + 0.46);
 
       if (storyEls.length)
-        tl.to(storyEls, { opacity: 0, y: -24, duration: 0.1, ease: "power1.in" }, 1.02);
-      tl.to(storyTitleRef.current, { opacity: 0, y: -24, duration: 0.1, ease: "power1.in" }, 1.02);
-      tl.to(storyPanelRef.current, { opacity: 0, duration: 0.1, ease: "power1.in" }, 1.04);
-      tl.to(featuresHeaderRef.current, { opacity: 1, y: 0, duration: 0.1 }, 1.1);
+        tl.to(storyEls, { opacity: 0, y: -24, duration: 0.1, ease: "power1.in" }, C2 + 1.02);
+      tl.to(
+        storyTitleRef.current,
+        { opacity: 0, y: -24, duration: 0.1, ease: "power1.in" },
+        C2 + 1.02,
+      );
+      tl.to(storyPanelRef.current, { opacity: 0, duration: 0.1, ease: "power1.in" }, C2 + 1.04);
+      tl.to(featuresHeaderRef.current, { opacity: 1, y: 0, duration: 0.1 }, C2 + 1.1);
 
       BEATS.forEach(({ at, cardAt, pose }, i) => {
         // The head turns first and holds for the whole step.
-        tl.to(gaze, { ...pose, duration: 0.14, ease: "power2.inOut" }, at);
-        tl.to(body, { t: i + 2, duration: 0.3, ease: "power1.inOut" }, at + 0.06);
+        tl.to(gaze, { ...pose, duration: 0.14, ease: "power2.inOut" }, C2 + at);
+        tl.to(body, { t: i + 2, duration: 0.3, ease: "power1.inOut" }, C2 + at + 0.06);
 
         // The previous card and its connector leave with the same motion.
         if (i > 0) {
           const prev = card(i - 1);
-          tl.to(prev.dot, { opacity: 0, duration: 0.04 }, at);
-          tl.to(prev.draw, { p: 0, duration: 0.12, ease: "power1.inOut" }, at);
-          tl.to(prev.callout, { opacity: 0, y: -20, duration: 0.1 }, at + 0.02);
-          tl.set(prev.line, { opacity: 0 }, at + 0.14);
+          tl.to(prev.dot, { opacity: 0, duration: 0.04 }, C2 + at);
+          tl.to(prev.draw, { p: 0, duration: 0.12, ease: "power1.inOut" }, C2 + at);
+          tl.to(prev.callout, { opacity: 0, y: -20, duration: 0.1 }, C2 + at + 0.02);
+          tl.set(prev.line, { opacity: 0 }, C2 + at + 0.14);
         }
 
         const c = card(i);
-        tl.to(c.callout, { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" }, cardAt);
-        tl.set(c.line, { opacity: 1 }, cardAt);
-        tl.to(c.draw, { p: 1, duration: 0.14, ease: "power1.inOut" }, cardAt);
-        tl.to(c.dot, { opacity: 1, duration: 0.05 }, cardAt + 0.14);
-        tl.to(c.rail, { opacity: 1, duration: 0.05 }, cardAt);
+        tl.to(c.callout, { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" }, C2 + cardAt);
+        tl.set(c.line, { opacity: 1 }, C2 + cardAt);
+        tl.to(c.draw, { p: 1, duration: 0.14, ease: "power1.inOut" }, C2 + cardAt);
+        tl.to(c.dot, { opacity: 1, duration: 0.05 }, C2 + cardAt + 0.14);
+        tl.to(c.rail, { opacity: 1, duration: 0.05 }, C2 + cardAt);
       });
 
       // Phones: SKIP INTRO shares the cards' spot (nothing else is free through the
@@ -616,30 +650,30 @@ export const useHeroTimeline = ({
       // it catching taps.
       if (isMobile && skipRef.current) {
         BEATS.forEach(({ cardAt }, i) => {
-          tl.to(skipRef.current, { autoAlpha: 0, duration: 0.05 }, cardAt - 0.05);
+          tl.to(skipRef.current, { autoAlpha: 0, duration: 0.05 }, C2 + cardAt - 0.05);
           // Card i leaves on the next beat; the last one stays to the end.
           const next = BEATS[i + 1];
-          if (next) tl.to(skipRef.current, { autoAlpha: 1, duration: 0.04 }, next.at + 0.12);
+          if (next) tl.to(skipRef.current, { autoAlpha: 1, duration: 0.04 }, C2 + next.at + 0.12);
         });
       }
 
       // Closing: the robot centres and the head turns front; on desktop all three
       // cards come back with their connectors.
       const closeAt = closeAtFor(isMobile);
-      tl.to(body, { t: 5, duration: 0.3, ease: "power1.inOut" }, closeAt);
+      tl.to(body, { t: 5, duration: 0.3, ease: "power1.inOut" }, C2 + closeAt);
       tl.to(
         gaze,
         { ...(isMobile ? GAZE.closeMobile : GAZE.front), duration: 0.16, ease: "power2.inOut" },
-        closeAt,
+        C2 + closeAt,
       );
       if (!isMobile) {
         [0, 1].forEach((i) => {
           const c = card(i);
-          tl.to(c.callout, { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" }, 3.16);
-          tl.set(c.line, { opacity: 1 }, 3.16);
-          tl.to(c.draw, { p: 1, duration: 0.14, ease: "power1.inOut" }, 3.16);
-          tl.to(c.dot, { opacity: 1, duration: 0.05 }, 3.3);
-          tl.to(c.rail, { opacity: 1, duration: 0.05 }, 3.16);
+          tl.to(c.callout, { opacity: 1, y: 0, duration: 0.12, ease: "power1.out" }, C2 + 3.16);
+          tl.set(c.line, { opacity: 1 }, C2 + 3.16);
+          tl.to(c.draw, { p: 1, duration: 0.14, ease: "power1.inOut" }, C2 + 3.16);
+          tl.to(c.dot, { opacity: 1, duration: 0.05 }, C2 + 3.3);
+          tl.to(c.rail, { opacity: 1, duration: 0.05 }, C2 + 3.16);
         });
       }
 

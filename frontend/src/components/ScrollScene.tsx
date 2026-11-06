@@ -1,11 +1,9 @@
 import { useRef } from "react";
-import { motion } from "framer-motion";
 import Spline from "@splinetool/react-spline";
 import { Application } from "@splinetool/runtime";
 import { profile, systemFeatures } from "../data/portfolioData";
 import { useTheme } from "../hooks/useTheme";
 import { MOBILE_LAYOUT_QUERY } from "../lib/layout";
-import { heroLineReveal as lineReveal, heroUiFade as uiFade } from "../lib/motion";
 import { OVERSAMPLE, OVERSAMPLE_1 } from "../lib/spline/camera";
 import { patchSplineRuntime } from "../lib/spline/runtime";
 import { L2_DESKTOP_URLS } from "../lib/spline/scenes";
@@ -14,7 +12,13 @@ import { SceneBoundary } from "./spline/SceneBoundary";
 import { FeatureCard } from "./scroll-scene/FeatureCard";
 import { FeatureConnectors } from "./scroll-scene/FeatureConnectors";
 import { FeaturesRail } from "./scroll-scene/FeaturesRail";
-import { HeroLoader } from "./scroll-scene/HeroLoader";
+import {
+  HeroHeadline,
+  HeroWordmark,
+  IntroTile,
+  ScrollCue,
+  SystemCheck,
+} from "./scroll-scene/HeroHud";
 import { StoryPanel } from "./scroll-scene/StoryPanel";
 import { useCalloutsAboveDock } from "./scroll-scene/useCalloutsAboveDock";
 import { useHeroScenes } from "./scroll-scene/useHeroScenes";
@@ -41,8 +45,11 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     idle2Ref,
     splineLayerRef,
     overlayRef,
-    wallRef,
-    wallTopRef,
+    bg1Ref,
+    wordmarkRef,
+    topBarRef,
+    introRef,
+    checkRef,
     vignetteRef,
     storyTitleRef,
     storyPanelRef,
@@ -74,7 +81,6 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     heroAltUrl,
     l2VisibleUrl,
     showAlt,
-    progress,
     failed,
     revealed,
     mountScene2,
@@ -115,23 +121,29 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       data-theme="dark"
       className="relative h-screen min-h-[640px] w-full overflow-hidden bg-[rgb(var(--page-surface))]"
     >
-      {/* Layer A: the hero scene over the painted wall */}
+      {/* Scene 1 ground: gradient, a soft glow behind the head, ground shade and vignette. */}
+      <div ref={bg1Ref} aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0" style={{ background: "var(--hero-bg-1)" }} />
+        <div className="subject-glow" style={{ left: "50%", top: 350, width: 820, height: 820 }} />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_45%_at_15%_88%,rgba(25,32,42,0.2)_0%,rgba(25,32,42,0)_70%),radial-gradient(ellipse_120%_90%_at_50%_40%,rgba(0,0,0,0)_55%,rgba(20,26,34,0.28)_100%)]" />
+      </div>
+
+      <HeroWordmark ref={wordmarkRef} />
+
+      {/* Layer A: the hero scene */}
       <div ref={splineLayerRef} className="absolute inset-0">
         <div
           ref={canvasWrapRef}
           data-testid="hero-canvas-zoom"
           className="hero-drain absolute inset-0 will-change-transform"
         >
-          {/* The wall stays outside the drift wrappers: only the canvas drifts. */}
-          <div ref={wallRef} className="absolute inset-0 bg-[rgb(var(--wall-a))]">
-            <div
-              ref={wallTopRef}
-              className="pointer-events-none absolute inset-0 bg-[rgb(var(--wall-b))]"
-            />
-          </div>
-
+          {/* The robot fades in (opacity + blur on this wrapper) once its scene has loaded. */}
           {!failed && (
-            <div className="absolute inset-0" data-testid="spline-canvas-wrap">
+            <div
+              className="hero-robot absolute inset-0"
+              data-revealed={revealed}
+              data-testid="spline-canvas-wrap"
+            >
               <div ref={parallax1Ref} className="absolute inset-0">
                 <div ref={idle1Ref} className="absolute inset-0">
                   {/* Desktop: both models stay mounted (fixed keys) and a class picks the visible
@@ -317,85 +329,33 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         </p>
       </div>
 
-      {/* Hero headline. Its treatment depends on the robot behind it, i.e. the theme.
-          Over the black robot, difference reads on both wall and body. Over the silver
-          one, difference returns mid-grey, so dark mode uses solid white. */}
-      <div
-        ref={headlineRef}
-        className={`pointer-events-none absolute inset-x-0 bottom-44 text-center sm:bottom-44 ${
-          darkMode ? "" : "mix-blend-difference"
-        }`}
-      >
-        <div className="overflow-hidden px-4">
-          <motion.h1
-            variants={lineReveal}
-            custom={0}
-            initial="hidden"
-            animate={revealed ? "show" : "hidden"}
-            data-testid="hero-headline-1"
-            className={`font-inter text-[clamp(1.4rem,3.3vw,3.1rem)] font-extralight uppercase leading-none tracking-[0.12em] sm:tracking-[0.3em] ${
-              isMobile || darkMode ? "text-white" : "text-ink"
-            }`}
+      {/* Scene 1 HUD, one window per scroll step (Ø1.1-Ø1.3), then SCROLL. Phones
+          get the headline and SCROLL only. */}
+      {!isMobile && <IntroTile ref={introRef} />}
+      {!isMobile && <SystemCheck ref={checkRef} />}
+      <HeroHeadline ref={headlineRef} isMobile={isMobile} />
+      <ScrollCue ref={scrollCueRef} isMobile={isMobile} />
+
+      {/* Top bar, scene 1 only: MSSE:// and STATUS. */}
+      <div ref={topBarRef} className="absolute inset-x-0 top-0">
+        {/* The CSS load fade sits on this inner box; GSAP owns the outer one. */}
+        <div className="hero-bar-in flex items-center justify-between px-6 py-6 sm:px-12 sm:py-[52px]">
+          <span
+            data-testid="hero-brand"
+            className="font-michroma text-xs tracking-[0.2em] text-[rgb(var(--hero-ink))] sm:text-[19px]"
           >
-            — Build the future —
-          </motion.h1>
-        </div>
-        <div className="mt-4 overflow-hidden px-4">
-          <motion.p
-            variants={lineReveal}
-            custom={1}
-            initial="hidden"
-            animate={revealed ? "show" : "hidden"}
-            data-testid="hero-headline-2"
-            className={`font-inter text-[clamp(0.8rem,1.81vw,1.6rem)] font-extralight uppercase leading-none tracking-[0.2em] sm:tracking-[0.42em] ${
-              isMobile || darkMode ? "text-white" : "text-ink sm:text-ink/40"
-            }`}
-          >
-            one system at a time
-          </motion.p>
+            {profile.shortMark}
+          </span>
+          <span className="flex items-center gap-2.5 font-display text-[13px] uppercase tracking-[0.08em] text-[rgb(var(--hero-ink))] sm:text-[15px]">
+            <span
+              data-testid="hero-status-dot"
+              aria-hidden="true"
+              className="h-[7px] w-[7px] rounded-full bg-[#2E6FF2] animate-pulse-dot motion-reduce:animate-none"
+            />
+            <span data-testid="hero-status">STATUS: {profile.status}</span>
+          </span>
         </div>
       </div>
-
-      {/* Brand and status sit outside the z-10 layer so their blend works. Light:
-          white with difference; dark: solid white (difference over mid-grey metal
-          returns mid-grey). */}
-      <motion.div
-        variants={uiFade}
-        custom={0}
-        initial="hidden"
-        animate={revealed ? "show" : "hidden"}
-        className={`absolute left-6 top-6 sm:left-10 sm:top-8 ${
-          darkMode ? "" : "mix-blend-difference"
-        }`}
-      >
-        <span
-          data-testid="hero-brand"
-          className="font-michroma text-xs tracking-[0.12em] text-white sm:text-sm sm:tracking-[0.3em]"
-        >
-          {profile.shortMark}
-          <span className="hidden text-white/65 sm:inline"> {profile.markSuffix}</span>
-        </span>
-      </motion.div>
-
-      <motion.div
-        variants={uiFade}
-        custom={1}
-        initial="hidden"
-        animate={revealed ? "show" : "hidden"}
-        data-theme={ch2Theme}
-        className="absolute right-6 top-6 sm:right-10 sm:top-8 flex items-center gap-2"
-      >
-        <span
-          data-testid="hero-status-dot"
-          className="h-1.5 w-1.5 rounded-full bg-[#2E6FF2] animate-pulse-dot"
-        />
-        <span
-          data-testid="hero-status"
-          className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo"
-        >
-          STATUS: {profile.status}
-        </span>
-      </motion.div>
 
       {/* Skip intro, until the sequence has been seen (then the dock takes over).
           Same treatment as the headline: difference over the black robot, solid white over the silver one. */}
@@ -404,35 +364,15 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
           ref={skipRef}
           data-testid="skip-intro"
           onClick={skipIntro}
-          className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+6rem)] left-1/2 flex -translate-x-1/2 items-center gap-2 px-4 py-2 font-display text-[11px] uppercase tracking-[0.24em] sm:bottom-10 ${
+          className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1.75rem)] left-1/2 -translate-x-1/2 px-2.5 py-3.5 font-display text-[14px] uppercase tracking-[0.32em] text-[#F1F3F5] sm:bottom-7 ${
             // On phones the timeline drives its opacity (it hides with the cards); a CSS
             // transition would lag behind it.
             isMobile ? "" : "transition-opacity duration-300"
-          } ${
-            isMobile || darkMode
-              ? "text-white"
-              : "text-ink hover:text-ink sm:text-white/70 sm:hover:text-white"
-          } ${darkMode ? "" : "mix-blend-difference"}`}
+          }`}
         >
-          Skip intro
+          <span className="hero-bar-in">Skip intro</span>
         </button>
       )}
-
-      {/* Scroll cue: the hero is the scroll, so say so. Fades on the first beat;
-          difference keeps it legible on the wall, on the robot and in both themes.
-          On phones it sits on the right, the side with free wall. */}
-      <div
-        ref={scrollCueRef}
-        data-testid="scroll-cue"
-        className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 flex-col items-center gap-2 mix-blend-difference sm:left-6 sm:right-auto sm:gap-3 lg:left-10"
-      >
-        <span className="font-display text-[9px] uppercase tracking-[0.28em] text-white/75 [writing-mode:vertical-rl] sm:text-[11px] sm:tracking-[0.34em]">
-          Scroll
-        </span>
-        <span className="relative block h-7 w-px overflow-hidden bg-white/25 sm:h-12">
-          <span className="absolute inset-x-0 top-0 block h-4 animate-scroll-cue bg-white" />
-        </span>
-      </div>
 
       {/* Layer D: UI. z-10 keeps the cards and rail from blending; the marks that
           must blend live outside it. */}
@@ -465,8 +405,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         {!isMobile && <FeaturesRail railRefs={railRefs} theme={ch2Theme} />}
       </div>
 
-      {/* Loader */}
-      <HeroLoader visible={!revealed} progress={progress} />
+      <div aria-hidden="true" className="grain pointer-events-none absolute inset-0 z-20" />
     </section>
   );
 };

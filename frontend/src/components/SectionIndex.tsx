@@ -11,12 +11,17 @@ const OFF = "font-normal text-white/50 hover:text-white/80";
  */
 export const SectionIndex = () => {
   const { section, step } = useActiveSection();
+  // In the hero it comes in with Ø1.3 (design: scene 1, third step).
+  const shown = section > 0 || step >= 2;
 
   return (
     <nav
       aria-label="Sections"
       data-testid="section-index"
-      className="fixed right-9 top-[28vh] z-40 hidden flex-col items-center gap-0.5 font-display tracking-[0.08em] mix-blend-difference lg:flex"
+      aria-hidden={shown ? undefined : true}
+      className={`fixed right-9 top-[28vh] z-40 hidden flex-col items-center gap-0.5 font-display tracking-[0.08em] mix-blend-difference transition-opacity duration-500 lg:flex ${
+        shown ? "opacity-100" : "pointer-events-none opacity-0"
+      }`}
     >
       {SECTIONS.map((s, i) => (
         <Fragment key={s.id}>

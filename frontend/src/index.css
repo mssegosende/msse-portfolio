@@ -46,6 +46,12 @@
     --bg-about: linear-gradient(180deg, #e1e6ea 0%, #c2c9d0 60%, #7d8893 100%);
     --bg-contact: linear-gradient(180deg, #7d8893 0%, #c2c9d0 42%, #eef1f4 100%);
     --glow: 255 255 255;
+
+    /* The pinned hero: scene 1 and scene 2 grounds, and its text colours. */
+    --hero-bg-1: linear-gradient(180deg, #eef1f4 0%, #c2c9d0 55%, #7d8893 100%);
+    --hero-bg-2: linear-gradient(180deg, #7d8893 0%, #c2c9d0 38%, #eef1f4 100%);
+    --hero-ink: 20 24 29;
+    --hero-ink-2: 46 52 59;
     --vignette: radial-gradient(
       ellipse 120% 90% at 50% 45%,
       rgba(0, 0, 0, 0) 55%,
@@ -68,6 +74,24 @@
     --bg-about: rgb(var(--surface));
     --bg-contact: rgb(var(--surface));
     --glow: 120 140 165;
+
+    /* TODO(P6): hero dark pass. Scene 1 already uses the sampled ramp. */
+    --hero-bg-1: linear-gradient(
+      180deg,
+      #121315 0%,
+      #1a1d24 20%,
+      #2c323e 40%,
+      #424b58 50%,
+      #5f6b7b 60%,
+      #7f8b9c 70%,
+      #98a4b2 80%,
+      #abb5b7 90%,
+      #8c96a8 94%,
+      #6b7789 100%
+    );
+    --hero-bg-2: linear-gradient(180deg, #0b0d10 0%, #1a1d24 60%, #2c323e 100%);
+    --hero-ink: 233 237 241;
+    --hero-ink-2: 174 182 191;
   }
 }
 
@@ -388,4 +412,87 @@ textarea:-webkit-autofill {
 .grain {
   background-image: url("/grain.png");
   background-size: 220px 220px;
+}
+
+/* ---- Pinned hero (P2) ---- */
+
+/* Load: the wordmark first, then the bar, then the robot (done by ~2 s). */
+.hero-title-in {
+  opacity: 0;
+  animation: hero-fade 1s ease 0.1s forwards;
+}
+.hero-bar-in {
+  opacity: 0;
+  animation: hero-fade 0.6s ease 0.5s forwards;
+}
+@keyframes hero-fade {
+  to {
+    opacity: 1;
+  }
+}
+/* On a wrapper of the canvas: opacity and blur only, never a transform. */
+.hero-robot {
+  opacity: 0;
+  filter: blur(14px);
+  transition:
+    opacity 1.4s cubic-bezier(0.25, 0.6, 0.2, 1),
+    filter 1.4s cubic-bezier(0.25, 0.6, 0.2, 1);
+}
+.hero-robot[data-revealed="true"] {
+  opacity: 1;
+  filter: none;
+}
+
+/* The MSSE wordmark: an endless marquee behind the robot. */
+.hero-wordmark {
+  font-family: "Michroma", sans-serif;
+  font-size: 22vw;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: transparent;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 15%, rgba(255, 255, 255, 0.3) 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.hero-marquee {
+  animation: hero-marquee 46s linear infinite;
+}
+@keyframes hero-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* SCROLL indicator's line. */
+.hero-hint {
+  transform-origin: top;
+  animation: hero-hint 1.8s ease-in-out infinite;
+}
+@keyframes hero-hint {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-marquee,
+  .hero-hint {
+    animation: none;
+  }
+  .hero-title-in,
+  .hero-bar-in {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
+  .hero-robot {
+    transition-duration: 0.01s;
+  }
 }

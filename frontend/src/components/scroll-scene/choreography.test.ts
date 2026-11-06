@@ -62,17 +62,20 @@ describe("chapterTwoFramings", () => {
 });
 
 describe("heroFraming", () => {
-  it("holds still with reduced motion", () => {
-    expect(heroFraming(false, true, VIEWPORTS[2]!)).toMatchObject({
+  it("holds still with reduced motion on phones", () => {
+    expect(heroFraming(true, true, VIEWPORTS[2]!)).toMatchObject({
       startScale: 1,
       startY: "2%",
       endY: "3%",
     });
   });
 
-  it("drifts down slightly through the drain on desktop", () => {
-    const { startY, endY } = heroFraming(false, false, VIEWPORTS[2]!);
-    expect(parseFloat(endY) - parseFloat(startY)).toBeCloseTo(1.3);
+  it("frames the desktop robot the same way with or without reduced motion, and holds", () => {
+    for (const viewport of VIEWPORTS) {
+      const moving = heroFraming(false, false, viewport);
+      expect(heroFraming(false, true, viewport)).toEqual(moving);
+      expect(moving.endY).toBe(moving.startY);
+    }
   });
 });
 

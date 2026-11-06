@@ -22,28 +22,39 @@ export const vwOf =
   (px: number): string =>
     `${(px / width) * 100}%`;
 
-/** Phase 1: the hero's opening framing and where the drain leaves it. */
+/**
+ * Scene 1 framing. Desktop: the robot nearly full width with the crown just cut
+ * by the top edge (design/HANDOFF.md, P2). The y is a camera pan; the crown's
+ * native position was measured at 1440x900 (HERO_CROWN_NATIVE, a fraction of
+ * the frame height, at scale 1), so any scale can put it at HERO_CROWN_TARGET.
+ */
 export const heroFraming = (isMobile: boolean, reduce: boolean, { height }: Viewport) => {
-  // Hero start scale. It also keeps Spline's in-canvas badge out of frame (it
-  // shows below ~1.2).
-  const startScale = reduce ? 1 : isMobile ? 1.86 : 1.9;
-  // Desktop hero: the crown sits HERO_CROWN_TOP px from the top at any window
-  // height. The head follows the cursor and moves the crown; 16px + 3.1% of the
-  // height leaves ~16px with the head at rest. The y is a camera pan;
-  // HERO_CROWN_FRAC_AT_BASE is the crown's measured position at a 38% pan.
-  const HERO_Y_BASE = 38;
-  const HERO_CROWN_FRAC_AT_BASE = 0.05;
-  const HERO_CROWN_TOP = 16 + 0.031 * height;
-  const heroY = HERO_Y_BASE + (HERO_CROWN_TOP / height - HERO_CROWN_FRAC_AT_BASE) * 100;
+  if (isMobile) {
+    // Phones keep their framing until P5. It also keeps Spline's in-canvas
+    // badge out of frame (it shows below ~1.2).
+    return {
+      startScale: reduce ? 1 : 1.86,
+      startY: reduce ? "2%" : "16.5%",
+      endY: reduce ? "3%" : "17.9%",
+      heroDx: 0,
+    };
+  }
+  const HERO_SCALE = 1.9;
+  const HERO_CROWN_NATIVE = 0.0456;
+  const HERO_CROWN_TARGET = -0.008;
+  const y = (HERO_CROWN_TARGET - 0.5 - (HERO_CROWN_NATIVE - 0.5) * HERO_SCALE) * 100;
   return {
-    startScale,
-    startY: reduce ? "2%" : isMobile ? "16.5%" : `${heroY}%`,
-    endY: reduce ? "3%" : isMobile ? "17.9%" : `${heroY + 1.3}%`,
+    startScale: HERO_SCALE,
+    startY: `${y}%`,
+    endY: `${y}%`,
     // The rig leaves the head left of the camera axis, an offset that scales
-    // with the window height. Desktop hero only.
-    heroDx: 0.0148 * height,
+    // with the window height and the zoom.
+    heroDx: ((0.0148 * HERO_SCALE) / 1.9) * height,
   };
 };
+
+/** Scene 1's scroll steps, in timeline seconds: Ø1.1, Ø1.2, Ø1.3, then SCROLL. */
+export const SCENE1 = { video: 0.1, check: 0.25, headline: 0.4, scroll: 0.55, end: 0.7 };
 
 /**
  * Chapter 2 framings, one per whole value of the timeline's `body.t` (0..5).
