@@ -1,13 +1,13 @@
-import { useEffect, useRef, useState, type Ref } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type Ref } from "react";
 import { capabilityCards } from "../../data/portfolioData";
 import type { Theme } from "../../lib/themeReload";
 import { Num } from "../Num";
-import { CapabilityCard } from "./CapabilityCard";
+import { CapabilityCard, CapabilityCardWide, WIDE_CARD_W } from "./CapabilityCard";
 
-// Desktop placement at 1440 x 900 (design/HANDOFF.md): 324 x 463, 110px from
-// the left, centred between the title and the dock. Other sizes scale the
-// whole card, never its fonts alone. CARD_SCALE: María Sol's review shrank the
-// card to 85 % of the mock, frame and type together.
+// Desktop, one card at a time (design/HANDOFF.md): 324 x 463 at 1440 x 900,
+// 110px from the left, centred between the title and the dock. Other sizes
+// scale the whole card, never its fonts alone. CARD_SCALE: María Sol's review
+// shrank the card to 85 % of the mock, frame and type together.
 const CARD_W = 324;
 const CARD_H = 463;
 const CARD_SCALE = 0.85;
@@ -27,31 +27,68 @@ const fitCard = (w: number, h: number) => {
   return { s, left: LEFT * Math.min(1, w / 1440), top: TITLE_BOTTOM + Math.max(0, free / 2) };
 };
 
-const useCardFit = (enabled: boolean) => {
-  const [fit, setFit] = useState(() => fitCard(window.innerWidth, window.innerHeight));
+// Desktop, the three together (María Sol's review, A7): horizontal cards
+// stacked beside the head, each step (Ø2.1-Ø2.3) revealing the next. Only on
+// windows tall enough for every card to show its whole text without
+// scrolling; shorter ones keep one card at a time. The stack scales as a whole.
+const STACK_DOCK_CLEAR = 96;
+const STACK_GAP = 14;
+
+const fitStack = (w: number, h: number) => {
+  const s = 0.9 * Math.min(1.22, w / 1440, Math.max(h / 900, 0.9));
+  const free = h - TITLE_BOTTOM - STACK_DOCK_CLEAR;
+  return {
+    s,
+    free,
+    /** The tallest each card can be, in card px (before the scale). */
+    roomH: (free / s - 2 * STACK_GAP) / 3,
+    left: LEFT * Math.min(1, w / 1440),
+  };
+};
+
+const useViewport = (enabled: boolean) => {
+  const [size, setSize] = useState(() => ({ w: window.innerWidth, h: window.innerHeight }));
   useEffect(() => {
     if (!enabled) return undefined;
-    const onResize = () => setFit(fitCard(window.innerWidth, window.innerHeight));
+    const onResize = () => setSize({ w: window.innerWidth, h: window.innerHeight });
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [enabled]);
-  return fit;
+  return size;
+};
+
+/**
+ * The height (card px) a horizontal card needs to show its whole text: the
+ * card minus the text box, plus the text. The text's width is fixed in card
+ * px, so this doesn't change with the window, only with the fonts.
+ */
+const measureNeed = (root: HTMLElement): number => {
+  let need = 0;
+  root.querySelectorAll("article").forEach((article) => {
+    const p = article.querySelector("p");
+    const box = p?.parentElement?.parentElement;
+    if (!p || !box) return;
+    need = Math.max(need, article.offsetHeight - box.clientHeight + p.offsetHeight);
+  });
+  return Math.ceil(need);
 };
 
 interface CapabilityCardsProps {
   ref?: Ref<HTMLDivElement>;
   /** The card the scroll is on: -1 before the first. */
   scrollIndex: number;
-  /** Past Ø2.3 with the dock shown: the cards rotate by themselves. */
+  /** Past Ø2.3 with the dock shown: one-at-a-time cards rotate by themselves. */
   autoRotate: boolean;
   isMobile: boolean;
   theme: Theme;
 }
 
 /**
- * Scene 2's cards, one at a time: each new one rises over the previous, which
- * fades. After Ø2.3 they keep rotating every ~5 s, paused on hover or touch,
- * and never with reduced motion.
+ * Scene 2's cards. Desktop on a tall enough window: the three stacked, each
+ * step revealing the next. Otherwise (and on phones) one at a time: each new
+ * one rises over the previous, which fades; after Ø2.3 they keep rotating
+ * every ~5 s, paused on hover or touch, and never with reduced motion.
+ * The outer box stays the same element in every mode: the timeline fades it.
  */
 export const CapabilityCards = ({
   ref,
@@ -60,13 +97,45 @@ export const CapabilityCards = ({
   isMobile,
   theme,
 }: CapabilityCardsProps) => {
-  const fit = useCardFit(!isMobile);
+  const { w, h } = useViewport(!isMobile);
+  const stack = fitStack(w, h);
+  // The card height the stack needs; null until measured (the stack renders
+  // once, before paint, to measure it).
+  const [need, setNeed] = useState<number | null>(null);
+  const stacked = !isMobile && (need === null || stack.roomH >= need);
+
+  const own = useRef<HTMLDivElement | null>(null);
+  const setRefs = useCallback(
+    (el: HTMLDivElement | null) => {
+      own.current = el;
+      if (typeof ref === "function") ref(el);
+      else if (ref) ref.current = el;
+    },
+    [ref],
+  );
+
+  useLayoutEffect(() => {
+    if (!stacked || !own.current) return;
+    const n = measureNeed(own.current);
+    if (n > 0 && n !== need) setNeed(n);
+  }, [stacked, need]);
+  // Web fonts change the wrap: measure again once they are in.
+  useEffect(() => {
+    if (isMobile) return;
+    let live = true;
+    void document.fonts?.ready.then(() => live && setNeed(null));
+    return () => {
+      live = false;
+    };
+  }, [isMobile]);
+
   const [rotated, setRotated] = useState<number | null>(null);
   const paused = useRef(false);
+  const rotates = autoRotate && !stacked;
 
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (!autoRotate || reduce) return undefined;
+    if (!rotates || reduce) return undefined;
     const id = setInterval(() => {
       if (!paused.current) setRotated((r) => ((r ?? scrollIndex) + 1) % capabilityCards.length);
     }, ROTATE_MS);
@@ -74,9 +143,9 @@ export const CapabilityCards = ({
       clearInterval(id);
       setRotated(null);
     };
-  }, [autoRotate, scrollIndex]);
+  }, [rotates, scrollIndex]);
 
-  const shown = autoRotate && rotated !== null ? rotated : scrollIndex;
+  const shown = rotates && rotated !== null ? rotated : scrollIndex;
 
   // The previous card stays mounted while it fades under the new one.
   const [cur, setCur] = useState(shown);
@@ -90,10 +159,14 @@ export const CapabilityCards = ({
   const prevCard = prev !== null && prev >= 0 ? card(prev) : undefined;
   const curCard = cur >= 0 ? card(cur) : undefined;
 
+  const cardH = need ?? stack.roomH;
+  const one = fitCard(w, h);
+
   return (
     <div
-      ref={ref}
+      ref={setRefs}
       data-testid="capability-cards"
+      data-layout={isMobile ? "phone" : stacked ? "stack" : "single"}
       onPointerEnter={() => {
         paused.current = true;
       }}
@@ -109,38 +182,67 @@ export const CapabilityCards = ({
       onPointerCancel={(e) => {
         if (e.pointerType !== "mouse") paused.current = false;
       }}
-      className={`pointer-events-auto absolute ${isMobile ? "callout-mobile left-4 right-4" : "origin-top-left"}`}
+      className={`pointer-events-auto absolute ${
+        isMobile ? "callout-mobile left-4 right-4" : "origin-top-left"
+      } ${stacked ? "flex flex-col" : ""}`}
       style={
         isMobile
           ? undefined
-          : {
-              left: fit.left,
-              top: fit.top,
-              width: CARD_W,
-              height: CARD_H,
-              transform: `scale(${fit.s})`,
-            }
+          : stacked
+            ? {
+                left: stack.left,
+                top:
+                  TITLE_BOTTOM +
+                  Math.max(0, (stack.free - (3 * cardH + 2 * STACK_GAP) * stack.s) / 2),
+                width: WIDE_CARD_W,
+                gap: STACK_GAP,
+                transform: `scale(${stack.s})`,
+              }
+            : {
+                left: one.left,
+                top: one.top,
+                width: CARD_W,
+                height: CARD_H,
+                transform: `scale(${one.s})`,
+              }
       }
     >
-      <div className={isMobile ? "relative" : "absolute inset-0"}>
-        {prevCard && (
-          <div
-            key={`sink-${prev}-${cur}`}
-            className="cap-sink absolute inset-x-0 bottom-0"
-            aria-hidden="true"
-          >
-            <CapabilityCard card={prevCard} theme={theme} isMobile={isMobile} />
-          </div>
-        )}
-        {curCard && (
-          <div
-            key={`rise-${cur}`}
-            className={`cap-rise ${isMobile ? "relative" : "absolute inset-0"}`}
-          >
-            <CapabilityCard card={curCard} theme={theme} isMobile={isMobile} />
-          </div>
-        )}
-      </div>
+      {stacked ? (
+        capabilityCards.map((c, i) => {
+          const on = i <= scrollIndex;
+          return (
+            <div
+              key={c.num}
+              className={on ? "cap-rise" : "opacity-0"}
+              style={{ height: cardH }}
+              aria-hidden={on ? undefined : true}
+              inert={!on}
+            >
+              <CapabilityCardWide card={c} theme={theme} />
+            </div>
+          );
+        })
+      ) : (
+        <div className={isMobile ? "relative" : "absolute inset-0"}>
+          {prevCard && (
+            <div
+              key={`sink-${prev}-${cur}`}
+              className="cap-sink absolute inset-x-0 bottom-0"
+              aria-hidden="true"
+            >
+              <CapabilityCard card={prevCard} theme={theme} isMobile={isMobile} />
+            </div>
+          )}
+          {curCard && (
+            <div
+              key={`rise-${cur}`}
+              className={`cap-rise ${isMobile ? "relative" : "absolute inset-0"}`}
+            >
+              <CapabilityCard card={curCard} theme={theme} isMobile={isMobile} />
+            </div>
+          )}
+        </div>
+      )}
       {isMobile && <StepCounter index={Math.max(0, cur)} />}
     </div>
   );

@@ -10,6 +10,10 @@ const GAP =
   "polygon(26px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 26px), calc(100% - 26px) 100%, 12px 100%, 0 calc(100% - 12px), 0 26px)";
 const PANEL =
   "polygon(24px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 10px 100%, 0 calc(100% - 10px), 0 24px)";
+// Desktop's horizontal card (María Sol's review, A7): the same frame with its
+// side steps moved to fit a short card.
+const FRAME_WIDE =
+  "polygon(30px 0, calc(100% - 16px) 0, 100% 16px, 100% 64px, calc(100% - 8px) 72px, calc(100% - 8px) calc(100% - 24px), calc(100% - 30px) 100%, 16px 100%, 0 calc(100% - 16px), 0 calc(100% - 72px), 8px calc(100% - 80px), 8px 22px)";
 const TAB = "polygon(0 100%, 20px 0, calc(100% - 20px) 0, 100% 100%)";
 const BEZEL =
   "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 10%), linear-gradient(160deg, #3A4148 0%, #252A30 45%, #1B1F24 100%)";
@@ -34,6 +38,89 @@ const THEMES = {
     body: "text-[#14181D]",
     chip: "text-[#14181D] border-[rgba(11,13,16,0.35)]",
   },
+};
+
+/** Desktop's horizontal card: the reference width; the parent sets the height and scale. */
+export const WIDE_CARD_W = 570;
+// The text's own fade: short enough for a few lines (the project cards' 56px
+// would hide them). The bottom padding lets the last line clear it at the end.
+const WIDE_FADE = "linear-gradient(180deg, #000 calc(100% - 18px), transparent 100%)";
+
+/**
+ * One scene 2 card, horizontal (desktop, three stacked beside the head): the
+ * vertical card's frame, bezel, tab, fonts and chips, laid out in rows (tag,
+ * title and number; the text, scrolling; the chips).
+ */
+export const CapabilityCardWide = ({ card, theme }: { card: Card; theme: Theme }) => {
+  const t = THEMES[theme];
+  return (
+    <article
+      data-testid={`capability-card-${card.num}`}
+      className="relative h-full drop-shadow-[0_24px_30px_rgba(18,24,34,0.34)]"
+      style={{ width: WIDE_CARD_W }}
+    >
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[#5B646E]"
+        style={{ clipPath: FRAME_WIDE }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-px"
+        style={{ background: BEZEL, clipPath: FRAME_WIDE }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-5 inset-y-3"
+        style={{ background: t.gap, clipPath: GAP }}
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-[22px] inset-y-3.5"
+        style={{ background: t.panel, clipPath: PANEL }}
+      />
+
+      <div className="relative z-[2] mx-[22px] my-3.5 flex h-[calc(100%-28px)] flex-col px-[18px] pb-6 pt-3.5">
+        <div className="flex items-center gap-3.5">
+          <div
+            className={`flex-none self-start rounded-[7px] border-[1.5px] px-[11px] py-1.5 font-mono text-[10px] tracking-[0.14em] ${t.tag}`}
+          >
+            SYS.0{card.num}
+          </div>
+          <h3
+            className={`m-0 min-w-0 flex-1 font-display text-[22px] font-semibold leading-[1.05] tracking-[0.08em] ${t.title}`}
+          >
+            <span className={`block text-[12px] tracking-[0.22em] ${t.small}`}>{card.small}</span>
+            {card.title}
+          </h3>
+          <Num
+            value={card.num}
+            className={`flex-none font-michroma text-[38px] leading-[0.9] ${t.title}`}
+          />
+        </div>
+        <ScrollText
+          style={{
+            flex: "1 1 auto",
+            minHeight: 0,
+            marginTop: 8,
+            maskImage: WIDE_FADE,
+            WebkitMaskImage: WIDE_FADE,
+          }}
+        >
+          <p className={`m-0 pb-[18px] text-[14px] leading-[1.55] ${t.body}`}>{card.text}</p>
+        </ScrollText>
+        <ul className="mt-1 flex flex-wrap gap-1.5 text-[12px] font-medium">
+          {card.chips.map((c) => (
+            <li key={c} className={`rounded-full border px-[11px] py-[5px] ${t.chip}`}>
+              {c}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <CardTab part={card.part} isMobile={false} />
+    </article>
+  );
 };
 
 /**
@@ -146,34 +233,32 @@ export const CapabilityCard = ({
         </ul>
       </div>
 
-      {/* Bottom tab: MSSE:// │ part. Light text in both themes. */}
-      <div
-        className={`absolute bottom-0 left-1/2 z-[4] -translate-x-1/2 text-[#E9EDF1] ${
-          isMobile ? "h-[38px] w-[min(200px,74%)]" : "h-10 w-[min(220px,74%)]"
-        }`}
-      >
-        <span
-          aria-hidden="true"
-          className="absolute inset-0 bg-[#5B646E]"
-          style={{ clipPath: TAB }}
-        />
-        <span
-          aria-hidden="true"
-          className="absolute inset-x-px bottom-0 top-px"
-          style={{ background: BEZEL, clipPath: TAB }}
-        />
-        <span className="relative flex h-full items-center justify-center gap-2.5 pt-0.5">
-          <span
-            className={`font-michroma tracking-[0.16em] ${isMobile ? "text-[9px]" : "text-[9.5px]"}`}
-          >
-            MSSE://
-          </span>
-          <span aria-hidden="true" className="h-4 w-[1.5px] bg-[rgba(233,237,241,0.6)]" />
-          <span className={`font-medium ${isMobile ? "text-[12px]" : "text-[12.5px]"}`}>
-            {card.part}
-          </span>
-        </span>
-      </div>
+      <CardTab part={card.part} isMobile={isMobile} />
     </article>
   );
 };
+
+/** Bottom tab: MSSE:// │ part. Light text in both themes. */
+const CardTab = ({ part, isMobile }: { part: string; isMobile: boolean }) => (
+  <div
+    className={`absolute bottom-0 left-1/2 z-[4] -translate-x-1/2 text-[#E9EDF1] ${
+      isMobile ? "h-[38px] w-[min(200px,74%)]" : "h-10 w-[min(220px,74%)]"
+    }`}
+  >
+    <span aria-hidden="true" className="absolute inset-0 bg-[#5B646E]" style={{ clipPath: TAB }} />
+    <span
+      aria-hidden="true"
+      className="absolute inset-x-px bottom-0 top-px"
+      style={{ background: BEZEL, clipPath: TAB }}
+    />
+    <span className="relative flex h-full items-center justify-center gap-2.5 pt-0.5">
+      <span
+        className={`font-michroma tracking-[0.16em] ${isMobile ? "text-[9px]" : "text-[9.5px]"}`}
+      >
+        MSSE://
+      </span>
+      <span aria-hidden="true" className="h-4 w-[1.5px] bg-[rgba(233,237,241,0.6)]" />
+      <span className={`font-medium ${isMobile ? "text-[12px]" : "text-[12.5px]"}`}>{part}</span>
+    </span>
+  </div>
+);
