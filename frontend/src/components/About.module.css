@@ -60,6 +60,17 @@
   color: rgb(var(--tx) / 0.95);
 }
 
+/* Paragraphs inside a step: the mock's 16 px between paragraphs. */
+.intro + .intro {
+  margin-top: 16px;
+}
+.piano > p {
+  margin: 0;
+}
+.piano > p + p {
+  margin-top: 16px;
+}
+
 /* "Shipping code since 2022": right-aligned on mobile. */
 .since {
   margin-top: 34px;

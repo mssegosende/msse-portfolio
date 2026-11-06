@@ -1,6 +1,7 @@
 import type { CapabilityCard as Card } from "../../data/portfolioData";
 import type { Theme } from "../../lib/themeReload";
 import { Num } from "../Num";
+import { ScrollText } from "../projects/ProjectCard";
 
 // The black framed card, layer by layer (design/CARD-SPEC.md).
 const FRAME =
@@ -100,7 +101,11 @@ export const CapabilityCard = ({
             className={`flex-none font-michroma text-[38px] leading-[0.9] ${t.title}`}
           />
         </div>
-        <p className={`mt-2.5 text-[14px] leading-[1.55] ${t.body}`}>{card.text}</p>
+        {/* Long copy scrolls inside the card, with the project cards' fade
+            (design/content-final.md): the card and its fonts never change. */}
+        <ScrollText style={{ flex: "0 1 auto", minHeight: 0, marginTop: 10 }}>
+          <p className={`m-0 text-[14px] leading-[1.55] ${t.body}`}>{card.text}</p>
+        </ScrollText>
         <ul className="mt-3.5 flex flex-wrap gap-1.5 text-[12px] font-medium">
           {card.chips.map((c) => (
             <li key={c} className={`rounded-full border px-[11px] py-[5px] ${t.chip}`}>
