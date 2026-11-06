@@ -55,7 +55,7 @@ export const SectionBackdrop = ({ scene }: { scene: SectionScene }) => {
     <>
       <div
         aria-hidden="true"
-        className="subject-glow"
+        className="subject-glow section-glow"
         style={
           {
             left: b.glow.x,

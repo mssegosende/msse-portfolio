@@ -56,12 +56,64 @@
   :root[data-theme="dark"] {
     --page-surface: 0 0 0;
 
-    /* TODO(P6): blue-black grounds with steel-blue hazes. Until then dark
-       keeps its solid surface so the light text stays readable. */
-    --bg-projects: rgb(var(--surface));
-    --bg-about: rgb(var(--surface));
-    --bg-contact: rgb(var(--surface));
+    /* Blue-black grounds with steel-blue hazes and a soft light streak
+       (design/source/desktop/dark/scene-{3..5}*.dc.html): the vignette, the
+       haze, the streak, then the ground ramp. */
+    --bg-projects:
+      radial-gradient(ellipse 90% 80% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.5) 100%),
+      radial-gradient(
+        ellipse 60% 45% at 22% 18%,
+        rgba(140, 160, 190, 0.3) 0%,
+        rgba(140, 160, 190, 0) 70%
+      ),
+      linear-gradient(
+        118deg,
+        rgba(0, 0, 0, 0) 22%,
+        rgba(130, 150, 180, 0.2) 40%,
+        rgba(130, 150, 180, 0.05) 56%,
+        rgba(0, 0, 0, 0) 70%
+      ),
+      linear-gradient(180deg, #16202c 0%, #101823 100%);
+    --bg-about:
+      radial-gradient(ellipse 90% 80% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.5) 100%),
+      radial-gradient(
+        ellipse 60% 45% at 80% 30%,
+        rgba(140, 160, 190, 0.3) 0%,
+        rgba(140, 160, 190, 0) 70%
+      ),
+      linear-gradient(
+        62deg,
+        rgba(0, 0, 0, 0) 22%,
+        rgba(130, 150, 180, 0.2) 40%,
+        rgba(130, 150, 180, 0.05) 56%,
+        rgba(0, 0, 0, 0) 70%
+      ),
+      linear-gradient(180deg, #101823 0%, #0a111a 60%, #03060b 100%);
+    --bg-contact:
+      radial-gradient(ellipse 90% 80% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.5) 100%),
+      radial-gradient(
+        ellipse 60% 45% at 30% 35%,
+        rgba(140, 160, 190, 0.3) 0%,
+        rgba(140, 160, 190, 0) 70%
+      ),
+      linear-gradient(
+        120deg,
+        rgba(0, 0, 0, 0) 22%,
+        rgba(130, 150, 180, 0.2) 40%,
+        rgba(130, 150, 180, 0.05) 56%,
+        rgba(0, 0, 0, 0) 70%
+      ),
+      linear-gradient(180deg, #03060b 0%, #0a111a 42%, #16202c 100%);
     --glow: 120 140 165;
+    /* Scenes 3-5: the glow is a faint steel haze in dark (the mocks'
+       rgba(140, 160, 190, 0.22)), not the light theme's white bloom. */
+    --section-glow: 140 160 190;
+    --section-glow-a: 0.22;
+    --vignette: radial-gradient(
+      ellipse 120% 90% at 50% 45%,
+      rgba(0, 0, 0, 0) 55%,
+      rgba(0, 0, 0, 0.5) 100%
+    );
 
     /* TODO(P6): hero dark pass. Scene 1 already uses the sampled ramp. */
     --hero-bg-1: linear-gradient(
@@ -351,6 +403,26 @@ textarea:-webkit-autofill {
     rgb(var(--glow) / 0)
   );
   pointer-events: none;
+}
+/* Scenes 3-5: the page theme sets their glow (light: the section's own
+   strength; dark: the mocks' steel haze). */
+.section-glow {
+  background: radial-gradient(
+    closest-side,
+    rgb(var(--section-glow, var(--glow)) / var(--section-glow-a, var(--glow-a, 0.6))),
+    rgb(var(--section-glow, var(--glow)) / 0)
+  );
+}
+/* Their background word in dark: the mocks' faint gradient, so it reads as a
+   shape in the ground, not a lit word. */
+:root[data-theme="dark"] [data-testid^="bg-word-"] {
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.17) 0%,
+    rgba(255, 255, 255, 0.05) 55%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.5));
 }
 
 /* Edge vignette, shared by every section. */
