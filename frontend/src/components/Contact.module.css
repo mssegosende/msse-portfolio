@@ -355,6 +355,12 @@ textarea.input {
     column-gap: 64px;
     align-items: start;
   }
+  /* SIGNAL stays with the title block as in the 1440 mock: past 1440 wide it
+     keeps the mock's spot (right edge at x = 1400, its size is capped there)
+     instead of drifting to the window's right edge. */
+  .stage :global(.bg-word--right) {
+    right: max(40px, calc(100% - 1400px));
+  }
   .title {
     margin-top: 16px;
     line-height: 1.05;
