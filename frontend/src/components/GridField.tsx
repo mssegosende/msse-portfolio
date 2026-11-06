@@ -1,195 +1,156 @@
 import { useEffect, useRef } from "react";
 
-// One page-wide grid drawn in pieces: each section has its own canvas, and
-// each offsets its lines by where it sits in the document so they line up
-// across section boundaries. The touch drift uses page coordinates and a
-// shared clock for the same reason.
-interface GridPoint {
-  x: number;
-  y: number;
-  ox: number;
-  oy: number;
-}
+// Scene 5's grid (design/source/desktop/light/scene-5-contact.dc.html): lines
+// every 72 px (39 px on phones), ink at 20 %, faded in from the top by a mask,
+// bulging around the cursor. Each point is pushed away from the cursor by
+// d * exp(-d² / R²) * K. Touch screens and reduced motion get the still grid.
+const STEP_DESKTOP = 72;
+const STEP_PHONE = 39;
+const SUB = 24; // sample spacing along each line, so the bulge curves
+const R = 190;
+const K = 0.42;
+const EASE = 0.14;
 
-export const GridField = ({ intensity = 1 }: { intensity?: number }) => {
+const MASK = "linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 25%, #000 55%)";
+
+export const GridField = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
-    const isTouch = window.matchMedia("(pointer: coarse)").matches;
+    const still =
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      window.matchMedia("(pointer: coarse)").matches;
 
-    const STEP = 56;
-    const RADIUS = 220;
-    const PUSH = 26;
     let w = 0;
     let h = 0;
+    let step = STEP_DESKTOP;
     let raf = 0;
     let visible = false;
-    let grid: GridPoint[][] = [];
-    // In range by construction: r < rows, c < cols.
-    const pt = (r: number, c: number) => grid[r]![c]!;
-    let cols = 0;
-    let rows = 0;
-    const mouse = { x: -9999, y: -9999, cx: 0, cy: 0, active: false };
+    // Where the bulge is (eased) and where it is heading, in canvas px.
+    const cur = { x: 0, y: 0 };
+    const target = { x: 0, y: 0 };
+    const client = { x: 0, y: 0, moved: false };
 
     // A 2D canvas can't use CSS classes, so the colour is read from the root
-    // token, cached, and invalidated when the theme attribute changes.
-    let inkChannels = "255 255 255";
+    // token and re-read when the theme attribute changes.
+    let ink = "0 0 0";
     const readInk = () => {
       const v = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim();
-      if (v) inkChannels = v;
+      if (v) ink = v;
+      draw();
     };
-    readInk();
-    const themeObserver = new MutationObserver(readInk);
-    themeObserver.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
+
+    const warp = (x: number, y: number): [number, number] => {
+      const dx = x - cur.x;
+      const dy = y - cur.y;
+      const f = Math.exp(-(dx * dx + dy * dy) / (R * R)) * K;
+      return [x + dx * f, y + dy * f];
+    };
+
+    function draw() {
+      if (!w || !h) return;
+      ctx!.clearRect(0, 0, w, h);
+      ctx!.lineWidth = 1;
+      ctx!.strokeStyle = `rgb(${ink} / 0.2)`;
+      ctx!.beginPath();
+      for (let x = 0; x <= w + step; x += step) {
+        for (let y = 0; y <= h + SUB; y += SUB) {
+          const [px, py] = warp(x, y);
+          if (y === 0) ctx!.moveTo(px, py);
+          else ctx!.lineTo(px, py);
+        }
+      }
+      for (let y = 0; y <= h + step; y += step) {
+        for (let x = 0; x <= w + SUB; x += SUB) {
+          const [px, py] = warp(x, y);
+          if (x === 0) ctx!.moveTo(px, py);
+          else ctx!.lineTo(px, py);
+        }
+      }
+      ctx!.stroke();
+    }
 
     const build = () => {
-      const parent = canvas.parentElement;
-      if (!parent) return;
-      const rect = parent.getBoundingClientRect();
+      const rect = canvas.parentElement?.getBoundingClientRect();
+      if (!rect) return;
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = rect.width;
       h = rect.height;
+      step = w < 768 ? STEP_PHONE : STEP_DESKTOP;
       canvas.width = w * dpr;
       canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // +2: the page-aligned grid starts up to one STEP before the canvas.
-      cols = Math.ceil(w / STEP) + 2;
-      rows = Math.ceil(h / STEP) + 2;
-      grid = [];
-      for (let r = 0; r < rows; r++) {
-        const row: GridPoint[] = [];
-        for (let c = 0; c < cols; c++) row.push({ x: c * STEP, y: r * STEP, ox: 0, oy: 0 });
-        grid.push(row);
+      if (still && w < 768) {
+        // Phones: a flat grid, no bulge.
+        cur.x = target.x = -9999;
+        cur.y = target.y = -9999;
+      } else if (!client.moved) {
+        // Before the pointer arrives: the bulge rests bottom-right, as in the mock.
+        cur.x = target.x = w * 0.82;
+        cur.y = target.y = h * 0.84;
       }
-    };
-
-    const step = () => {
-      // Shared clock, so every canvas reads the same t on the same frame.
-      const t = performance.now() * 0.00024;
-      const rect = canvas.getBoundingClientRect();
-      // Read every frame: the pin spacer, fonts and images move sections
-      // after mount.
-      const docLeft = rect.left + window.scrollX;
-      const docTop = rect.top + window.scrollY;
-      const offX = ((docLeft % STEP) + STEP) % STEP;
-      const offY = ((docTop % STEP) + STEP) % STEP;
-      mouse.x = mouse.cx - rect.left;
-      mouse.y = mouse.cy - rect.top;
-      mouse.active = !isTouch && mouse.y > -RADIUS && mouse.y < rect.height + RADIUS;
-
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const p = pt(r, c);
-          p.x = c * STEP - offX;
-          p.y = r * STEP - offY;
-          let tx = 0;
-          let ty = 0;
-          if (isTouch) {
-            // Applied directly, not eased: a canvas scrolling into view must
-            // already match its neighbour.
-            p.ox = Math.sin((docLeft + p.x) * 0.012 + t) * 5;
-            p.oy = Math.cos((docTop + p.y) * 0.014 + t * 0.8) * 5;
-            continue;
-          } else if (mouse.active) {
-            const dx = p.x - mouse.x;
-            const dy = p.y - mouse.y;
-            const d = Math.hypot(dx, dy);
-            if (d < RADIUS && d > 0.01) {
-              const f = (1 - d / RADIUS) ** 2 * PUSH;
-              tx = (dx / d) * f;
-              ty = (dy / d) * f;
-            }
-          }
-          p.ox += (tx - p.ox) * 0.07;
-          p.oy += (ty - p.oy) * 0.07;
-        }
-      }
-
-      ctx.clearRect(0, 0, w, h);
-      ctx.lineWidth = 1;
-
-      // base pass — barely perceptible
-      const baseAlpha = 0.06 * intensity;
-      ctx.strokeStyle = `rgb(${inkChannels} / ${baseAlpha})`;
-      for (let r = 0; r < rows; r++) {
-        ctx.beginPath();
-        for (let c = 0; c < cols; c++) {
-          const p = pt(r, c);
-          if (c === 0) ctx.moveTo(p.x + p.ox, p.y + p.oy);
-          else ctx.lineTo(p.x + p.ox, p.y + p.oy);
-        }
-        ctx.stroke();
-      }
-      for (let c = 0; c < cols; c++) {
-        ctx.beginPath();
-        for (let r = 0; r < rows; r++) {
-          const p = pt(r, c);
-          if (r === 0) ctx.moveTo(p.x + p.ox, p.y + p.oy);
-          else ctx.lineTo(p.x + p.ox, p.y + p.oy);
-        }
-        ctx.stroke();
-      }
-
-      // brighten pass — segments near the pointer
-      if (mouse.active) {
-        const seg = (a: GridPoint, b: GridPoint) => {
-          const mx = (a.x + a.ox + b.x + b.ox) / 2 - mouse.x;
-          const my = (a.y + a.oy + b.y + b.oy) / 2 - mouse.y;
-          const d = Math.hypot(mx, my);
-          if (d < RADIUS) {
-            ctx.strokeStyle = `rgb(${inkChannels} / ${(0.06 + 0.16 * (1 - d / RADIUS)) * intensity})`;
-            ctx.beginPath();
-            ctx.moveTo(a.x + a.ox, a.y + a.oy);
-            ctx.lineTo(b.x + b.ox, b.y + b.oy);
-            ctx.stroke();
-          }
-        };
-        for (let r = 0; r < rows; r++)
-          for (let c = 0; c < cols - 1; c++) seg(pt(r, c), pt(r, c + 1));
-        for (let c = 0; c < cols; c++)
-          for (let r = 0; r < rows - 1; r++) seg(pt(r, c), pt(r + 1, c));
-      }
+      draw();
     };
 
     const loop = () => {
+      raf = 0;
       if (!visible) return;
-      step();
-      raf = requestAnimationFrame(loop);
+      if (client.moved) {
+        const rect = canvas.getBoundingClientRect();
+        target.x = client.x - rect.left;
+        target.y = client.y - rect.top;
+      }
+      cur.x += (target.x - cur.x) * EASE;
+      cur.y += (target.y - cur.y) * EASE;
+      draw();
+      if (Math.abs(target.x - cur.x) + Math.abs(target.y - cur.y) > 0.5) {
+        raf = requestAnimationFrame(loop);
+      }
+    };
+    const kick = () => {
+      if (!raf && visible && !still) raf = requestAnimationFrame(loop);
     };
 
     const io = new IntersectionObserver(([entry]) => {
-      if (!entry) return;
-      visible = entry.isIntersecting;
-      cancelAnimationFrame(raf);
-      if (visible) raf = requestAnimationFrame(loop);
+      visible = !!entry?.isIntersecting;
+      kick();
     });
     io.observe(canvas);
 
     const onMove = (e: MouseEvent) => {
-      mouse.cx = e.clientX;
-      mouse.cy = e.clientY;
+      client.x = e.clientX;
+      client.y = e.clientY;
+      client.moved = true;
+      kick();
     };
-    window.addEventListener("mousemove", onMove, { passive: true });
-    window.addEventListener("resize", build);
+    const themeObserver = new MutationObserver(readInk);
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    const resize = new ResizeObserver(build);
+    if (canvas.parentElement) resize.observe(canvas.parentElement);
+    if (!still) {
+      window.addEventListener("mousemove", onMove, { passive: true });
+      window.addEventListener("scroll", kick, { passive: true });
+    }
+    readInk();
     build();
 
     return () => {
       cancelAnimationFrame(raf);
       io.disconnect();
+      resize.disconnect();
       themeObserver.disconnect();
       window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("resize", build);
+      window.removeEventListener("scroll", kick);
     };
-  }, [intensity]);
+  }, []);
 
   return (
     <canvas
@@ -197,6 +158,7 @@ export const GridField = ({ intensity = 1 }: { intensity?: number }) => {
       data-testid="grid-field"
       aria-hidden="true"
       className="pointer-events-none absolute inset-0"
+      style={{ WebkitMaskImage: MASK, maskImage: MASK }}
     />
   );
 };

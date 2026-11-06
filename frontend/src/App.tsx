@@ -10,7 +10,6 @@ import { About } from "@/components/About";
 import { Projects } from "@/components/Projects";
 import { Capabilities } from "@/components/Capabilities";
 import { Contact } from "@/components/Contact";
-import { Footer } from "@/components/Footer";
 import { RotateLock } from "@/components/RotateLock";
 import { SectionIndex } from "@/components/SectionIndex";
 
@@ -35,7 +34,6 @@ function App() {
         <About />
         <Contact />
       </main>
-      <Footer />
       <RotateLock />
     </div>
   );

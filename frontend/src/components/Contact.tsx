@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { fadeUpVariants, revealOnView } from "../lib/motion";
-import { terminalBoot } from "../data/portfolioData";
+import { Github, Mail } from "lucide-react";
+import { profile } from "../data/portfolioData";
+import { scrollToTop } from "../hooks/useLenis";
+import { useSectionStep } from "../hooks/useSectionStep";
 import { GridField } from "./GridField";
+import { Num } from "./Num";
 import { SectionBackdrop } from "./SectionBackdrop";
-
-const fadeUp = fadeUpVariants({ stagger: 0.1 });
+import s from "./Contact.module.css";
 
 const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/contact`;
 
@@ -26,17 +28,23 @@ interface ContactForm {
   name: string;
   email: string;
   company: string;
+  linkedin: string;
   message: string;
   website: string;
 }
 
-const EMPTY_FORM: ContactForm = { name: "", email: "", company: "", message: "", website: "" };
-
-const LINE_COLOR = { cmd: "text-ink/[0.83]", out: "text-ink/65", ok: "text-ink" };
+const EMPTY_FORM: ContactForm = {
+  name: "",
+  email: "",
+  company: "",
+  linkedin: "",
+  message: "",
+  website: "",
+};
 
 interface LogLine {
   text: string;
-  kind: keyof typeof LINE_COLOR;
+  ok: boolean;
 }
 
 type FieldChange = ChangeEvent<HTMLInputElement | HTMLTextAreaElement>;
@@ -52,10 +60,7 @@ interface TerminalFieldProps {
   "data-testid"?: string;
 }
 
-const inputClass =
-  "mt-1.5 w-full rounded-lg border border-ink/[0.13] bg-ink/[0.03] px-4 py-3 font-kodemono text-sm text-ink placeholder:text-ink/65 outline-none transition-[border-color,box-shadow] duration-300 focus:border-ink/50 focus:shadow-[0_0_20px_rgb(var(--ink) / 0.07)]";
-
-// One terminal prompt: "> label:" over its input (or textarea).
+// One terminal prompt: "> label (hint):" on one line, over its input.
 const TerminalField = ({
   label,
   hint,
@@ -63,27 +68,32 @@ const TerminalField = ({
   type = "text",
   ...field
 }: TerminalFieldProps) => (
-  <label className="block">
-    <span className="text-ink">
+  <label className={s.field}>
+    <span className={s.label}>
       &gt; {label}
-      {hint ? (
+      {hint && (
         <>
           {" "}
-          <span className="text-ink/65">{hint}:</span>
+          <span className={s.hint}>{hint}</span>
         </>
-      ) : (
-        ":"
       )}
+      :
     </span>
     {multiline ? (
-      <textarea rows={4} className={`${inputClass} resize-none`} {...field} />
+      <textarea rows={4} className={s.input} {...field} />
     ) : (
-      <input type={type} className={inputClass} {...field} />
+      <input type={type} className={s.input} {...field} />
     )}
   </label>
 );
 
+/**
+ * Scene 5 · LET'S TALK (design/source/{desktop,mobile}/light/scene-5-contact.dc.html):
+ * the text, the terminal form card and the page footer, over the bulging grid.
+ */
 export const Contact = () => {
+  const ref = useRef<HTMLElement>(null);
+  const reached = useSectionStep(ref, 3) >= 0;
   const [form, setForm] = useState(EMPTY_FORM);
   const [lines, setLines] = useState<LogLine[]>([]);
   const [errors, setErrors] = useState<{ text: string }[]>([]);
@@ -103,8 +113,7 @@ export const Contact = () => {
   const set = (key: keyof ContactForm) => (e: FieldChange) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const pushLine = (text: string, kind: LogLine["kind"] = "out") =>
-    setLines((prev) => [...prev, { text, kind }]);
+  const pushLine = (text: string, ok = false) => setLines((prev) => [...prev, { text, ok }]);
 
   const showError = (text: string) => {
     setErrors((prev) => (prev.some((x) => x.text === text) ? prev : [...prev, { text }]));
@@ -130,7 +139,7 @@ export const Contact = () => {
     }
 
     setSending(true);
-    pushLine("$ transmit --channel=secure …", "cmd");
+    pushLine("$ transmit --channel=secure …");
     try {
       const res = await fetch(API_URL, {
         method: "POST",
@@ -138,7 +147,7 @@ export const Contact = () => {
         body: JSON.stringify(form),
       });
       if (res.ok) {
-        pushLine("[OK] MESSAGE TRANSMITTED — I'll get back to you within 24h.", "ok");
+        pushLine("[OK] MESSAGE TRANSMITTED — I'll get back to you within 24h.", true);
         setDone(true);
         setForm(EMPTY_FORM);
       } else if (res.status === 429) {
@@ -153,79 +162,89 @@ export const Contact = () => {
     }
   };
 
+  // Ø5.1 text, Ø5.2 the card, Ø5.3 the footer: one after another on arrival.
+  const rise = (i: number) => ({
+    "data-on": reached,
+    style: { transitionDelay: reached ? `${i * 0.35}s` : undefined },
+  });
+
   return (
-    <section
-      id="contact"
-      data-testid="contact-section"
-      style={{ background: "var(--bg-contact)" }}
-      className="relative overflow-hidden px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgb(var(--ink) / 0.04),transparent_60%)]" />
-      <SectionBackdrop scene="contact" />
-      <GridField />
-      <div className="relative mx-auto max-w-4xl">
-        <motion.p variants={fadeUp} {...revealOnView()} className="section-pill">
-          OPEN CHANNEL
-        </motion.p>
-        <motion.h2
-          variants={fadeUp}
-          custom={1}
-          {...revealOnView()}
-          className="section-title section-title--light mt-4"
-        >
-          Let&apos;s talk
-        </motion.h2>
+    <section ref={ref} id="contact" data-testid="contact-section" className={s.section}>
+      <div className={s.stage}>
+        <SectionBackdrop scene="contact" />
+        <GridField />
 
-        <motion.div
-          variants={fadeUp}
-          custom={2}
-          {...revealOnView()}
-          data-testid="contact-terminal"
-          className="corner-frame cut-corner mt-14 overflow-hidden border border-ink/[0.13] bg-ink/[0.04]/90 shadow-[0_0_80px_rgb(var(--ink) / 0.03)] backdrop-blur-xl"
-        >
-          {/* terminal chrome */}
-          <div className="flex items-center gap-2 border-b border-ink/[0.13] px-5 py-3.5">
-            <span className="h-3 w-3 rounded-full bg-ink/20" />
-            <span className="h-3 w-3 rounded-full bg-ink/[0.33]" />
-            <span className="h-3 w-3 rounded-full bg-ink/[0.47]" />
-            <span className="ml-4 font-kodemono text-[13px] tracking-wider text-ink/65">
-              msg@portfolio: ~/contact — zsh
+        <div className={`${s.left} ${s.reveal}`} {...rise(0)}>
+          <p className="section-pill">
+            <span className="lg:hidden">
+              <Num value="5" /> ·&nbsp;
             </span>
-          </div>
+            OPEN CHANNEL
+          </p>
+          <h2 className={`section-title section-title--light ${s.title}`}>
+            Let&apos;s
+            <br className="hidden lg:inline" /> talk
+          </h2>
+          <p className={s.lede}>
+            Tell me what you&apos;re building. I answer every message — and if you share your
+            LinkedIn, I&apos;ll send you my CV.
+          </p>
+          <div className={s.where}>Remote · worldwide · GMT−3</div>
+        </div>
 
-          <div className="p-6 font-kodemono text-[13px] leading-relaxed sm:p-8">
-            {terminalBoot.map((line, i) => (
-              <p key={i} className={line.type === "cmd" ? "text-ink/[0.83]" : "text-ink/65"}>
-                {line.type === "cmd" ? `$ ${line.text}` : line.text}
-              </p>
-            ))}
+        <div className={`${s.card} ${s.reveal}`} data-testid="contact-terminal" {...rise(1)}>
+          <div aria-hidden="true" className={s.outline} />
+          <div aria-hidden="true" className={s.bezel} />
+          <div aria-hidden="true" className={s.gap} />
+          <div aria-hidden="true" className={s.panel} />
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-              <p className="text-ink/[0.83]">$ contact --send --secure</p>
+          <div className={s.body}>
+            <div className={s.chrome}>
+              <span aria-hidden="true" className={s.dot} style={{ background: "#E9EDF1" }} />
+              <span aria-hidden="true" className={s.dot} style={{ background: "#8F98A2" }} />
+              <span aria-hidden="true" className={s.dot} style={{ background: "#4A525B" }} />
+              <span className={s.chromeTitle}>
+                <span className="hidden lg:inline">msg@portfolio: </span>~/contact — zsh
+              </span>
+            </div>
 
-              <TerminalField
-                label="name"
-                data-testid="contact-name-input"
-                value={form.name}
-                onChange={set("name")}
-                placeholder="your name"
-              />
-              <TerminalField
-                label="email"
-                type="email"
-                data-testid="contact-email-input"
-                value={form.email}
-                onChange={set("email")}
-                placeholder="you@domain.com"
-              />
-              <TerminalField
-                label="company"
-                hint="(optional)"
-                data-testid="contact-company-input"
-                value={form.company}
-                onChange={set("company")}
-                placeholder="organization / studio"
-              />
+            <form onSubmit={handleSubmit} className={s.form} noValidate>
+              <div>$ contact --send --secure</div>
+
+              <div className={s.pair}>
+                <TerminalField
+                  label="name"
+                  data-testid="contact-name-input"
+                  value={form.name}
+                  onChange={set("name")}
+                  placeholder="your name"
+                />
+                <TerminalField
+                  label="email"
+                  type="email"
+                  data-testid="contact-email-input"
+                  value={form.email}
+                  onChange={set("email")}
+                  placeholder="you@domain.com"
+                />
+                <TerminalField
+                  label="company"
+                  hint="(optional)"
+                  data-testid="contact-company-input"
+                  value={form.company}
+                  onChange={set("company")}
+                  placeholder="organization / studio"
+                />
+                <TerminalField
+                  label="linkedin"
+                  hint="(for the CV)"
+                  type="url"
+                  data-testid="contact-linkedin-input"
+                  value={form.linkedin}
+                  onChange={set("linkedin")}
+                  placeholder="linkedin.com/in/…"
+                />
+              </div>
               <TerminalField
                 label="message"
                 multiline
@@ -251,7 +270,7 @@ export const Contact = () => {
                 data-testid="contact-submit-button"
                 type="submit"
                 disabled={sending}
-                className="group relative w-full border border-ink/30 bg-ink/5 px-6 py-4 font-display text-[13px] uppercase tracking-[0.02em] text-ink transition-[background-color,box-shadow,color] duration-300 hover:bg-ink hover:text-surface hover:shadow-[0_0_40px_rgb(var(--ink) / 0.25)] disabled:cursor-wait disabled:opacity-50"
+                className={s.submit}
               >
                 {sending ? "Transmitting…" : done ? "Transmit again" : "Transmit message"}
               </button>
@@ -259,14 +278,13 @@ export const Contact = () => {
               {/* Hidden with :empty rather than errors.length: the array is
                   already empty while the last line fades out, and a JS
                   condition would unmount it mid-animation. */}
-              <div data-testid="contact-errors" className="space-y-1.5 empty:hidden">
+              <div data-testid="contact-errors" className={s.notices}>
                 <AnimatePresence>
                   {errors.map((err) => (
                     <motion.p
                       key={err.text}
                       role="alert"
                       data-testid="contact-error"
-                      className="text-ink/65"
                       initial={{ opacity: 0, x: -8 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -8 }}
@@ -280,25 +298,69 @@ export const Contact = () => {
             </form>
 
             {lines.length > 0 && (
-              <div
-                data-testid="contact-status-lines"
-                className="mt-6 space-y-1.5 border-t border-ink/[0.13] pt-5"
-              >
+              <div data-testid="contact-status-lines" className={s.log}>
                 {lines.map((line, i) => (
                   <motion.p
                     key={i}
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className={LINE_COLOR[line.kind]}
+                    className={line.ok ? s.logOk : undefined}
                   >
                     {line.text}
                   </motion.p>
                 ))}
-                <span className="terminal-caret text-ink/65" />
+                <span className="terminal-caret" />
               </div>
             )}
           </div>
-        </motion.div>
+
+          <div className={s.tab}>
+            <span className={s.tabInner}>
+              <span className={s.tabMark}>MSSE://</span>
+              <span aria-hidden="true" className={s.tabRule} />
+              <span className={s.tabText}>Secure channel</span>
+            </span>
+          </div>
+        </div>
+
+        <footer data-testid="footer" className={`${s.footer} ${s.reveal}`} {...rise(2)}>
+          <div>
+            {/* To the very top: the hero is pinned, so its element would land mid-sequence. */}
+            <button
+              type="button"
+              data-testid="footer-brand"
+              onClick={scrollToTop}
+              className={s.brand}
+            >
+              {profile.shortMark}
+            </button>
+            <p className={s.credit}>
+              © {new Date().getFullYear()} {profile.name}
+              <br />
+              Software &amp; AI engineer
+            </p>
+          </div>
+          <div className={s.socials}>
+            <a
+              data-testid="footer-github-link"
+              href={profile.socials.github}
+              aria-label="GitHub"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={s.social}
+            >
+              <Github size={18} strokeWidth={1.6} aria-hidden="true" />
+            </a>
+            <a
+              data-testid="footer-email-link"
+              href={`mailto:${profile.email}`}
+              aria-label="Email"
+              className={s.social}
+            >
+              <Mail size={18} strokeWidth={1.6} aria-hidden="true" />
+            </a>
+          </div>
+        </footer>
       </div>
     </section>
   );

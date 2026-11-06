@@ -1,0 +1,477 @@
+/* Scene 5 · LET'S TALK. Values from design/source/{desktop,mobile}/light/scene-5-contact.dc.html. */
+
+.section {
+  --tx: 20 24 29;
+  position: relative;
+}
+:global(:root[data-theme="dark"]) .section {
+  --tx: var(--ink);
+}
+
+.stage {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-contact);
+  color: rgb(var(--tx));
+  /* Bottom: room for the fixed dock under the footer. */
+  padding: 26px 18px 84px;
+}
+
+.left,
+.card,
+.footer {
+  position: relative;
+  z-index: 5;
+}
+
+/* Rise in, one after another, once the section is reached. */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal[data-on="true"] {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transform: none;
+    transition: none !important;
+  }
+}
+
+.title {
+  margin-top: 12px;
+  line-height: 1.08;
+}
+.lede {
+  margin: 18px 0 0;
+  max-width: 440px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+.where {
+  margin-top: 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+/* ---- The terminal card: the black framed card (design/CARD-SPEC.md) ---- */
+.card {
+  --chamfer: polygon(
+    30px 0,
+    calc(100% - 16px) 0,
+    100% 16px,
+    100% 150px,
+    calc(100% - 8px) 158px,
+    calc(100% - 8px) calc(100% - 24px),
+    calc(100% - 30px) 100%,
+    16px 100%,
+    0 calc(100% - 16px),
+    0 calc(100% - 160px),
+    8px calc(100% - 168px),
+    8px 22px
+  );
+  margin: 32px -6px 0;
+  filter: drop-shadow(0 34px 40px rgba(18, 24, 34, 0.38));
+}
+.outline,
+.bezel,
+.gap,
+.panel {
+  position: absolute;
+  pointer-events: none;
+}
+.outline {
+  inset: 0;
+  background: #5b646e;
+  clip-path: var(--chamfer);
+}
+.bezel {
+  inset: 1px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 10%),
+    linear-gradient(160deg, #3a4148 0%, #252a30 45%, #1b1f24 100%);
+  clip-path: var(--chamfer);
+}
+.gap {
+  inset: 12px 20px;
+  background: #050608;
+  clip-path: polygon(
+    26px 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% calc(100% - 26px),
+    calc(100% - 26px) 100%,
+    12px 100%,
+    0 calc(100% - 12px),
+    0 26px
+  );
+}
+.panel {
+  inset: 14px 22px;
+  background: radial-gradient(ellipse 120% 70% at 20% 0%, #262b31 0%, #12151a 55%, #0b0d10 100%);
+  clip-path: polygon(
+    24px 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% calc(100% - 24px),
+    calc(100% - 24px) 100%,
+    10px 100%,
+    0 calc(100% - 10px),
+    0 24px
+  );
+}
+
+.body {
+  position: relative;
+  z-index: 2;
+  margin: 14px 22px;
+  padding: 18px 12px 56px;
+  color: #e9edf1;
+  font-family: "JetBrains Mono", monospace;
+}
+
+.chrome {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+.chromeTitle {
+  margin-left: 10px;
+  font-size: 10.5px;
+  color: #aeb6bf;
+}
+
+.form {
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 12px;
+}
+.pair {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.label {
+  white-space: nowrap;
+}
+.hint {
+  color: #8f98a2;
+}
+.input {
+  font: inherit;
+  padding: 12px;
+  border-radius: 0;
+  background: #0e1115;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #e9edf1;
+  outline: none;
+}
+/* The global autofill rule paints the page surface; keep the terminal dark. */
+.input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0 1000px #0e1115 inset;
+  -webkit-text-fill-color: #e9edf1;
+}
+.input::placeholder {
+  color: #5e6670;
+}
+.input:focus-visible {
+  outline: 2px solid #e9edf1;
+  outline-offset: 1px;
+}
+textarea.input {
+  resize: vertical;
+}
+.submit {
+  margin-top: 4px;
+  padding: 16px;
+  background: #e9edf1;
+  color: #0b0d10;
+  border: 0;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.submit:focus-visible {
+  outline: 2px solid #e9edf1;
+  outline-offset: 3px;
+}
+.submit:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.notices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #aeb6bf;
+}
+.notices:empty {
+  display: none;
+}
+.log {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: #aeb6bf;
+}
+.logOk {
+  color: #e9edf1;
+}
+
+/* Bottom tab: MSSE:// │ Secure channel. */
+.tab {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(220px, 74%);
+  height: 38px;
+  z-index: 4;
+  color: #e9edf1;
+}
+.tab::before,
+.tab::after {
+  content: "";
+  position: absolute;
+  clip-path: polygon(0 100%, 20px 0, calc(100% - 20px) 0, 100% 100%);
+}
+.tab::before {
+  inset: 0;
+  background: #5b646e;
+}
+.tab::after {
+  inset: 1px 1px 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 10%),
+    linear-gradient(160deg, #3a4148 0%, #252a30 45%, #1b1f24 100%);
+}
+.tabInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  padding-top: 2px;
+}
+.tabMark {
+  font-family: "Michroma", sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+.tabRule {
+  width: 1.5px;
+  height: 15px;
+  background: rgba(233, 237, 241, 0.6);
+}
+.tabText {
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ---- Footer: MSSE:// + © left, GitHub + email right, around the dock ---- */
+.footer {
+  margin: 96px -18px 0;
+  padding: 22px 18px 0;
+  border-top: 1px solid rgb(var(--tx) / 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.brand {
+  font-family: "Michroma", sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: rgb(var(--tx));
+}
+.credit {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: rgb(var(--tx) / 0.88);
+}
+.socials {
+  display: flex;
+  gap: 8px;
+}
+.social {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(20, 24, 29, 0.25);
+  background: rgba(255, 255, 255, 0.6);
+  color: #14181d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+}
+.social:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* ---- Desktop: text left, the card right, footer on both sides of the dock ---- */
+@media (min-width: 1024px) {
+  .stage {
+    min-height: 100vh;
+    /* Right 140: clear of the section index. Bottom: the footer band. */
+    padding: 52px 140px 140px 56px;
+    display: grid;
+    grid-template-columns: minmax(0, 520fr) minmax(0, 660fr);
+    column-gap: 64px;
+    align-items: start;
+  }
+  .title {
+    margin-top: 16px;
+    line-height: 1.05;
+  }
+  .lede {
+    margin-top: 30px;
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .where {
+    margin-top: 22px;
+    font-size: 13px;
+  }
+  .card {
+    --chamfer: polygon(
+      34px 0,
+      calc(100% - 18px) 0,
+      100% 18px,
+      100% 210px,
+      calc(100% - 8px) 218px,
+      calc(100% - 8px) calc(100% - 26px),
+      calc(100% - 34px) 100%,
+      18px 100%,
+      0 calc(100% - 18px),
+      0 calc(100% - 230px),
+      8px calc(100% - 238px),
+      8px 26px
+    );
+    margin: clamp(16px, 6.7vh, 60px) 0 0;
+  }
+  .body {
+    padding: 26px 30px 70px;
+  }
+  .chrome {
+    gap: 8px;
+    padding-bottom: 16px;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+  }
+  .chromeTitle {
+    margin-left: 14px;
+    font-size: 12px;
+  }
+  .form {
+    padding-top: 24px;
+    gap: 18px;
+    font-size: 13px;
+  }
+  .pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .field {
+    gap: 8px;
+  }
+  .input {
+    padding: 13px 14px;
+  }
+  .submit {
+    margin-top: 6px;
+    padding: 18px;
+    font-size: 15px;
+  }
+  .tab {
+    width: min(280px, 74%);
+    height: 44px;
+  }
+  .tabInner {
+    gap: 12px;
+  }
+  .tabMark {
+    font-size: 10px;
+  }
+  .tabRule {
+    height: 18px;
+  }
+  .tabText {
+    font-size: 13px;
+  }
+
+  /* The rule at 104 px from the bottom; the two ends level with the dock. */
+  .footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 104px;
+    margin: 0;
+    padding: 0 56px 30px;
+    align-items: flex-end;
+    border-top-color: rgb(var(--tx) / 0.14);
+  }
+  .brand {
+    font-size: 13px;
+  }
+  .credit {
+    margin-top: 8px;
+    font-size: 12px;
+    color: rgb(var(--tx) / 0.8);
+  }
+  .socials {
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+}
+
+/* Short desktop screens (1280 x 720): a tighter form so the card clears the footer. */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .stage {
+    padding-top: 40px;
+  }
+  .body {
+    padding: 20px 26px 60px;
+  }
+  .form {
+    padding-top: 16px;
+    gap: 12px;
+  }
+  .input {
+    padding: 10px 12px;
+  }
+  .submit {
+    padding: 14px;
+  }
+}
