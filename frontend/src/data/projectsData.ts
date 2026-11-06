@@ -1,10 +1,12 @@
 // Scene 3 projects. Copy: design/projects-copy.md (used exactly as written).
-// `media`: the looping clip in the GIF player. Ethos, Marvel Characters and
-// Lynx use real recordings (Ethos and Marvel ~22 s, Marvel its search and
-// filters stretch; Lynx 17.6 s, without the full-width conclusions the 16:10
-// crop would cut), as 16:10 H.264 seamless loops (0.6 s crossfade, no audio)
-// + a poster frame at `startAt`; the other three are still abstract
-// placeholders: swap them for screen recordings cut the same way.
+// `media`: the looping clip in the GIF player. Blaze, Lynx, Ethos and Marvel
+// Characters use real recordings (Ethos and Marvel ~22 s, Marvel its search
+// and filters stretch; Lynx 17.6 s, without the full-width conclusions the
+// 16:10 crop would cut; Blaze 14.4 s, the editor only: its landing's
+// full-width wordmark can't fit a 16:10 crop), as 16:10 H.264 seamless loops
+// (0.6 s crossfade, no audio) + a poster frame at `startAt`; Alphecca and
+// Polaris are still abstract placeholders: swap them for screen recordings
+// cut the same way.
 
 export interface ShowcaseProject {
   id: string;
@@ -27,8 +29,8 @@ export interface ShowcaseProject {
   /**
    * Seconds into the clip where it starts (the poster is that frame), so
    * clips playing side by side are never in sync: every project its own
-   * offset (Marvel Characters 0, Lynx 5, Ethos 10, the placeholders 20, 30,
-   * 40; a new one takes the next free ten). Wrapped into the clip's length, so
+   * offset (Marvel Characters 0, Blaze 4, Lynx 5, Ethos 10, the placeholders
+   * 30, 40; a new one takes a free value). Wrapped into the clip's length, so
    * the 8 s placeholders already differ; keep the poster at the same frame.
    */
   startAt?: number;
@@ -58,9 +60,10 @@ export const showcaseProjects: ShowcaseProject[] = [
     ],
     codeUrl: "",
     liveUrl: "",
-    media: "/projects/blaze.webm",
-    startAt: 20,
-    seconds: 8,
+    media: "/projects/blaze.mp4",
+    poster: "/projects/blaze.jpg",
+    startAt: 4,
+    seconds: 14.4,
     art: art(210, "24% 30%", "80% 76%"),
   },
   {
