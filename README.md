@@ -20,8 +20,9 @@ tests, Playwright for end-to-end tests. pnpm 9 as the package manager.
 
 **Backend** — FastAPI with Pydantic validation; each contact message is emailed with
 Resend (nothing is stored). It serves exactly one endpoint that matters,
-`POST /api/contact`, and is deployed as its own Vercel project (Root Directory
-`backend`). The site renders without it.
+`POST /api/contact`. It deploys with the site in the same Vercel project through
+Vercel Services (`vercel.json`: `/api/*` → backend, the rest → frontend), so the
+form calls its own origin. The site renders without it.
 
 **Hosting** — AWS: a private S3 bucket behind CloudFront, defined in CloudFormation and
 deployed from GitHub Actions.
@@ -183,10 +184,10 @@ pytest                          # Resend is mocked: the tests never send email
 
 Neither file is versioned; each folder's `.env.example` lists its keys.
 
-| File            | Keys                                                                                                                              |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `frontend/.env` | `VITE_BACKEND_URL` — the contact service's base URL. Read at build time, so for deploys it is a repository variable (see Deploy). |
-| `backend/.env`  | `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CORS_ORIGINS`. On Vercel they are the backend project's environment variables.             |
+| File            | Keys                                                                                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frontend/.env` | `VITE_BACKEND_URL` — optional override of the contact service's base URL. Unset: same origin in production, `http://localhost:8000` in dev.                   |
+| `backend/.env`  | `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CORS_ORIGINS`. On Vercel the first two are the project's environment variables; CORS isn't needed there (same origin). |
 
 ---
 
