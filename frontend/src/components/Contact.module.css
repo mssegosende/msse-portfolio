@@ -383,7 +383,10 @@ textarea.input {
       8px calc(100% - 238px),
       8px 26px
     );
-    margin: clamp(16px, 6.7vh, 60px) 0 0;
+    /* As in the mock: centred in the screen above the footer band (the grid
+       row fills the stage between its top and bottom padding), at any height. */
+    align-self: center;
+    margin: 0;
   }
   .body {
     padding: 26px 30px 70px;
@@ -466,8 +469,10 @@ textarea.input {
 
 /* Short desktop screens (1280 x 720): a tighter form so the card clears the footer. */
 @media (min-width: 1024px) and (max-height: 820px) {
+  /* Bottom 120: the card and the footer band fit in one screen at 720. */
   .stage {
     padding-top: 40px;
+    padding-bottom: 120px;
   }
   .body {
     padding: 20px 26px 60px;
