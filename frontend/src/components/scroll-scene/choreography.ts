@@ -91,11 +91,28 @@ export const SCENE1 = { video: 0.1, check: 0.25, headline: 0.4, scroll: 0.55, en
  */
 export const giantHeadFraming = (isMobile: boolean, viewport: Viewport): Framing => {
   const vw = vwOf(viewport.width);
-  return isMobile
-    ? { scale: PHONE_HEAD.scale, x: vw(PHONE_HEAD.dx * viewport.width), y: `${PHONE_HEAD.y}%` }
-    : { scale: GIANT.scale, x: vw(GIANT.dx * viewport.height), y: `${GIANT.y}%` };
+  if (!isMobile) return { scale: GIANT.scale, x: vw(GIANT.dx * viewport.height), y: `${GIANT.y}%` };
+  // Phones: the face above the card, as in the mock (María Sol's review: it
+  // was too close and the card hid the face on a real phone). The card is
+  // fixed in px at the bottom, so the head is placed from the card's top: the
+  // eye line PHONE_HEAD.eyesAbove px over it, the crown PHONE_HEAD.crownToEyes
+  // px above the eyes, smaller when a short screen has less room.
+  const h = viewport.height;
+  const cardTop = h - PHONE_HEAD.cardBlock;
+  const eyes = cardTop - PHONE_HEAD.eyesAbove;
+  const crownToEyes = Math.max(60, Math.min(PHONE_HEAD.crownToEyes, eyes - PHONE_HEAD.topMin));
+  // Screen y / height = 0.5 - scale * n + y / 100, n measured on the model.
+  const scale = crownToEyes / ((HEAD_N.crown - HEAD_N.eyes) * h);
+  const y = 100 * (eyes / h - 0.5 + scale * HEAD_N.eyes);
+  return { scale, x: vw(PHONE_HEAD.dx * viewport.width), y: `${y}%` };
 };
-const PHONE_HEAD = { scale: 1.8, dx: 0.025, y: 43.5 };
+// Phone scene 2, in px (design/source/mobile/light/scene-2-capabilities.dc.html
+// at 390 x 844): the card block (card + Ø2.x counter + 6rem to the bottom),
+// the eye line above the card, crown to eyes, and the highest the crown goes.
+const PHONE_HEAD = { cardBlock: 416, eyesAbove: 115, crownToEyes: 170, topMin: 40, dx: 0.025 };
+// The head's crown and eye line in camera units (screen offset from the centre
+// per unit of scale, in viewport heights), measured on the phone robot.
+const HEAD_N = { crown: 0.4437, eyes: 0.2858 };
 
 /**
  * Phones: the robot starts further back and to the side and approaches the
