@@ -5,7 +5,8 @@ import { systemFeatures } from "../../data/portfolioData";
 import { getLenis } from "../../hooks/useLenis";
 import { VIEW_CSS_SCALE, applyView } from "../../lib/spline/camera";
 import { BOT_HOME, applyPose } from "../../lib/spline/rig";
-import type { ViewTransform } from "../../lib/spline/types";
+import { noteRenderedFrame } from "../../lib/spline/quality";
+import type { SplineApp, ViewTransform } from "../../lib/spline/types";
 import {
   hasThemeReloadPosition,
   pendingThemeReload,
@@ -15,6 +16,7 @@ import {
   BEATS,
   GAZE,
   XFADE_AT,
+  XFADE_DURATION,
   chapterTwoFramings,
   closeAt as closeAtFor,
   connectorAnchors,
@@ -24,6 +26,8 @@ import {
 import type { HeroSceneRefs } from "./useHeroScenes";
 
 gsap.registerPlugin(ScrollTrigger);
+// Without 3D the scene wrappers never mount, so part of the timeline has no target.
+gsap.config({ nullTargetWarn: false });
 
 type Refs<T> = (T | null)[];
 
@@ -150,8 +154,10 @@ export const useHeroTimeline = ({
       head1Ref,
       headAltRef,
       l2Ref,
-      awake2Ref,
-      stopped1Ref,
+      settledRef,
+      scenesLoadedRef,
+      showAltRef,
+      l2VisibleRef,
       heroVisibleRef,
     } = scenes;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -448,8 +454,12 @@ export const useHeroTimeline = ({
         h.rotation.x = head1.x;
       };
 
+      // Assigned once the timeline exists.
+      let syncPlayback = () => {};
+
       // The pose normaliser rides the gaze ticker rather than adding its own.
       const applyGazeAndPose = () => {
+        syncPlayback();
         applyGaze();
         // Phones: the hero's arms in light, layer 2's in dark.
         if (isMobile) {
@@ -483,53 +493,11 @@ export const useHeroTimeline = ({
           onUpdate: (self) => {
             const p = self.progress;
             if (isTouchDevice && !isMobile) touchParallax(p);
-            // Scene 2 wakes a little before the crossfade (60% of the way there)
-            // so it has drawn the framed robot by the time it shows.
-            const wake2 = p > (XFADE_AT / tl.duration()) * 0.6;
-            if (wake2 !== awake2Ref.current) {
-              awake2Ref.current = wake2;
-              const apps = isMobile ? [app2Ref.current] : l2Desktop().map((e) => e.app);
-              apps.forEach((a) => {
-                try {
-                  if (wake2) a?.play();
-                  else a?.stop();
-                } catch {
-                  /* runtime without play()/stop() */
-                }
-              });
-            }
-            if (p > 0.45 && !stopped1Ref.current) {
-              stopped1Ref.current = true;
-              // Both desktop layer A mounts, including the hidden one.
-              try {
-                app1Ref.current?.stop();
-              } catch {
-                /* runtime without stop() */
-              }
-              try {
-                appAltRef.current?.stop();
-              } catch {
-                /* runtime without stop() */
-              }
-            }
             // Latches once: the dock stays even if the visitor scrolls back up.
             if (p > 0.985 && !journeyRef.current) {
               journeyRef.current = true;
               setJourneyDone(true);
               onJourneyEndRef.current?.();
-            }
-            if (p < 0.25 && stopped1Ref.current) {
-              stopped1Ref.current = false;
-              try {
-                app1Ref.current?.play();
-              } catch {
-                /* runtime without play() */
-              }
-              try {
-                appAltRef.current?.play();
-              } catch {
-                /* runtime without play() */
-              }
             }
           },
         },
@@ -557,9 +525,45 @@ export const useHeroTimeline = ({
         0.1,
       );
 
+      // Only what is on screen renders: every scene is a full-screen GPU load, and
+      // drawing all four at once is what a laptop GPU can't keep up with. The fade
+      // follows the scrubbed time and scroll leads it, so the hero keeps running
+      // until both are past the fade and layer 2 wakes as soon as either nears it.
+      const setRunning = (app: SplineApp | null | undefined, on: boolean) => {
+        if (!app || !settledRef.current.has(app)) return;
+        try {
+          if (on) {
+            app.play();
+          } else {
+            app.stop();
+            // A load starts its loop from a timeout. One that fires after a stop()
+            // leaves the loop running on a scene marked as stopped, and stop() then
+            // does nothing.
+            app._renderer?.setAnimationLoop(null);
+          }
+        } catch {
+          /* runtime without play()/stop() */
+        }
+      };
+      syncPlayback = () => {
+        const shown = tl.time();
+        const scrolled = (tl.scrollTrigger?.progress ?? 0) * tl.duration();
+        const hero =
+          heroVisibleRef.current && Math.min(shown, scrolled) < XFADE_AT + XFADE_DURATION;
+        const layer2 = heroVisibleRef.current && Math.max(shown, scrolled) > XFADE_AT * 0.9;
+        setRunning(app1Ref.current, hero && !showAltRef.current);
+        setRunning(appAltRef.current, hero && showAltRef.current);
+        setRunning(app2Ref.current, layer2);
+        Object.entries(l2Ref.current).forEach(([key, entry]) => {
+          if (key.startsWith("d:"))
+            setRunning(entry.app, layer2 && key === "d:" + l2VisibleRef.current);
+        });
+        if ((hero || layer2) && scenesLoadedRef.current) noteRenderedFrame();
+      };
+
       // Phase 2: crossfade to chapter 2; the robot rises in close-up.
-      tl.to(splineLayerRef.current, { opacity: 0, duration: 0.12 }, XFADE_AT);
-      tl.to(layer2Ref.current, { opacity: 1, duration: 0.12 }, XFADE_AT);
+      tl.to(splineLayerRef.current, { opacity: 0, duration: XFADE_DURATION }, XFADE_AT);
+      tl.to(layer2Ref.current, { opacity: 1, duration: XFADE_DURATION }, XFADE_AT);
       tl.to(lift, { t: 1, duration: 0.16, onUpdate: applyLift }, XFADE_AT);
 
       // Story paragraphs fade in one after another during the close-up hold.
@@ -697,34 +701,11 @@ export const useHeroTimeline = ({
       put();
     }
 
-    // Both runtimes idle while the hero is off screen. Coming back, scene 2 always
-    // resumes; scene 1 only if the sequence hasn't parked it.
+    // The playback sync idles every scene while the hero is off screen.
     const heroVisibility = new IntersectionObserver(
       ([entry]) => {
         if (!entry) return;
-        const visible = entry.isIntersecting;
-        heroVisibleRef.current = visible;
-        try {
-          const l2Apps = isMobile
-            ? [app2Ref.current]
-            : Object.entries(l2Ref.current)
-                .filter(([k]) => k.startsWith("d:"))
-                .map(([, e]) => e.app);
-          if (visible) {
-            l2Apps.forEach((a) => a?.play?.());
-            // The alternate mount follows slot1's rule.
-            if (!stopped1Ref.current) {
-              app1Ref.current?.play?.();
-              appAltRef.current?.play?.();
-            }
-          } else {
-            app1Ref.current?.stop?.();
-            appAltRef.current?.stop?.();
-            l2Apps.forEach((a) => a?.stop?.());
-          }
-        } catch {
-          /* runtime without play/stop */
-        }
+        heroVisibleRef.current = entry.isIntersecting;
       },
       { rootMargin: "120px" },
     );

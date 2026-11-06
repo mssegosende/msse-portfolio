@@ -150,6 +150,7 @@ export const connectorAnchors = (isMobile: boolean): Anchor[] => {
 
 /** Where layer 2 fades in. */
 export const XFADE_AT = 0.5;
+export const XFADE_DURATION = 0.12;
 
 /** One beat per card: steps 0.60 apart, each card landing after the body settles. */
 export const BEATS = [

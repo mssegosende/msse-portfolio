@@ -2,7 +2,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObje
 import { SPLINE_SCENE_URL, SPLINE_SCENE_2_URL } from "../../data/portfolioData";
 import { CAM_FINAL, HERO_CAM_DESKTOP, HERO_CAM_MOBILE, pinCamera } from "../../lib/spline/camera";
 import { collectArms, findBot, placeBot } from "../../lib/spline/rig";
-import { releaseGlContext } from "../../lib/spline/runtime";
+import { trackRenderQuality } from "../../lib/spline/quality";
+import { canRender3D, releaseGlContext, watchContextLoss } from "../../lib/spline/runtime";
 import { L2_DESKTOP_URLS, themeModel } from "../../lib/spline/scenes";
 import type { SceneNode, SplineApp, SplineObject } from "../../lib/spline/types";
 
@@ -35,18 +36,19 @@ export const useHeroScenes = (
 ) => {
   const [progress, setProgress] = useState(0);
   const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const [scene2Failed, setScene2Failed] = useState(false);
+  // Without WebGL (blocked, or the GPU was reset) nothing mounts: straight to the
+  // static robot, with no loader to wait through.
+  const [failed, setFailed] = useState(() => !canRender3D());
+  const [scene2Failed, setScene2Failed] = useState(failed);
   // Layer 2 mounts that have drawn their first frames, by "m:"/"d:" + url.
   const [drawn2, setDrawn2] = useState<Record<string, boolean>>({});
   // Mounts whose load failed (reported by SceneBoundary): "alt" and "d:" + url.
   const [deadScenes, setDeadScenes] = useState<Record<string, boolean>>({});
   const markDead = (key: string) => setDeadScenes((d) => (d[key] ? d : { ...d, [key]: true }));
   const readyRef = useRef(false);
-  // Scene 2 renders only when layer 2 is about to appear. Set by the pin's
-  // onUpdate, read by onLoad.
-  const awake2Ref = useRef(false);
-  const stopped1Ref = useRef(false);
+  // Scenes that have drawn their first frames. Only these get paused: the
+  // timeline's playback sync leaves the others alone.
+  const settledRef = useRef(new WeakSet<SplineApp>());
   const app1Ref = useRef<SplineApp | null>(null);
   const app2Ref = useRef<SplineApp | null>(null);
   const armsRef = useRef<SceneNode[]>([]);
@@ -65,8 +67,7 @@ export const useHeroScenes = (
   const l2Ref = useRef<Record<string, L2Entry>>({});
   // Phones: the hero's arms (on phones armsRef holds layer 2's).
   const heroArmsRef = useRef<SceneNode[]>([]);
-  // Kept by the hero IntersectionObserver: a scene that loads with the hero off
-  // screen draws once and stops.
+  // Kept by the hero IntersectionObserver.
   const heroVisibleRef = useRef(true);
   // One model per theme throughout: the black robot (scene 1) in light, the
   // silver one (scene 2) in dark.
@@ -93,6 +94,19 @@ export const useHeroScenes = (
   // Desktop only: layer A's black robot, shown in light.
   const heroAltUrl = SPLINE_SCENE_URL;
   const showAlt = !isMobile && !darkMode && !deadScenes.alt;
+
+  // The playback sync runs on the ticker and needs what is visible right now.
+  const showAltRef = useRef(showAlt);
+  const l2VisibleRef = useRef(l2VisibleUrl);
+  useLayoutEffect(() => {
+    showAltRef.current = showAlt;
+    l2VisibleRef.current = l2VisibleUrl;
+  });
+
+  // A hidden scene has to draw once, or the first frame it shows stalls compiling
+  // its shaders.
+  const afterFirstFrames = (fn: () => void) =>
+    requestAnimationFrame(() => requestAnimationFrame(fn));
 
   // Loader: eases toward 90% until the scene loads.
   useEffect(() => {
@@ -129,22 +143,9 @@ export const useHeroScenes = (
       : canvasWrapRef.current
         ? canvasWrapRef.current.querySelector("canvas")
         : null;
-    // After a phone theme reload the hero may load past its part of the sequence or
-    // off screen: draw a couple of frames, then stop. Scrolling back restarts it.
-    if (isMobile) {
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          if (app1Ref.current !== app) return;
-          if (stopped1Ref.current || !heroVisibleRef.current) {
-            try {
-              app.stop();
-            } catch {
-              /* runtime without stop() */
-            }
-          }
-        }),
-      );
-    }
+    trackRenderQuality(app);
+    watchContextLoss(app.canvas, () => setFailed(true));
+    afterFirstFrames(() => settledRef.current.add(app));
     if (readyRef.current) return;
     readyRef.current = true;
     setProgress(100);
@@ -166,6 +167,9 @@ export const useHeroScenes = (
       /* older runtime */
     }
     altCanvasRef.current = altBoxRef.current ? altBoxRef.current.querySelector("canvas") : null;
+    trackRenderQuality(app);
+    watchContextLoss(app.canvas, () => markDead("alt"));
+    afterFirstFrames(() => settledRef.current.add(app));
   };
 
   // Layer 2 load. "m:" is the phone mount (the theme's model); "d:" the two
@@ -197,27 +201,22 @@ export const useHeroScenes = (
     } catch {
       /* older runtime without setBackgroundColor */
     }
-    // Ready after two drawn frames, so the rig is in place before the fade; on
-    // desktop, once both models are in. Then paused again while the visitor is
-    // still in the hero, or while the hero is off screen.
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        setDrawn2((d) => (d[key] ? d : { ...d, [key]: true }));
-        if (!awake2Ref.current || !heroVisibleRef.current) {
-          try {
-            app.stop();
-          } catch {
-            /* runtime without stop() */
-          }
-        }
-      }),
+    trackRenderQuality(app);
+    watchContextLoss(app.canvas, () =>
+      key.startsWith("m:") ? setScene2Failed(true) : markDead(key),
     );
+    // Ready after two drawn frames, so the rig is in place before the fade; on
+    // desktop, once both models are in.
+    afterFirstFrames(() => {
+      settledRef.current.add(app);
+      setDrawn2((d) => (d[key] ? d : { ...d, [key]: true }));
+    });
   };
 
   const revealed = loaded || failed;
   // Scene 2 mounts as soon as the hero has loaded, not on scroll: a flick reaches
   // the crossfade in half a second, faster than any scroll threshold. Its loop
-  // stays paused until near the crossfade (awake2Ref).
+  // stays paused until near the crossfade (the timeline's playback sync).
   const mountScene2 = revealed;
   // Ready once its mounts have drawn; on desktop, every model that hasn't failed
   // (if both fail, the fallback PNG shows).
@@ -261,6 +260,12 @@ export const useHeroScenes = (
     };
   }, [slot2Url]);
 
+  // Frame times mean nothing while scenes are still loading.
+  const scenesLoadedRef = useRef(false);
+  useLayoutEffect(() => {
+    scenesLoadedRef.current = scene2Ready || scene2Dead;
+  }, [scene2Ready, scene2Dead]);
+
   // The alternate mount has a fixed key and is desktop only: its context is
   // released only when it unmounts (entering the phone layout, or leaving).
   const dropAlt = useCallback(() => {
@@ -288,8 +293,10 @@ export const useHeroScenes = (
     head1Ref,
     headAltRef,
     l2Ref,
-    awake2Ref,
-    stopped1Ref,
+    settledRef,
+    scenesLoadedRef,
+    showAltRef,
+    l2VisibleRef,
     heroVisibleRef,
   }));
 
@@ -297,6 +304,11 @@ export const useHeroScenes = (
     const e = l2Ref.current["d:" + url];
     if (e) releaseGlContext(e.canvas);
     delete l2Ref.current["d:" + url];
+    setDrawn2((d) => {
+      const rest = { ...d };
+      delete rest["d:" + url];
+      return rest;
+    });
   };
 
   return {

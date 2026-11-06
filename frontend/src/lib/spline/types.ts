@@ -26,6 +26,15 @@ export interface RuntimeCamera {
   __viewHooked?: boolean;
 }
 
+/** The runtime's renderer, as far as this project touches it. */
+export interface RuntimeRenderer {
+  viewportWidth: number;
+  viewportHeight: number;
+  setAnimationLoop: (callback: unknown) => void;
+  setPixelRatio: (ratio: number) => void;
+  setSize: (width: number, height: number, updateStyle?: boolean) => void;
+}
+
 /** A node of the runtime's three.js scene graph. */
 export interface SceneNode {
   name?: string;
@@ -36,6 +45,7 @@ export interface SceneNode {
 /** An Application plus the private fields this project relies on. */
 export type SplineApp = Application & {
   _camera?: RuntimeCamera;
+  _renderer?: RuntimeRenderer;
   _scene?: SceneNode;
   scene?: SceneNode;
 };

@@ -44,7 +44,9 @@ the dark theme.
 
 - _Desktop_ mounts both models in both layers (four scenes) with fixed keys. The theme
   only picks which one is visible, so a toggle never reloads or rebuilds anything. The
-  ticker drives the hidden mounts too, so they are always in the current beat.
+  ticker drives the hidden mounts too, so they are always in the current beat, but only
+  the visible scene renders: the timeline's playback sync pauses the rest. Drawing all
+  four at once ran at 4-9 fps on an integrated GPU at 1440p.
 - _Phones_ mount only the theme's model, two scenes in total: with more, iOS kills the
   tab. Changing theme on a phone reloads the page (`lib/themeReload.ts`), because iOS
   never frees discarded Spline scenes and swapping them in place leaks until the tab
@@ -81,9 +83,13 @@ before any scene mounts:
 
 - Phones cap the device pixel ratio at 2. The scene files ask for the full ratio, and
   at DPR 3 every buffer was huge.
-- Phones and non-Chromium desktop browsers are forced onto WebGL. On phones, WebGPU's
-  pipeline caches retain every discarded scene; in Safari, WebGPU doesn't render the
-  robot's eyes (a video texture). Chromium keeps WebGPU.
+- Every browser is forced onto WebGL. It ran faster than WebGPU on an integrated GPU at
+  1440p, and a lost WebGL context can be caught while a lost WebGPU device leaves a blank
+  canvas. On phones, WebGPU's pipeline caches also retain every discarded scene; in
+  Safari, WebGPU doesn't render the robot's eyes (a video texture).
+- Buffers are capped at a pixel budget (`lib/spline/quality.ts`), and the budget drops
+  when frames stay slow on the machine. The oversampled desktop buffers reached 9.6 MP
+  on a 1440p screen.
 
 Both patches are private API: if the runtime changes, they silently do nothing, which
 is why the runtime version is pinned.

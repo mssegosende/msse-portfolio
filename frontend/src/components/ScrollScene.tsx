@@ -195,11 +195,13 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
               <div className="absolute inset-0 bg-ink/[0.02]" />
               <div className="absolute inset-0 bg-grid opacity-50" />
               <div className="absolute inset-0 scanline-overlay" />
-              <div
-                data-testid="hero-fallback-badge"
-                className="absolute right-6 top-24 border border-ink/[0.13] bg-surface/60 px-4 py-2 font-display text-[13px] uppercase tracking-[0.02em] text-ink/65 backdrop-blur-md"
-              >
-                3D OFFLINE // STATIC RENDER
+              <div className="absolute inset-0 flex items-center justify-center">
+                <img
+                  src="/robot-alpha.png"
+                  alt="MSG·01 humanoid unit — static render"
+                  data-testid="hero-robot-fallback"
+                  className="relative h-[80vh] object-contain md:h-[95vh]"
+                />
               </div>
             </div>
           )}
