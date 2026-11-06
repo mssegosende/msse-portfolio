@@ -15,6 +15,7 @@ import {
   HeroWordmark,
   IntroTile,
   ScrollCue,
+  ScrollCuePhone,
   SystemCheck,
 } from "./scroll-scene/HeroHud";
 import { useCalloutsAboveDock } from "./scroll-scene/useCalloutsAboveDock";
@@ -136,11 +137,18 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       {/* Scene 1 ground: gradient, a soft glow behind the head, ground shade and vignette. */}
       <div ref={bg1Ref} aria-hidden="true" className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0" style={{ background: "var(--hero-bg-1)" }} />
-        <div className="subject-glow" style={{ left: "50%", top: 350, width: 820, height: 820 }} />
+        <div
+          className="subject-glow"
+          style={
+            isMobile
+              ? { left: "64%", top: "39%", width: 620, height: 620 }
+              : { left: "50%", top: 350, width: 820, height: 820 }
+          }
+        />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_45%_at_15%_88%,rgba(25,32,42,0.2)_0%,rgba(25,32,42,0)_70%),radial-gradient(ellipse_120%_90%_at_50%_40%,rgba(0,0,0,0)_55%,rgba(20,26,34,0.28)_100%)]" />
       </div>
 
-      <HeroWordmark ref={wordmarkRef} />
+      <HeroWordmark ref={wordmarkRef} isMobile={isMobile} />
 
       {/* Layer A: the hero scene */}
       <div ref={splineLayerRef} className="absolute inset-0">
@@ -152,7 +160,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
           {/* The robot fades in (opacity + blur on this wrapper) once its scene has loaded. */}
           {!failed && (
             <div
-              className="hero-robot absolute inset-0"
+              className={`hero-robot absolute inset-0 ${isMobile ? "hero-robot--phone" : ""}`}
               data-revealed={revealed}
               data-testid="spline-canvas-wrap"
             >
@@ -309,24 +317,38 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       {!isMobile && <IntroTile ref={introRef} />}
       {!isMobile && <SystemCheck ref={checkRef} />}
       <HeroHeadline ref={headlineRef} isMobile={isMobile} />
-      {/* TODO(P5): phones get SCROLL in the bottom stack (design: mobile scene 1). */}
-      {!isMobile && <ScrollCue ref={scrollCueRef} />}
+      {isMobile ? <ScrollCuePhone ref={scrollCueRef} /> : <ScrollCue ref={scrollCueRef} />}
 
       {/* Top bar, scene 1 only: MSSE:// and STATUS. */}
       <div ref={topBarRef} className="absolute inset-x-0 top-0">
         {/* The CSS load fade sits on this inner box; GSAP owns the outer one. */}
-        <div className="hero-bar-in flex items-center justify-between px-6 py-6 sm:px-12 sm:py-[52px]">
+        <div
+          className={`hero-bar-in flex items-center justify-between ${
+            isMobile ? "px-[18px] py-[22px]" : "px-12 py-[52px]"
+          }`}
+        >
+          {/* Phones: a small MSSE:// (STATUS size) and STATUS in a frosted pill. */}
           <span
             data-testid="hero-brand"
-            className="font-michroma text-xs tracking-[0.2em] text-[rgb(var(--hero-ink))] sm:text-[19px]"
+            className={`font-michroma text-[rgb(var(--hero-ink))] ${
+              isMobile ? "text-[10.5px] tracking-[0.16em]" : "text-[19px] tracking-[0.2em]"
+            }`}
           >
             {profile.shortMark}
           </span>
-          <span className="flex items-center gap-2.5 font-display text-[13px] uppercase tracking-[0.08em] text-[rgb(var(--hero-ink))] sm:text-[15px]">
+          <span
+            className={`flex items-center font-display uppercase tracking-[0.08em] text-[rgb(var(--hero-ink))] ${
+              isMobile
+                ? "hero-status-pill gap-2 rounded-full px-3 py-1.5 text-[13px]"
+                : "gap-2.5 text-[15px]"
+            }`}
+          >
             <span
               data-testid="hero-status-dot"
               aria-hidden="true"
-              className="h-[7px] w-[7px] rounded-full bg-[#2E6FF2] animate-pulse-dot motion-reduce:animate-none"
+              className={`rounded-full bg-[#2E6FF2] animate-pulse-dot motion-reduce:animate-none ${
+                isMobile ? "h-1.5 w-1.5" : "h-[7px] w-[7px]"
+              }`}
             />
             <span data-testid="hero-status">STATUS: {profile.status}</span>
           </span>
@@ -339,7 +361,11 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
           ref={skipRef}
           data-testid="skip-intro"
           onClick={skipIntro}
-          className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1.75rem)] left-1/2 -translate-x-1/2 px-2.5 py-3.5 font-display text-[14px] uppercase tracking-[0.32em] text-[#F1F3F5] data-[scene="2"]:text-[rgb(var(--hero-ink))] sm:bottom-7 ${
+          className={`pointer-events-auto absolute left-1/2 -translate-x-1/2 whitespace-nowrap px-2.5 font-display uppercase tracking-[0.32em] text-[#F1F3F5] data-[scene="2"]:text-[rgb(var(--hero-ink))] ${
+            isMobile
+              ? "bottom-[calc(env(safe-area-inset-bottom,0px)+12px)] py-3 text-[13px]"
+              : "bottom-7 py-3.5 text-[14px]"
+          } ${
             // On phones the timeline drives its opacity (it hides with the cards); a CSS
             // transition would lag behind it.
             isMobile ? "" : "transition-[opacity,color] duration-300"

@@ -204,12 +204,8 @@ export const useHeroTimeline = ({
 
     const ctx = gsap.context(() => {
       if (isMobile) {
-        gsap.set(canvasWrapRef.current, {
-          scale: startScale,
-          x: vw(-58),
-          y: startY,
-          transformOrigin: "50% 50%",
-        });
+        // The hero is framed by its camera (applyView); its wrapper stays untransformed.
+        gsap.set(canvasWrapRef.current, { clearProps: "transform" });
         gsap.set(canvas2WrapRef.current, {
           scale: giant.scale,
           x: giant.x,
@@ -231,7 +227,9 @@ export const useHeroTimeline = ({
         headlineRef.current,
         scrollCueRef.current,
       ].filter((el): el is HTMLDivElement => !!el);
-      gsap.set(hud1, { autoAlpha: 0, y: 12 });
+      // Phones show their bottom stack (Ø1 / Ø5, headline, SCROLL) from the start;
+      // desktop reveals each window on its own step.
+      if (!isMobile) gsap.set(hud1, { autoAlpha: 0, y: 12 });
       if (isMobile) {
         [parallax1Ref.current, parallax2Ref.current, idle1Ref.current, idle2Ref.current].forEach(
           (el) => el && gsap.set(el, { x: 0, y: 0, rotation: 0, scale: 1 }),
@@ -361,7 +359,9 @@ export const useHeroTimeline = ({
         }
         applyBotRig();
         applyHead1();
-        if (!isMobile) {
+        if (isMobile) {
+          applyView(app1Ref.current, heroView, 1);
+        } else {
           applyView(app1Ref.current, heroView);
           applyView(appAltRef.current, heroView);
           l2Desktop().forEach((e) => applyView(e.app, scene2View));
@@ -405,10 +405,12 @@ export const useHeroTimeline = ({
 
       // ---- scene 1: each HUD window on its own step, then SCROLL; it holds ------
       const rise = { autoAlpha: 1, y: 0, duration: 0.06, ease: "power1.out" };
-      tl.to(introRef.current, rise, SCENE1.video);
-      tl.to(checkRef.current, rise, SCENE1.check);
-      tl.to(headlineRef.current, rise, SCENE1.headline);
-      tl.to(scrollCueRef.current, rise, SCENE1.scroll);
+      if (!isMobile) {
+        tl.to(introRef.current, rise, SCENE1.video);
+        tl.to(checkRef.current, rise, SCENE1.check);
+        tl.to(headlineRef.current, rise, SCENE1.headline);
+        tl.to(scrollCueRef.current, rise, SCENE1.scroll);
+      }
 
       // ---- scene 1 -> 2: the HUD, MSSE:// and STATUS leave; the grounds and the
       // robots crossfade while the giant head comes in -----------------------------

@@ -421,6 +421,44 @@ textarea:-webkit-autofill {
     transform: translateX(-50%);
   }
 }
+/* Phones: two 212px rows, the top one faster, the lower one the other way. */
+.hero-wordmark--phone {
+  font-size: 212px;
+}
+.hero-marquee--phone {
+  animation-duration: 38s;
+}
+.hero-marquee--reverse {
+  animation-direction: reverse;
+}
+
+/* Phones: the robot fades into the ground below the shoulders (and the
+   runtime's corner badge with it). */
+.hero-robot--phone {
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 44.8%,
+    rgba(0, 0, 0, 0.55) 52.8%,
+    rgba(0, 0, 0, 0) 62%
+  );
+  mask-image: linear-gradient(
+    180deg,
+    #000 0%,
+    #000 44.8%,
+    rgba(0, 0, 0, 0.55) 52.8%,
+    rgba(0, 0, 0, 0) 62%
+  );
+}
+
+/* Phones: STATUS in a frosted pill. */
+.hero-status-pill {
+  background: rgba(238, 241, 244, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: #24292f;
+}
 
 /* SCROLL indicator's line. */
 .hero-hint {

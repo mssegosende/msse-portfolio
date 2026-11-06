@@ -28,15 +28,19 @@ export const vwOf =
  * native position was measured at 1440x900 (HERO_CROWN_NATIVE, a fraction of
  * the frame height, at scale 1), so any scale can put it at HERO_CROWN_TARGET.
  */
-export const heroFraming = (isMobile: boolean, reduce: boolean, { height }: Viewport) => {
+// Phone hero framing: zoom, pan right (share of the width) and down (% of the frame).
+const PHONE_HERO = { scale: 0.94, dx: 0.222, y: -9.6 };
+
+export const heroFraming = (isMobile: boolean, _reduce: boolean, { width, height }: Viewport) => {
   if (isMobile) {
-    // Phones keep their framing until P5. It also keeps Spline's in-canvas
-    // badge out of frame (it shows below ~1.2).
+    // Phones (design/source/mobile/light/scene-1-hero.dc.html): the robot lower
+    // and to the right, one arm in frame, the head whole ~40px from the top.
+    // A camera framing (applyView at css scale 1), the same with reduced motion.
     return {
-      startScale: reduce ? 1 : 1.86,
-      startY: reduce ? "2%" : "16.5%",
-      endY: reduce ? "3%" : "17.9%",
-      heroDx: 0,
+      startScale: PHONE_HERO.scale,
+      startY: `${PHONE_HERO.y}%`,
+      endY: `${PHONE_HERO.y}%`,
+      heroDx: PHONE_HERO.dx * width,
     };
   }
   const HERO_SCALE = 1.9;

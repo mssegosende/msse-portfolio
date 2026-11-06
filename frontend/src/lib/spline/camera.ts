@@ -22,16 +22,22 @@ export const OVERSAMPLE = 1.7;
  * re-applied inside updateProjectionMatrix: the runtime recomputes the
  * projection on resize and during its intro, and a once-per-frame write lost
  * that race in Safari (the robot showed unframed for a few seconds).
+ * `cssScale` is the wrapper's own scale: VIEW_CSS_SCALE on desktop, 1 on
+ * phones (their robot layer is masked at the bottom, which hides the badge).
  */
-export const applyView = (app: SplineApp | null, v: ViewTransform): void => {
+export const applyView = (
+  app: SplineApp | null,
+  v: ViewTransform,
+  cssScale: number = VIEW_CSS_SCALE,
+): void => {
   const cam = app?._camera;
   if (!cam || !cam.projectionMatrix || typeof cam.updateProjectionMatrix !== "function") return;
   try {
     // NDC runs -1..1 across the canvas, y up: a pan of f of the canvas is 2f.
     cam.__view = {
-      zoom: (CAM_BASE_ZOOM * v.scale) / VIEW_CSS_SCALE,
-      ox: (-2 * parseFloat(v.x)) / 100 / VIEW_CSS_SCALE,
-      oy: (2 * parseFloat(v.y)) / 100 / VIEW_CSS_SCALE,
+      zoom: (CAM_BASE_ZOOM * v.scale) / cssScale,
+      ox: (-2 * parseFloat(v.x)) / 100 / cssScale,
+      oy: (2 * parseFloat(v.y)) / 100 / cssScale,
     };
     if (!cam.__viewHooked) {
       const update = cam.updateProjectionMatrix;
