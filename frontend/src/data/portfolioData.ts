@@ -100,17 +100,17 @@ export const profile: Profile = {
     linkedin: null,
   },
   bio: [
-    "I'm María Sol — a full stack developer and AI engineer based in Buenos Aires. I've spent the last five years building the systems other people's businesses run on: backend infrastructure and payment workflows for a functional-medicine booking platform in Los Angeles, a microservice that resolved scheduling conflicts and data discrepancies between systems that disagreed with each other, and REST APIs written from scratch for a core-banking simulation platform.",
-    "Right now I'm architecting the migration of a legacy C# monolith into distributed polyglot microservices, and building FastAPI services that power AI-assisted pricing features consumed by an agent layer. I work across Python, TypeScript and C#, and I care most about the unglamorous parts — strict API contracts, validation layers, data that reconciles — because those are what decide whether a system survives in production.",
+    "I'm María Sol — a full stack developer and AI engineer in Buenos Aires. I came to code through a cousin who was sure I could do it, and a computer I wanted to understand down to the parts: I built my own PC in 2020, and I've been writing software professionally since 2022.",
+    "Piano taught me the thing I use most: different logics share patterns. Once I see the pattern, a new language or framework stops being foreign — that's how I learn, and how I walk into a system I've never seen.",
   ],
-  // Years only: Aug 2021 to present.
-  stats: [{ value: "5+", label: "Years shipping code" }],
+  // A year, never a count ("since 2022", not "N+ years").
+  stats: [{ value: "2022", label: "Shipping code since" }],
 };
 
-// Draft, pending approval. ScrollScene animates exactly two paragraphs.
+// The scene 4 WHO copy. ScrollScene animates exactly two paragraphs.
 export const story: string[] = [
-  "I started where the load is: backend infrastructure. Booking systems that couldn't drop a payment, a microservice that had to reconcile data two systems disagreed about, banking APIs written from scratch. That work taught me reliability isn't a feature you add later — it's decided in the first contract you write.",
-  "Now I do it at a larger scale: breaking a legacy monolith into distributed services, and wiring AI agents into pricing systems where a wrong answer costs real money. I build my own products for the same reason — AlphardRE, so Argentine freelancers can see what their income is actually worth, and Apsis, because I wanted an assistant built to my own standards.",
+  "I'm María Sol — a full stack developer and AI engineer in Buenos Aires. I came to code through a cousin who was sure I could do it, and a computer I wanted to understand down to the parts: I built my own PC in 2020, and I've been writing software professionally since 2022.",
+  "Piano taught me the thing I use most: different logics share patterns. Once I see the pattern, a new language or framework stops being foreign — that's how I learn, and how I walk into a system I've never seen.",
 ];
 
 // Title above the story block in the pinned hero.
@@ -123,17 +123,17 @@ export const manifesto: ManifestoEntry[] = [
   {
     num: "01",
     title: "Contracts before code",
-    text: "Strict API contracts and validation layers aren't bureaucracy. They're what stops two services from quietly disagreeing about the same data until someone's money is wrong.",
+    text: "Typed schemas and validation at the edge aren't bureaucracy. They're what makes an agent's output something you can trust.",
   },
   {
     num: "02",
     title: "Interfaces are the product",
-    text: "The most resilient backend in the world fails if the interface feels dead. Motion, latency and feedback are engineering decisions, not decoration.",
+    text: "Motion, latency and feedback are engineering decisions, not decoration.",
   },
   {
     num: "03",
-    title: "Legacy is a starting point",
-    text: "Real systems are rarely greenfield. The craft is migrating what a business already runs on — without ever stopping it.",
+    title: "Humans where they matter",
+    text: "Automate the routine, and design the exact point where a person should step in.",
   },
 ];
 
