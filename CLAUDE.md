@@ -35,11 +35,19 @@ and read exact values from `design/source/**/*.dc.html`.
   "Generated with Claude Code".
 
 ## Deploy
-- Vercel project `msse-portfolio`, Root Directory `frontend`, Vite preset.
-  Pushing `main` deploys to https://msse-portfolio.vercel.app.
+- Vercel project `msse-portfolio` with **Vercel Services**: Framework Preset
+  `Services`, Root Directory = repo root. Pushing `main` deploys both to
+  https://msse-portfolio.vercel.app.
+- `vercel.json` (repo root) defines two services: `frontend` (root `frontend/`,
+  Vite) and `backend` (root `backend/`, FastAPI, `server:app`). Rewrites:
+  `/api/(.*)` → backend, everything else → frontend. The backend receives the
+  path unchanged, so its routes keep the `/api` prefix (`POST /api/contact`).
+  Build settings live per service in `vercel.json`, never at its top level.
+- The form calls the same origin in production and `http://localhost:8000` in
+  dev; `VITE_BACKEND_URL` is only an override. Backend env vars
+  (`RESEND_API_KEY`, `CONTACT_TO_EMAIL`) are set in the Vercel project.
 - The AWS files (`infra/aws/`, the `deploy` job in CI) stay as they are: the
-  job is skipped until AWS is set up after the sprint. Don't add a `vercel.json`.
-- The backend (contact form) is not deployed yet; don't try to fix that now.
+  job is skipped until AWS is set up after the sprint.
 
 ## This repo
 - Package manager: **pnpm 9.15.9** (pinned). Use `pnpm` if it's on the PATH,

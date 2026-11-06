@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setMediaQuery } from "@/test/matchMedia";
 import { Contact } from "./Contact";
 
@@ -78,5 +78,32 @@ describe("Contact", () => {
     await submit();
     await submit();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe("Contact endpoint without VITE_BACKEND_URL", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  it.each([
+    ["production calls the same origin", false, "/api/contact"],
+    ["dev calls the local backend", true, "http://localhost:8000/api/contact"],
+  ])("%s", async (_, dev, url) => {
+    vi.stubEnv("VITE_BACKEND_URL", "");
+    vi.stubEnv("DEV", dev);
+    vi.resetModules();
+    const { Contact: FreshContact } = await import("./Contact");
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+
+    const user = userEvent.setup();
+    render(<FreshContact />);
+    await user.type(screen.getByTestId("contact-name-input"), "Ada Lovelace");
+    await user.type(screen.getByTestId("contact-email-input"), "ada@example.com");
+    await user.type(screen.getByTestId("contact-message-input"), "Let's build an engine.");
+    await user.click(screen.getByTestId("contact-submit-button"));
+
+    expect(fetchMock).toHaveBeenCalledWith(url, expect.objectContaining({ method: "POST" }));
   });
 });

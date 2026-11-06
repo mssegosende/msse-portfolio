@@ -9,7 +9,11 @@ import { Num } from "./Num";
 import { SectionBackdrop } from "./SectionBackdrop";
 import s from "./Contact.module.css";
 
-const API_URL = `${import.meta.env.VITE_BACKEND_URL}/api/contact`;
+// Production: same origin (Vercel routes /api/* to the backend service).
+// Dev: the local uvicorn. VITE_BACKEND_URL overrides both.
+const BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? "http://localhost:8000" : "");
+const API_URL = `${BACKEND_URL}/api/contact`;
 
 const validate = ({ name, email, message }: ContactForm): string | null => {
   if (name.trim().length < 2) return "ERR: name must be at least 2 characters";
