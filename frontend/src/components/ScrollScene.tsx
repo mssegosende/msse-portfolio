@@ -12,6 +12,12 @@ import { ReleasingBox } from "./spline/ReleasingBox";
 import { SceneBoundary } from "./spline/SceneBoundary";
 import { CapabilityCards } from "./scroll-scene/CapabilityCards";
 import {
+  CAP_TITLE_SIZE,
+  CAP_TITLE_WIDTHS,
+  capTitleFit,
+  type CapTitleWidths,
+} from "./scroll-scene/capTitle";
+import {
   HeroHeadline,
   HeroWordmark,
   PhoneBarcode,
@@ -105,6 +111,35 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
 
   useCalloutsAboveDock(isMobile, sectionRef, cardsRef);
 
+  // Scene 2's title stays readable beside the giant head (capTitleFit): it
+  // breaks onto two lines, and shrinks only if it must, where one line would
+  // run under the head. The cards start below wherever it ends.
+  const [viewport, setViewport] = useState(() => ({
+    w: window.innerWidth,
+    h: window.innerHeight,
+  }));
+  const [titleWidths, setTitleWidths] = useState<CapTitleWidths>(CAP_TITLE_WIDTHS);
+  const titleMeasureRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (isMobile) return undefined;
+    let live = true;
+    const onResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
+    const measure = () => {
+      const [full, first] = Array.from(titleMeasureRef.current?.children ?? []) as HTMLElement[];
+      if (live && full?.offsetWidth && first?.offsetWidth) {
+        setTitleWidths({ full: full.offsetWidth, first: first.offsetWidth });
+      }
+    };
+    measure();
+    void document.fonts?.ready.then(measure);
+    window.addEventListener("resize", onResize);
+    return () => {
+      live = false;
+      window.removeEventListener("resize", onResize);
+    };
+  }, [isMobile]);
+  const titleFit = capTitleFit(viewport.w, viewport.h, titleWidths);
+
   const { journeyDone, skipIntro, cardIndex, atEnd } = useHeroTimeline({
     isMobile,
     darkMode,
@@ -162,10 +197,23 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
           className={`section-title section-title--light ${
             isMobile ? "mt-3 leading-[1.08]" : "mt-4 whitespace-nowrap leading-none"
           }`}
+          style={isMobile ? undefined : { fontSize: titleFit.size }}
         >
-          What the core {isMobile && <br />}
+          What the core {(isMobile || titleFit.lines === 2) && <br />}
           runs on
         </h2>
+        {/* The title's lines at full size, measured in the loaded font for capTitleFit. */}
+        {!isMobile && (
+          <span
+            ref={titleMeasureRef}
+            aria-hidden="true"
+            className="section-title invisible absolute left-0 top-0 whitespace-nowrap"
+            style={{ fontSize: CAP_TITLE_SIZE }}
+          >
+            <span className="inline-block">What the core runs on</span>
+            <span className="inline-block">What the core</span>
+          </span>
+        )}
       </div>
 
       {/* Scene 1 ground: gradient, a soft glow behind the head, ground shade and vignette. */}
@@ -419,6 +467,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
           autoRotate={journeyDone && atEnd}
           isMobile={isMobile}
           theme={pageTheme}
+          titleBottom={titleFit.bottom}
         />
       </div>
 

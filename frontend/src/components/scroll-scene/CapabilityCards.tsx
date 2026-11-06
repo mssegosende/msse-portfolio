@@ -12,19 +12,19 @@ const CARD_W = 324;
 const CARD_H = 463;
 const CARD_SCALE = 0.85;
 const LEFT = 110;
-const TITLE_BOTTOM = 180;
 const DOCK_CLEAR = 100;
 const ROTATE_MS = 5000;
 
-const fitCard = (w: number, h: number) => {
+/** `titleBottom`: where the title ends (capTitleFit), the mock's 180 for one line. */
+const fitCard = (w: number, h: number, titleBottom: number) => {
   const s =
     CARD_SCALE *
     Math.min(
       1.25,
-      Math.max(0.72, Math.min(h / 900, w / 1440, (h - TITLE_BOTTOM - DOCK_CLEAR) / CARD_H)),
+      Math.max(0.72, Math.min(h / 900, w / 1440, (h - titleBottom - DOCK_CLEAR) / CARD_H)),
     );
-  const free = h - TITLE_BOTTOM - DOCK_CLEAR - CARD_H * s;
-  return { s, left: LEFT * Math.min(1, w / 1440), top: TITLE_BOTTOM + Math.max(0, free / 2) };
+  const free = h - titleBottom - DOCK_CLEAR - CARD_H * s;
+  return { s, left: LEFT * Math.min(1, w / 1440), top: titleBottom + Math.max(0, free / 2) };
 };
 
 // Desktop, the three together (María Sol's review, A7): horizontal cards
@@ -33,17 +33,17 @@ const fitCard = (w: number, h: number) => {
 // STACK_MIN_LINES of its text; the rest scrolls inside the card with the
 // project cards' fade. Shorter windows (e.g. 1280 x 720) keep one card at a
 // time. The stack scales as a whole: where the 4 lines don't fit at its
-// usual scale (1440 x 900), it shrinks just enough, down to STACK_MIN_SCALE
-// (the single card's 85 %), frame and type together.
-const STACK_DOCK_CLEAR = 96;
+// usual scale (1440 x 900, under the two-line title), it shrinks just enough,
+// down to STACK_MIN_SCALE, frame and type together.
+const STACK_DOCK_CLEAR = 88;
 const STACK_GAP = 14;
 const STACK_MIN_H = 900;
 const STACK_MIN_LINES = 4;
-const STACK_MIN_SCALE = 0.85;
+const STACK_MIN_SCALE = 0.8;
 
 /** `minH`: the card height (card px) that shows STACK_MIN_LINES, once measured. */
-const fitStack = (w: number, h: number, minH?: number) => {
-  const free = h - TITLE_BOTTOM - STACK_DOCK_CLEAR;
+const fitStack = (w: number, h: number, titleBottom: number, minH?: number) => {
+  const free = h - titleBottom - STACK_DOCK_CLEAR;
   let s = 0.9 * Math.min(1.22, w / 1440, Math.max(h / 900, 0.9));
   if (minH) s = Math.min(s, Math.max(STACK_MIN_SCALE, free / (3 * minH + 2 * STACK_GAP)));
   return {
@@ -101,6 +101,8 @@ interface CapabilityCardsProps {
   autoRotate: boolean;
   isMobile: boolean;
   theme: Theme;
+  /** Desktop: where the title ends (capTitleFit), px from the top; the cards start below. */
+  titleBottom?: number;
 }
 
 /**
@@ -116,12 +118,13 @@ export const CapabilityCards = ({
   autoRotate,
   isMobile,
   theme,
+  titleBottom = 180,
 }: CapabilityCardsProps) => {
   const { w, h } = useViewport(!isMobile);
   // The card heights the stack needs; null until measured (the stack renders
   // once, before paint, to measure it).
   const [need, setNeed] = useState<Need | null>(null);
-  const stack = fitStack(w, h, need?.min);
+  const stack = fitStack(w, h, titleBottom, need?.min);
   // Half a px of slack: at the shrunk scale the room equals the need exactly.
   const stacked = !isMobile && h >= STACK_MIN_H && (need === null || stack.roomH + 0.5 >= need.min);
 
@@ -182,7 +185,7 @@ export const CapabilityCards = ({
 
   // Whole text where it fits; otherwise all the room there is, text scrolling.
   const cardH = need ? Math.min(need.full, stack.roomH) : stack.roomH;
-  const one = fitCard(w, h);
+  const one = fitCard(w, h, titleBottom);
 
   return (
     <div
@@ -214,7 +217,7 @@ export const CapabilityCards = ({
             ? {
                 left: stack.left,
                 top:
-                  TITLE_BOTTOM +
+                  titleBottom +
                   Math.max(0, (stack.free - (3 * cardH + 2 * STACK_GAP) * stack.s) / 2),
                 width: WIDE_CARD_W,
                 gap: STACK_GAP,
