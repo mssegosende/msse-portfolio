@@ -6,7 +6,9 @@ import {
   XFADE_DURATION,
   cardIndexAt,
   giantHeadFraming,
+  headLook,
   headSway,
+  cursorAttention,
   heroFraming,
   phoneApproachFrom,
   snapStops,
@@ -95,6 +97,34 @@ describe("headSway", () => {
       expect(Math.abs(x)).toBeLessThanOrEqual(0.35);
       expect(Math.abs(y)).toBeLessThanOrEqual(0.35);
     }
+  });
+});
+
+describe("headLook", () => {
+  it("looks to one side and the other with the cursor idle, capped", () => {
+    let min = 0;
+    let max = 0;
+    for (let t = 0; t < 42; t += 0.25) {
+      const { x, y } = headLook(t, { x: 0, y: 0 }, 0);
+      min = Math.min(min, y);
+      max = Math.max(max, y);
+      expect(Math.abs(x)).toBeLessThanOrEqual(0.5);
+    }
+    expect(max).toBeGreaterThan(0.3);
+    expect(min).toBeLessThan(-0.25);
+  });
+
+  it("follows the cursor while it moves, whatever the look-around is doing", () => {
+    const t = 7; // mid look to one side
+    const { y } = headLook(t, { x: -0.5, y: 0 }, 1);
+    expect(y).toBeLessThan(-0.2);
+    expect(Math.abs(headLook(t, { x: 9, y: -9 }, 1).y)).toBeLessThanOrEqual(0.5);
+  });
+
+  it("fades the cursor's pull out after it stops", () => {
+    expect(cursorAttention(0)).toBe(1);
+    expect(cursorAttention(3500)).toBeCloseTo(0.5);
+    expect(cursorAttention(10000)).toBe(0);
   });
 });
 

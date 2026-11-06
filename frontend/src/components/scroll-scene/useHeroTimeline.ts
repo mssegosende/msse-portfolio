@@ -18,6 +18,8 @@ import {
   XFADE_DURATION,
   cardIndexAt,
   giantHeadFraming,
+  cursorAttention,
+  headLook,
   headSway,
   heroFraming,
   phoneApproachFrom,
@@ -108,6 +110,9 @@ export const useHeroTimeline = ({
   const heroEndRef = useRef(0);
   // Normalized cursor over the hero (-0.5..0.5), for the heads.
   const mouseNRef = useRef({ x: 0, y: 0 });
+  // When the cursor last moved (performance.now()): scene 2's head follows it
+  // for a while, then goes back to looking around.
+  const mouseAtRef = useRef(-Infinity);
   // Phone hero head's default direction (the black robot's, to the right) in both
   // themes. On desktop the head follows the mouse (applyHeadDesktop).
   const head1BaseRef = useRef({ x: 0.05, y: 0.27 });
@@ -201,6 +206,7 @@ export const useHeroTimeline = ({
         px2(nx * -28);
         py2(ny * -16);
         mouseNRef.current = { x: nx, y: ny };
+        mouseAtRef.current = performance.now();
       };
       sectionRef.current?.addEventListener("mousemove", onMouse);
       removeMouse = () => sectionRef.current?.removeEventListener("mousemove", onMouse);
@@ -269,17 +275,26 @@ export const useHeroTimeline = ({
           .filter(([k]) => k.startsWith("d:"))
           .map(([, e]) => e);
 
-      // ---- scene 2 head: a slow sway plus the cursor, eased ---------------------
+      // ---- scene 2 head, eased: desktop looks around and follows the cursor
+      // (headLook); phones sway (headSway). Still with reduced motion.
       const cur = { x: 0, y: 0 };
       let swayT = 0;
+      // Real seconds, so the look-around keeps its pace on 120 Hz screens; a
+      // hidden tab's long gap counts as one frame.
+      let lastGaze = performance.now();
       const applyGaze = () => {
         const heads = isMobile
           ? [app2Ref.current?.findObjectByName("Head") ?? null]
           : l2Desktop().map((e) => e.head);
-        if (!reduce) swayT += 1 / 60;
+        const now = performance.now();
+        const dt = (now - lastGaze) / 1000;
+        lastGaze = now;
+        if (!reduce) swayT += dt > 0.1 ? 1 / 60 : dt;
         const target = reduce
           ? { x: 0, y: 0 }
-          : headSway(swayT, isMobile ? { x: 0, y: 0 } : mouseNRef.current);
+          : isMobile
+            ? headSway(swayT, { x: 0, y: 0 })
+            : headLook(swayT, mouseNRef.current, cursorAttention(now - mouseAtRef.current));
         cur.x += (target.x - cur.x) * 0.06;
         cur.y += (target.y - cur.y) * 0.06;
         heads.forEach((head) => {

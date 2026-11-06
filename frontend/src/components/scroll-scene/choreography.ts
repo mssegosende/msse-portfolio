@@ -165,8 +165,56 @@ export const cardIndexAt = (t: number): number => {
   return idx;
 };
 
-/** Scene 2's head: a slow sway plus the cursor (radians, capped at ±0.35). */
+/** Phones' scene 2 head: a slow sway (radians, capped at ±0.35; no cursor there). */
 export const headSway = (time: number, mouse: { x: number; y: number }) => ({
   x: Math.max(-0.35, Math.min(0.35, Math.sin(time * 0.37) * 0.05 + mouse.y * 0.16)),
   y: Math.max(-0.35, Math.min(0.35, Math.sin(time * 0.23) * 0.12 + mouse.x * 0.3)),
 });
+
+// Desktop scene 2's look-around (María Sol's review, A6): the head rests, turns
+// slowly to one side, holds, comes back, then the other side. Keyframes in
+// seconds and radians (y turns, x tilts), eased between; LOOK_PERIOD loops it.
+const LOOK_KEYS: [t: number, y: number, x: number][] = [
+  [0, 0, 0],
+  [3, 0, 0],
+  [5.5, 0.34, 0.05],
+  [8.5, 0.34, 0.05],
+  [11, 0, 0],
+  [13, 0, 0],
+  [15.5, -0.3, -0.04],
+  [18.5, -0.3, -0.04],
+  [21, 0, 0],
+];
+const LOOK_PERIOD = 21;
+const LOOK_CAP = 0.5;
+
+/** The look-around pose at time t (s): eased between LOOK_KEYS, looping. */
+export const lookAround = (time: number) => {
+  const t = ((time % LOOK_PERIOD) + LOOK_PERIOD) % LOOK_PERIOD;
+  const i = Math.max(0, LOOK_KEYS.findIndex((k) => k[0] > t) - 1);
+  const [t0, y0, x0] = LOOK_KEYS[i]!;
+  const [t1, y1, x1] = LOOK_KEYS[i + 1] ?? LOOK_KEYS[i]!;
+  const u = t1 > t0 ? (t - t0) / (t1 - t0) : 0;
+  const e = u * u * (3 - 2 * u);
+  return { x: x0 + (x1 - x0) * e, y: y0 + (y1 - y0) * e };
+};
+
+/**
+ * Desktop scene 2's head (radians): the cursor, as scene 1 follows it, while
+ * `attention` is 1 (it moved lately); the look-around plus a slow sway when 0.
+ * Capped at ±LOOK_CAP.
+ */
+export const headLook = (time: number, mouse: { x: number; y: number }, attention: number) => {
+  const look = lookAround(time);
+  const follow = { x: mouse.y < 0 ? mouse.y * 0.3 : mouse.y * 0.42, y: mouse.x * 0.57 };
+  const a = Math.max(0, Math.min(1, attention));
+  const cap = (v: number) => Math.max(-LOOK_CAP, Math.min(LOOK_CAP, v));
+  return {
+    x: cap(Math.sin(time * 0.37) * 0.03 + look.x * (1 - a) + follow.x * a),
+    y: cap(Math.sin(time * 0.23) * 0.05 + look.y * (1 - a) + follow.y * a),
+  };
+};
+
+/** How much the head follows the cursor, from ms since it last moved: 1, then fading to 0. */
+export const cursorAttention = (idleMs: number) =>
+  Math.max(0, Math.min(1, 1 - (idleMs - 2500) / 2000));
