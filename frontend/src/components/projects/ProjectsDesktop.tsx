@@ -229,7 +229,7 @@ export const ProjectsDesktop = () => {
           <h2 className="section-title mt-4">Projects</h2>
         </div>
         <p
-          className="absolute top-24 m-0 max-w-[400px] font-inter text-[15px] leading-[1.6] text-[#252B31]"
+          className="absolute top-24 m-0 max-w-[400px] font-inter text-[15px] leading-[1.6] text-[#252B31] dark:text-[#C9D0D7]"
           // The mock's 44.45 %, but never under the fixed-size title (1280 and narrower).
           style={{ left: "max(44.45%, 620px)" }}
         >
