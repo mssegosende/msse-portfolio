@@ -53,3 +53,10 @@ export const scrollToId = (id: string): void => {
   if (instance) instance.scrollTo(el, { duration: 1.4 });
   else el.scrollIntoView({ behavior: "smooth" });
 };
+
+/** Smooth scroll to a document offset (instant with reduced motion). */
+export const scrollToY = (y: number): void => {
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  if (instance) instance.scrollTo(y, reduce ? { immediate: true } : { duration: 1.4 });
+  else window.scrollTo({ top: y, behavior: reduce ? "instant" : "smooth" });
+};

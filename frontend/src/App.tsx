@@ -12,6 +12,7 @@ import { Capabilities } from "@/components/Capabilities";
 import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { RotateLock } from "@/components/RotateLock";
+import { SectionIndex } from "@/components/SectionIndex";
 
 function App() {
   useLenis();
@@ -24,12 +25,14 @@ function App() {
   return (
     <div className="App bg-surface font-inter text-ink antialiased">
       <NavigationDock visible={journeyDone} />
+      <SectionIndex />
+      {/* Design order: Ø1 hero, Ø2 capabilities, Ø3 projects, Ø4 about, Ø5 contact. */}
       <main>
         <ScrollScene onJourneyEnd={() => setJourneyDone(true)} />
         <Marquee />
-        <About />
-        <Projects />
         <Capabilities />
+        <Projects />
+        <About />
         <Contact />
       </main>
       <Footer />

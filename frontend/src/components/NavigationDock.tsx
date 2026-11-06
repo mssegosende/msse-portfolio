@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { User, FolderOpen, Cpu, Send, Sun, Moon, Home } from "lucide-react";
+import { User, FolderOpen, Cpu, Send, Sun, Moon } from "lucide-react";
 import { profile } from "../data/portfolioData";
 import { scrollToId, scrollToTop } from "../hooks/useLenis";
 import { useTheme } from "../hooks/useTheme";
+import { useActiveSection } from "../hooks/useActiveSection";
 
 const links = [
   { id: "about", label: "About", icon: User, testid: "nav-about-link" },
@@ -12,6 +13,7 @@ const links = [
 
 export const NavigationDock = ({ visible }: { visible: boolean }) => {
   const { theme, toggle } = useTheme();
+  const { id: current } = useActiveSection();
 
   return (
     // data-dock-slot: the dock's resting place, measured even while the nav
@@ -25,24 +27,14 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
         initial={{ y: 90, opacity: 0 }}
         animate={visible ? { y: 0, opacity: 1 } : {}}
         transition={{ delay: 0.5, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        className="pointer-events-auto"
+        className="pointer-events-auto w-full sm:w-auto"
       >
-        <div className="glass flex max-w-[calc(100vw-1.5rem)] items-center gap-1 px-2 py-2 shadow-[0_8px_40px_rgb(var(--surface) / 0.6)] sm:px-3 cut-corner overflow-x-auto">
-          {/* The brand is hidden below sm, so phones get the same action as an icon. */}
-          <button
-            data-testid="nav-home"
-            onClick={scrollToTop}
-            aria-label="Back to the top"
-            title="Back to the top"
-            className="group flex shrink-0 items-center gap-2 px-3 py-2 text-ink/65 transition-[color,background-color] duration-300 hover:bg-ink/5 hover:text-ink sm:hidden"
-          >
-            <Home size={15} />
-          </button>
+        <div className="glass flex w-full max-w-[calc(100vw-1.5rem)] items-center justify-between gap-0.5 py-1.5 pl-1.5 pr-1.5 sm:w-auto sm:justify-start sm:gap-1 sm:py-2 shadow-[0_8px_40px_rgb(var(--surface) / 0.6)] sm:px-3 cut-corner overflow-x-auto">
           <button
             data-testid="nav-brand"
             onClick={scrollToTop}
             aria-label="Back to the top"
-            className="mr-2 hidden shrink-0 px-3 py-2 font-orbitron text-[13px] font-bold tracking-[0.02em] text-ink transition-colors hover:text-ink/[0.83] sm:block"
+            className="mr-1 shrink-0 px-2 py-2 font-michroma text-[11px] tracking-[0.14em] text-ink transition-colors hover:text-ink/[0.83] sm:mr-2 sm:px-3 sm:text-[13px] sm:tracking-[0.02em]"
           >
             {profile.shortMark}
           </button>
@@ -51,7 +43,10 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
               key={id}
               data-testid={testid}
               onClick={() => scrollToId(id)}
-              className="group flex shrink-0 items-center gap-2 px-3 py-2 text-ink/65 transition-[color,background-color] duration-300 hover:bg-ink/5 hover:text-ink"
+              aria-current={current === id ? "true" : undefined}
+              className={`group flex shrink-0 items-center gap-2 px-3 py-2 transition-[color,background-color] duration-300 hover:bg-ink/5 hover:text-ink ${
+                current === id ? "font-semibold text-ink" : "text-ink/65"
+              }`}
               aria-label={label}
             >
               <Icon size={15} />
@@ -60,15 +55,20 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
               </span>
             </button>
           ))}
-          <span aria-hidden="true" className="mx-1.5 h-5 w-px shrink-0 bg-ink/15" />
+          <span aria-hidden="true" className="mx-1.5 hidden h-5 w-px shrink-0 bg-ink/15 sm:block" />
           {/* Framed so it reads as a control, not another destination. */}
           <button
             data-testid="theme-toggle"
             onClick={toggle}
-            className="group flex shrink-0 items-center gap-2 cut-corner border border-ink/20 bg-ink/[0.06] px-3 py-2 text-ink transition-[background-color,border-color] duration-300 hover:border-ink/45 hover:bg-ink/10"
+            className="group relative flex shrink-0 items-center gap-2 cut-corner border border-ink/20 bg-ink/[0.06] px-3 py-2 text-ink transition-[background-color,border-color] duration-300 hover:border-ink/45 hover:bg-ink/10"
             aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
+            {/* The folded corner. */}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute right-0 top-0 h-[14px] w-[14px] bg-[linear-gradient(225deg,transparent_50%,rgb(var(--ink)/0.18)_50%)]"
+            />
             {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
             <span className="hidden font-display text-[12px] uppercase tracking-[0.02em] lg:block">
               {theme === "dark" ? "Light" : "Dark"}
@@ -77,10 +77,10 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
           <button
             data-testid="nav-cta-button"
             onClick={() => scrollToId("contact")}
-            className="ml-1 flex shrink-0 items-center gap-2 bg-ink px-4 py-2 font-display text-[13px] uppercase tracking-[0.02em] text-surface transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgb(var(--ink) / 0.35)]"
+            className="ml-1 flex shrink-0 items-center gap-1.5 bg-ink px-3 py-2 sm:gap-2 sm:px-4 font-display text-[13px] uppercase tracking-[0.02em] text-surface transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgb(var(--ink) / 0.35)]"
           >
             <Send size={12} />
-            <span className="hidden sm:block">Initiate</span>
+            <span>Initiate</span>
           </button>
         </div>
       </motion.nav>
