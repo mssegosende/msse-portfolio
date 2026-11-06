@@ -17,6 +17,7 @@ import s from "./projects.module.css";
 
 const N = PROJECTS.length;
 const VISIBLE = 3; // folders on screen in the row
+const OTHERS = N - 1; // the row's projects: all but the featured one
 
 // The mock's layout (scene-3-projects-*.dc.html) at 1440 x 900: cards drawn in
 // their own units and zoomed by 0.88. The whole card area scales with the
@@ -192,9 +193,10 @@ const Folder = ({
 /**
  * Desktop scene 3, a normal scrolling section (no pin; scroll never moves the
  * cards): the featured reel on top (each clip plays and hands the spot to the
- * next project, through all of them) and the folder row right below, three
- * folders with ‹ › to move through the projects one at a time, wrapping.
- * Picking a folder sends that project up to the featured spot.
+ * next project, through all of them) and the folder row right below: the
+ * other five projects (never the featured one), three at a time, with ‹ › to
+ * move through them, wrapping. Picking a folder sends that project up to the
+ * featured spot, and the one it replaces joins the row.
  */
 export const ProjectsDesktop = () => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
@@ -225,24 +227,31 @@ export const ProjectsDesktop = () => {
   const paused = userPaused ?? reduced;
   const [hovered, setHovered] = useState(false);
 
-  // The row: the first visible project (ring index) and the last arrow's direction.
-  const [offset, setOffset] = useState(1);
+  // The row: the other five projects, never the featured one, in reel order
+  // from the one after it. `offset` is the first one shown (‹ › move it, and
+  // it stays put while the featured changes, so the row moves on with the
+  // reel); `dir` is the last move's direction.
+  const [offset, setOffset] = useState(0);
   const [dir, setDir] = useState(1);
   const shift = (d: number) => {
     setDir(d);
-    setOffset((o) => (o + d + N) % N);
+    setOffset((o) => (o + d + OTHERS) % OTHERS);
   };
 
   const project = PROJECTS[f]!;
   const next = PROJECTS[(f + 1) % N]!;
-  const advance = useCallback(() => setF((i) => (i + 1) % N), []);
+  const advance = useCallback(() => {
+    setDir(1);
+    setF((i) => (i + 1) % N);
+  }, []);
   const playing = onScreen && !paused && !hovered;
   const row = Array.from({ length: VISIBLE }, (_, slot) => {
-    const ring = (offset + slot) % N;
+    const ring = (f + 1 + ((offset + slot) % OTHERS)) % N;
     return { slot, ring, p: PROJECTS[ring]! };
   });
 
   const pick = (ring: number) => {
+    setDir(1);
     setF(ring);
     // Bring the featured card into view: the section as it first arrives.
     const el = sectionRef.current;
