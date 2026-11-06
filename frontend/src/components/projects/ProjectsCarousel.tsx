@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PROJECTS_INTRO, showcaseProjects as PROJECTS } from "@/data/projectsData";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useProjectsInView } from "@/hooks/useProjectsInView";
 import { SectionBackdrop } from "../SectionBackdrop";
 import { Num } from "../Num";
 import { GifPlayer } from "./GifPlayer";
@@ -17,6 +18,8 @@ const EDGE = 16; // the track's left padding (scroll-padding)
  */
 export const ProjectsCarousel = () => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const sectionRef = useRef<HTMLElement>(null);
+  useProjectsInView(sectionRef);
   const trackRef = useRef<HTMLDivElement>(null);
   const [idx, setIdx] = useState(0);
   const [inView, setInView] = useState(false);
@@ -54,6 +57,7 @@ export const ProjectsCarousel = () => {
 
   return (
     <section
+      ref={sectionRef}
       id="projects"
       data-testid="projects-section"
       className="relative overflow-hidden pb-28 pt-[26px]"
@@ -106,6 +110,7 @@ export const ProjectsCarousel = () => {
                   project={p}
                   nextName={next.name}
                   playing={i === idx && inView && !paused}
+                  preload={i === idx ? "auto" : "none"}
                   paused={paused}
                   onToggle={() => setUserPaused(!paused)}
                   onEnded={reduced ? undefined : advance}

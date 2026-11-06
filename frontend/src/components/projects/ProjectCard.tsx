@@ -260,7 +260,9 @@ export const ProjectFrame = ({
   const links = projectLinks(project);
   return (
     <>
-      <div aria-hidden="true" className={s.outline} />
+      <div aria-hidden="true" className={s.shadow}>
+        <div className={s.outline} />
+      </div>
       <div aria-hidden="true" className={s.bezel} />
       <div aria-hidden="true" className={s.gap} />
       <div aria-hidden="true" className={s.panel} />

@@ -111,6 +111,26 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
 
   useCalloutsAboveDock(isMobile, sectionRef, cardsRef);
 
+  // Once the hero has scrolled fully off screen it leaves painting: its idle
+  // Spline canvases still cost the compositor enough to starve scene 3's
+  // video decoder (the featured clip ran at ~0.3x). Back the moment a pixel
+  // of it returns.
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return undefined;
+    const io = new IntersectionObserver(
+      ([e]) => {
+        el.style.visibility = e?.isIntersecting ? "" : "hidden";
+      },
+      { rootMargin: "-1px 0px" },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      el.style.visibility = "";
+    };
+  }, [sectionRef]);
+
   // Scene 2's title stays readable beside the giant head (capTitleFit): it
   // breaks onto two lines, and shrinks only if it must, where one line would
   // run under the head. The cards start below wherever it ends.

@@ -6,6 +6,7 @@ import {
   type ShowcaseProject,
 } from "@/data/projectsData";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useProjectsInView } from "@/hooks/useProjectsInView";
 import { scrollToY } from "@/hooks/useLenis";
 import { SectionBackdrop } from "../SectionBackdrop";
 import { Num } from "../Num";
@@ -104,55 +105,89 @@ const rowVariants: Variants = {
   }),
 };
 
+/**
+ * A row card's folder: the clip's poster, played only while the visitor
+ * hovers or focuses the card (never with reduced motion), so the featured
+ * clip is the only one decoding the rest of the time.
+ */
 const Folder = ({
   project,
   onPick,
-  reduced,
+  active,
+  onFocusChange,
 }: {
   project: ShowcaseProject;
   onPick: () => void;
-  reduced: boolean;
-}) => (
-  <button
-    type="button"
-    className={s.folder}
-    onClick={(e) => {
-      e.stopPropagation(); // the card around it picks too
-      onPick();
-    }}
-    aria-label={`Show ${project.name} in the featured spot`}
-    data-testid={`project-folder-${project.id}`}
-  >
-    <span className={s.folderBack} style={{ background: project.art }}>
-      <video
-        className={s.video}
-        src={project.media}
-        poster={project.poster}
-        muted
-        loop
-        playsInline
-        autoPlay={!reduced}
-        preload="metadata"
-        onLoadedMetadata={(e) => seekToStart(e.currentTarget, project.startAt)}
-        aria-hidden="true"
-        tabIndex={-1}
-      />
-    </span>
-    <span aria-hidden="true" className={s.folderEdge} />
-    <span aria-hidden="true" className={s.folderFlap} />
-    <span aria-hidden="true" className={s.folderLabel}>
-      <FitName
-        name={project.name}
-        size={14}
-        className={s.folderName}
-        style={{ display: "block" }}
-      />
-      <span className={s.folderMeta} style={{ display: "block" }}>
-        <Num value={project.num} /> · GIF
+  active: boolean;
+  onFocusChange: (on: boolean) => void;
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  // Nothing loads until the first hover: the poster stands in.
+  const [armed, setArmed] = useState(false);
+  if (active && !armed) setArmed(true);
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (active) v.play().catch(() => {});
+    else v.pause();
+  }, [active]);
+
+  return (
+    <button
+      type="button"
+      className={s.folder}
+      onClick={(e) => {
+        e.stopPropagation(); // the card around it picks too
+        onPick();
+      }}
+      // Keyboard focus only: a click focuses the button too, and the clicked
+      // project is on its way to the featured spot.
+      onFocus={(e) => onFocusChange(e.currentTarget.matches(":focus-visible"))}
+      onBlur={() => onFocusChange(false)}
+      aria-label={`Show ${project.name} in the featured spot`}
+      data-testid={`project-folder-${project.id}`}
+    >
+      <span className={s.folderBack} style={{ background: project.art }}>
+        <video
+          ref={videoRef}
+          className={s.video}
+          src={project.media}
+          poster={project.poster}
+          muted
+          loop
+          playsInline
+          preload={armed ? "auto" : "none"}
+          onLoadedMetadata={(e) => seekToStart(e.currentTarget, project.startAt)}
+          aria-hidden="true"
+          tabIndex={-1}
+        />
       </span>
-    </span>
-  </button>
-);
+      <span aria-hidden="true" className={s.folderEdge} />
+      <span aria-hidden="true" className={s.folderFlap}>
+        <span
+          className={s.flapBlur}
+          style={{
+            background: project.poster
+              ? `url(${project.poster}) center / cover no-repeat`
+              : project.art,
+          }}
+        />
+        <span className={s.flapTint} />
+      </span>
+      <span aria-hidden="true" className={s.folderLabel}>
+        <FitName
+          name={project.name}
+          size={14}
+          className={s.folderName}
+          style={{ display: "block" }}
+        />
+        <span className={s.folderMeta} style={{ display: "block" }}>
+          <Num value={project.num} /> · GIF
+        </span>
+      </span>
+    </button>
+  );
+};
 
 /**
  * Desktop scene 3, a normal scrolling section (no pin; scroll never moves the
@@ -166,6 +201,10 @@ export const ProjectsDesktop = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const headRef = useRef<HTMLDivElement>(null);
   const { k, featuredTop, rowTop, height } = useLayout(headRef);
+  useProjectsInView(sectionRef);
+  // The row card under the pointer or holding the focus: its folder clip plays.
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
 
   // The reel only runs while the featured card is mostly on screen.
   const featuredRef = useRef<HTMLDivElement>(null);
@@ -350,6 +389,8 @@ export const ProjectsDesktop = () => {
                     height: ROW.height,
                   }}
                   onClick={() => pick(ring)}
+                  onMouseEnter={() => setHoverId(p.id)}
+                  onMouseLeave={() => setHoverId((h) => (h === p.id ? null : h))}
                   data-testid={`project-card-${p.id}`}
                 >
                   <ProjectFrame
@@ -362,7 +403,12 @@ export const ProjectsDesktop = () => {
                       flexDirection: "column",
                     }}
                   >
-                    <Folder project={p} onPick={() => pick(ring)} reduced={reduced} />
+                    <Folder
+                      project={p}
+                      onPick={() => pick(ring)}
+                      active={!reduced && (hoverId === p.id || focusId === p.id)}
+                      onFocusChange={(on) => setFocusId((f) => (on ? p.id : f === p.id ? null : f))}
+                    />
                     <ScrollText style={{ flex: "1 1 auto", minHeight: 0 }}>
                       <CardText project={p} format="row" tagsTop={16} />
                     </ScrollText>

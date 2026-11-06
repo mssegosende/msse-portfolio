@@ -6,6 +6,14 @@
 
 .frame {
   position: relative;
+}
+
+/* The card's shadow, on its own layer under the outline: a filter on the card
+   itself would repaint with every frame of the clip inside it. */
+.shadow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   filter: drop-shadow(0 34px 40px rgba(18, 24, 34, 0.38));
 }
 
@@ -394,11 +402,29 @@
   top: 29%;
   background: rgba(255, 255, 255, 0.22);
 }
+/* The frosted flap. Not a backdrop-filter: that would blur the clip behind it
+   again on every frame while it plays. Its own blurred copy of the poster,
+   lined up with the clip behind (.folderBack), is drawn once. */
 .folderFlap {
   top: calc(29% + 1px);
+  overflow: hidden;
+}
+.flapBlur,
+.flapTint {
+  position: absolute;
+}
+.flapBlur {
+  /* .folderBack's box in the flap's own units: the flap starts 29% down the
+     folder and is 71% of it tall; the clip stops 14% above the bottom. */
+  left: 7%;
+  right: 7%;
+  top: -40.9%;
+  bottom: 19.7%;
+  filter: blur(14px) saturate(1.1);
+}
+.flapTint {
+  inset: 0;
   background: linear-gradient(180deg, rgba(34, 38, 45, 0.62) 0%, rgba(10, 12, 15, 0.9) 100%);
-  -webkit-backdrop-filter: blur(14px) saturate(1.1);
-  backdrop-filter: blur(14px) saturate(1.1);
 }
 .folderLabel {
   position: absolute;

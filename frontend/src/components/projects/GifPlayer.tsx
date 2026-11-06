@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useIsPresent } from "framer-motion";
 import type { ShowcaseProject } from "@/data/projectsData";
 import { seekToStart } from "./clip";
 import s from "./projects.module.css";
@@ -17,6 +18,8 @@ interface GifPlayerProps {
   /** Called when the clip ends; without it the clip loops (reduced motion). */
   onEnded?: () => void;
   compact?: boolean;
+  /** How much to load before it plays: "none" for a slide that isn't showing yet. */
+  preload?: "auto" | "none";
 }
 
 /**
@@ -28,12 +31,17 @@ interface GifPlayerProps {
 export const GifPlayer = ({
   project,
   nextName,
-  playing,
   paused,
   onToggle,
   onEnded,
   compact = false,
+  preload = "auto",
+  playing: wanted,
 }: GifPlayerProps) => {
+  // A featured card on its way out (AnimatePresence) stops at once, so only
+  // the incoming clip decodes during the hand-over.
+  const present = useIsPresent();
+  const playing = wanted && present;
   const videoRef = useRef<HTMLVideoElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
   const onEndedRef = useRef(onEnded);
@@ -128,7 +136,7 @@ export const GifPlayer = ({
           poster={project.poster}
           muted
           playsInline
-          preload="auto"
+          preload={preload}
           // Always looping: the hand-over comes from the loop tracking above.
           loop
           onError={() => setFailed(true)}

@@ -7,8 +7,8 @@
 // full width so the edge-to-edge BLAZE wordmark keeps every letter, the
 // editor cropped from the left so its sidebar stays whole), as 16:10 H.264
 // seamless loops (0.6 s crossfade, no audio) + a poster frame at `startAt`;
-// Alphecca is still an abstract placeholder: swap it for a screen recording
-// cut the same way.
+// Alphecca is still an abstract placeholder (the same H.264 / poster format):
+// swap it for a screen recording cut the same way.
 
 export interface ShowcaseProject {
   id: string;
@@ -79,7 +79,8 @@ export const showcaseProjects: ShowcaseProject[] = [
     ],
     codeUrl: "",
     liveUrl: "",
-    media: "/projects/alphecca.webm",
+    media: "/projects/alphecca.mp4",
+    poster: "/projects/alphecca.jpg",
     startAt: 30,
     seconds: 8,
     art: art(120, "70% 28%", "22% 80%"),

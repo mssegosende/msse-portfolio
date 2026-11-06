@@ -5,6 +5,7 @@ import { getLenis } from "../../hooks/useLenis";
 import { VIEW_CSS_SCALE, applyView } from "../../lib/spline/camera";
 import { BOT_HOME, applyPose } from "../../lib/spline/rig";
 import { noteRenderedFrame } from "../../lib/spline/quality";
+import { isProjectsInView } from "../../lib/sceneFocus";
 import type { SplineApp, ViewTransform } from "../../lib/spline/types";
 import {
   hasThemeReloadPosition,
@@ -553,9 +554,10 @@ export const useHeroTimeline = ({
       syncPlayback = () => {
         const shown = tl.time();
         const scrolled = (tl.scrollTrigger?.progress ?? 0) * tl.duration();
-        const hero =
-          heroVisibleRef.current && Math.min(shown, scrolled) < XFADE_AT + XFADE_DURATION;
-        const layer2 = heroVisibleRef.current && Math.max(shown, scrolled) > XFADE_AT * 0.9;
+        // Scene 3 in view: its clips get the frames, every scene idles.
+        const visible = heroVisibleRef.current && !isProjectsInView();
+        const hero = visible && Math.min(shown, scrolled) < XFADE_AT + XFADE_DURATION;
+        const layer2 = visible && Math.max(shown, scrolled) > XFADE_AT * 0.9;
         setRunning(app1Ref.current, hero && !showAltRef.current);
         setRunning(appAltRef.current, hero && showAltRef.current);
         setRunning(app2Ref.current, layer2);
