@@ -1,7 +1,7 @@
 // Scene 3 projects. Copy: design/projects-copy.md (used exactly as written).
-// `media`: the looping clip in the GIF player. The current files in
-// public/projects/ are abstract placeholders; swap them for the real screen
-// recordings (mp4 or webm, ~16:10, muted) and keep the same path or update it.
+// `media`: the looping clip in the GIF player. Ethos and Marvel Characters use
+// the real recordings (16:10 H.264 loops + a poster frame); the other four are
+// still abstract placeholders: swap them for screen recordings cut the same way.
 
 export interface ShowcaseProject {
   id: string;
@@ -19,6 +19,8 @@ export interface ShowcaseProject {
   codeUrl: string;
   liveUrl: string;
   media: string;
+  /** First frame of the clip, shown while it loads. */
+  poster?: string;
   /** Fallback length when the clip doesn't report a duration (MediaRecorder webm). */
   seconds: number;
   /** Static art behind the clip (poster while it loads, and the folder back panel). */
@@ -119,8 +121,9 @@ export const showcaseProjects: ShowcaseProject[] = [
     // TODO: repo URL and Vercel URL (pending); hidden until filled in.
     codeUrl: "",
     liveUrl: "",
-    media: "/projects/ethos.webm",
-    seconds: 8,
+    media: "/projects/ethos.mp4",
+    poster: "/projects/ethos.jpg",
+    seconds: 14.2,
     art: art(160, "30% 64%", "74% 30%"),
   },
   {
@@ -134,8 +137,9 @@ export const showcaseProjects: ShowcaseProject[] = [
     ],
     codeUrl: "https://github.com/mssegosende/17.1-marvel-characters",
     liveUrl: "",
-    media: "/projects/marvel-characters.webm",
-    seconds: 8,
+    media: "/projects/marvel-characters.mp4",
+    poster: "/projects/marvel-characters.jpg",
+    seconds: 15,
     art: art(250, "62% 70%", "26% 22%"),
   },
 ];
