@@ -92,6 +92,13 @@ export const SystemCheck = ({ ref }: { ref?: Ref<HTMLDivElement> }) => (
   </div>
 );
 
+// Phones: the bottom stack sits on the light band of the scene 1 ground in both
+// themes, so it keeps the mock's dark inks in dark mode too (mobile/dark mock).
+// Line 2 is a touch darker than the mock's #2E343B: AA 4.5:1 on that band.
+const PHONE_INK = "text-[#14181D]";
+const PHONE_INK_2 = "text-[#22272D]";
+const PHONE_CUE = "#24292F";
+
 /** Ø1.3: BUILD THE FUTURE / ONE SYSTEM AT A TIME, top-right (phones: bottom, centred). */
 export const HeroHeadline = ({
   ref,
@@ -102,10 +109,10 @@ export const HeroHeadline = ({
 }) => (
   <div
     ref={ref}
-    className={`absolute font-display uppercase ${INK} ${
+    className={`absolute font-display uppercase ${
       isMobile
-        ? "inset-x-0 bottom-[calc(env(safe-area-inset-bottom,0px)+128px)] text-center"
-        : "right-[112px] top-[22.2%] text-right text-[15px] leading-[1.6] tracking-[0.32em]"
+        ? `inset-x-0 bottom-[calc(env(safe-area-inset-bottom,0px)+128px)] text-center ${PHONE_INK}`
+        : `right-[112px] top-[22.2%] text-right text-[15px] leading-[1.6] tracking-[0.32em] ${INK}`
     }`}
   >
     {/* Phones: where the visitor is, Ø1 of Ø5 (no section index there). */}
@@ -123,7 +130,7 @@ export const HeroHeadline = ({
       <h1 data-testid="hero-headline-1" className="font-normal">
         Build the future
       </h1>
-      <p data-testid="hero-headline-2" className={INK_2}>
+      <p data-testid="hero-headline-2" className={isMobile ? PHONE_INK_2 : INK_2}>
         One system at a time
       </p>
     </div>
@@ -138,10 +145,13 @@ export const ScrollCuePhone = ({ ref }: { ref?: Ref<HTMLDivElement> }) => (
     data-testid="scroll-cue"
     className="pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom,0px)+60px)] left-1/2 -ml-[50px] flex w-[100px] flex-col items-center gap-2"
   >
-    <span className={`hero-bar-in font-display text-[11px] uppercase tracking-[0.4em] ${INK}`}>
+    <span
+      className="hero-bar-in font-display text-[11px] uppercase tracking-[0.4em]"
+      style={{ color: PHONE_CUE }}
+    >
       Scroll
     </span>
-    <span className="hero-hint block h-[30px] w-px bg-[rgb(var(--hero-ink))]" />
+    <span className="hero-hint block h-[30px] w-px" style={{ background: PHONE_CUE }} />
   </div>
 );
 
