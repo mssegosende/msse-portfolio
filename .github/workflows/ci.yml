@@ -41,7 +41,7 @@ jobs:
           # Baked into the bundle at build time.
           VITE_BACKEND_URL: ${{ vars.VITE_BACKEND_URL }}
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v7
         with:
           name: coverage
           path: frontend/coverage
@@ -52,7 +52,7 @@ jobs:
       - run: pnpm test:e2e
 
       - if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: |
@@ -63,7 +63,7 @@ jobs:
 
       # The deploy publishes this exact build, the one the e2e suite just ran on.
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: site
           path: frontend/dist
