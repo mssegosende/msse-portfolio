@@ -67,6 +67,22 @@ export const HeroWordmark = ({ ref, isMobile }: { ref?: Ref<HTMLDivElement>; isM
 // Barcode bar widths, px.
 const BARS = [3, 1, 2, 1, 4, 1, 1, 2, 3, 1, 2, 2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1];
 
+/**
+ * Phones: the Ø1.2 barcode, small and quiet, under MSSE:// at the top-left
+ * (María Sol's review: scene 1 felt empty beside the robot).
+ */
+export const PhoneBarcode = () => (
+  <div
+    aria-hidden="true"
+    data-testid="hero-barcode-phone"
+    className="hero-bar-in absolute left-[18px] top-[50px] flex h-3.5 gap-px opacity-70"
+  >
+    {BARS.map((w, i) => (
+      <span key={i} className="block h-full bg-[rgb(var(--hero-ink))]" style={{ width: w * 0.6 }} />
+    ))}
+  </div>
+);
+
 /** Ø1.2: barcode + SYSTEM CHECK, frosted, bottom-left. */
 export const SystemCheck = ({ ref }: { ref?: Ref<HTMLDivElement> }) => (
   <div

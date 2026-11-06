@@ -14,6 +14,7 @@ import { CapabilityCards } from "./scroll-scene/CapabilityCards";
 import {
   HeroHeadline,
   HeroWordmark,
+  PhoneBarcode,
   ScrollCue,
   ScrollCuePhone,
   SystemCheck,
@@ -352,8 +353,9 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       <HeroHeadline ref={headlineRef} isMobile={isMobile} />
       {isMobile ? <ScrollCuePhone ref={scrollCueRef} /> : <ScrollCue ref={scrollCueRef} />}
 
-      {/* Top bar, scene 1 only: MSSE:// and STATUS. */}
+      {/* Top bar, scene 1 only: MSSE:// and STATUS (phones: the barcode under MSSE://). */}
       <div ref={topBarRef} className="absolute inset-x-0 top-0">
+        {isMobile && <PhoneBarcode />}
         {/* The CSS load fade sits on this inner box; GSAP owns the outer one. */}
         <div
           className={`hero-bar-in flex items-center justify-between ${
