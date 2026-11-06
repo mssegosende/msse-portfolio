@@ -42,9 +42,6 @@ const THEMES = {
 
 /** Desktop's horizontal card: the reference width; the parent sets the height and scale. */
 export const WIDE_CARD_W = 570;
-// The text's own fade: short enough for a few lines (the project cards' 56px
-// would hide them). The bottom padding lets the last line clear it at the end.
-const WIDE_FADE = "linear-gradient(180deg, #000 calc(100% - 18px), transparent 100%)";
 
 /**
  * One scene 2 card, horizontal (desktop, three stacked beside the head): the
@@ -103,11 +100,10 @@ export const CapabilityCardWide = ({ card, theme }: { card: Card; theme: Theme }
             flex: "1 1 auto",
             minHeight: 0,
             marginTop: 8,
-            maskImage: WIDE_FADE,
-            WebkitMaskImage: WIDE_FADE,
           }}
         >
-          <p className={`m-0 pb-[18px] text-[14px] leading-[1.55] ${t.body}`}>{card.text}</p>
+          {/* Text longer than the card scrolls, with the project cards' fade. */}
+          <p className={`m-0 text-[14px] leading-[1.55] ${t.body}`}>{card.text}</p>
         </ScrollText>
         <ul className="mt-1 flex flex-wrap gap-1.5 text-[12px] font-medium">
           {card.chips.map((c) => (

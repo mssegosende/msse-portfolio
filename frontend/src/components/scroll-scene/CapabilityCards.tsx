@@ -29,14 +29,23 @@ const fitCard = (w: number, h: number) => {
 
 // Desktop, the three together (María Sol's review, A7): horizontal cards
 // stacked beside the head, each step (Ø2.1-Ø2.3) revealing the next. Only on
-// windows tall enough for every card to show its whole text without
-// scrolling; shorter ones keep one card at a time. The stack scales as a whole.
+// windows at least STACK_MIN_H tall where every card shows at least
+// STACK_MIN_LINES of its text; the rest scrolls inside the card with the
+// project cards' fade. Shorter windows (e.g. 1280 x 720) keep one card at a
+// time. The stack scales as a whole: where the 4 lines don't fit at its
+// usual scale (1440 x 900), it shrinks just enough, down to STACK_MIN_SCALE
+// (the single card's 85 %), frame and type together.
 const STACK_DOCK_CLEAR = 96;
 const STACK_GAP = 14;
+const STACK_MIN_H = 900;
+const STACK_MIN_LINES = 4;
+const STACK_MIN_SCALE = 0.85;
 
-const fitStack = (w: number, h: number) => {
-  const s = 0.9 * Math.min(1.22, w / 1440, Math.max(h / 900, 0.9));
+/** `minH`: the card height (card px) that shows STACK_MIN_LINES, once measured. */
+const fitStack = (w: number, h: number, minH?: number) => {
   const free = h - TITLE_BOTTOM - STACK_DOCK_CLEAR;
+  let s = 0.9 * Math.min(1.22, w / 1440, Math.max(h / 900, 0.9));
+  if (minH) s = Math.min(s, Math.max(STACK_MIN_SCALE, free / (3 * minH + 2 * STACK_GAP)));
   return {
     s,
     free,
@@ -57,20 +66,31 @@ const useViewport = (enabled: boolean) => {
   return size;
 };
 
+interface Need {
+  /** Card height (card px) that shows every card's whole text. */
+  full: number;
+  /** Card height that shows STACK_MIN_LINES of every card's text. */
+  min: number;
+}
+
 /**
- * The height (card px) a horizontal card needs to show its whole text: the
- * card minus the text box, plus the text. The text's width is fixed in card
- * px, so this doesn't change with the window, only with the fonts.
+ * The heights (card px) a horizontal card needs: the card minus the text
+ * box, plus the text (whole, or its first lines). The text's width is fixed
+ * in card px, so this doesn't change with the window, only with the fonts.
  */
-const measureNeed = (root: HTMLElement): number => {
-  let need = 0;
+const measureNeed = (root: HTMLElement): Need | null => {
+  let full = 0;
+  let min = 0;
   root.querySelectorAll("article").forEach((article) => {
     const p = article.querySelector("p");
     const box = p?.parentElement?.parentElement;
     if (!p || !box) return;
-    need = Math.max(need, article.offsetHeight - box.clientHeight + p.offsetHeight);
+    const chrome = article.offsetHeight - box.clientHeight;
+    const line = parseFloat(getComputedStyle(p).lineHeight) || 21.7;
+    full = Math.max(full, chrome + p.offsetHeight);
+    min = Math.max(min, chrome + Math.min(p.offsetHeight, STACK_MIN_LINES * line));
   });
-  return Math.ceil(need);
+  return full > 0 ? { full: Math.ceil(full), min: Math.ceil(min) } : null;
 };
 
 interface CapabilityCardsProps {
@@ -98,11 +118,12 @@ export const CapabilityCards = ({
   theme,
 }: CapabilityCardsProps) => {
   const { w, h } = useViewport(!isMobile);
-  const stack = fitStack(w, h);
-  // The card height the stack needs; null until measured (the stack renders
+  // The card heights the stack needs; null until measured (the stack renders
   // once, before paint, to measure it).
-  const [need, setNeed] = useState<number | null>(null);
-  const stacked = !isMobile && (need === null || stack.roomH >= need);
+  const [need, setNeed] = useState<Need | null>(null);
+  const stack = fitStack(w, h, need?.min);
+  // Half a px of slack: at the shrunk scale the room equals the need exactly.
+  const stacked = !isMobile && h >= STACK_MIN_H && (need === null || stack.roomH + 0.5 >= need.min);
 
   const own = useRef<HTMLDivElement | null>(null);
   const setRefs = useCallback(
@@ -117,7 +138,7 @@ export const CapabilityCards = ({
   useLayoutEffect(() => {
     if (!stacked || !own.current) return;
     const n = measureNeed(own.current);
-    if (n > 0 && n !== need) setNeed(n);
+    if (n && (n.full !== need?.full || n.min !== need?.min)) setNeed(n);
   }, [stacked, need]);
   // Web fonts change the wrap: measure again once they are in.
   useEffect(() => {
@@ -159,7 +180,8 @@ export const CapabilityCards = ({
   const prevCard = prev !== null && prev >= 0 ? card(prev) : undefined;
   const curCard = cur >= 0 ? card(cur) : undefined;
 
-  const cardH = need ?? stack.roomH;
+  // Whole text where it fits; otherwise all the room there is, text scrolling.
+  const cardH = need ? Math.min(need.full, stack.roomH) : stack.roomH;
   const one = fitCard(w, h);
 
   return (

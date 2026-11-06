@@ -3,8 +3,9 @@ import { blockSpline, openHome, PHONE, scrollToPin } from "./helpers";
 
 // Scene 2's cards have to fit whatever screen they are on, clear of the title and
 // the dock (it broke on Safari's shorter viewport and under the phone's dock before).
-// Desktop shows the three together, stacked, only where every card shows its
-// whole text without scrolling; shorter windows and phones show one at a time.
+// Desktop shows the three together, stacked, from 900px of window height and
+// only where every card shows at least 4 lines of its text (the rest scrolls
+// inside the card); shorter windows and phones show one at a time.
 
 type Box = { top: number; bottom: number; left: number; right: number };
 
@@ -21,11 +22,17 @@ const boxes = (page: Page) =>
     const root = document.querySelector('[data-testid="capability-cards"]')!;
     return {
       layout: root.getAttribute("data-layout"),
-      // Any shown card whose text box scrolls.
-      overflowing: shown.filter((a) => {
-        const box = a.querySelector("p")?.parentElement?.parentElement;
-        return !!box && box.scrollHeight > box.clientHeight + 1;
-      }).length,
+      // The fewest lines of text any shown card has in view (its text box's
+      // height, or the whole text when shorter), in unscaled card px.
+      minLines: Math.min(
+        ...shown.map((a) => {
+          const p = a.querySelector("p");
+          const box = p?.parentElement?.parentElement;
+          if (!p || !box) return 0;
+          const line = parseFloat(getComputedStyle(p).lineHeight);
+          return Math.min(box.clientHeight, p.offsetHeight) / line;
+        }),
+      ),
       cards: shown.map(rect),
       title: rect(document.querySelector('[data-testid="capabilities-title"] h2')),
       dockTop: document.querySelector("[data-dock-slot]")!.getBoundingClientRect().top,
@@ -36,13 +43,13 @@ const boxes = (page: Page) =>
 const overlaps = (a: Box, b: Box) =>
   a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
-const DESKTOP_SIZES: { width: number; height: number; layout?: "stack" | "single" }[] = [
+const DESKTOP_SIZES: { width: number; height: number; layout: "stack" | "single" }[] = [
   { width: 1280, height: 720, layout: "single" },
-  { width: 1440, height: 790 }, // Safari with its toolbars on a 1440x900 screen
-  { width: 1440, height: 900 },
-  { width: 1920, height: 1080 },
-  { width: 1920, height: 1200 },
-  { width: 2560, height: 1440 },
+  { width: 1440, height: 790, layout: "single" }, // Safari with its toolbars on a 1440x900 screen
+  { width: 1440, height: 900, layout: "stack" },
+  { width: 1920, height: 1080, layout: "stack" },
+  { width: 1920, height: 1200, layout: "stack" },
+  { width: 2560, height: 1440, layout: "stack" },
 ];
 
 for (const { layout: expected, ...viewport } of DESKTOP_SIZES) {
@@ -54,7 +61,7 @@ for (const { layout: expected, ...viewport } of DESKTOP_SIZES) {
       await openHome(page);
       await scrollToPin(page, 0.99);
       const first = await boxes(page);
-      if (expected) expect(first.layout).toBe(expected);
+      expect(first.layout).toBe(expected);
       const stacked = first.layout === "stack";
       await expect.poll(async () => (await boxes(page)).cards.length).toBe(stacked ? 3 : 1);
       // Let the last card finish rising (cap-rise moves it up 40px).
@@ -65,10 +72,10 @@ for (const { layout: expected, ...viewport } of DESKTOP_SIZES) {
             (a) => a.playState !== "running" || a.effect?.getComputedTiming().endTime === Infinity,
           ),
       );
-      const { cards, title, overflowing, viewport: vp } = await boxes(page);
-      console.log(`${viewport.width}x${viewport.height}: ${first.layout}`);
-      // Stacked cards show their whole text.
-      if (stacked) expect(overflowing).toBe(0);
+      const { cards, title, minLines, viewport: vp } = await boxes(page);
+      // Stacked cards show at least 4 lines of text each (a little slack for
+      // sub-pixel rounding).
+      if (stacked) expect(minLines).toBeGreaterThan(3.9);
       const dock = await page.getByTestId("navigation-dock").boundingBox();
       cards.forEach((card, i) => {
         expect(card!.top).toBeGreaterThanOrEqual(0);
