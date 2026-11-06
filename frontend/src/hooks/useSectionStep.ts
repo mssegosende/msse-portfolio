@@ -19,8 +19,12 @@ export const useSectionStep = (ref: RefObject<HTMLElement | null>, steps: number
       const el = ref.current;
       if (!el) return;
       // +1: the index counts a step as reached one pixel early.
-      const p = (window.innerHeight * PROBE - el.getBoundingClientRect().top + 1) / el.offsetHeight;
-      setStep(p < 0 ? -1 : Math.min(steps - 1, Math.floor(p * steps)));
+      const rect = el.getBoundingClientRect();
+      const p = (window.innerHeight * PROBE - rect.top + 1) / el.offsetHeight;
+      // A section only a little taller than the screen (phones) never moves its
+      // top far enough for its last step: its bottom on screen counts as the end.
+      const atEnd = rect.bottom <= window.innerHeight + 1;
+      setStep(p < 0 ? -1 : atEnd ? steps - 1 : Math.min(steps - 1, Math.floor(p * steps)));
     };
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(update);
