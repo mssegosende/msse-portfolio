@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { EASE_OUT, fadeUpVariants, revealOnView } from "../lib/motion";
 import { Github, ExternalLink, ArrowUpRight } from "lucide-react";
 import { getProjects, type Project } from "../data/portfolioData";
-import { GridField } from "./GridField";
+import { SectionBackdrop } from "./SectionBackdrop";
 
 const fadeUp = fadeUpVariants();
 
@@ -104,24 +104,21 @@ export const Projects = () => {
     <section
       id="projects"
       data-testid="projects-section"
-      className="relative overflow-hidden bg-surface px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
+      style={{ background: "var(--bg-projects)" }}
+      className="relative overflow-hidden px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
-      <GridField />
+      <SectionBackdrop scene="projects" />
       <div className="relative mx-auto max-w-7xl">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <motion.p
-              variants={fadeUp}
-              {...revealOnView()}
-              className="font-display text-[13px] uppercase tracking-[0.02em] text-ink"
-            >
-              03 // SELECTED WORK
+            <motion.p variants={fadeUp} {...revealOnView()} className="section-pill">
+              SELECTED WORK
             </motion.p>
             <motion.h2
               variants={fadeUp}
               custom={1}
               {...revealOnView()}
-              className="text-engraved mt-6 font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
+              className="section-title mt-4"
             >
               Projects
             </motion.h2>

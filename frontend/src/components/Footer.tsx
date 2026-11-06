@@ -34,7 +34,7 @@ export const Footer = () => (
         <button
           data-testid="footer-brand"
           onClick={scrollToTop}
-          className="font-orbitron text-sm font-bold tracking-[0.02em] text-ink transition-colors hover:text-ink/[0.83]"
+          className="font-michroma text-sm tracking-[0.02em] text-ink transition-colors hover:text-ink/[0.83]"
         >
           {profile.shortMark}
           <span className="text-ink/65"> {profile.markSuffix}</span>

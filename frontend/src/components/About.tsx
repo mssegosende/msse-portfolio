@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { fadeUpVariants, revealOnView } from "../lib/motion";
 import { profile, manifesto } from "../data/portfolioData";
-import { GridField } from "./GridField";
+import { SectionBackdrop } from "./SectionBackdrop";
+import { Num } from "./Num";
 
 const fadeUp = fadeUpVariants({ stagger: 0.12, duration: 0.9 });
 
@@ -10,30 +11,25 @@ export const About = () => {
     <section
       id="about"
       data-testid="about-section"
-      className="relative overflow-hidden bg-surface px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
+      style={{ background: "var(--bg-about)" }}
+      className="relative overflow-hidden px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
-      <GridField />
-      {/* Scrim: the text sits on near-solid surface, the grid shows at the edges. */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_65%_at_50%_45%,rgb(var(--surface) / 0.82),transparent_100%)]" />
+      <SectionBackdrop scene="about" />
       <div className="relative mx-auto max-w-7xl">
-        <motion.p
-          variants={fadeUp}
-          {...revealOnView()}
-          className="font-display text-[13px] uppercase tracking-[0.02em] text-ink"
-        >
-          02 // WHO
+        <motion.p variants={fadeUp} {...revealOnView()} className="section-pill">
+          WHO
         </motion.p>
 
-        <div className="mt-10 max-w-3xl">
+        <div className="max-w-3xl">
           <motion.h2
             variants={fadeUp}
             custom={1}
             {...revealOnView()}
-            className="text-engraved font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
+            className="section-title mt-4"
           >
-            Human behind
+            The human
             <br />
-            the <span className="text-ink/65">machine</span>
+            behind the machine
           </motion.h2>
 
           {profile.bio.map((para, i) => (
@@ -76,7 +72,7 @@ export const About = () => {
               className="group corner-frame cut-corner bg-surface p-8 pt-5 transition-colors duration-500 hover:bg-ink/[0.04] sm:p-10 sm:pt-7"
             >
               <div className="select-none font-display text-7xl leading-none text-outline-grey transition-all duration-500 group-hover:[-webkit-text-stroke-color:rgb(var(--ink) / 0.55)]">
-                {ch.num}
+                <Num value={ch.num} />
               </div>
               <h3 className="mt-6 font-display text-sm uppercase tracking-wider text-ink">
                 {ch.title}

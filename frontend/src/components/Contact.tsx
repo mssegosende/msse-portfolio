@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { fadeUpVariants, revealOnView } from "../lib/motion";
 import { terminalBoot } from "../data/portfolioData";
 import { GridField } from "./GridField";
+import { SectionBackdrop } from "./SectionBackdrop";
 
 const fadeUp = fadeUpVariants({ stagger: 0.1 });
 
@@ -156,25 +157,23 @@ export const Contact = () => {
     <section
       id="contact"
       data-testid="contact-section"
-      className="relative overflow-hidden bg-surface px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
+      style={{ background: "var(--bg-contact)" }}
+      className="relative overflow-hidden px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgb(var(--ink) / 0.04),transparent_60%)]" />
+      <SectionBackdrop scene="contact" />
       <GridField />
       <div className="relative mx-auto max-w-4xl">
-        <motion.p
-          variants={fadeUp}
-          {...revealOnView()}
-          className="font-display text-[13px] uppercase tracking-[0.02em] text-ink"
-        >
-          05 // OPEN CHANNEL
+        <motion.p variants={fadeUp} {...revealOnView()} className="section-pill">
+          OPEN CHANNEL
         </motion.p>
         <motion.h2
           variants={fadeUp}
           custom={1}
           {...revealOnView()}
-          className="text-engraved mt-6 font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
+          className="section-title section-title--light mt-4"
         >
-          Initiate contact
+          Let&apos;s talk
         </motion.h2>
 
         <motion.div

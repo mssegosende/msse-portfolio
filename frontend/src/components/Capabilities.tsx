@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { EASE_OUT, fadeUpVariants, revealOnView } from "../lib/motion";
 import { Plus, Minus } from "lucide-react";
 import { capabilities } from "../data/portfolioData";
-import { GridField } from "./GridField";
+import { SectionBackdrop } from "./SectionBackdrop";
+import { Num } from "./Num";
 
 const fadeUp = fadeUpVariants();
 
@@ -14,26 +15,21 @@ export const Capabilities = () => {
     <section
       id="capabilities"
       data-testid="capabilities-section"
-      className="relative overflow-hidden bg-surface px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
+      style={{ background: "var(--bg-capabilities)" }}
+      className="relative overflow-hidden px-4 py-24 sm:px-8 md:px-12 md:py-36 lg:px-20"
     >
-      <GridField />
-      {/* Scrim: the text sits on near-solid surface, the grid shows at the edges. */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_75%_65%_at_50%_45%,rgb(var(--surface) / 0.82),transparent_100%)]" />
+      <SectionBackdrop scene="capabilities" />
       <div className="relative mx-auto max-w-4xl">
-        <motion.p
-          variants={fadeUp}
-          {...revealOnView()}
-          className="font-display text-[13px] uppercase tracking-[0.02em] text-ink"
-        >
-          04 // SYSTEM SPECIFICATIONS
+        <motion.p variants={fadeUp} {...revealOnView()} className="section-pill">
+          CAPABILITIES
         </motion.p>
         <motion.h2
           variants={fadeUp}
           custom={1}
           {...revealOnView()}
-          className="text-engraved mt-6 font-display font-light text-3xl uppercase text-ink sm:text-4xl lg:text-5xl"
+          className="section-title section-title--light mt-4"
         >
-          Capabilities
+          What the core runs on
         </motion.h2>
 
         <div className="mt-14 border-y border-ink/[0.13]">
@@ -55,7 +51,7 @@ export const Capabilities = () => {
                   className="group flex w-full items-center justify-between gap-6 py-7 text-left"
                 >
                   <span className="flex items-baseline gap-4 sm:gap-6">
-                    <span className="font-display text-[13px] text-ink/65">[ {cap.num} ]</span>
+                    <Num value={cap.num} className="font-display text-[13px] text-ink/65" />
                     <span
                       className={`font-display text-base uppercase transition-colors duration-300 sm:text-lg ${
                         open ? "text-ink" : "text-ink/[0.83] group-hover:text-ink"

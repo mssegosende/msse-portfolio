@@ -370,7 +370,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       >
         <span
           data-testid="hero-brand"
-          className="font-orbitron text-xs font-bold tracking-[0.12em] text-white sm:text-sm sm:tracking-[0.3em]"
+          className="font-michroma text-xs tracking-[0.12em] text-white sm:text-sm sm:tracking-[0.3em]"
         >
           {profile.shortMark}
           <span className="hidden text-white/65 sm:inline"> {profile.markSuffix}</span>

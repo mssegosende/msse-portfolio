@@ -1,6 +1,7 @@
 import type { Ref } from "react";
 import type { SystemFeature } from "../../data/portfolioData";
 import type { Theme } from "../../lib/themeReload";
+import { Num } from "../Num";
 
 interface FeatureCardProps {
   ref?: Ref<HTMLDivElement>;
@@ -32,7 +33,7 @@ export const FeatureCard = ({ ref, feature: f, isMobile, theme }: FeatureCardPro
       <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/[0.70] p-4 backdrop-blur-md">
         <div className="flex items-center gap-4">
           <div className="select-none font-display text-[3.25rem] font-light leading-[0.85] text-outline-grey">
-            {f.num}
+            <Num value={f.num} />
           </div>
           <div className="min-w-0">
             <span className="font-display text-[12px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">
@@ -51,7 +52,7 @@ export const FeatureCard = ({ ref, feature: f, isMobile, theme }: FeatureCardPro
       <div className="corner-frame cut-corner relative border border-ink/[0.13] bg-surface/70 p-[clamp(1rem,min(2.6vh,2.8vw),1.75rem)] backdrop-blur-md">
         <div className="flex items-center gap-[clamp(0.75rem,1.6vw,1.25rem)]">
           <div className="select-none font-display text-[clamp(2.75rem,min(7vh,6vw),4.5rem)] font-light leading-[0.85] text-outline-grey">
-            {f.num}
+            <Num value={f.num} />
           </div>
           <div className="min-w-0">
             <span className="font-display text-[13px] uppercase tracking-[0.02em] text-ink/[0.83] text-halo">

@@ -6,7 +6,9 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        orbitron: ["Orbitron", "sans-serif"],
+        michroma: ["Michroma", "sans-serif"],
+        gothic: ['"Science Gothic"', "Michroma", "sans-serif"],
+        mono: ['"JetBrains Mono"', "monospace"],
         inter: ["Inter", "sans-serif"],
         kodemono: ['"Kode Mono"', "monospace"],
         display: ["Rajdhani", "sans-serif"],
