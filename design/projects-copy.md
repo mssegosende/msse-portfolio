@@ -45,12 +45,12 @@ It started as a take-home challenge. After the technical review, I rebuilt it as
 
 ## Ø3.5 · ETHOS
 - Subtitle: Full Stack — Clinic Booking App
-- Tags: React, Vite, Tailwind CSS, Node.js, FastAPI, PostgreSQL
-- Code: pending (repo URL) · Live: pending (Vercel URL) — hide both until filled in
+- Tags: React, Vite, Tailwind CSS, Node.js, Express, FastAPI, PostgreSQL
+- Code: none yet (https://github.com/mssegosende/ethos-health is private; add it once public) · Live: https://ethos-health-bice.vercel.app
 
-A booking app for a fictional functional-medicine clinic, built as a study project. Patients log in, check their dashboard and book, reschedule or cancel visits with their clinician. You can try it with the demo account.
+A booking platform for a fictional functional-medicine clinic, built as a study project. You can try it with a one-click demo account: book, reschedule and cancel visits, and see your care plan and past sessions.
 
-I started from the business rules for appointments: which professional a patient sees, when a slot is really free, and what happens on a cancellation or reschedule. On the frontend, every screen talks to a single data layer with two interchangeable adapters. The demo adapter applies those rules in the browser, and the live demo runs on it. The HTTP adapter targets a Node gateway in front of a FastAPI service with PostgreSQL, and the backend is being connected to that same contract.
+The core is the appointments service. I defined the business rules before writing code: which professional a patient sees, when a slot is really free, and what happens on a cancellation or reschedule. Those rules live in a FastAPI service that only accepts traffic from a Node gateway. The gateway handles identity and JWT auth, and gives every demo visitor an isolated, temporary session, so the frontend talks to a single API. Both services run on Railway with PostgreSQL, and the React frontend is on Vercel.
 
 Next up: memberships with Stripe, and patient metrics (biomarkers, sleep, recovery) with an LLM layer to help clinicians interpret them.
 

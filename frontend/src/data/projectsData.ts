@@ -112,15 +112,16 @@ export const showcaseProjects: ShowcaseProject[] = [
     num: "3.5",
     name: "ETHOS",
     subtitle: "Full Stack — Clinic Booking App",
-    tags: ["React", "Vite", "Tailwind CSS", "Node.js", "FastAPI", "PostgreSQL"],
+    tags: ["React", "Vite", "Tailwind CSS", "Node.js", "Express", "FastAPI", "PostgreSQL"],
     paragraphs: [
-      "A booking app for a fictional functional-medicine clinic, built as a study project. Patients log in, check their dashboard and book, reschedule or cancel visits with their clinician. You can try it with the demo account.",
-      "I started from the business rules for appointments: which professional a patient sees, when a slot is really free, and what happens on a cancellation or reschedule. On the frontend, every screen talks to a single data layer with two interchangeable adapters. The demo adapter applies those rules in the browser, and the live demo runs on it. The HTTP adapter targets a Node gateway in front of a FastAPI service with PostgreSQL, and the backend is being connected to that same contract.",
+      "A booking platform for a fictional functional-medicine clinic, built as a study project. You can try it with a one-click demo account: book, reschedule and cancel visits, and see your care plan and past sessions.",
+      "The core is the appointments service. I defined the business rules before writing code: which professional a patient sees, when a slot is really free, and what happens on a cancellation or reschedule. Those rules live in a FastAPI service that only accepts traffic from a Node gateway. The gateway handles identity and JWT auth, and gives every demo visitor an isolated, temporary session, so the frontend talks to a single API. Both services run on Railway with PostgreSQL, and the React frontend is on Vercel.",
       "Next up: memberships with Stripe, and patient metrics (biomarkers, sleep, recovery) with an LLM layer to help clinicians interpret them.",
     ],
-    // TODO: repo URL and Vercel URL (pending); hidden until filled in.
+    // Code: the repo (github.com/mssegosende/ethos-health) is private for now
+    // (404 without login); fill this in once it is public.
     codeUrl: "",
-    liveUrl: "",
+    liveUrl: "https://ethos-health-bice.vercel.app",
     media: "/projects/ethos.mp4",
     poster: "/projects/ethos.jpg",
     seconds: 14.2,
