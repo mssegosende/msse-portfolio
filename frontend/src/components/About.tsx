@@ -10,8 +10,8 @@ const STEPS = 3;
 
 /**
  * Scene 4 · WHO (design/source/{desktop,mobile}/light/scene-4-about.dc.html).
- * Desktop: the section pins for three steps — Ø4.1 the text, Ø4.2 piano +
- * "since 2022", Ø4.3 the principles. Mobile: one column, all shown.
+ * Desktop: the section pins for three steps — Ø4.1 the text, Ø4.2 the story
+ * (in place of the Ø4.1 text) + "since 2022", Ø4.3 the principles. Mobile: one column, all shown.
  */
 export const About = () => {
   const ref = useRef<HTMLElement>(null);
@@ -19,7 +19,6 @@ export const About = () => {
   const desktop = useMediaQuery("(min-width: 1024px)");
   // Mobile shows everything once the section is reached.
   const on = (n: number) => step >= (desktop ? n : 0);
-  const [intro, piano] = profile.bio;
   const since = profile.stats[0];
   const shown = Math.max(step, 0) + 1;
 
@@ -42,11 +41,23 @@ export const About = () => {
               behind the <br className="md:hidden" />
               machine
             </h2>
-            <p className={s.intro}>{intro}</p>
           </div>
-          <p className={`${s.reveal} ${s.piano}`} data-on={on(1)}>
-            {piano}
-          </p>
+          {/* Desktop: Ø4.2's story takes the place of Ø4.1's text (same spot,
+              one at a time, so the longer copy clears the dock). Mobile: both. */}
+          <div className={s.swap}>
+            <div className={s.reveal} data-on={desktop ? step === 0 : on(0)}>
+              {profile.bio.map((para, i) => (
+                <p key={i} className={s.intro}>
+                  {para}
+                </p>
+              ))}
+            </div>
+            <div className={`${s.reveal} ${s.piano}`} data-on={on(1)}>
+              {profile.story.map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className={s.right}>

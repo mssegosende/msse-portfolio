@@ -1,6 +1,7 @@
 import type { CapabilityCard as Card } from "../../data/portfolioData";
 import type { Theme } from "../../lib/themeReload";
 import { Num } from "../Num";
+import { ScrollText } from "../projects/ProjectCard";
 
 // The black framed card, layer by layer (design/CARD-SPEC.md).
 const FRAME =
@@ -111,11 +112,24 @@ export const CapabilityCard = ({
             }`}
           />
         </div>
-        <p
-          className={`mt-2.5 leading-[1.55] ${t.body} ${isMobile ? "text-[13.5px]" : "text-[14px]"}`}
+        {/* Long copy scrolls inside the card, with the project cards' fade
+            (design/content-final.md): the card and its fonts never change.
+            Phones size the card from its content, so the body keeps the
+            mock's four lines (13.5px x 1.55 x 4). */}
+        <ScrollText
+          style={{
+            flex: "0 1 auto",
+            minHeight: 0,
+            marginTop: 10,
+            ...(isMobile ? { maxHeight: 84 } : null),
+          }}
         >
-          {card.text}
-        </p>
+          <p
+            className={`m-0 leading-[1.55] ${t.body} ${isMobile ? "text-[13.5px]" : "text-[14px]"}`}
+          >
+            {card.text}
+          </p>
+        </ScrollText>
         <ul
           className={`flex flex-wrap gap-1.5 font-medium ${
             isMobile ? "mt-3 text-[11.5px]" : "mt-3.5 text-[12px]"

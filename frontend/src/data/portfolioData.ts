@@ -14,7 +14,9 @@ export interface Profile {
   email: string;
   /** A null linkedin hides its footer icon. */
   socials: { github: string; linkedin: string | null };
+  /** Scene 4: Ø4.1 `bio` and Ø4.2 `story`, a list of paragraphs each. */
   bio: string[];
+  story: string[];
   stats: { value: string; label: string }[];
 }
 
@@ -66,8 +68,12 @@ export const profile: Profile = {
     linkedin: null,
   },
   bio: [
-    "I'm María Sol — a full stack developer and AI engineer in Buenos Aires. I came to code through a cousin who was sure I could do it, and a computer I wanted to understand down to the parts: I built my own PC in 2020, and I've been writing software professionally since 2022.",
-    "Piano taught me the thing I use most: different logics share patterns. Once I see the pattern, a new language or framework stops being foreign — that's how I learn, and how I walk into a system I've never seen.",
+    "I am María Sol, a full stack developer and AI engineer based in Buenos Aires. Since 2022 I have built products end to end, from the interface users interact with to the services behind it, and more recently the AI layer on top. I am most motivated by systems with dense business rules and no tolerance for silent errors, such as bookings, payments and data that must remain consistent wherever it lives. Each one presents a challenge with something new to learn.",
+    "I work primarily in Python and TypeScript and take ownership of features from the data layer to the interface. I am currently directing my career toward systems where integrity is non-negotiable: where every operation must reconcile exactly, and where security is designed in from the first line.",
+  ],
+  story: [
+    "The people who knew me saw it before I did. They recognized that the way I questioned how things worked, and refused to let a problem go unsolved, was already the mindset of an engineer. Teaching myself, in my own way, showed me how far I could go once I set my mind to something. That is when I stopped being just a user of technology and started building it for the people on the other side of the screen.",
+    "Studying has been my engine ever since, and I pick things up quickly. Learning the piano taught me that every system runs on patterns, and once you see them, one logic leads you into the next, whether it is written in notes, in code or in another language. At the end of the day, that is what I bring to a team: the habit of turning what I don't know yet into what I can build next.",
   ],
   // A year, never a count ("since 2022", not "N+ years").
   stats: [{ value: "2022", label: "Shipping code since" }],
@@ -85,18 +91,18 @@ export const systemCheck: string[] = [
 export const manifesto: ManifestoEntry[] = [
   {
     num: "01",
-    title: "Contracts before code",
-    text: "Typed schemas and validation at the edge aren't bureaucracy. They're what makes an agent's output something you can trust.",
+    title: "Curiosity as method",
+    text: "Before I trust a system, I need to understand why it works. That discipline surfaces flawed assumptions early, when correcting them costs the least.",
   },
   {
     num: "02",
-    title: "Interfaces are the product",
-    text: "Motion, latency and feedback are engineering decisions, not decoration.",
+    title: "Ownership to resolution",
+    text: "I stay with a problem until its root cause is understood and resolved, not merely suppressed. A complete fix also ensures the same failure cannot recur unnoticed.",
   },
   {
     num: "03",
-    title: "Humans where they matter",
-    text: "Automate the routine, and design the exact point where a person should step in.",
+    title: "Creativity within constraints",
+    text: "Every engineering problem arrives with constraints. Working within them is where I learn the most, and where the strongest solutions tend to emerge.",
   },
 ];
 
@@ -107,7 +113,7 @@ export const capabilityCards: CapabilityCard[] = [
     part: "MIND",
     small: "THE MIND",
     title: "AI ENGINEERING",
-    text: "The part that thinks. Models that read, reason and decide — LangGraph agents where every step has a typed contract and a defined way to fail, measured with evals.",
+    text: "I build LLM systems where the model advises and the code decides. Rules find the candidates, the model weighs them against context, and confidence thresholds turn its answer into an action, with dismissing held to a higher bar than flagging. Anything uncertain, and any failed call, goes to a human instead of disappearing. LLMs are probabilistic, so the risk is mine to own: every pipeline is evaluated against labeled data (precision, recall, F1) and every model is compared on cost and latency before it ships.",
     chips: ["LangGraph", "LangChain", "RAG", "Evals"],
   },
   {
@@ -115,7 +121,7 @@ export const capabilityCards: CapabilityCard[] = [
     part: "NERVES",
     small: "THE NERVOUS SYSTEM",
     title: "BACKEND",
-    text: "Unseen, it carries every signal. APIs are the nerves, services the organs, the database the memory — Python and FastAPI, the domain never tied to the framework.",
+    text: "Python and FastAPI are my main backend, with Node.js and NestJS when the service calls for it. I start from the business rules: a domain layer that knows nothing about the framework or the database, organized with clean and hexagonal architecture, and I move from one well-built service to microservices only when the problem asks for it. I like the problems that look simple until you write them down, like a slot that must never be booked twice. PostgreSQL underneath, Pydantic at the edges, pytest around the rules, Docker around it all.",
     chips: ["Python", "FastAPI", "PostgreSQL", "Node"],
   },
   {
@@ -123,7 +129,7 @@ export const capabilityCards: CapabilityCard[] = [
     part: "BODY",
     small: "THE BODY",
     title: "FRONTEND",
-    text: "What you see and touch. HTML is the skeleton, CSS the skin, JavaScript the muscles that move it — React and TypeScript, with Zod at the boundaries.",
+    text: "On the frontend I focus on the data layer: what the interface needs from the server, and what happens when the answer doesn't arrive as expected. I build with React and TypeScript on Next.js, loading data in Server Components whenever the page allows it, so less code and no secrets reach the browser. Types disappear at runtime, so I validate server responses with Zod before they reach a component, and a broken contract shows up as a clear error instead of a blank screen.",
     chips: ["React", "TypeScript", "Next.js", "Zod", "GSAP"],
   },
 ];

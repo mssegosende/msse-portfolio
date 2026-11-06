@@ -60,6 +60,17 @@
   color: rgb(var(--tx) / 0.95);
 }
 
+/* Paragraphs inside a step: the mock's 16 px between paragraphs. */
+.intro + .intro {
+  margin-top: 16px;
+}
+.piano > p {
+  margin: 0;
+}
+.piano > p + p {
+  margin-top: 16px;
+}
+
 /* "Shipping code since 2022": right-aligned on mobile. */
 .since {
   margin-top: 34px;
@@ -190,9 +201,24 @@
     margin-top: 34px;
     font-size: 19px;
   }
+  /* Ø4.1 and Ø4.2 share one grid cell; the one that is off is also hidden
+     once it has faded, so it can't be selected or read under the other. */
+  .swap {
+    display: grid;
+  }
+  .swap > * {
+    grid-area: 1 / 1;
+  }
+  .swap > .reveal:not([data-on="true"]) {
+    visibility: hidden;
+    transition:
+      opacity 0.55s cubic-bezier(0.2, 0.7, 0.2, 1),
+      transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1),
+      visibility 0s 0.55s;
+  }
   .piano {
     max-width: 700px;
-    margin-top: clamp(24px, 8vh, 72px);
+    margin-top: 34px;
     font-size: 17px;
     line-height: 1.7;
   }
@@ -253,6 +279,7 @@
     font-size: 17px;
   }
   .piano {
+    margin-top: 24px;
     font-size: 15.5px;
     line-height: 1.6;
   }
@@ -263,5 +290,11 @@
     margin-top: 6px;
     font-size: 14px;
     line-height: 1.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swap > .reveal:not([data-on="true"]) {
+    transition: none;
   }
 }
