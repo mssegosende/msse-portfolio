@@ -14,11 +14,13 @@ interface Backdrop {
 }
 
 // Values from design/source/desktop/light/scene-{3..5}*.dc.html (1440 x 900).
-// Scene 2 (capabilities) is inside the pinned hero (ScrollScene).
+// Scene 2 (capabilities) is inside the pinned hero (ScrollScene). Every word
+// sits behind its own title, as HUMAN does (María Sol's review): WORK and
+// SIGNAL moved from the mock's right to the left.
 const BACKDROPS: Record<SectionScene, Backdrop> = {
   projects: {
     word: "WORK",
-    wordSide: "right",
+    wordSide: "left",
     softWord: false,
     glow: { x: "50%", y: "58%", w: 1100, h: 700, a: 0.65 },
     shade:
@@ -34,7 +36,7 @@ const BACKDROPS: Record<SectionScene, Backdrop> = {
   },
   contact: {
     word: "SIGNAL",
-    wordSide: "right",
+    wordSide: "left",
     softWord: true,
     glow: { x: "67%", y: "47%", w: 1100, h: 900, a: 0.45 },
   },

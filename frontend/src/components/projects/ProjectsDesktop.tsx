@@ -226,17 +226,17 @@ export const ProjectsDesktop = () => {
       <SectionBackdrop scene="projects" />
 
       <div ref={headRef} className="absolute inset-x-0 top-0 z-[5]">
-        <div className="absolute left-14 top-[52px]">
-          <p className="section-pill">SELECTED WORK</p>
-          <h2 className="section-title mt-4">Projects</h2>
+        {/* One title block: the intro sits a fixed 64px after the title (the
+            mock's x = 640 at 1440), so it stays with it at any width. */}
+        <div className="absolute left-14 top-[52px] flex items-start gap-16">
+          <div className="flex-none">
+            <p className="section-pill">SELECTED WORK</p>
+            <h2 className="section-title mt-4">Projects</h2>
+          </div>
+          <p className="m-0 mt-11 max-w-[400px] font-inter text-[15px] leading-[1.6] text-[#252B31] dark:text-[#C9D0D7]">
+            {PROJECTS_INTRO}
+          </p>
         </div>
-        <p
-          className="absolute top-24 m-0 max-w-[400px] font-inter text-[15px] leading-[1.6] text-[#252B31] dark:text-[#C9D0D7]"
-          // The mock's 44.45 %, but never under the fixed-size title (1280 and narrower).
-          style={{ left: "max(44.45%, 620px)" }}
-        >
-          {PROJECTS_INTRO}
-        </p>
       </div>
 
       <MotionConfig reducedMotion="user">
