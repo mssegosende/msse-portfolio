@@ -1,4 +1,12 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type Ref,
+} from "react";
 import { projectLinks, type ShowcaseProject } from "@/data/projectsData";
 import { Num } from "../Num";
 import s from "./projects.module.css";
@@ -92,9 +100,13 @@ export const CardText = ({
       <div className={s.num} style={{ marginTop: t.titleTop, fontSize: t.num }}>
         <Num value={project.num} />
       </div>
-      <h3 className={s.name} style={{ marginTop: t.nameTop, fontSize: t.name }}>
-        {project.name}
-      </h3>
+      <FitName
+        as="h3"
+        name={project.name}
+        size={t.name}
+        className={s.name}
+        style={{ marginTop: t.nameTop }}
+      />
       {project.status && (
         <div className={s.status} style={{ marginTop: t.statusTop, fontSize: t.status }}>
           {project.status}
@@ -121,6 +133,67 @@ export const CardText = ({
         ))}
       </ul>
     </>
+  );
+};
+
+/**
+ * A project name that never loses a letter: it wraps between words, and where
+ * one word is still wider than its column (a narrow phone, a long name) its
+ * font steps down until the word fits, down to half its size.
+ */
+export const FitName = ({
+  name,
+  size,
+  as: Tag = "span",
+  className,
+  style,
+}: {
+  name: string;
+  size: number;
+  as?: "h3" | "span";
+  className?: string;
+  style?: CSSProperties;
+}) => {
+  const ref = useRef<HTMLElement>(null);
+  const [fit, setFit] = useState(size);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    let width = -1;
+    const measure = (force = false) => {
+      // Only a new column width (or new fonts) changes the fit; the steps
+      // below change the height, which must not measure again.
+      if (!force && el.clientWidth === width) return;
+      width = el.clientWidth;
+      let next = size;
+      el.style.fontSize = `${next}px`;
+      while (el.scrollWidth > el.clientWidth + 0.5 && next > size / 2) {
+        next = Math.max(size / 2, next - 0.5);
+        el.style.fontSize = `${next}px`;
+      }
+      setFit(next);
+    };
+    measure(true);
+    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(() => measure());
+    ro?.observe(el);
+    let live = true;
+    void document.fonts?.ready.then(() => live && measure(true));
+    return () => {
+      live = false;
+      ro?.disconnect();
+    };
+  }, [size, name]);
+
+  return (
+    <Tag
+      ref={ref as Ref<never>}
+      className={className}
+      style={{ ...style, fontSize: fit }}
+      data-testid="project-name"
+    >
+      {name}
+    </Tag>
   );
 };
 

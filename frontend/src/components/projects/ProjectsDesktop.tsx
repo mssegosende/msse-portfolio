@@ -11,7 +11,7 @@ import { SectionBackdrop } from "../SectionBackdrop";
 import { Num } from "../Num";
 import { seekToStart } from "./clip";
 import { GifPlayer } from "./GifPlayer";
-import { CardText, ProjectFrame, ScrollText } from "./ProjectCard";
+import { CardText, FitName, ProjectFrame, ScrollText } from "./ProjectCard";
 import s from "./projects.module.css";
 
 const N = PROJECTS.length;
@@ -141,9 +141,12 @@ const Folder = ({
     <span aria-hidden="true" className={s.folderEdge} />
     <span aria-hidden="true" className={s.folderFlap} />
     <span aria-hidden="true" className={s.folderLabel}>
-      <span className={s.folderName} style={{ display: "block" }}>
-        {project.name}
-      </span>
+      <FitName
+        name={project.name}
+        size={14}
+        className={s.folderName}
+        style={{ display: "block" }}
+      />
       <span className={s.folderMeta} style={{ display: "block" }}>
         <Num value={project.num} /> · GIF
       </span>

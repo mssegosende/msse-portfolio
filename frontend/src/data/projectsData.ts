@@ -3,11 +3,12 @@
 // Marvel Characters use real recordings (Ethos and Marvel ~22 s, Marvel its
 // search and filters stretch; Polaris 18.5 s, the whole recording; Lynx
 // 17.6 s, without the full-width conclusions the 16:10 crop would cut; Blaze
-// 24.7 s, the whole recording as María Sol asked, cropped from the left so
-// the editor's sidebar stays whole; the landing's full-width wordmark loses
-// its E to the crop), as 16:10 H.264 seamless loops (0.6 s crossfade, no
-// audio) + a poster frame at `startAt`; Alphecca is still an abstract
-// placeholder: swap it for a screen recording cut the same way.
+// 24.7 s, the whole recording as María Sol asked: the landing scaled to its
+// full width so the edge-to-edge BLAZE wordmark keeps every letter, the
+// editor cropped from the left so its sidebar stays whole), as 16:10 H.264
+// seamless loops (0.6 s crossfade, no audio) + a poster frame at `startAt`;
+// Alphecca is still an abstract placeholder: swap it for a screen recording
+// cut the same way.
 
 export interface ShowcaseProject {
   id: string;

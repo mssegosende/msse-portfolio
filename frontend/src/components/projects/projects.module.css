@@ -294,6 +294,7 @@
 }
 .track {
   flex: 1;
+  min-width: 24px;
   height: 2px;
   background: rgba(255, 255, 255, 0.25);
 }
@@ -302,12 +303,16 @@
   height: 100%;
   background: #fff;
 }
+/* A long name wraps (between words) instead of running off the player. */
 .next {
+  flex: 0 1 auto;
+  min-width: 0;
   font-family: "JetBrains Mono", monospace;
   font-size: 10px;
   letter-spacing: 0.1em;
+  line-height: 1.35;
+  text-align: right;
   color: rgba(255, 255, 255, 0.85);
-  white-space: nowrap;
 }
 .compact .controls {
   gap: 10px;
