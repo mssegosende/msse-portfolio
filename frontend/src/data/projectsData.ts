@@ -1,13 +1,13 @@
 // Scene 3 projects. Copy: design/projects-copy.md (used exactly as written).
-// `media`: the looping clip in the GIF player. Blaze, Lynx, Ethos and Marvel
-// Characters use real recordings (Ethos and Marvel ~22 s, Marvel its search
-// and filters stretch; Lynx 17.6 s, without the full-width conclusions the
-// 16:10 crop would cut; Blaze 24.7 s, the whole recording as María Sol asked,
-// cropped from the left so the editor's sidebar stays whole; the landing's
-// full-width wordmark loses its E to the crop), as 16:10 H.264 seamless loops
-// (0.6 s crossfade, no audio) + a poster frame at `startAt`; Alphecca and
-// Polaris are still abstract placeholders: swap them for screen recordings
-// cut the same way.
+// `media`: the looping clip in the GIF player. Blaze, Polaris, Lynx, Ethos and
+// Marvel Characters use real recordings (Ethos and Marvel ~22 s, Marvel its
+// search and filters stretch; Polaris 18.5 s, the whole recording; Lynx
+// 17.6 s, without the full-width conclusions the 16:10 crop would cut; Blaze
+// 24.7 s, the whole recording as María Sol asked, cropped from the left so
+// the editor's sidebar stays whole; the landing's full-width wordmark loses
+// its E to the crop), as 16:10 H.264 seamless loops (0.6 s crossfade, no
+// audio) + a poster frame at `startAt`; Alphecca is still an abstract
+// placeholder: swap it for a screen recording cut the same way.
 
 export interface ShowcaseProject {
   id: string;
@@ -30,9 +30,9 @@ export interface ShowcaseProject {
   /**
    * Seconds into the clip where it starts (the poster is that frame), so
    * clips playing side by side are never in sync: every project its own
-   * offset (Marvel Characters 0, Lynx 5, Ethos 10, Blaze 14, the placeholders
-   * 30, 40; a new one takes a free value). Wrapped into the clip's length, so
-   * the 8 s placeholders already differ; keep the poster at the same frame.
+   * offset (Marvel Characters 0, Lynx 5, Polaris 7, Ethos 10, Blaze 14, the
+   * Alphecca placeholder 30; a new one takes a free value). Wrapped into the
+   * clip's length; keep the poster at the same frame.
    */
   startAt?: number;
   /** Fallback length when the clip doesn't report a duration (MediaRecorder webm). */
@@ -104,9 +104,10 @@ export const showcaseProjects: ShowcaseProject[] = [
     ],
     codeUrl: "",
     liveUrl: "",
-    media: "/projects/polaris.webm",
-    startAt: 40,
-    seconds: 8,
+    media: "/projects/polaris.mp4",
+    poster: "/projects/polaris.jpg",
+    startAt: 7,
+    seconds: 18.5,
     art: art(300, "40% 70%", "78% 24%"),
   },
   {
