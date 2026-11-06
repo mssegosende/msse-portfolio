@@ -1,27 +1,61 @@
-import { useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { profile, manifesto } from "../data/portfolioData";
 import { useMediaQuery } from "../hooks/useMediaQuery";
-import { useSectionStep } from "../hooks/useSectionStep";
+import { useSectionProgress, useSectionStep } from "../hooks/useSectionStep";
 import { SectionBackdrop } from "./SectionBackdrop";
 import { Num } from "./Num";
 import s from "./About.module.css";
 
 const STEPS = 3;
 
+// Desktop reveal, on the section's progress (María Sol's review). The index
+// splits the section in thirds: Ø4.1 brings paragraphs 1 and 2, Ø4.2 the
+// paragraphs 3 and 4, Ø4.3 the right column; then about one screen of hold
+// before Contact (the section's height leaves it).
+const PARA_AT = [0, 1 / 6, 1 / 3, 1 / 2];
+const RIGHT_AT = 2 / 3;
+
+const PARAGRAPHS = [
+  ...profile.bio.map((text) => ({ text, kind: "bio" as const })),
+  ...profile.story.map((text) => ({ text, kind: "story" as const })),
+];
+
 /**
  * Scene 4 · WHO (design/source/{desktop,mobile}/light/scene-4-about.dc.html).
- * Desktop: the section pins for three steps — the left column first, complete
- * (Ø4.1 the text, Ø4.2 the story in its place), then the right column, complete
- * (Ø4.3: "since 2022", then the principles). Mobile: one column, all shown.
+ * Desktop: the section pins while its four paragraphs appear one by one in a
+ * single column and stay; when they no longer fit, the earlier ones slide up
+ * and dim. Only after the fourth does the right column come in ("since 2022",
+ * then the principles), with the text still there. Mobile: one column, all shown.
  */
 export const About = () => {
   const ref = useRef<HTMLElement>(null);
   const step = useSectionStep(ref, STEPS);
+  const progress = useSectionProgress(ref);
   const desktop = useMediaQuery("(min-width: 1024px)");
-  // Mobile shows everything once the section is reached.
-  const on = (n: number) => step >= (desktop ? n : 0);
+  const reached = step >= 0;
+  const shownParas = desktop ? PARA_AT.filter((at) => progress >= at).length : reached ? 4 : 0;
+  const rightOn = desktop ? progress >= RIGHT_AT : reached;
   const since = profile.stats[0];
   const shown = Math.max(step, 0) + 1;
+
+  // Desktop: how far the paragraphs slide up so the newest one shows whole.
+  const windowRef = useRef<HTMLDivElement>(null);
+  const stackRef = useRef<HTMLDivElement>(null);
+  const [lift, setLift] = useState(0);
+  useLayoutEffect(() => {
+    const win = windowRef.current;
+    const stack = stackRef.current;
+    if (!desktop || !win || !stack) {
+      setLift(0);
+      return undefined;
+    }
+    const measure = () => setLift(Math.max(0, Math.ceil(stack.scrollHeight - win.clientHeight)));
+    measure();
+    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    ro?.observe(win);
+    ro?.observe(stack);
+    return () => ro?.disconnect();
+  }, [desktop, shownParas]);
 
   return (
     <section ref={ref} id="about" data-testid="about-section" className={s.section}>
@@ -29,7 +63,7 @@ export const About = () => {
         <SectionBackdrop scene="about" />
 
         <div className={s.left}>
-          <div className={s.reveal} data-on={on(0)}>
+          <div className={s.reveal} data-on={reached}>
             <p className="section-pill">
               <span className="lg:hidden">
                 <Num value="4" /> ·&nbsp;
@@ -43,34 +77,46 @@ export const About = () => {
               machine
             </h2>
           </div>
-          {/* Desktop: Ø4.2's story takes the place of Ø4.1's text (same spot,
-              one at a time, so the longer copy clears the dock). Mobile: both. */}
-          <div className={s.swap}>
-            <div className={s.reveal} data-on={desktop ? step === 0 : on(0)}>
-              {profile.bio.map((para, i) => (
-                <p key={i} className={s.intro}>
-                  {para}
+          <div
+            ref={windowRef}
+            className={s.textWindow}
+            data-lifted={desktop && lift > 0}
+            data-testid="about-text"
+          >
+            <div
+              ref={stackRef}
+              className={s.textStack}
+              style={desktop ? { transform: `translateY(${-lift}px)` } : undefined}
+            >
+              {PARAGRAPHS.map((p, i) => (
+                <p
+                  key={i}
+                  className={`${s.reveal} ${s.para} ${p.kind === "bio" ? s.intro : s.story}`}
+                  data-on={i < shownParas}
+                  data-dim={desktop && lift > 0 && i < shownParas - 1}
+                  data-testid={`about-paragraph-${i + 1}`}
+                >
+                  {p.text}
                 </p>
-              ))}
-            </div>
-            <div className={`${s.reveal} ${s.piano}`} data-on={on(1)}>
-              {profile.story.map((para, i) => (
-                <p key={i}>{para}</p>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Nothing here shows while the left text is being read (Ø4.1–Ø4.2). */}
+        {/* Nothing here shows until the fourth paragraph is out. */}
         <div className={s.right}>
           {since && (
-            <div className={`${s.reveal} ${s.since}`} data-on={on(2)} data-testid="about-stat-code">
+            <div
+              className={`${s.reveal} ${s.slow} ${s.since}`}
+              data-on={rightOn}
+              data-testid="about-stat-code"
+            >
               <div className={s.sinceLabel}>{since.label}</div>
               <div className={s.year}>{since.value}</div>
             </div>
           )}
 
-          <div aria-hidden="true" className={`${s.reveal} ${s.accent}`} data-on={on(2)}>
+          <div aria-hidden="true" className={`${s.reveal} ${s.accent}`} data-on={rightOn}>
             <span />
             <span />
           </div>
@@ -80,9 +126,9 @@ export const About = () => {
               <article
                 key={p.num}
                 data-testid={`manifesto-chapter-${p.num}`}
-                className={`${s.reveal} ${s.principle}`}
-                data-on={on(2)}
-                style={{ transitionDelay: desktop && on(2) ? `${0.2 + i * 0.15}s` : undefined }}
+                className={`${s.reveal} ${s.slow} ${s.principle}`}
+                data-on={rightOn}
+                style={{ transitionDelay: desktop && rightOn ? `${0.45 + i * 0.3}s` : undefined }}
               >
                 <Num value={p.num} className={s.principleNum} />
                 <div>

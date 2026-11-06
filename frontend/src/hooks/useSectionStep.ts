@@ -6,6 +6,39 @@ import { useEffect, useState, type RefObject } from "react";
 const PROBE = 0.4;
 
 /**
+ * How far into a scrolled section the visitor is, on the index's scale: below
+ * 0 before it is reached, then 0 to 1 over the section's height (step k of n
+ * starts at k / n). For reveals finer than the index's steps.
+ */
+export const useSectionProgress = (ref: RefObject<HTMLElement | null>): number => {
+  const [progress, setProgress] = useState(-1);
+
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const el = ref.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setProgress((window.innerHeight * PROBE - rect.top + 1) / el.offsetHeight);
+    };
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [ref]);
+
+  return progress;
+};
+
+/**
  * The step a scrolled section is on: -1 before it is reached, then 0 to
  * `steps - 1`.
  */

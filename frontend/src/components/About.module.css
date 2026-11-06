@@ -47,27 +47,22 @@
   line-height: 1.08;
 }
 
+/* Mobile: the bio (Ø4.1) and the story (Ø4.2) keep their own sizes. */
 .intro {
   margin: 22px 0 0;
   font-size: 16px;
   line-height: 1.6;
 }
 
-.piano {
+.story {
   margin: 16px 0 0;
   font-size: 15px;
   line-height: 1.65;
   color: rgb(var(--tx) / 0.95);
 }
 
-/* Paragraphs inside a step: the mock's 16 px between paragraphs. */
+/* The mock's 16 px between paragraphs. */
 .intro + .intro {
-  margin-top: 16px;
-}
-.piano > p {
-  margin: 0;
-}
-.piano > p + p {
   margin-top: 16px;
 }
 
@@ -176,11 +171,13 @@
   opacity: 1;
 }
 
-/* ---- Desktop: pinned for three steps, text left, 2022 + principles right ---- */
+/* ---- Desktop: pinned, text left (four paragraphs, one by one), 2022 + principles right ---- */
 @media (min-width: 1024px) {
-  /* Pinned for 1.5 screens; the index splits this height into Ø4.1–Ø4.3. */
+  /* Pinned for four screens; the index splits this height into Ø4.1–Ø4.3:
+     two paragraphs each for Ø4.1 and Ø4.2, the right column at Ø4.3, then
+     about a screen of hold before Contact. */
   .section {
-    height: 250vh;
+    height: 500vh;
   }
   .stage {
     position: sticky;
@@ -197,30 +194,55 @@
     margin-top: 16px;
     line-height: 1.05;
   }
-  .intro {
+  /* The left column runs from the top to above the dock; the text gets
+     whatever the title leaves. */
+  .left {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 52px - 116px);
+  }
+  /* One column for all four paragraphs: one size, one width, about 62
+     characters a line at every window size. */
+  .textWindow {
+    flex: 1 1 auto;
+    min-height: 0;
     margin-top: 34px;
-    font-size: 19px;
+    max-width: 30em;
+    overflow: hidden;
+    /* 18 px at 1440 wide, 21 at 1920, up to 22 on the widest. */
+    font-size: clamp(16px, 0.6vw + 9.5px, 22px);
   }
-  /* Ø4.1 and Ø4.2 share one grid cell; the one that is off is also hidden
-     once it has faded, so it can't be selected or read under the other. */
-  .swap {
-    display: grid;
+  /* Once the earlier paragraphs slide up, they fade out under the title. */
+  .textWindow[data-lifted="true"] {
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 56px);
+    mask-image: linear-gradient(180deg, transparent 0, #000 56px);
   }
-  .swap > * {
-    grid-area: 1 / 1;
+  .textStack {
+    transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
-  .swap > .reveal:not([data-on="true"]) {
-    visibility: hidden;
-    transition:
-      opacity 0.55s cubic-bezier(0.2, 0.7, 0.2, 1),
-      transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1),
-      visibility 0s 0.55s;
+  .para {
+    margin: 0;
+    font-size: 1em;
+    line-height: 1.65;
+    color: rgb(var(--tx));
   }
-  .piano {
-    max-width: 700px;
-    margin-top: 34px;
-    font-size: 17px;
-    line-height: 1.7;
+  .para + .para {
+    margin-top: 1em;
+  }
+  /* A paragraph takes room only once it is out, so the slide measures what shows. */
+  .para:not([data-on="true"]) {
+    display: none;
+  }
+  .para[data-on="true"] {
+    animation: para-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+    transition: opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .para[data-dim="true"] {
+    opacity: 0.42;
+  }
+  /* The right column comes in slower than the text. */
+  .slow {
+    transition-duration: 1.2s;
   }
   .since {
     margin-top: clamp(36px, 11vh, 98px);
@@ -274,13 +296,14 @@
   .title {
     font-size: 52px;
   }
-  .intro {
-    margin-top: 24px;
-    font-size: 17px;
+  .left {
+    height: calc(100vh - 40px - 108px);
   }
-  .piano {
+  .textWindow {
     margin-top: 24px;
-    font-size: 15.5px;
+    font-size: 16px;
+  }
+  .para {
     line-height: 1.6;
   }
   .principleTitle {
@@ -293,8 +316,17 @@
   }
 }
 
+@keyframes para-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .swap > .reveal:not([data-on="true"]) {
+  .textStack,
+  .para[data-on="true"] {
     transition: none;
+    animation: none;
   }
 }
