@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { showcaseProjects as PROJECTS } from "@/data/projectsData";
+import { PROJECTS_INTRO, showcaseProjects as PROJECTS } from "@/data/projectsData";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { SectionBackdrop } from "../SectionBackdrop";
 import { Num } from "../Num";
 import { GifPlayer } from "./GifPlayer";
-import { CardText, Flow, ProjectFrame } from "./ProjectCard";
+import { CardText, ProjectFrame } from "./ProjectCard";
 import s from "./projects.module.css";
 
 const GAP = 12;
@@ -67,8 +67,7 @@ export const ProjectsCarousel = () => {
         </p>
         <h2 className="section-title mt-3">Projects</h2>
         <p className="mt-3 font-inter text-[13.5px] leading-[1.55] text-[#252B31]">
-          Things I build to learn in public — each one a problem I wanted solved properly, from the
-          data model up to the interface.
+          {PROJECTS_INTRO}
         </p>
       </div>
 
@@ -92,11 +91,7 @@ export const ProjectsCarousel = () => {
               aria-label={`${i + 1} of ${PROJECTS.length}: ${p.name}`}
               data-testid={`project-card-${p.id}`}
             >
-              <ProjectFrame
-                tabLabel={i === 0 ? "Read the case study ↗" : "Case study ↗"}
-                href={p.caseStudyUrl || undefined}
-                contentStyle={{ padding: "18px 12px 52px" }}
-              >
+              <ProjectFrame project={p} contentStyle={{ padding: "18px 12px 52px" }}>
                 <GifPlayer
                   compact
                   project={p}
@@ -106,7 +101,6 @@ export const ProjectsCarousel = () => {
                   onToggle={() => setUserPaused(!paused)}
                   onEnded={reduced ? undefined : advance}
                 />
-                {p.flow && <Flow steps={p.flow} compact />}
                 <CardText project={p} format="phone" tagsTop={16} />
               </ProjectFrame>
             </article>

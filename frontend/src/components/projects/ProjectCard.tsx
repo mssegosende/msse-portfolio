@@ -1,5 +1,5 @@
-import { Fragment, type CSSProperties, type ReactNode } from "react";
-import type { ShowcaseProject } from "@/data/projectsData";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { projectLinks, type ShowcaseProject } from "@/data/projectsData";
 import { Num } from "../Num";
 import s from "./projects.module.css";
 
@@ -10,7 +10,6 @@ const TYPE: Record<
   CardFormat,
   {
     tag: CSSProperties;
-    tagGap: number;
     titleTop: number;
     name: number;
     num: number;
@@ -26,7 +25,6 @@ const TYPE: Record<
 > = {
   featured: {
     tag: {},
-    tagGap: 10,
     titleTop: 24,
     name: 40,
     num: 30,
@@ -40,7 +38,6 @@ const TYPE: Record<
   },
   row: {
     tag: { padding: "6px 11px", fontSize: 10 },
-    tagGap: 8,
     titleTop: 12,
     name: 24,
     num: 20,
@@ -54,7 +51,6 @@ const TYPE: Record<
   },
   phone: {
     tag: { padding: "6px 10px", fontSize: 9.5 },
-    tagGap: 8,
     titleTop: 14,
     name: 24,
     num: 18,
@@ -69,7 +65,7 @@ const TYPE: Record<
   },
 };
 
-/** Tags, name + Ø number, status, text and chips. */
+/** Subtitle label, name + Ø number, status, paragraphs and tag chips. */
 export const CardText = ({
   project,
   format,
@@ -82,12 +78,10 @@ export const CardText = ({
   const t = TYPE[format];
   return (
     <>
-      <div style={{ marginTop: tagsTop, display: "flex", flexWrap: "wrap", gap: t.tagGap }}>
-        {project.tags.map((tag) => (
-          <span key={tag} className={s.tag} style={t.tag}>
-            {tag}
-          </span>
-        ))}
+      <div style={{ marginTop: tagsTop, display: "flex" }}>
+        <span className={s.tag} style={t.tag}>
+          {project.subtitle}
+        </span>
       </div>
       <div
         style={{
@@ -110,15 +104,17 @@ export const CardText = ({
           {project.status}
         </div>
       )}
-      <p className={s.body} style={{ marginTop: t.bodyTop, ...t.body }}>
-        {project.body}
-      </p>
+      {project.paragraphs.map((p) => (
+        <p key={p.slice(0, 32)} className={s.body} style={{ marginTop: t.bodyTop, ...t.body }}>
+          {p}
+        </p>
+      ))}
       <ul
         className={s.chips}
         style={{ marginTop: t.chipsTop, gap: t.chipGap, padding: 0, listStyle: "none" }}
         aria-label="Stack"
       >
-        {project.chips.map((c) => (
+        {project.tags.map((c) => (
           <li
             key={c}
             className={s.chip}
@@ -132,59 +128,67 @@ export const CardText = ({
   );
 };
 
-/** PR DIFF → AGENTS · RULES → RATING → < THRESHOLD · HUMAN */
-export const Flow = ({ steps, compact = false }: { steps: string[]; compact?: boolean }) => (
-  <div
-    className={s.flow}
-    style={compact ? { marginTop: 12, gap: 5, fontSize: 9, letterSpacing: "0.04em" } : undefined}
-    aria-label={`Flow: ${steps.join(", then ")}`}
-    role="img"
-  >
-    {steps.map((step, i) => {
-      const last = i === steps.length - 1;
-      const cls = last ? s.flowEnd : i === steps.length - 2 ? s.flowStrong : "";
-      return (
-        <Fragment key={step}>
-          {i > 0 && (
-            <span className={s.flowArrow} aria-hidden="true">
-              →
-            </span>
-          )}
-          <span className={cls} style={compact ? { padding: "5px 7px" } : undefined}>
-            {step}
-          </span>
-        </Fragment>
+/**
+ * A text column that scrolls inside its card when the copy is longer than
+ * the card (fonts never shrink, text is never cut), with a soft fade at the
+ * bottom while there is more below.
+ */
+export const ScrollText = ({ children, style }: { children: ReactNode; style?: CSSProperties }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [state, setState] = useState({ overflows: false, more: false });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const update = () => {
+      const overflows = el.scrollHeight - el.clientHeight > 1;
+      const more = overflows && el.scrollHeight - el.scrollTop - el.clientHeight > 2;
+      setState((cur) =>
+        cur.overflows === overflows && cur.more === more ? cur : { overflows, more },
       );
-    })}
-  </div>
-);
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    // The box and its content both change size (fonts loading, resize).
+    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+    ro?.observe(el);
+    if (el.firstElementChild) ro?.observe(el.firstElementChild);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro?.disconnect();
+    };
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`${s.scrollText} ${state.more ? s.fade : ""}`}
+      style={style}
+      // Lenis leaves the wheel to this box only when it actually scrolls.
+      data-lenis-prevent={state.overflows ? "" : undefined}
+      tabIndex={state.overflows ? 0 : undefined}
+      data-overflows={state.overflows ? "true" : undefined}
+    >
+      <div>{children}</div>
+    </div>
+  );
+};
 
 /**
  * The black framed card (CARD-SPEC): outline, graphite bezel, gap, dark panel
- * and the bottom tab `MSSE:// │ label`. The tab is a link only with an href.
+ * and the bottom tab `MSSE:// │ Code ↗ Live ↗`. Links without a URL are not
+ * shown; with none, the tab carries only the mark.
  */
 export const ProjectFrame = ({
-  tabLabel,
-  href,
+  project,
   contentStyle,
   children,
 }: {
-  tabLabel: string;
-  href?: string;
+  project: ShowcaseProject;
   contentStyle?: CSSProperties;
   children: ReactNode;
 }) => {
-  const tab = (
-    <>
-      <span aria-hidden="true" className={s.tabOutline} />
-      <span aria-hidden="true" className={s.tabBezel} />
-      <span className={s.tabRow}>
-        <span className={s.tabMark}>MSSE://</span>
-        <span aria-hidden="true" className={s.tabDivider} />
-        <span className={s.tabLabel}>{tabLabel}</span>
-      </span>
-    </>
-  );
+  const links = projectLinks(project);
   return (
     <>
       <div aria-hidden="true" className={s.outline} />
@@ -194,19 +198,28 @@ export const ProjectFrame = ({
       <div className={s.content} style={contentStyle}>
         {children}
       </div>
-      {href ? (
-        <a
-          className={s.tab}
-          href={href}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {tab}
-        </a>
-      ) : (
-        <div className={s.tab}>{tab}</div>
-      )}
+      <div className={s.tab}>
+        <span aria-hidden="true" className={s.tabOutline} />
+        <span aria-hidden="true" className={s.tabBezel} />
+        <span className={s.tabRow}>
+          <span className={s.tabMark}>MSSE://</span>
+          {links.length > 0 && <span aria-hidden="true" className={s.tabDivider} />}
+          {links.map((l) => (
+            <a
+              key={l.label}
+              className={s.tabLink}
+              href={l.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`${project.name}: ${l.label} (opens in a new tab)`}
+              data-testid={`project-${l.label.toLowerCase()}-link-${project.id}`}
+            >
+              {l.label} ↗
+            </a>
+          ))}
+        </span>
+      </div>
     </>
   );
 };

@@ -154,10 +154,17 @@
   height: 18px;
   background: rgba(233, 237, 241, 0.6);
 }
-.tabLabel {
+.tabLink {
   font-family: "Inter", sans-serif;
   font-size: 13px;
   font-weight: 500;
+  color: inherit;
+  text-decoration: none;
+}
+.tabLink:hover,
+.tabLink:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .sm .tabRow {
   gap: 10px;
@@ -168,13 +175,8 @@
 .sm .tabDivider {
   height: 15px;
 }
-.sm .tabLabel {
+.sm .tabLink {
   font-size: 12px;
-}
-a.tab:hover .tabLabel,
-a.tab:focus-visible .tabLabel {
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 /* ---- Card type ---- */
@@ -188,9 +190,12 @@ a.tab:focus-visible .tabLabel {
   font-family: "JetBrains Mono", monospace;
   font-size: 10.5px;
   letter-spacing: 0.14em;
+  line-height: 1.45;
+  text-transform: uppercase;
   color: #fff;
 }
 .name {
+  min-width: 0;
   margin: 0;
   font-family: "Michroma", sans-serif;
   font-weight: 400;
@@ -222,36 +227,6 @@ a.tab:focus-visible .tabLabel {
   color: #e9edf1;
 }
 
-/* Review flow strip (Arcturus) */
-.flow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10.5px;
-  letter-spacing: 0.06em;
-  color: #e9edf1;
-}
-.flow > span {
-  padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-.flow > .flowArrow {
-  padding: 0;
-  border: 0;
-  color: #8f98a2;
-}
-.flow > .flowStrong {
-  border-color: rgba(255, 255, 255, 0.6);
-}
-.flow > .flowEnd {
-  border-color: #e9edf1;
-  background: #e9edf1;
-  color: #0b0d10;
-}
-
 /* ---- GIF player ---- */
 
 .player {
@@ -276,17 +251,6 @@ a.tab:focus-visible .tabLabel {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-.caption {
-  position: absolute;
-  left: 18px;
-  top: 16px;
-  right: 18px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10.5px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.8);
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
 }
 .controls {
   position: absolute;
@@ -338,13 +302,6 @@ a.tab:focus-visible .tabLabel {
   color: rgba(255, 255, 255, 0.75);
   white-space: nowrap;
 }
-.compact .caption {
-  left: 12px;
-  top: 10px;
-  right: 12px;
-  font-size: 9px;
-  line-height: 1.45;
-}
 .compact .controls {
   gap: 10px;
   padding: 16px 10px 8px;
@@ -376,6 +333,7 @@ a.tab:focus-visible .tabLabel {
 
 .folder {
   position: relative;
+  flex: none;
   display: block;
   width: 100%;
   aspect-ratio: 16 / 10;
@@ -498,4 +456,48 @@ a.tab:focus-visible .tabLabel {
 }
 .dotOn {
   background: #14181d;
+}
+
+/* ---- Long copy: the text column scrolls inside the card ---- */
+
+.scrollText {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.scrollText::-webkit-scrollbar {
+  display: none;
+}
+.scrollText:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+.fade {
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 56px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 56px), transparent 100%);
+}
+
+/* ---- Folder row arrows ---- */
+
+.arrow {
+  position: absolute;
+  top: 267px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(20, 24, 29, 0.25);
+  background: rgba(255, 255, 255, 0.7);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 22px;
+  line-height: 1;
+  color: #14181d;
+  cursor: pointer;
+}
+.arrow:hover {
+  background: #fff;
+}
+.arrow:focus-visible {
+  outline: 2px solid #14181d;
+  outline-offset: 2px;
 }

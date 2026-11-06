@@ -102,7 +102,6 @@ export const GifPlayer = ({
           tabIndex={-1}
         />
       )}
-      <span className={s.caption}>{project.caption}</span>
       <div className={s.controls}>
         <button
           type="button"

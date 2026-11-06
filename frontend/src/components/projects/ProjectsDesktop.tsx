@@ -1,19 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, MotionConfig, type Variants } from "framer-motion";
-import { showcaseProjects as PROJECTS, type ShowcaseProject } from "@/data/projectsData";
+import {
+  PROJECTS_INTRO,
+  showcaseProjects as PROJECTS,
+  type ShowcaseProject,
+} from "@/data/projectsData";
 import { SECTIONS } from "@/lib/sections";
 import { useActiveSection } from "@/hooks/useActiveSection";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { SectionBackdrop } from "../SectionBackdrop";
 import { Num } from "../Num";
 import { GifPlayer } from "./GifPlayer";
-import { CardText, Flow, ProjectFrame } from "./ProjectCard";
+import { CardText, ProjectFrame, ScrollText } from "./ProjectCard";
 import s from "./projects.module.css";
 
 const SECTION = SECTIONS.findIndex((x) => x.id === "projects");
 const LAST_STEP = (SECTIONS[SECTION]?.steps ?? 4) - 1;
-const INTRO =
-  "Things I build to learn in public — each one a problem I wanted solved properly, from the data model up to the interface.";
+const N = PROJECTS.length;
+const VISIBLE = 3; // folders on screen in the row
 
 // The mock's layout (scene-3-projects-*.dc.html) at 1440 x 900: cards drawn in
 // their own units and zoomed by 0.88. The whole card area scales with the
@@ -39,20 +43,45 @@ const useStageScale = () => {
   return k;
 };
 
-// The incoming card rises over the outgoing one, which then sinks away.
-// `custom` (on AnimatePresence): whether the next view is the featured card.
-const riseVariants: Variants = {
+/** AnimatePresence `custom`: what the leaving cards should do. */
+interface Leave {
+  /** The next view is the featured card. */
+  toFeatured: boolean;
+  /** Row moved by an arrow: +1 next, -1 previous, 0 not a move. */
+  dir: number;
+}
+
+const sink = (delay: number) => ({
+  opacity: 0,
+  y: -10,
+  scale: 0.98,
+  zIndex: 1,
+  transition: { duration: 0.45, ease: "easeOut" as const, delay },
+});
+
+// The incoming featured card rises over the outgoing one, which then sinks away.
+const featuredVariants: Variants = {
   hidden: { opacity: 0, y: 40, zIndex: 2 },
   show: { opacity: 1, y: 0, zIndex: 2, transition: { duration: 0.65, ease: EASE, delay: 0.15 } },
-  gone: (nextIsFeatured: boolean) => ({
-    opacity: 0,
-    y: -10,
-    scale: 0.98,
-    zIndex: 1,
-    transition: { duration: 0.45, ease: "easeOut", delay: nextIsFeatured ? 0.4 : 0 },
-  }),
+  gone: (c: Leave) => sink(c.toFeatured ? 0.4 : 0),
 };
-const rise = { variants: riseVariants, initial: "hidden", animate: "show", exit: "gone" };
+
+// Row cards sit at x = slot * pitch. A step adds one rising card; an arrow
+// slides the row by one folder, the new one coming in from that side.
+const rowVariants: Variants = {
+  hidden: ({ slot, dir }: { slot: number; dir: number }) =>
+    dir
+      ? { opacity: 0, x: (dir > 0 ? VISIBLE : -1) * ROW.pitch, y: 0, zIndex: 2 }
+      : { opacity: 0, x: slot * ROW.pitch, y: 40, zIndex: 2 },
+  gone: (c: Leave) =>
+    c.dir && !c.toFeatured
+      ? {
+          opacity: 0,
+          x: (c.dir > 0 ? -1 : VISIBLE) * ROW.pitch,
+          transition: { duration: 0.45, ease: EASE },
+        }
+      : sink(c.toFeatured ? 0.4 : 0),
+};
 
 const Folder = ({
   project,
@@ -98,8 +127,10 @@ const Folder = ({
 
 /**
  * Desktop scene 3: a pinned stage. Ø3.1 is the featured reel (each clip plays
- * and hands the spot to the next project); Ø3.2–Ø3.4 fill a row of folders,
- * one per step. Picking a folder sends that project to the featured spot.
+ * and hands the spot to the next project, through all of them); Ø3.2–Ø3.4
+ * fill a row of three folders, one per step. ‹ › move the row through the
+ * projects one folder at a time, wrapping. Picking a folder sends that
+ * project to the featured spot.
  */
 export const ProjectsDesktop = () => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
@@ -131,14 +162,30 @@ export const ProjectsDesktop = () => {
   const [hoverView, setHoverView] = useState<string | null>(null);
   const hovered = hoverView === view;
 
-  const project = PROJECTS[f]!;
-  const next = PROJECTS[(f + 1) % PROJECTS.length]!;
-  const advance = useCallback(() => setF((i) => (i + 1) % PROJECTS.length), []);
-  const playing = onScreen && showFeatured && !paused && !hovered;
-  const row = showFeatured ? [] : PROJECTS.slice(1, step + 1);
+  // The row: the first visible project (ring index) and the last arrow move,
+  // which only counts for the step it was made on.
+  const [offset, setOffset] = useState(1);
+  const [move, setMove] = useState<{ dir: number; step: number } | null>(null);
+  const dir = move && move.step === step ? move.dir : 0;
+  const shift = (d: number) => {
+    setOffset((o) => (o + d + N) % N);
+    setMove({ dir: d, step });
+  };
 
-  const pick = (i: number) => {
-    setF(i);
+  const project = PROJECTS[f]!;
+  const next = PROJECTS[(f + 1) % N]!;
+  const advance = useCallback(() => setF((i) => (i + 1) % N), []);
+  const playing = onScreen && showFeatured && !paused && !hovered;
+  const row = showFeatured
+    ? []
+    : Array.from({ length: Math.min(step, VISIBLE) }, (_, slot) => {
+        const ring = (offset + slot) % N;
+        return { slot, ring, p: PROJECTS[ring]! };
+      });
+  const leave: Leave = { toFeatured: showFeatured, dir };
+
+  const pick = (ring: number) => {
+    setF(ring);
     setPickedAt(step);
   };
 
@@ -164,7 +211,7 @@ export const ProjectsDesktop = () => {
           className="absolute top-24 z-[5] m-0 max-w-[400px] font-inter text-[15px] leading-[1.6] text-[#252B31]"
           style={{ left: "44.45%" }}
         >
-          {INTRO}
+          {PROJECTS_INTRO}
         </p>
 
         <div
@@ -192,12 +239,38 @@ export const ProjectsDesktop = () => {
                   ← ALL PROJECTS
                 </button>
               )}
-              <AnimatePresence custom={showFeatured}>
+              {!showFeatured && (
+                <>
+                  <button
+                    type="button"
+                    className={s.arrow}
+                    style={{ left: -66 }}
+                    onClick={() => shift(-1)}
+                    aria-label="Previous project"
+                    data-testid="projects-row-prev"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    className={s.arrow}
+                    style={{ left: FEATURED.width + 16 }}
+                    onClick={() => shift(1)}
+                    aria-label="Next project"
+                    data-testid="projects-row-next"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
+              <AnimatePresence custom={leave}>
                 {showFeatured && (
                   <motion.article
                     key={`featured-${project.id}`}
-                    {...rise}
-                    custom={showFeatured}
+                    variants={featuredVariants}
+                    initial="hidden"
+                    animate="show"
+                    exit="gone"
                     className={`${s.frame} ${s.lg}`}
                     style={{ position: "absolute", left: 0, ...FEATURED }}
                     onMouseEnter={() => setHoverView(view)}
@@ -206,21 +279,21 @@ export const ProjectsDesktop = () => {
                     data-testid="project-featured"
                   >
                     <ProjectFrame
-                      tabLabel="Read the case study ↗"
-                      href={project.caseStudyUrl || undefined}
+                      project={project}
                       contentStyle={{
                         height: "calc(100% - 28px)",
                         boxSizing: "border-box",
                         padding: "36px 40px 64px",
                         display: "grid",
                         gridTemplateColumns: "minmax(0, 0.9fr) minmax(0, 1.2fr)",
+                        gridTemplateRows: "minmax(0, 1fr)",
                         gap: 40,
                         alignItems: "center",
                       }}
                     >
-                      <div>
+                      <ScrollText style={{ maxHeight: "100%" }}>
                         <CardText project={project} format="featured" />
-                      </div>
+                      </ScrollText>
                       <div>
                         <GifPlayer
                           key={project.id}
@@ -231,38 +304,51 @@ export const ProjectsDesktop = () => {
                           onToggle={() => setUserPaused(!paused)}
                           onEnded={reduced ? undefined : advance}
                         />
-                        {project.flow && <Flow steps={project.flow} />}
                       </div>
                     </ProjectFrame>
                   </motion.article>
                 )}
-                {row.map((p, i) => (
+                {row.map(({ slot, ring, p }) => (
                   <motion.article
                     key={`row-${p.id}`}
-                    {...rise}
-                    custom={showFeatured}
+                    variants={rowVariants}
+                    custom={{ slot, dir }}
+                    initial="hidden"
+                    animate={{
+                      opacity: 1,
+                      x: slot * ROW.pitch,
+                      y: 0,
+                      zIndex: 2,
+                      transition: dir
+                        ? { duration: 0.45, ease: EASE }
+                        : { duration: 0.65, ease: EASE, delay: 0.15 },
+                    }}
+                    exit="gone"
                     className={`${s.frame} ${s.lg} cursor-pointer`}
                     style={{
                       position: "absolute",
                       top: 0,
-                      left: i * ROW.pitch,
+                      left: 0,
                       width: ROW.width,
                       height: ROW.height,
                     }}
-                    onClick={() => pick(i + 1)}
+                    onClick={() => pick(ring)}
                     data-testid={`project-card-${p.id}`}
                   >
                     <ProjectFrame
-                      tabLabel="Case study ↗"
-                      href={p.caseStudyUrl || undefined}
+                      project={p}
                       contentStyle={{
                         height: "calc(100% - 28px)",
                         boxSizing: "border-box",
                         padding: "20px 20px 60px",
+                        display: "flex",
+                        flexDirection: "column",
                       }}
                     >
-                      <Folder project={p} onPick={() => pick(i + 1)} reduced={reduced} />
-                      <CardText project={p} format="row" tagsTop={16} />
+                      <Folder project={p} onPick={() => pick(ring)} reduced={reduced} />
+                      <ScrollText style={{ flex: "1 1 auto", minHeight: 0 }}>
+                        <CardText project={p} format="row" tagsTop={16} />
+                      </ScrollText>
                     </ProjectFrame>
                   </motion.article>
                 ))}
