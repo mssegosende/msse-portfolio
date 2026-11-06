@@ -14,7 +14,7 @@ export interface IndexSection {
 export const SECTIONS: IndexSection[] = [
   { id: "hero", num: "1", label: "Hero", steps: 3 },
   { id: "capabilities", num: "2", label: "Capabilities", steps: 3 },
-  { id: "projects", num: "3", label: "Projects", steps: 4 },
+  { id: "projects", num: "3", label: "Projects", steps: 2 },
   { id: "about", num: "4", label: "About", steps: 3 },
   { id: "contact", num: "5", label: "Contact", steps: 3 },
 ];
@@ -69,6 +69,15 @@ export const measureSections = (): (SectionRange | null)[] => {
     if (!el) return null;
     const top = docTop(el);
     const from = top - vh * PROBE;
+    // Scene 3 scrolls normally (no pin): Ø3.1 is the featured card, which the
+    // layout centres on screen when the section top reaches the viewport top;
+    // Ø3.2 centres the folder row. The step changes halfway between the two.
+    const row = s.id === "projects" ? el.querySelector('[data-testid="projects-row"]') : null;
+    if (row instanceof HTMLElement) {
+      const rowTarget = Math.min(maxScroll, docTop(row) + row.offsetHeight / 2 - vh / 2);
+      const targets = [top, Math.max(top + 2, rowTarget)];
+      return { start: from, stepAt: [from, (targets[0]! + targets[1]!) / 2], targets };
+    }
     let to = from + el.offsetHeight;
     // The page can't scroll far enough for the last section's top to cross the
     // probe line for every step, so its steps end at the bottom of the page instead.

@@ -66,7 +66,7 @@ export const ProjectsCarousel = () => {
           &nbsp;· SELECTED WORK
         </p>
         <h2 className="section-title mt-3">Projects</h2>
-        <p className="mt-3 font-inter text-[13.5px] leading-[1.55] text-[#252B31]">
+        <p className="mt-3 font-inter text-[13.5px] leading-[1.55] text-[#252B31] dark:text-[#C9D0D7]">
           {PROJECTS_INTRO}
         </p>
       </div>
@@ -119,12 +119,13 @@ export const ProjectsCarousel = () => {
         })}
       </div>
 
-      <div className="relative z-[6] mx-[18px] flex items-center justify-between font-mono text-[10px] tracking-[0.12em] text-[#14181D]">
+      <div className="relative z-[6] mx-[18px] flex items-center justify-between font-mono text-[10px] tracking-[0.12em] text-[#14181D] dark:text-[#E9EDF1]">
         <span aria-live="polite">
           <span className="font-semibold">
             <Num value={PROJECTS[idx]!.num} />
           </span>{" "}
-          <span className="opacity-55">
+          {/* 0.7, not the mock's 0.55: AA 4.5:1 on the light ground too. */}
+          <span className="opacity-70">
             / <Num value={PROJECTS[PROJECTS.length - 1]!.num} />
           </span>
         </span>

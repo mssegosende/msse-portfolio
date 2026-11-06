@@ -11,6 +11,8 @@ const TYPE: Record<
   {
     tag: CSSProperties;
     titleTop: number;
+    /** Between the Ø number and the name below it. */
+    nameTop: number;
     name: number;
     num: number;
     statusTop: number;
@@ -26,6 +28,7 @@ const TYPE: Record<
   featured: {
     tag: {},
     titleTop: 24,
+    nameTop: 10,
     name: 40,
     num: 30,
     statusTop: 10,
@@ -39,6 +42,7 @@ const TYPE: Record<
   row: {
     tag: { padding: "6px 11px", fontSize: 10 },
     titleTop: 12,
+    nameTop: 6,
     name: 24,
     num: 20,
     statusTop: 6,
@@ -52,6 +56,7 @@ const TYPE: Record<
   phone: {
     tag: { padding: "6px 10px", fontSize: 9.5 },
     titleTop: 14,
+    nameTop: 6,
     name: 24,
     num: 18,
     statusTop: 6,
@@ -83,22 +88,13 @@ export const CardText = ({
           {project.subtitle}
         </span>
       </div>
-      <div
-        style={{
-          marginTop: t.titleTop,
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
-          gap: 12,
-        }}
-      >
-        <h3 className={s.name} style={{ fontSize: t.name }}>
-          {project.name}
-        </h3>
-        <span className={s.num} style={{ fontSize: t.num }}>
-          <Num value={project.num} />
-        </span>
+      {/* The Ø number on its own line, so a name that wraps keeps it clear. */}
+      <div className={s.num} style={{ marginTop: t.titleTop, fontSize: t.num }}>
+        <Num value={project.num} />
       </div>
+      <h3 className={s.name} style={{ marginTop: t.nameTop, fontSize: t.name }}>
+        {project.name}
+      </h3>
       {project.status && (
         <div className={s.status} style={{ marginTop: t.statusTop, fontSize: t.status }}>
           {project.status}

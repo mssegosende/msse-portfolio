@@ -92,6 +92,7 @@ export const GifPlayer = ({
           ref={videoRef}
           className={s.video}
           src={project.media}
+          poster={project.poster}
           muted
           playsInline
           preload="auto"
