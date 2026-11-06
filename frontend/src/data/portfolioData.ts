@@ -53,11 +53,6 @@ export interface CapabilityCard {
   chips: string[];
 }
 
-export interface TerminalLine {
-  type: "cmd" | "out";
-  text: string;
-}
-
 export interface BacklogEntry {
   id: string;
   title: string;
@@ -264,13 +259,6 @@ export const capabilityCards: CapabilityCard[] = [
     text: "What you see and touch. HTML is the skeleton, CSS the skin, JavaScript the muscles that move it — React and TypeScript, with Zod at the boundaries.",
     chips: ["React", "TypeScript", "Next.js", "Zod", "GSAP"],
   },
-];
-
-export const terminalBoot: TerminalLine[] = [
-  { type: "cmd", text: "whoami" },
-  { type: "out", text: "mssegosende — full stack developer & ai engineer" },
-  { type: "cmd", text: "cat availability.txt" },
-  { type: "out", text: "STATUS: OPEN TO OPPORTUNITIES // REMOTE — WORLDWIDE" },
 ];
 
 // ============================================================

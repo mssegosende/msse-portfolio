@@ -1,0 +1,267 @@
+/* Scene 4 · WHO. Values from design/source/{desktop,mobile}/light/scene-4-about.dc.html. */
+
+.section {
+  /* Text colour: #14181D on the light ground; the dark theme keeps its ink. */
+  --tx: 20 24 29;
+  position: relative;
+}
+:global(:root[data-theme="dark"]) .section {
+  --tx: var(--ink);
+}
+
+.stage {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-about);
+  color: rgb(var(--tx));
+  padding: 26px 18px 150px;
+}
+
+.left,
+.right {
+  position: relative;
+  z-index: 5;
+}
+
+/* Rise in (0.55 s, as the mock's .in); data-on comes from the scroll step. */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.55s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal[data-on="true"] {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transform: none;
+    transition: none;
+  }
+}
+
+.title {
+  margin-top: 12px;
+  line-height: 1.08;
+}
+
+.intro {
+  margin: 22px 0 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.piano {
+  margin: 16px 0 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgb(var(--tx) / 0.95);
+}
+
+/* "Shipping code since 2022": right-aligned on mobile. */
+.since {
+  margin-top: 34px;
+  text-align: right;
+}
+.sinceLabel {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.45;
+  color: rgb(var(--tx) / 0.88);
+}
+.year {
+  margin-top: 6px;
+  font-family: "Michroma", sans-serif;
+  font-size: 58px;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  filter: drop-shadow(0 14px 22px rgba(20, 26, 34, 0.14));
+}
+
+/* Accent bar between the text and the principles (mobile only). */
+.accent {
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.accent > span:first-child {
+  width: 44px;
+  height: 3px;
+  background: rgb(var(--tx));
+}
+.accent > span:last-child {
+  flex: 1;
+  height: 1px;
+  background: rgb(var(--tx) / 0.28);
+}
+
+.principle {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 4px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgb(var(--tx) / 0.28);
+}
+.principle:last-child {
+  border-bottom: 0;
+}
+.principleNum {
+  font-family: "Michroma", sans-serif;
+  font-size: 11px;
+  line-height: 1.6;
+  color: rgb(var(--tx) / 0.88);
+}
+.principleTitle {
+  margin: 0;
+  font-family: "Rajdhani", sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.principleText {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgb(var(--tx) / 0.95);
+}
+
+/* Mobile step counter, above the dock. */
+.counter {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 86px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+.counter b {
+  font-weight: 600;
+}
+.counterTotal {
+  opacity: 0.55;
+}
+.bars {
+  display: flex;
+  gap: 6px;
+}
+.bars > span {
+  width: 18px;
+  height: 2px;
+  background: rgb(var(--tx));
+  opacity: 0.25;
+  transition: opacity 0.3s;
+}
+.bars > span[data-on="true"] {
+  opacity: 1;
+}
+
+/* ---- Desktop: pinned for three steps, text left, 2022 + principles right ---- */
+@media (min-width: 1024px) {
+  /* Pinned for 1.5 screens; the index splits this height into Ø4.1–Ø4.3. */
+  .section {
+    height: 250vh;
+  }
+  .stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    /* Right 140: clear of the section index. */
+    padding: 52px 140px 0 56px;
+    display: grid;
+    grid-template-columns: minmax(0, 740fr) minmax(0, 460fr);
+    column-gap: 44px;
+    align-items: start;
+  }
+  .title {
+    margin-top: 16px;
+    line-height: 1.05;
+  }
+  .intro {
+    margin-top: 34px;
+    font-size: 19px;
+  }
+  .piano {
+    max-width: 700px;
+    margin-top: clamp(24px, 8vh, 72px);
+    font-size: 17px;
+    line-height: 1.7;
+  }
+  .since {
+    margin-top: clamp(36px, 11vh, 98px);
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: clamp(16px, 2.9vh, 26px);
+    border-bottom: 1px solid rgb(var(--tx) / 0.28);
+  }
+  .sinceLabel {
+    font-size: 14px;
+    letter-spacing: 0;
+    color: rgb(var(--tx));
+  }
+  .year {
+    margin-top: 0;
+    /* 112 px at 900 tall, smaller on short screens. */
+    font-size: clamp(72px, 12.4vh, 112px);
+  }
+  .accent {
+    display: none;
+  }
+  .principles {
+    margin-top: 16px;
+  }
+  .principle {
+    display: block;
+    padding: clamp(12px, 2.4vh, 22px) 0;
+  }
+  .principleNum {
+    display: none;
+  }
+  .principleTitle {
+    font-size: 17px;
+  }
+  .principleText {
+    margin-top: 8px;
+    font-size: 15.5px;
+  }
+  .counter {
+    display: none;
+  }
+}
+
+/* Short desktop screens (1280 x 720): smaller type so both columns clear the dock. */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .stage {
+    padding-top: 40px;
+  }
+  .title {
+    font-size: 52px;
+  }
+  .intro {
+    margin-top: 24px;
+    font-size: 17px;
+  }
+  .piano {
+    font-size: 15.5px;
+    line-height: 1.6;
+  }
+  .principleTitle {
+    font-size: 15px;
+  }
+  .principleText {
+    margin-top: 6px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}

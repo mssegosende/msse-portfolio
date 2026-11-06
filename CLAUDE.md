@@ -10,6 +10,9 @@ and read exact values from `design/source/**/*.dc.html`.
   (pushing `main` deploys).
 - Change only what the current phase asks. Don't invent visual treatments that
   aren't in the design, and don't remove existing ones that are.
+- The layout in design/screens is fixed. When content changes (more or fewer
+  items, longer text), adapt the data to the existing design; never redesign.
+  If something can't fit without changing the design, ask María Sol first.
 - Never apply a CSS transform to the Spline canvas — framing goes through the
   Spline camera / bot rig. Never add a WebGL context.
 - Respect `prefers-reduced-motion` (no marquee, no auto-rotation/advance).

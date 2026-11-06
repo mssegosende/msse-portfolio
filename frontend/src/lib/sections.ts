@@ -50,8 +50,9 @@ const evenSteps = (from: number, to: number, n: number) =>
 /** Measure every section; null where its element isn't on the page. */
 export const measureSections = (): (SectionRange | null)[] => {
   const vh = window.innerHeight;
+  const maxScroll = document.documentElement.scrollHeight - vh;
   const pin = heroPin();
-  return SECTIONS.map((s) => {
+  return SECTIONS.map((s, i) => {
     if (s.id === "hero") {
       if (!pin) return null;
       const stepAt = [pin.start, pin.at(SCENE1.check), pin.at(SCENE1.headline)];
@@ -67,12 +68,17 @@ export const measureSections = (): (SectionRange | null)[] => {
     const el = document.getElementById(s.id);
     if (!el) return null;
     const top = docTop(el);
-    const stepAt = evenSteps(top - vh * PROBE, top - vh * PROBE + el.offsetHeight, s.steps);
-    return {
-      start: stepAt[0]!,
-      stepAt,
-      targets: [top, ...stepAt.slice(1).map((y) => y + vh * PROBE)],
-    };
+    const from = top - vh * PROBE;
+    let to = from + el.offsetHeight;
+    // The page can't scroll far enough for the last section's top to cross the
+    // probe line for every step, so its steps end at the bottom of the page instead.
+    if (i === SECTIONS.length - 1) to = Math.max(from + 1, Math.min(to, maxScroll));
+    const stepAt = evenSteps(from, to, s.steps);
+    // Each target stays inside its own step (the stretched steps can be short).
+    const targets = [top, ...stepAt.slice(1).map((y) => y + vh * PROBE)].map((y, k) =>
+      k + 1 < stepAt.length ? Math.min(y, stepAt[k + 1]! - 2) : Math.min(y, maxScroll),
+    );
+    return { start: stepAt[0]!, stepAt, targets };
   });
 };
 
