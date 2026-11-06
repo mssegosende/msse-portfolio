@@ -245,8 +245,8 @@ export const ScrollText = ({ children, style }: { children: ReactNode; style?: C
 
 /**
  * The black framed card (CARD-SPEC): outline, graphite bezel, gap, dark panel
- * and the bottom tab `MSSE:// │ Code ↗ Live ↗`. Links without a URL are not
- * shown; with none, the tab carries only the mark.
+ * and the bottom tab `MSSE:// │ Live ↗` (no Code links). Without a Live URL
+ * the tab carries only the mark.
  */
 export const ProjectFrame = ({
   project,

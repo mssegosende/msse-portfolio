@@ -57,3 +57,18 @@ test("the featured project is never in the folder row", async ({ page }) => {
   const after = await settledApart(page);
   expect(after.row).not.toContain(picked);
 });
+
+test("cards link only to Live, never to the code", async ({ page }) => {
+  await blockSpline(page);
+  await openHome(page);
+  const section = page.getByTestId("projects-section");
+  await section.scrollIntoViewIfNeeded();
+  await page.getByTestId("project-reel-toggle").click();
+  await expect(section.locator('[data-testid^="project-code-link-"]')).toHaveCount(0);
+  await expect(section.getByRole("link", { name: /: Code/ })).toHaveCount(0);
+  // Lynx (in the row at first) has a Live URL.
+  await expect(page.getByTestId("project-live-link-lynx")).toHaveAttribute(
+    "href",
+    "https://lynx-site.vercel.app",
+  );
+});

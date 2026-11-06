@@ -22,7 +22,7 @@ export interface ShowcaseProject {
   /** Rendered as chips. */
   tags: string[];
   paragraphs: string[];
-  /** Empty hides the link. */
+  /** Kept for the record; not rendered (cards show only Live). */
   codeUrl: string;
   liveUrl: string;
   media: string;
@@ -173,9 +173,9 @@ export const showcaseProjects: ShowcaseProject[] = [
   },
 ];
 
-/** The Code / Live links that have a URL. */
+/**
+ * The links a card shows: only Live, when there is a URL (María Sol's review:
+ * no Code links; codeUrl stays in the data, unrendered).
+ */
 export const projectLinks = (p: ShowcaseProject) =>
-  [
-    { label: "Code", href: p.codeUrl },
-    { label: "Live", href: p.liveUrl },
-  ].filter((l) => l.href);
+  [{ label: "Live", href: p.liveUrl }].filter((l) => l.href);
