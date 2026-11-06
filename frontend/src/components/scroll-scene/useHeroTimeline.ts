@@ -343,20 +343,31 @@ export const useHeroTimeline = ({
       let syncPlayback = () => {};
 
       // Phones: the scroll settles on the hero, on each card, or on the end, and
-      // one gesture moves one stop, whatever its length. A position far from the
-      // last stop (a jump: SKIP INTRO, the dock, a restore) re-syncs to the nearest.
+      // one gesture moves one stop from where the last snap settled, whatever its
+      // length. ScrollTrigger can ask again mid-snap, so the settled stop only
+      // changes when a snap completes. A position far from it (a jump: the footer
+      // logo, a restore) takes the next stop in the scroll's direction.
       const STOPS = snapStops();
-      let stop = 0;
-      const stepSnap = (value: number): number => {
-        const nearest = STOPS.reduce(
+      let settled = 0;
+      const nearestStop = (value: number) =>
+        STOPS.reduce(
           (best, s, i) => (Math.abs(s - value) < Math.abs((STOPS[best] ?? 0) - value) ? i : best),
           0,
         );
-        const here = STOPS[stop] ?? 0;
-        if (Math.abs(nearest - stop) > 2) stop = nearest;
-        else if (value > here + 0.002) stop = Math.min(STOPS.length - 1, stop + 1);
-        else if (value < here - 0.002) stop = Math.max(0, stop - 1);
-        return STOPS[stop] ?? value;
+      const stepSnap = (value: number, self?: ScrollTrigger): number => {
+        // Already on a stop (a snap that just landed asks again): stay.
+        const near = nearestStop(value);
+        if (Math.abs((STOPS[near] ?? 0) - value) < 0.004) return STOPS[near] ?? value;
+        const down = (self?.direction ?? 1) > 0;
+        let ahead = down
+          ? STOPS.findIndex((s) => s > value + 0.002)
+          : STOPS.findLastIndex((s) => s < value - 0.002);
+        if (ahead < 0) ahead = nearestStop(value);
+        const target =
+          Math.abs(ahead - settled) > 2
+            ? ahead
+            : Math.min(settled + 1, Math.max(settled - 1, ahead));
+        return STOPS[target] ?? value;
       };
 
       // The pose normaliser rides the gaze ticker rather than adding its own.
@@ -408,6 +419,12 @@ export const useHeroTimeline = ({
             isMobile && !reduce
               ? {
                   snapTo: stepSnap,
+                  // The real position, not one projected from the velocity: a
+                  // quick short gesture must not read as a jump.
+                  inertia: false,
+                  onComplete: (self: ScrollTrigger) => {
+                    settled = nearestStop(self.progress);
+                  },
                   delay: 0.05,
                   duration: { min: 0.25, max: 0.7 },
                   ease: "power1.inOut",

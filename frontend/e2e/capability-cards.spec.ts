@@ -67,11 +67,17 @@ for (const viewport of [
       await blockSpline(page);
       await openHome(page);
 
-      // Points inside each card's step, and the end.
+      // Points inside each card's step, and the end. Phones snap one stop per
+      // gesture, so the scroll settles after the snap and the scrub: poll.
       for (const progress of [0.5, 0.7, 0.99]) {
         await scrollToPin(page, progress);
+        await expect
+          .poll(async () => (await boxes(page)).cards.length, {
+            message: `a card is showing at ${progress}`,
+            timeout: 8000,
+          })
+          .toBeGreaterThan(0);
         const { cards, dockTop } = await boxes(page);
-        expect(cards.length, `a card is showing at ${progress}`).toBeGreaterThan(0);
         for (const card of cards) {
           expect(card!.top).toBeGreaterThanOrEqual(0);
           expect(card!.bottom).toBeLessThanOrEqual(dockTop);
