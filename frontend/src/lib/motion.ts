@@ -23,22 +23,3 @@ export const revealOnView = (margin = "-80px") => ({
   whileInView: "show",
   viewport: { once: true, margin },
 });
-
-// Hero headline: each line slides up out of its mask.
-export const heroLineReveal: Variants = {
-  hidden: { y: "110%" },
-  show: (i: number) => ({
-    y: "0%",
-    transition: { delay: 0.2 + i * 0.18, duration: 1, ease: EASE_OUT },
-  }),
-};
-
-// Hero UI (brand, status, subtitle): a short rise after the headline.
-export const heroUiFade: Variants = {
-  hidden: { opacity: 0, y: 14 },
-  show: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: 0.7 + i * 0.15, duration: 0.8, ease: EASE_OUT },
-  }),
-};

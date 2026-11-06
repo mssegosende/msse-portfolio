@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-export type SectionScene = "capabilities" | "projects" | "about" | "contact";
+export type SectionScene = "projects" | "about" | "contact";
 
 interface Backdrop {
   word: string;
@@ -13,16 +13,9 @@ interface Backdrop {
   shade?: string;
 }
 
-// Values from design/source/desktop/light/scene-{2..5}*.dc.html (1440 x 900).
+// Values from design/source/desktop/light/scene-{3..5}*.dc.html (1440 x 900).
+// Scene 2 (capabilities) is inside the pinned hero (ScrollScene).
 const BACKDROPS: Record<SectionScene, Backdrop> = {
-  capabilities: {
-    word: "STACK",
-    wordSide: "left",
-    softWord: true,
-    glow: { x: "58%", y: "33%", w: 900, h: 900, a: 0.6 },
-    shade:
-      "radial-gradient(ellipse 70% 55% at 22% 78%, rgba(25,32,42,0.22) 0%, rgba(25,32,42,0) 70%)",
-  },
   projects: {
     word: "WORK",
     wordSide: "right",

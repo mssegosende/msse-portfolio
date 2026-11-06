@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getProjects, layoutSpans, projects, story, systemFeatures } from "./portfolioData";
+import { capabilityCards, getProjects, layoutSpans, profile, projects } from "./portfolioData";
 
 // Rows on the 12-column grid must fill exactly, with no half-empty row.
 const fillsRows = (spans: number[]) => {
@@ -44,19 +44,17 @@ describe("getProjects", () => {
   });
 });
 
-// ScrollScene's timeline is built for this exact content.
 describe("hero content", () => {
-  it("has three system features with connector origins inside their cards", () => {
-    expect(systemFeatures.map((f) => f.num)).toEqual(["01", "02", "03"]);
-    for (const { lineFrom } of systemFeatures) {
-      expect(lineFrom.x).toBeGreaterThanOrEqual(0);
-      expect(lineFrom.x).toBeLessThanOrEqual(1);
-      expect(lineFrom.y).toBeGreaterThanOrEqual(0);
-      expect(lineFrom.y).toBeLessThanOrEqual(1);
-    }
+  it("has three scene 2 cards, mind -> nerves -> body", () => {
+    expect(capabilityCards.map((c) => c.part)).toEqual(["MIND", "NERVES", "BODY"]);
+    expect(capabilityCards.map((c) => c.num)).toEqual(["1", "2", "3"]);
   });
+});
 
-  it("has two story paragraphs", () => {
-    expect(story).toHaveLength(2);
+describe("copy rules", () => {
+  it("says since 2022, never a year count", () => {
+    const text = JSON.stringify({ profile, capabilityCards });
+    expect(text).not.toMatch(/\d\+\s*years/i);
+    expect(text).toContain("2022");
   });
 });

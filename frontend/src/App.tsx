@@ -5,10 +5,8 @@ import { pendingThemeReload } from "@/lib/themeReload";
 import { useTitleTicker } from "@/hooks/useTitleTicker";
 import { ScrollScene } from "@/components/ScrollScene";
 import { NavigationDock } from "@/components/NavigationDock";
-import { Marquee } from "@/components/Marquee";
 import { About } from "@/components/About";
 import { Projects } from "@/components/Projects";
-import { Capabilities } from "@/components/Capabilities";
 import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
 import { RotateLock } from "@/components/RotateLock";
@@ -26,11 +24,10 @@ function App() {
     <div className="App bg-surface font-inter text-ink antialiased">
       <NavigationDock visible={journeyDone} />
       <SectionIndex />
-      {/* Design order: Ø1 hero, Ø2 capabilities, Ø3 projects, Ø4 about, Ø5 contact. */}
+      {/* Design order: Ø1 hero and Ø2 capabilities (both inside the pinned hero),
+          Ø3 projects, Ø4 about, Ø5 contact. */}
       <main>
         <ScrollScene onJourneyEnd={() => setJourneyDone(true)} />
-        <Marquee />
-        <Capabilities />
         <Projects />
         <About />
         <Contact />

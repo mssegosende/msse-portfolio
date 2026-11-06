@@ -32,16 +32,10 @@
   :root {
     --radius: 0.75rem;
 
-    --page-surface: 255 255 255; /* chapter 2 background */
-    --wall-a: 255 255 255; /* wall on load */
-    --wall-b: 237 237 237; /* wall once settled */
-    --drain-b: 0.25; /* drain brightness delta */
-    --drain-c: -0.1; /* drain contrast delta */
-    --lift-from: 1.6; /* scene 2 starting brightness */
+    --page-surface: 255 255 255;
 
-    /* Section grounds (design/HANDOFF.md, scenes 2-5) and the white glow
+    /* Section grounds (design/HANDOFF.md, scenes 3-5) and the white glow
        behind each section's subject. */
-    --bg-capabilities: linear-gradient(180deg, #7d8893 0%, #c2c9d0 38%, #eef1f4 100%);
     --bg-projects: linear-gradient(180deg, #eef1f4 0%, #dce1e6 60%, #c2c9d0 100%);
     --bg-about: linear-gradient(180deg, #e1e6ea 0%, #c2c9d0 60%, #7d8893 100%);
     --bg-contact: linear-gradient(180deg, #7d8893 0%, #c2c9d0 42%, #eef1f4 100%);
@@ -61,15 +55,9 @@
 
   :root[data-theme="dark"] {
     --page-surface: 0 0 0;
-    --wall-a: 0 0 0;
-    --wall-b: 18 18 18;
-    --drain-b: -0.98;
-    --drain-c: 0.15;
-    --lift-from: 0.25;
 
     /* TODO(P6): blue-black grounds with steel-blue hazes. Until then dark
        keeps its solid surface so the light text stays readable. */
-    --bg-capabilities: rgb(var(--surface));
     --bg-projects: rgb(var(--surface));
     --bg-about: rgb(var(--surface));
     --bg-contact: rgb(var(--surface));
@@ -197,39 +185,6 @@ body {
   50% {
     opacity: 0;
   }
-}
-
-/* The timeline tweens --drain-t and --lift-t from 0 to 1 and each theme
-   supplies the deltas, so the same tween works in both themes. */
-.hero-drain {
-  filter: brightness(calc(1 + var(--drain-b) * var(--drain-t, 0)))
-    contrast(calc(1 + var(--drain-c) * var(--drain-t, 0)));
-}
-
-.hero-lift {
-  filter: brightness(calc(var(--lift-from) + (1 - var(--lift-from)) * var(--lift-t, 0)));
-}
-
-/* A surface-coloured halo that lifts text off both the wall and the robot
-   without a blend mode. */
-.text-halo {
-  text-shadow:
-    0 0 10px rgb(var(--surface) / 0.92),
-    0 0 26px rgb(var(--surface) / 0.75);
-}
-
-/* Keeps the headline readable over the silver body in dark mode. */
-.headline-glow {
-  text-shadow:
-    0 1px 12px rgba(0, 0, 0, 0.75),
-    0 0 34px rgba(0, 0, 0, 0.55);
-}
-
-.text-engraved {
-  text-shadow:
-    1px 1px 0 rgb(var(--surface) / 0.6),
-    2px 2px 0 rgb(var(--engrave-mid) / 0.4),
-    0 6px 18px rgb(var(--surface) / 0.8);
 }
 
 .tick-marks {
@@ -482,7 +437,34 @@ textarea:-webkit-autofill {
   }
 }
 
+/* Scene 2 cards: the new one rises over the previous, which fades. */
+.cap-rise {
+  opacity: 0;
+  transform: translateY(40px);
+  animation: cap-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s forwards;
+}
+.cap-sink {
+  animation: cap-sink 0.5s ease 0.3s forwards;
+}
+@keyframes cap-rise {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes cap-sink {
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .cap-rise,
+  .cap-sink {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
   .hero-marquee,
   .hero-hint {
     animation: none;

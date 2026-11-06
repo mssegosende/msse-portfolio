@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { User, FolderOpen, Cpu, Send, Sun, Moon } from "lucide-react";
 import { profile } from "../data/portfolioData";
-import { scrollToId, scrollToTop } from "../hooks/useLenis";
+import { scrollToTop } from "../hooks/useLenis";
 import { useTheme } from "../hooks/useTheme";
-import { useActiveSection } from "../hooks/useActiveSection";
+import { goToSection, useActiveSection } from "../hooks/useActiveSection";
+import { SECTIONS } from "../lib/sections";
 
 const links = [
   { id: "about", label: "About", icon: User, testid: "nav-about-link" },
@@ -42,7 +43,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
             <button
               key={id}
               data-testid={testid}
-              onClick={() => scrollToId(id)}
+              onClick={() => goToSection(SECTIONS.findIndex((s) => s.id === id))}
               aria-current={current === id ? "true" : undefined}
               className={`group flex shrink-0 items-center gap-2 px-3 py-2 transition-[color,background-color] duration-300 hover:bg-ink/5 hover:text-ink ${
                 current === id ? "font-semibold text-ink" : "text-ink/65"
@@ -76,7 +77,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
           </button>
           <button
             data-testid="nav-cta-button"
-            onClick={() => scrollToId("contact")}
+            onClick={() => goToSection(SECTIONS.findIndex((s) => s.id === "contact"))}
             className="ml-1 flex shrink-0 items-center gap-1.5 bg-ink px-3 py-2 sm:gap-2 sm:px-4 font-display text-[13px] uppercase tracking-[0.02em] text-surface transition-[box-shadow,transform] duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgb(var(--ink) / 0.35)]"
           >
             <Send size={12} />

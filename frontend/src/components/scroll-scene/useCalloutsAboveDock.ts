@@ -3,7 +3,7 @@ import { useEffect, type RefObject } from "react";
 const GAP = 16;
 
 /**
- * Phones: keeps the feature cards 16px above the dock. CSS units can't: the
+ * Phones: keeps scene 2's cards 16px above the dock. CSS units can't: the
  * pinned section is 100vh (on iOS, the height with the browser bars hidden),
  * so with the bars showing its bottom edge is off screen. The dock is fixed
  * to the visible edge, so it is the reference.
@@ -11,7 +11,7 @@ const GAP = 16;
 export const useCalloutsAboveDock = (
   enabled: boolean,
   sectionRef: RefObject<HTMLElement | null>,
-  calloutRefs: RefObject<(HTMLElement | null)[]>,
+  cardRef: RefObject<HTMLElement | null>,
 ): void => {
   useEffect(() => {
     if (!enabled) return undefined;
@@ -28,9 +28,7 @@ export const useCalloutsAboveDock = (
       );
       if (bottom === last) return;
       last = bottom;
-      calloutRefs.current.forEach((el) => {
-        if (el) el.style.bottom = `${bottom}px`;
-      });
+      if (cardRef.current) cardRef.current.style.bottom = `${bottom}px`;
     };
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(placeCallouts);
@@ -42,15 +40,13 @@ export const useCalloutsAboveDock = (
     window.addEventListener("resize", schedule);
     window.addEventListener("scroll", schedule, { passive: true });
     vv?.addEventListener("resize", schedule);
-    const callouts = calloutRefs.current;
+    const card = cardRef.current;
     return () => {
       if (raf) cancelAnimationFrame(raf);
       window.removeEventListener("resize", schedule);
       window.removeEventListener("scroll", schedule);
       vv?.removeEventListener("resize", schedule);
-      callouts.forEach((el) => {
-        if (el) el.style.bottom = "";
-      });
+      if (card) card.style.bottom = "";
     };
-  }, [enabled, sectionRef, calloutRefs]);
+  }, [enabled, sectionRef, cardRef]);
 };

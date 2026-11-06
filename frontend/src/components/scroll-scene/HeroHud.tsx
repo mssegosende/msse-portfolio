@@ -122,17 +122,13 @@ export const HeroHeadline = ({
   </div>
 );
 
-/** The SCROLL indicator, after the three steps. */
-export const ScrollCue = ({ ref, isMobile }: { ref?: Ref<HTMLDivElement>; isMobile: boolean }) => (
+/** The SCROLL indicator, after the three steps (desktop). */
+export const ScrollCue = ({ ref }: { ref?: Ref<HTMLDivElement> }) => (
   <div
     ref={ref}
     aria-hidden="true"
     data-testid="scroll-cue"
-    className={`pointer-events-none absolute flex flex-col items-center gap-[18px] ${
-      isMobile
-        ? "bottom-[calc(env(safe-area-inset-bottom,0px)+4.5rem)] left-1/2 -ml-2"
-        : "left-[52px] top-[36.7%]"
-    }`}
+    className="pointer-events-none absolute left-[52px] top-[36.7%] flex flex-col items-center gap-[18px]"
   >
     <span
       className={`font-display text-[13px] uppercase tracking-[0.4em] [writing-mode:vertical-rl] ${INK}`}

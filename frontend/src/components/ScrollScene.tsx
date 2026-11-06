@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import Spline from "@splinetool/react-spline";
 import { Application } from "@splinetool/runtime";
-import { profile, systemFeatures } from "../data/portfolioData";
+import { profile } from "../data/portfolioData";
 import { useTheme } from "../hooks/useTheme";
 import { MOBILE_LAYOUT_QUERY } from "../lib/layout";
 import { OVERSAMPLE, OVERSAMPLE_1 } from "../lib/spline/camera";
@@ -9,9 +9,7 @@ import { patchSplineRuntime } from "../lib/spline/runtime";
 import { L2_DESKTOP_URLS } from "../lib/spline/scenes";
 import { ReleasingBox } from "./spline/ReleasingBox";
 import { SceneBoundary } from "./spline/SceneBoundary";
-import { FeatureCard } from "./scroll-scene/FeatureCard";
-import { FeatureConnectors } from "./scroll-scene/FeatureConnectors";
-import { FeaturesRail } from "./scroll-scene/FeaturesRail";
+import { CapabilityCards } from "./scroll-scene/CapabilityCards";
 import {
   HeroHeadline,
   HeroWordmark,
@@ -19,7 +17,6 @@ import {
   ScrollCue,
   SystemCheck,
 } from "./scroll-scene/HeroHud";
-import { StoryPanel } from "./scroll-scene/StoryPanel";
 import { useCalloutsAboveDock } from "./scroll-scene/useCalloutsAboveDock";
 import { useHeroScenes } from "./scroll-scene/useHeroScenes";
 import { useHeroElements, useHeroTimeline } from "./scroll-scene/useHeroTimeline";
@@ -30,9 +27,9 @@ patchSplineRuntime(Application);
 export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => {
   const { theme } = useTheme();
   const darkMode = theme === "dark";
-  // Chapter 2's UI follows the page theme; the section itself is fixed to
+  // Scene 2's cards follow the page theme; the section itself is fixed to
   // data-theme="dark", so its children set the page theme explicitly.
-  const ch2Theme = darkMode ? "dark" : "light";
+  const pageTheme = darkMode ? "dark" : "light";
 
   const els = useHeroElements();
   const {
@@ -44,26 +41,17 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     idle1Ref,
     idle2Ref,
     splineLayerRef,
-    overlayRef,
     bg1Ref,
     wordmarkRef,
     topBarRef,
     introRef,
     checkRef,
-    vignetteRef,
-    storyTitleRef,
-    storyPanelRef,
     scrollCueRef,
-    layer2Ref,
-    layer2InnerRef,
     headlineRef,
     skipRef,
-    featuresHeaderRef,
-    storyRefs,
-    calloutRefs,
-    lineRefs,
-    dotRefs,
-    railRefs,
+    layer2Ref,
+    title2Ref,
+    cardsRef,
   } = els;
   // Each layer A mount gets its own box: with two canvases in canvasWrapRef, a
   // querySelector would release the wrong one.
@@ -100,9 +88,9 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
   // compositing and hit-testing: one live robot per layer.
   const hiddenCls = "invisible opacity-0";
 
-  useCalloutsAboveDock(isMobile, sectionRef, calloutRefs);
+  useCalloutsAboveDock(isMobile, sectionRef, cardsRef);
 
-  const { journeyDone, skipIntro } = useHeroTimeline({
+  const { journeyDone, skipIntro, cardIndex, atEnd } = useHeroTimeline({
     isMobile,
     darkMode,
     sceneUrl,
@@ -119,8 +107,32 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       ref={sectionRef}
       data-testid="scene-section"
       data-theme="dark"
-      className="relative h-screen min-h-[640px] w-full overflow-hidden bg-[rgb(var(--page-surface))]"
+      className="relative h-screen min-h-[640px] w-full overflow-hidden"
     >
+      {/* Scene 2 ground, under scene 1's: gradient, glow behind the head, shade,
+          vignette and the STACK word. Scene 1's ground fades off it. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0" style={{ background: "var(--hero-bg-2)" }} />
+        <div
+          className="subject-glow"
+          style={{ left: "58%", top: "33%", width: 900, height: 900 }}
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_22%_78%,rgba(25,32,42,0.22)_0%,rgba(25,32,42,0)_70%),radial-gradient(ellipse_120%_90%_at_55%_45%,rgba(0,0,0,0)_55%,rgba(20,26,34,0.28)_100%)]" />
+        <div className="bg-word bg-word--left bg-word--soft">STACK</div>
+      </div>
+
+      {/* Scene 2 title. Behind the robot: the giant head sits in front of it. */}
+      <div
+        ref={title2Ref}
+        data-testid="capabilities-title"
+        className="pointer-events-none absolute left-4 top-6 sm:left-14 sm:top-[52px]"
+      >
+        <div className="section-pill bg-white/90 shadow-none">Capabilities</div>
+        <h2 className="section-title section-title--light mt-4 leading-none sm:whitespace-nowrap">
+          What the core runs on
+        </h2>
+      </div>
+
       {/* Scene 1 ground: gradient, a soft glow behind the head, ground shade and vignette. */}
       <div ref={bg1Ref} aria-hidden="true" className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0" style={{ background: "var(--hero-bg-1)" }} />
@@ -135,7 +147,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         <div
           ref={canvasWrapRef}
           data-testid="hero-canvas-zoom"
-          className="hero-drain absolute inset-0 will-change-transform"
+          className="absolute inset-0 will-change-transform"
         >
           {/* The robot fades in (opacity + blur on this wrapper) once its scene has loaded. */}
           {!failed && (
@@ -220,19 +232,9 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         </div>
       </div>
 
-      {/* Overlay that deepens with the drain (scene 1 only) */}
-      <div
-        ref={overlayRef}
-        className="pointer-events-none absolute inset-0 bg-[rgb(var(--page-surface))]"
-      />
-
-      {/* Layer C: the chapter 2 scene */}
+      {/* Layer 2: scene 2's giant head */}
       <div ref={layer2Ref} className="pointer-events-none absolute inset-0">
-        <div ref={layer2InnerRef} className="hero-lift absolute inset-0">
-          {/* Same decoupling as scene 1: only the canvas drifts. The drift transforms
-              nest inside the blend wrapper, which resolves against layer2Inner's filter. */}
-          <div className="absolute left-1/2 top-1/2 h-[90vh] w-[90vh] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgb(var(--ink) / 0.07),transparent_62%)]" />
-
+        <div className="absolute inset-0">
           {/* Fallback PNG only when the live scene fails; while loading, the layer
               shows nothing. */}
           {scene2Dead && (
@@ -253,10 +255,12 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
               scene2Ready ? "opacity-100" : "opacity-0"
             }`}
           >
-            {mountScene2 && !scene2Dead && (
-              <div className="absolute inset-0">
-                <div ref={parallax2Ref} className="absolute inset-0">
-                  <div ref={idle2Ref} className="absolute inset-0">
+            {/* The drift wrappers always exist, so the timeline can bind them before
+                the scene mounts. */}
+            <div ref={parallax2Ref} className="absolute inset-0">
+              <div ref={idle2Ref} className="absolute inset-0">
+                {mountScene2 && !scene2Dead && (
+                  <>
                     {isMobile
                       ? slot2Url && (
                           <div className="absolute inset-0">
@@ -292,41 +296,12 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
                             </SceneBoundary>
                           </ReleasingBox>
                         ))}
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Edge vignette, faded in by the timeline */}
-      <div
-        ref={vignetteRef}
-        data-testid="hero-vignette"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_55%,rgb(var(--vignette,0_0_0) / 0.55)_100%)]"
-      />
-
-      {/* The headline lives outside the z-indexed UI layer: its blend must resolve
-          against the scene, and a z-index on an ancestor would cut it off from it. */}
-      {/* Features header, outside the z-10 layer for the same reason: the difference
-          blend keeps it readable over both the body and the ground. */}
-      <div
-        ref={featuresHeaderRef}
-        className="pointer-events-none absolute inset-x-0 top-8 hidden text-center mix-blend-difference sm:block sm:top-12"
-      >
-        <p className="font-display text-[13px] uppercase tracking-[0.02em] text-white/[0.83]">
-          01 // system features
-        </p>
-        <h2
-          data-testid="features-headline"
-          className="mt-4 font-display text-3xl font-light uppercase text-white sm:text-5xl"
-        >
-          System Features
-        </h2>
-        <p className="mt-3 font-display text-[13px] uppercase tracking-[0.02em] text-white/65">
-          based on the msg·01 core
-        </p>
       </div>
 
       {/* Scene 1 HUD, one window per scroll step (Ø1.1-Ø1.3), then SCROLL. Phones
@@ -334,7 +309,8 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       {!isMobile && <IntroTile ref={introRef} />}
       {!isMobile && <SystemCheck ref={checkRef} />}
       <HeroHeadline ref={headlineRef} isMobile={isMobile} />
-      <ScrollCue ref={scrollCueRef} isMobile={isMobile} />
+      {/* TODO(P5): phones get SCROLL in the bottom stack (design: mobile scene 1). */}
+      {!isMobile && <ScrollCue ref={scrollCueRef} />}
 
       {/* Top bar, scene 1 only: MSSE:// and STATUS. */}
       <div ref={topBarRef} className="absolute inset-x-0 top-0">
@@ -357,8 +333,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         </div>
       </div>
 
-      {/* Skip intro, until the sequence has been seen (then the dock takes over).
-          Same treatment as the headline: difference over the black robot, solid white over the silver one. */}
+      {/* Skip intro, until the sequence has been seen (then the dock takes over). */}
       {!journeyDone && (
         <button
           ref={skipRef}
@@ -374,35 +349,15 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         </button>
       )}
 
-      {/* Layer D: UI. z-10 keeps the cards and rail from blending; the marks that
-          must blend live outside it. */}
+      {/* Scene 2's cards, in front of the robot. */}
       <div className="pointer-events-none absolute inset-0 z-10">
-        {/* Story paragraphs (phase 2) */}
-        <StoryPanel
-          ref={storyPanelRef}
-          titleRef={storyTitleRef}
-          paragraphRefs={storyRefs}
-          theme={ch2Theme}
+        <CapabilityCards
+          ref={cardsRef}
+          scrollIndex={cardIndex}
+          autoRotate={journeyDone && atEnd}
+          isMobile={isMobile}
+          theme={pageTheme}
         />
-
-        {/* Connector lines and dots (desktop) */}
-        {!isMobile && <FeatureConnectors lineRefs={lineRefs} dotRefs={dotRefs} theme={ch2Theme} />}
-
-        {/* Feature cards */}
-        {systemFeatures.map((f, i) => (
-          <FeatureCard
-            key={f.num}
-            ref={(el) => {
-              calloutRefs.current[i] = el;
-            }}
-            feature={f}
-            isMobile={isMobile}
-            theme={ch2Theme}
-          />
-        ))}
-
-        {/* Progress rail (desktop) */}
-        {!isMobile && <FeaturesRail railRefs={railRefs} theme={ch2Theme} />}
       </div>
 
       <div aria-hidden="true" className="grain pointer-events-none absolute inset-0 z-20" />

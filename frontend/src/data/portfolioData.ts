@@ -40,30 +40,17 @@ export interface Project {
   draft?: boolean;
 }
 
-/** A point as fractions of an element (0..1) or percentages of the stage. */
-export interface Point {
-  x: number;
-  y: number;
-}
-
-export interface SystemFeature {
+/** One scene 2 card (design/HANDOFF.md, P2). */
+export interface CapabilityCard {
+  /** Plain number, shown as Ø1. */
   num: string;
+  /** The bottom tab: MSSE:// │ part. */
   part: string;
+  /** The small line above the title. */
+  small: string;
   title: string;
   text: string;
-  side: "left" | "right";
-  /** CSS top of the card, e.g. "44%". */
-  top: string;
-  lineFrom: Point;
-  to: Point;
-}
-
-export interface Capability {
-  id: string;
-  num: string;
-  title: string;
-  description: string;
-  tags: string[];
+  chips: string[];
 }
 
 export interface TerminalLine {
@@ -107,12 +94,6 @@ export const profile: Profile = {
   stats: [{ value: "2022", label: "Shipping code since" }],
 };
 
-// The scene 4 WHO copy. ScrollScene animates exactly two paragraphs.
-export const story: string[] = [
-  "I'm María Sol — a full stack developer and AI engineer in Buenos Aires. I came to code through a cousin who was sure I could do it, and a computer I wanted to understand down to the parts: I built my own PC in 2020, and I've been writing software professionally since 2022.",
-  "Piano taught me the thing I use most: different logics share patterns. Once I see the pattern, a new language or framework stops being foreign — that's how I learn, and how I walk into a system I've never seen.",
-];
-
 // Scene 1's SYSTEM CHECK panel (Ø1.2), line by line.
 export const systemCheck: string[] = [
   "OPERATOR: M. S. GOSENDE",
@@ -121,12 +102,6 @@ export const systemCheck: string[] = [
   "LOC: −34.60 −58.38",
   "STATUS: OPEN TO WORK",
 ];
-
-// Title above the story block in the pinned hero.
-export const storyTitle = {
-  name: "María Sol Gosende Centurión",
-  role: "Full Stack Developer & AI Engineer",
-};
 
 export const manifesto: ManifestoEntry[] = [
   {
@@ -144,15 +119,6 @@ export const manifesto: ManifestoEntry[] = [
     title: "Humans where they matter",
     text: "Automate the routine, and design the exact point where a person should step in.",
   },
-];
-
-export const marqueeItems: string[] = [
-  "FULL STACK DEVELOPMENT",
-  "DISTRIBUTED MICROSERVICES",
-  "API DESIGN",
-  "LLM AGENTS",
-  "DATA PIPELINES",
-  "FINTECH SYSTEMS",
 ];
 
 // ------------------------------------------------------------
@@ -272,80 +238,31 @@ export const getProjects = (): Project[] => {
   });
 };
 
-// Exactly three entries: the pinned hero animates 01/02/03 at fixed positions.
-// `lineFrom`: where the card's connector starts, as a fraction of the card.
-// `to`: the dot's first position; the timeline moves it onto the body part.
-export const systemFeatures: SystemFeature[] = [
+// Scene 2: one card at a time, mind -> nerves -> body.
+export const capabilityCards: CapabilityCard[] = [
   {
-    num: "01",
-    part: "HEAD",
+    num: "1",
+    part: "MIND",
+    small: "THE MIND",
     title: "AI ENGINEERING",
-    text: "LLM agents and AI-assisted features wired into services that already carry production load. I build the layer an agent actually calls: strict schemas, validation at the edge, and failure modes that degrade instead of guessing. LangChain and LangGraph orchestrate it — the contract is what decides whether the output can be trusted.",
-    side: "left",
-    top: "9%",
-    lineFrom: { x: 0.7, y: 0.5 },
-    to: { x: 50, y: 38 },
+    text: "The part that thinks. Models that read, reason and decide — LangGraph agents where every step has a typed contract and a defined way to fail, measured with evals.",
+    chips: ["LangGraph", "LangChain", "RAG", "Evals"],
   },
   {
-    num: "02",
-    part: "HANDS",
-    title: "FRONTEND",
-    text: "React and TypeScript interfaces — motion, real-time 3D, and feedback that keeps up with the user. Typed end to end against the same contracts the backend publishes, so the UI breaks at compile time instead of in front of someone. Tailwind and Framer Motion for the everyday, Spline and Three.js when the scene has to feel alive.",
-    side: "right",
-    top: "44%",
-    lineFrom: { x: 0.3, y: 0.22 },
-    to: { x: 67, y: 86 },
-  },
-  {
-    num: "03",
-    part: "TORSO",
+    num: "2",
+    part: "NERVES",
+    small: "THE NERVOUS SYSTEM",
     title: "BACKEND",
-    text: "FastAPI, NestJS and .NET microservices with strict contracts and real data behind them. This is where a legacy monolith gets broken apart without stopping the business: versioned APIs, validation layers, and reconciliations that surface a disagreement before it reaches someone's balance. PostgreSQL and SQL Server underneath, Docker around it.",
-    side: "left",
-    top: "52%",
-    lineFrom: { x: 0.7, y: 0.52 },
-    to: { x: 50, y: 77 },
-  },
-];
-
-export const capabilities: Capability[] = [
-  {
-    id: "frontend",
-    num: "01",
-    title: "Frontend",
-    description:
-      "Interfaces built on the same stacks I ship backends with — typed, motion-first, accessible.",
-    tags: ["React", "Next.js", "Remix", "TypeScript", "Tailwind CSS", "Three.js"],
+    text: "Unseen, it carries every signal. APIs are the nerves, services the organs, the database the memory — Python and FastAPI, the domain never tied to the framework.",
+    chips: ["Python", "FastAPI", "PostgreSQL", "Node"],
   },
   {
-    id: "backend",
-    num: "02",
-    title: "Backend",
-    description:
-      "APIs and microservices with strict contracts, validation layers and real load behind them.",
-    tags: ["FastAPI", "Flask", "NestJS", "Express", "Node.js", "C# / .NET", "REST APIs"],
-  },
-  {
-    id: "ai",
-    num: "03",
-    title: "AI Engineering",
-    description: "Agent layers and AI-assisted features built into production services, not demos.",
-    tags: [
-      "LangChain",
-      "LangGraph",
-      "LLM Agents",
-      "Agent-consumed APIs",
-      "Python",
-      "Emergent (AI app builder)",
-    ],
-  },
-  {
-    id: "data",
-    num: "04",
-    title: "Data & Infrastructure",
-    description:
-      "Relational data, ETL pipelines, and the migration path from monolith to services.",
-    tags: ["PostgreSQL", "SQL Server", "SQLAlchemy", "ETL Pipelines", "Docker", "Git"],
+    num: "3",
+    part: "BODY",
+    small: "THE BODY",
+    title: "FRONTEND",
+    text: "What you see and touch. HTML is the skeleton, CSS the skin, JavaScript the muscles that move it — React and TypeScript, with Zod at the boundaries.",
+    chips: ["React", "TypeScript", "Next.js", "Zod", "GSAP"],
   },
 ];
 
