@@ -142,13 +142,21 @@
   padding-bottom: 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
+/* The three window lights hold their size and spot: a crowded title bar (a
+   phone's larger system text) shrinks the title, never the dots. */
 .dot {
+  display: block;
+  flex: none;
   width: 9px;
   height: 9px;
   border-radius: 50%;
 }
 .chromeTitle {
+  min-width: 0;
   margin-left: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 10.5px;
   color: #aeb6bf;
 }
