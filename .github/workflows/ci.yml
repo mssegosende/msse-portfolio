@@ -83,7 +83,7 @@ jobs:
       BUCKET: ${{ vars.AWS_SITE_BUCKET }}
       IMMUTABLE: public, max-age=31536000, immutable
     steps:
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v8
         with:
           name: site
           path: dist
