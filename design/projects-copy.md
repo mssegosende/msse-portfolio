@@ -34,14 +34,15 @@ It covers three BCRA ordered texts on the life cycle of a financial institution:
 
 ## Ø3.4 · LYNX
 - Subtitle: AI — Fraud & Elder-Exploitation Detection
-- Tags: Python, pandas, Pydantic, LangGraph, Gemini, FastAPI
-- Code: none yet · Live: none yet
+- Status: In progress
+- Tags: Python, pandas, Pydantic, LangGraph, Gemini, gitleaks
+- Code: none (the repo is private, don't link it) · Live: https://lynx-site.vercel.app
 
 A pipeline that flags fraud, scams and financial exploitation in older adults' bank accounts. Rules detect the cases. An LLM reads the account holder's profile to tell a real case from a lookalike. Then the code decides: alert, human review or no alert.
 
-<!-- Second paragraph held back until the rebuild is done. Do not publish yet:
-It started as a take-home challenge. After the technical review, I rebuilt it as my own project, on synthetic data I generated. Ambiguous names are now flagged instead of merged. The LLM is measured against rules alone and against itself across five runs. And secret scanning runs on every commit.
--->
+It started as a take-home challenge. After the technical review, I rebuilt it as my own research project, on synthetic data I designed: every fraud pattern has a real case and a decoy that fires the same rule. Ambiguous names are now kept with their candidates instead of merged, and an ambiguous case is never dismissed automatically. Secret scanning runs on every commit.
+
+In progress: an ablation that measures what the profile adds over rules alone, and five runs per model to check that the answers are stable. The live page walks through the method, the false positives and the open questions, and the results land there next.
 
 ## Ø3.5 · ETHOS
 - Subtitle: Full Stack — Clinic Booking App

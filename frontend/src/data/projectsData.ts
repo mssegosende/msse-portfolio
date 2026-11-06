@@ -1,9 +1,10 @@
 // Scene 3 projects. Copy: design/projects-copy.md (used exactly as written).
-// `media`: the looping clip in the GIF player. Ethos and Marvel Characters use
-// real recordings, ~22 s each (Marvel: its search and filters stretch), cut to
-// 16:10 H.264 seamless loops (0.6 s crossfade, no audio) + a poster frame at
-// `startAt`; the other four are still abstract placeholders: swap them for
-// screen recordings cut the same way.
+// `media`: the looping clip in the GIF player. Ethos, Marvel Characters and
+// Lynx use real recordings (Ethos and Marvel ~22 s, Marvel its search and
+// filters stretch; Lynx 17.6 s, without the full-width conclusions the 16:10
+// crop would cut), as 16:10 H.264 seamless loops (0.6 s crossfade, no audio)
+// + a poster frame at `startAt`; the other three are still abstract
+// placeholders: swap them for screen recordings cut the same way.
 
 export interface ShowcaseProject {
   id: string;
@@ -25,10 +26,10 @@ export interface ShowcaseProject {
   poster?: string;
   /**
    * Seconds into the clip where it starts (the poster is that frame), so
-   * clips playing side by side are never in sync: every project ~10 s apart
-   * (Marvel Characters 0, Ethos 10, the rest 20, 30, 40, 50; a new one takes
-   * the next free ten). Wrapped into the clip's length, so the 8 s
-   * placeholders already differ; keep the poster at the same frame.
+   * clips playing side by side are never in sync: every project its own
+   * offset (Marvel Characters 0, Lynx 5, Ethos 10, the placeholders 20, 30,
+   * 40; a new one takes the next free ten). Wrapped into the clip's length, so
+   * the 8 s placeholders already differ; keep the poster at the same frame.
    */
   startAt?: number;
   /** Fallback length when the clip doesn't report a duration (MediaRecorder webm). */
@@ -109,16 +110,20 @@ export const showcaseProjects: ShowcaseProject[] = [
     num: "3.4",
     name: "LYNX",
     subtitle: "AI — Fraud & Elder-Exploitation Detection",
-    tags: ["Python", "pandas", "Pydantic", "LangGraph", "Gemini", "FastAPI"],
-    // First paragraph only: the second is held back until the rebuild is done.
+    status: "In progress",
+    tags: ["Python", "pandas", "Pydantic", "LangGraph", "Gemini", "gitleaks"],
     paragraphs: [
       "A pipeline that flags fraud, scams and financial exploitation in older adults' bank accounts. Rules detect the cases. An LLM reads the account holder's profile to tell a real case from a lookalike. Then the code decides: alert, human review or no alert.",
+      "It started as a take-home challenge. After the technical review, I rebuilt it as my own research project, on synthetic data I designed: every fraud pattern has a real case and a decoy that fires the same rule. Ambiguous names are now kept with their candidates instead of merged, and an ambiguous case is never dismissed automatically. Secret scanning runs on every commit.",
+      "In progress: an ablation that measures what the profile adds over rules alone, and five runs per model to check that the answers are stable. The live page walks through the method, the false positives and the open questions, and the results land there next.",
     ],
+    // Code: the repo is private; don't link it.
     codeUrl: "",
-    liveUrl: "",
-    media: "/projects/lynx.webm",
-    startAt: 50,
-    seconds: 8,
+    liveUrl: "https://lynx-site.vercel.app",
+    media: "/projects/lynx.mp4",
+    poster: "/projects/lynx.jpg",
+    startAt: 5,
+    seconds: 17.6,
     art: art(30, "82% 62%", "20% 30%"),
   },
   {
