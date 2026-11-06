@@ -19,6 +19,7 @@ export const IntroTile = ({ ref }: { ref?: Ref<HTMLDivElement> }) => {
   const [open, setOpen] = useState(false);
   const [length, setLength] = useState<string | null>(null);
 
+  // left-[112px]: the top bar's MSSE:// sits on the same edge (ScrollScene.tsx).
   return (
     <div
       ref={ref}

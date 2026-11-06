@@ -357,7 +357,8 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         {/* The CSS load fade sits on this inner box; GSAP owns the outer one. */}
         <div
           className={`hero-bar-in flex items-center justify-between ${
-            isMobile ? "px-[18px] py-[22px]" : "px-12 py-[52px]"
+            // Desktop: MSSE:// on the Ø1.1 tile's edge (112px, IntroVideo.tsx).
+            isMobile ? "px-[18px] py-[22px]" : "py-[52px] pl-[112px] pr-12"
           }`}
         >
           {/* Phones: a small MSSE:// (STATUS size) and STATUS in a frosted pill. */}
