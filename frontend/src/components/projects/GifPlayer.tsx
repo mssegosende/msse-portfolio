@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ShowcaseProject } from "@/data/projectsData";
+import { seekToStart } from "./clip";
 import s from "./projects.module.css";
 
 const PAUSE_ICON = "M6 5h4v14H6zM14 5h4v14h-4z";
@@ -20,7 +21,9 @@ interface GifPlayerProps {
 
 /**
  * The 16:10 "GIF" player: a muted clip with PAUSE/PLAY, a progress line and
- * NEXT · <name>. Remount it (key) per project so the clip starts over.
+ * NEXT · <name>. Remount it (key) per project so the clip starts over. The
+ * clip starts at the project's startAt and plays one whole loop from there
+ * (back round to startAt) before onEnded.
  */
 export const GifPlayer = ({
   project,
@@ -35,6 +38,9 @@ export const GifPlayer = ({
   const barRef = useRef<HTMLDivElement>(null);
   const onEndedRef = useRef(onEnded);
   const clock = useRef(0);
+  // Loop tracking: the last time seen, and whether the clip has wrapped round.
+  const lastT = useRef(0);
+  const wrapped = useRef(false);
   // A clip that can't load still advances the reel, on its nominal length.
   const [failed, setFailed] = useState(false);
 
@@ -54,6 +60,24 @@ export const GifPlayer = ({
     else v.pause();
   }, [playing, failed]);
 
+  // Start at the project's offset, as soon as the clip knows its length (it
+  // may already: the folder row loads the same file).
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || failed) return undefined;
+    const start = () => {
+      seekToStart(v, project.startAt);
+      lastT.current = v.currentTime;
+      wrapped.current = false;
+    };
+    if (v.readyState >= HTMLMediaElement.HAVE_METADATA) {
+      start();
+      return undefined;
+    }
+    v.addEventListener("loadedmetadata", start, { once: true });
+    return () => v.removeEventListener("loadedmetadata", start);
+  }, [project.startAt, failed]);
+
   // The progress line: written straight to the DOM, once per frame, while playing.
   useEffect(() => {
     if (!playing) return;
@@ -71,7 +95,16 @@ export const GifPlayer = ({
         p = clock.current / project.seconds;
       } else {
         const d = Number.isFinite(v.duration) && v.duration > 0 ? v.duration : project.seconds;
-        p = v.ended ? 1 : v.currentTime / d;
+        const start = (project.startAt ?? 0) % d;
+        const t = v.currentTime;
+        if (t + 0.5 < lastT.current) wrapped.current = true;
+        lastT.current = t;
+        // One whole loop from startAt: hand over once it is back there.
+        if (wrapped.current && t >= start && onEndedRef.current) {
+          wrapped.current = false;
+          onEndedRef.current();
+        }
+        p = ((((t - start) % d) + d) % d) / d;
       }
       last = now;
       if (barRef.current) barRef.current.style.width = `${Math.min(100, p * 100)}%`;
@@ -79,7 +112,7 @@ export const GifPlayer = ({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [playing, failed, project.seconds]);
+  }, [playing, failed, project.seconds, project.startAt]);
 
   return (
     <div
@@ -96,8 +129,8 @@ export const GifPlayer = ({
           muted
           playsInline
           preload="auto"
-          loop={!onEnded}
-          onEnded={() => onEndedRef.current?.()}
+          // Always looping: the hand-over comes from the loop tracking above.
+          loop
           onError={() => setFailed(true)}
           aria-hidden="true"
           tabIndex={-1}

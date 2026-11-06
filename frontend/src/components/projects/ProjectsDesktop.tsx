@@ -9,6 +9,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { scrollToY } from "@/hooks/useLenis";
 import { SectionBackdrop } from "../SectionBackdrop";
 import { Num } from "../Num";
+import { seekToStart } from "./clip";
 import { GifPlayer } from "./GifPlayer";
 import { CardText, ProjectFrame, ScrollText } from "./ProjectCard";
 import s from "./projects.module.css";
@@ -132,6 +133,7 @@ const Folder = ({
         playsInline
         autoPlay={!reduced}
         preload="metadata"
+        onLoadedMetadata={(e) => seekToStart(e.currentTarget, project.startAt)}
         aria-hidden="true"
         tabIndex={-1}
       />

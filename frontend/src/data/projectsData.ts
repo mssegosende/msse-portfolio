@@ -1,7 +1,8 @@
 // Scene 3 projects. Copy: design/projects-copy.md (used exactly as written).
 // `media`: the looping clip in the GIF player. Ethos and Marvel Characters use
-// the real recordings (16:10 H.264 loops + a poster frame); the other four are
-// still abstract placeholders: swap them for screen recordings cut the same way.
+// the full real recordings (16:10 H.264 seamless loops + a poster frame at
+// `startAt`); the other four are still abstract placeholders: swap them for
+// screen recordings cut the same way.
 
 export interface ShowcaseProject {
   id: string;
@@ -21,6 +22,14 @@ export interface ShowcaseProject {
   media: string;
   /** First frame of the clip, shown while it loads. */
   poster?: string;
+  /**
+   * Seconds into the clip where it starts (the poster is that frame), so
+   * clips playing side by side are never in sync: every project ~10 s apart
+   * (Marvel Characters 0, Ethos 10, the rest 20, 30, 40, 50; a new one takes
+   * the next free ten). Wrapped into the clip's length, so the 8 s
+   * placeholders already differ; keep the poster at the same frame.
+   */
+  startAt?: number;
   /** Fallback length when the clip doesn't report a duration (MediaRecorder webm). */
   seconds: number;
   /** Static art behind the clip (poster while it loads, and the folder back panel). */
@@ -48,6 +57,7 @@ export const showcaseProjects: ShowcaseProject[] = [
     codeUrl: "",
     liveUrl: "",
     media: "/projects/blaze.webm",
+    startAt: 20,
     seconds: 8,
     art: art(210, "24% 30%", "80% 76%"),
   },
@@ -63,6 +73,7 @@ export const showcaseProjects: ShowcaseProject[] = [
     codeUrl: "",
     liveUrl: "",
     media: "/projects/alphecca.webm",
+    startAt: 30,
     seconds: 8,
     art: art(120, "70% 28%", "22% 80%"),
   },
@@ -88,6 +99,7 @@ export const showcaseProjects: ShowcaseProject[] = [
     codeUrl: "",
     liveUrl: "",
     media: "/projects/polaris.webm",
+    startAt: 40,
     seconds: 8,
     art: art(300, "40% 70%", "78% 24%"),
   },
@@ -104,6 +116,7 @@ export const showcaseProjects: ShowcaseProject[] = [
     codeUrl: "",
     liveUrl: "",
     media: "/projects/lynx.webm",
+    startAt: 50,
     seconds: 8,
     art: art(30, "82% 62%", "20% 30%"),
   },
@@ -124,7 +137,8 @@ export const showcaseProjects: ShowcaseProject[] = [
     liveUrl: "https://ethos-health-bice.vercel.app",
     media: "/projects/ethos.mp4",
     poster: "/projects/ethos.jpg",
-    seconds: 14.2,
+    startAt: 10,
+    seconds: 21.8,
     art: art(160, "30% 64%", "74% 30%"),
   },
   {
@@ -140,7 +154,8 @@ export const showcaseProjects: ShowcaseProject[] = [
     liveUrl: "",
     media: "/projects/marvel-characters.mp4",
     poster: "/projects/marvel-characters.jpg",
-    seconds: 15,
+    startAt: 0,
+    seconds: 46.1,
     art: art(250, "62% 70%", "26% 22%"),
   },
 ];
