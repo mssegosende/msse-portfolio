@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Spline from "@splinetool/react-spline";
 import { Application } from "@splinetool/runtime";
 import { profile } from "../data/portfolioData";
@@ -25,6 +25,9 @@ import { useHeroElements, useHeroTimeline } from "./scroll-scene/useHeroTimeline
 import { useMediaQuery } from "../hooks/useMediaQuery";
 
 patchSplineRuntime(Application);
+
+// Longest wait for the robot before the wordmark and top bar fade in anyway, ms.
+const HERO_IN_CAP = 6000;
 
 export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => {
   const { theme } = useTheme();
@@ -86,6 +89,15 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     onLayer2Gone,
   } = useHeroScenes(isMobile, darkMode, { canvasWrapRef, slot1BoxRef, altBoxRef, canvas2WrapRef });
 
+  // The load fades (wordmark, top bar) wait for the robot so all three land
+  // together; a slow scene never holds the text back longer than HERO_IN_CAP.
+  const [capped, setCapped] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setCapped(true), HERO_IN_CAP);
+    return () => clearTimeout(t);
+  }, []);
+  const heroIn = revealed || capped;
+
   // Hidden desktop mounts also get visibility:hidden, which takes them out of
   // compositing and hit-testing: one live robot per layer.
   const hiddenCls = "invisible opacity-0";
@@ -109,6 +121,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       ref={sectionRef}
       data-testid="scene-section"
       data-theme="dark"
+      data-hero-in={heroIn}
       className="relative h-screen min-h-[640px] w-full overflow-hidden"
     >
       {/* Scene 2 ground, under scene 1's: gradient, glow behind the head, shade,
