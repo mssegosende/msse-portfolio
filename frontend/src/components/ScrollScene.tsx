@@ -14,11 +14,11 @@ import { CapabilityCards } from "./scroll-scene/CapabilityCards";
 import {
   HeroHeadline,
   HeroWordmark,
-  IntroTile,
   ScrollCue,
   ScrollCuePhone,
   SystemCheck,
 } from "./scroll-scene/HeroHud";
+import { IntroTile } from "./scroll-scene/IntroVideo";
 import { useCalloutsAboveDock } from "./scroll-scene/useCalloutsAboveDock";
 import { useHeroScenes } from "./scroll-scene/useHeroScenes";
 import { useHeroElements, useHeroTimeline } from "./scroll-scene/useHeroTimeline";

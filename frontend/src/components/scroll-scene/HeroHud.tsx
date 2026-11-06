@@ -62,37 +62,7 @@ export const HeroWordmark = ({ ref, isMobile }: { ref?: Ref<HTMLDivElement>; isM
     </div>
   );
 
-/** Ø1.1: the intro video tile. TODO(polish): play the intro once the video exists. */
-export const IntroTile = ({ ref }: { ref?: Ref<HTMLDivElement> }) => (
-  <div
-    ref={ref}
-    role="img"
-    aria-label="Intro video"
-    data-testid="hero-intro-tile"
-    className="absolute left-[112px] top-[44.4%] w-[184px]"
-  >
-    <span className="relative block h-[104px] overflow-hidden bg-[#121417] shadow-[0_16px_30px_-14px_rgba(10,14,20,0.6)]">
-      <img
-        src="/robot-alpha.png"
-        alt=""
-        className="h-full w-full object-cover [object-position:48%_14%]"
-      />
-      <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,12,15,0)_40%,rgba(10,12,15,0.55)_100%)]" />
-      <span className="absolute left-1/2 top-1/2 -ml-[17px] -mt-[17px] flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/[0.92]">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="#0B0D10" aria-hidden="true">
-          <path d="M8 5v14l11-7z" />
-        </svg>
-      </span>
-      <span className="absolute bottom-[5px] right-[6px] font-mono text-[9px] text-[#E9EDF1]">
-        [ 1:30 ]
-      </span>
-    </span>
-    <span className={`mt-[9px] block text-[12px] leading-[1.45] ${INK}`}>
-      <span className="block font-medium">Watch the intro</span>
-      <span className={`block ${INK_2}`}>What I&apos;m building right now</span>
-    </span>
-  </div>
-);
+// Ø1.1, the intro video tile, lives in IntroVideo.tsx with its player.
 
 // Barcode bar widths, px.
 const BARS = [3, 1, 2, 1, 4, 1, 1, 2, 3, 1, 2, 2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1];
