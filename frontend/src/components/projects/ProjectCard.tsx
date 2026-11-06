@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { Fragment, type CSSProperties, type ReactNode } from "react";
 import type { ShowcaseProject } from "@/data/projectsData";
 import { Num } from "../Num";
 import s from "./projects.module.css";
@@ -144,7 +144,7 @@ export const Flow = ({ steps, compact = false }: { steps: string[]; compact?: bo
       const last = i === steps.length - 1;
       const cls = last ? s.flowEnd : i === steps.length - 2 ? s.flowStrong : "";
       return (
-        <span key={step} style={{ display: "contents" }}>
+        <Fragment key={step}>
           {i > 0 && (
             <span className={s.flowArrow} aria-hidden="true">
               →
@@ -153,7 +153,7 @@ export const Flow = ({ steps, compact = false }: { steps: string[]; compact?: bo
           <span className={cls} style={compact ? { padding: "5px 7px" } : undefined}>
             {step}
           </span>
-        </span>
+        </Fragment>
       );
     })}
   </div>
