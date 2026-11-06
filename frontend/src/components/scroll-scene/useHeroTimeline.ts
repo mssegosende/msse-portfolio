@@ -158,7 +158,12 @@ export const useHeroTimeline = ({
     } = scenes;
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
-    const viewport = { width: window.innerWidth || 2000, height: window.innerHeight || 900 };
+    // Phones frame against the section (the canvas), which is 100vh: on iOS the
+    // large viewport, taller than innerHeight while the browser bars show.
+    const viewport = {
+      width: window.innerWidth || 2000,
+      height: (isMobile ? sectionRef.current?.clientHeight : 0) || window.innerHeight || 900,
+    };
     const vw = vwOf(viewport.width);
     const { startScale, startY, heroDx } = heroFraming(isMobile, reduce, viewport);
     const giant = giantHeadFraming(isMobile, viewport);

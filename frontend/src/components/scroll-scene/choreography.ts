@@ -28,18 +28,34 @@ export const vwOf =
  * native position was measured at 1440x900 (HERO_CROWN_NATIVE, a fraction of
  * the frame height, at scale 1), so any scale can put it at HERO_CROWN_TARGET.
  */
-// Phone hero framing: zoom, pan right (share of the width) and down (% of the frame).
-const PHONE_HERO = { scale: 0.94, dx: 0.222, y: -9.6 };
+// Phone hero framing at the mock's 390 x 844: zoom, pan right (share of the
+// width) and down (% of the frame).
+const PHONE_HERO = { scale: 0.94, dx: 0.222, y: -11.2 };
+/** The phone mocks' height, which the phone framings are measured at. */
+export const PHONE_REF_H = 844;
+
+/**
+ * The camera keeps its vertical field of view, so on a phone the robot scales
+ * with the viewport height, and a real phone's browser bars leave ~660-750px
+ * of the 844. This turns a framing measured at PHONE_REF_H into one that keeps
+ * the robot the same size in px and the same distance from the top.
+ */
+const phoneFixedPx = (scale: number, y: number, height: number) => {
+  const k = PHONE_REF_H / height;
+  return { scale: scale * k, y: 100 * ((0.5 + y / 100) * k - 0.5) };
+};
 
 export const heroFraming = (isMobile: boolean, _reduce: boolean, { width, height }: Viewport) => {
   if (isMobile) {
     // Phones (design/source/mobile/light/scene-1-hero.dc.html): the robot lower
-    // and to the right, one arm in frame, the head whole ~40px from the top.
+    // and to the right, one arm in frame, the head whole ~50px from the top, at
+    // the mock's size on any phone height (María Sol's review: it read small).
     // A camera framing (applyView at css scale 1), the same with reduced motion.
+    const f = phoneFixedPx(PHONE_HERO.scale, PHONE_HERO.y, height);
     return {
-      startScale: PHONE_HERO.scale,
-      startY: `${PHONE_HERO.y}%`,
-      endY: `${PHONE_HERO.y}%`,
+      startScale: f.scale,
+      startY: `${f.y}%`,
+      endY: `${f.y}%`,
       heroDx: PHONE_HERO.dx * width,
     };
   }
