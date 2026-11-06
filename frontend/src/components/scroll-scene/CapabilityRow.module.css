@@ -1,0 +1,108 @@
+/* Scene 2's card row (CapabilityRow.tsx). The fades at its ends are a mask on
+   the row, like the About text window's, but sideways; their widths are
+   registered so they slide with the cards instead of jumping. The right fade
+   runs from --fade-r-a to --fade-r-b, both measured from the right edge: the
+   row reaches past the head's line by the cards' shadow, which a card waiting
+   off the row never shows through. */
+@property --fade-l {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fade-r-a {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fade-r-b {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+.window {
+  position: absolute;
+  left: 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--fade-l),
+    #000 calc(100% - var(--fade-r-a)),
+    transparent calc(100% - var(--fade-r-b))
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 var(--fade-l),
+    #000 calc(100% - var(--fade-r-a)),
+    transparent calc(100% - var(--fade-r-b))
+  );
+  transition:
+    --fade-l 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+    --fade-r-a 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+    --fade-r-b 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.track {
+  position: absolute;
+  transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.track[data-carousel="true"] {
+  touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
+}
+.window[data-dragging="true"],
+.window[data-dragging="true"] .track {
+  transition: none;
+  cursor: grabbing;
+}
+
+.slot {
+  position: absolute;
+  top: 0;
+  transition: opacity 0.8s ease;
+}
+/* Cards waiting off the row: the About paragraphs' dim. */
+.slot[data-place="left"],
+.slot[data-place="right"] {
+  opacity: 0.7;
+}
+
+.controls {
+  position: absolute;
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+  transition: opacity 0.4s ease;
+}
+.control {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  transition: opacity 0.3s ease;
+}
+.control:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.control:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .window,
+  .track,
+  .slot {
+    transition: none;
+  }
+}

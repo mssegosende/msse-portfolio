@@ -37,12 +37,18 @@ export interface CapTitleFit {
   bottom: number;
 }
 
+/** The title's left edge: the cards' row starts there too. */
+export const CAP_LEFT = LEFT;
+
+/** How far right anything in front of the head may reach, px (the head's edge minus the gap). */
+export const capHeadClear = (width: number, height: number) => width / 2 - HEAD_LEFT * height - GAP;
+
 export const capTitleFit = (
   width: number,
   height: number,
   widths: CapTitleWidths = CAP_TITLE_WIDTHS,
 ): CapTitleFit => {
-  const room = width / 2 - HEAD_LEFT * height - GAP - LEFT;
+  const room = capHeadClear(width, height) - LEFT;
   if (widths.full <= room) {
     return { lines: 1, size: CAP_TITLE_SIZE, bottom: ONE_LINE_BOTTOM };
   }

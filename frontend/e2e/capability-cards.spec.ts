@@ -1,11 +1,12 @@
 import { expect, test, type Page } from "@playwright/test";
 import { blockSpline, openHome, PHONE, scrollToPin } from "./helpers";
 
-// Scene 2's cards have to fit whatever screen they are on, clear of the title and
-// the dock (it broke on Safari's shorter viewport and under the phone's dock before).
-// Desktop shows the three together, stacked, from 900px of window height and
-// only where every card shows at least 4 lines of its text (the rest scrolls
-// inside the card); shorter windows and phones show one at a time.
+// Scene 2's cards have to fit whatever screen they are on, clear of the title,
+// the head and the dock (it broke on Safari's shorter viewport and under the
+// phone's dock before). Desktop: the vertical cards in one row under the title,
+// one more per step; where the next doesn't fit before the head, the row
+// slides left, the earliest card fades off its left edge, and the row works as
+// a carousel (‹ ›, arrow keys, drag). Phones show one card at a time.
 
 type Box = { top: number; bottom: number; left: number; right: number };
 
@@ -16,24 +17,20 @@ const boxes = (page: Page) =>
       const r = el.getBoundingClientRect();
       return { top: r.top, bottom: r.bottom, left: r.left, right: r.right };
     };
-    const shown = [
-      ...document.querySelectorAll('[data-testid="capability-cards"] .cap-rise article'),
-    ];
     const root = document.querySelector('[data-testid="capability-cards"]')!;
+    const slots = [...root.querySelectorAll("[data-place]")];
     return {
       layout: root.getAttribute("data-layout"),
-      // The fewest lines of text any shown card has in view (its text box's
-      // height, or the whole text when shorter), in unscaled card px.
-      minLines: Math.min(
-        ...shown.map((a) => {
-          const p = a.querySelector("p");
-          const box = p?.parentElement?.parentElement;
-          if (!p || !box) return 0;
-          const line = parseFloat(getComputedStyle(p).lineHeight);
-          return Math.min(box.clientHeight, p.offsetHeight) / line;
-        }),
-      ),
-      cards: shown.map(rect),
+      fit: Number(root.getAttribute("data-fit")),
+      // Each card's place in the row: in, left / right (off the row), waiting.
+      places: slots.map((s) => s.getAttribute("data-place")),
+      inRow: slots
+        .filter((s) => s.getAttribute("data-place") === "in")
+        .map((s) => rect(s.querySelector("article"))),
+      // Phones: the card showing.
+      cards: [
+        ...document.querySelectorAll('[data-testid="capability-cards"] .cap-rise article'),
+      ].map(rect),
       title: rect(document.querySelector('[data-testid="capabilities-title"] h2')),
       dockTop: document.querySelector("[data-dock-slot]")!.getBoundingClientRect().top,
       viewport: { width: window.innerWidth, height: window.innerHeight },
@@ -43,49 +40,97 @@ const boxes = (page: Page) =>
 const overlaps = (a: Box, b: Box) =>
   a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
-const DESKTOP_SIZES: { width: number; height: number; layout: "stack" | "single" }[] = [
-  { width: 1280, height: 720, layout: "single" },
-  { width: 1440, height: 790, layout: "single" }, // Safari with its toolbars on a 1440x900 screen
-  { width: 1440, height: 900, layout: "stack" },
-  { width: 1920, height: 1080, layout: "stack" },
-  { width: 1920, height: 1200, layout: "stack" },
-  { width: 2560, height: 1440, layout: "stack" },
+/** Let the cards finish rising (cap-rise moves them 40px) and the row finish sliding. */
+const settled = (page: Page) =>
+  page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .every(
+        (a) => a.playState !== "running" || a.effect?.getComputedTiming().endTime === Infinity,
+      ),
+  );
+
+// How many cards fit side by side before the head.
+const DESKTOP_SIZES: { width: number; height: number; fit: number }[] = [
+  { width: 1280, height: 720, fit: 2 },
+  { width: 1440, height: 790, fit: 2 }, // Safari with its toolbars on a 1440x900 screen
+  { width: 1440, height: 900, fit: 2 },
+  { width: 1920, height: 1080, fit: 2 },
+  { width: 1920, height: 1200, fit: 2 },
+  { width: 2560, height: 1080, fit: 3 },
+  { width: 2560, height: 1440, fit: 3 },
 ];
 
-for (const { layout: expected, ...viewport } of DESKTOP_SIZES) {
+for (const { fit, ...viewport } of DESKTOP_SIZES) {
   test.describe(`desktop ${viewport.width}x${viewport.height}`, () => {
     test.use({ viewport });
 
-    test("the cards sit on screen, apart, clear of the title and the dock", async ({ page }) => {
+    test("one card per step, in a row clear of the title, the head and the dock", async ({
+      page,
+    }) => {
       await blockSpline(page);
       await openHome(page);
+
+      // Inside Ø2.1's and Ø2.2's steps: the cards come in from the left.
+      for (const [progress, shown] of [
+        [0.58, 1],
+        [0.74, 2],
+      ] as const) {
+        await scrollToPin(page, progress);
+        await expect
+          .poll(async () => (await boxes(page)).places.filter((p) => p !== "waiting").length)
+          .toBe(shown);
+      }
+
       await scrollToPin(page, 0.99);
       const first = await boxes(page);
-      expect(first.layout).toBe(expected);
-      const stacked = first.layout === "stack";
-      await expect.poll(async () => (await boxes(page)).cards.length).toBe(stacked ? 3 : 1);
-      // Let the last card finish rising (cap-rise moves it up 40px).
-      await page.waitForFunction(() =>
-        document
-          .getAnimations()
-          .every(
-            (a) => a.playState !== "running" || a.effect?.getComputedTiming().endTime === Infinity,
-          ),
-      );
-      const { cards, title, minLines, viewport: vp } = await boxes(page);
-      // Stacked cards show at least 4 lines of text each (a little slack for
-      // sub-pixel rounding).
-      if (stacked) expect(minLines).toBeGreaterThan(3.9);
+      expect(first.layout).toBe("row");
+      expect(first.fit).toBe(fit);
+      await expect
+        .poll(async () => (await boxes(page)).places)
+        .toEqual(
+          // The earliest cards wait off the row's left edge.
+          ["in", "in", "in"].map((p, i) => (i < 3 - fit ? "left" : p)),
+        );
+      await settled(page);
+
+      const { inRow, title, viewport: vp } = await boxes(page);
       const dock = await page.getByTestId("navigation-dock").boundingBox();
-      cards.forEach((card, i) => {
+      // The head's left edge, less its gap (capTitle.ts: capHeadClear).
+      const headClear = vp.width / 2 - 0.08 * vp.height - 28;
+      inRow.forEach((card, i) => {
         expect(card!.top).toBeGreaterThanOrEqual(0);
         expect(card!.left).toBeGreaterThanOrEqual(0);
-        expect(card!.right).toBeLessThanOrEqual(vp.width);
-        expect(card!.bottom).toBeLessThanOrEqual(vp.height);
-        expect(overlaps(card!, title!)).toBe(false);
+        expect(card!.right).toBeLessThanOrEqual(headClear + 0.5);
         expect(card!.bottom).toBeLessThanOrEqual(dock!.y);
-        if (i > 0) expect(card!.top).toBeGreaterThanOrEqual(cards[i - 1]!.bottom);
+        expect(overlaps(card!, title!)).toBe(false);
+        if (i > 0) expect(card!.left).toBeGreaterThanOrEqual(inRow[i - 1]!.right);
       });
+
+      const controls = page.getByTestId("capability-controls");
+      if (fit === 3) {
+        await expect(controls).toHaveCount(0);
+        return;
+      }
+
+      // A carousel: ‹ brings the earliest card back, the arrow keys move it too.
+      await expect(controls).toBeVisible();
+      const back = page.getByRole("button", { name: "Previous capability" });
+      const next = page.getByRole("button", { name: "Next capability" });
+      await expect(next).toBeDisabled();
+      await back.click();
+      await expect.poll(async () => (await boxes(page)).places).toEqual(["in", "in", "right"]);
+      await next.press("ArrowRight");
+      await expect.poll(async () => (await boxes(page)).places).toEqual(["left", "in", "in"]);
+
+      // Dragging the row to the right brings the earliest card back as well.
+      const card = (await boxes(page)).inRow[0]!;
+      const y = (card.top + card.bottom) / 2;
+      await page.mouse.move(card.left + 40, y);
+      await page.mouse.down();
+      await page.mouse.move(card.left + 140, y, { steps: 8 });
+      await page.mouse.up();
+      await expect.poll(async () => (await boxes(page)).places).toEqual(["in", "in", "right"]);
     });
   });
 }
