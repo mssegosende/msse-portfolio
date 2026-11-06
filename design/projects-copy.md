@@ -56,8 +56,10 @@ The core is the appointments service. I defined the business rules before writin
 Next up: memberships with Stripe, and patient metrics (biomarkers, sleep, recovery) with an LLM layer to help clinicians interpret them.
 
 ## Ø3.6 · MARVEL CHARACTERS
-- Subtitle: Frontend — Character Browser
+- Subtitle: Full Stack — Character Browser
 - Tags: Next.js, React, TypeScript, Zod, Tailwind CSS, Vitest
-- Code: https://github.com/mssegosende/17.1-marvel-characters · Live: none yet
+- Code: https://github.com/mssegosende/17.1-marvel-characters · Live: https://marvel-characters-coral.vercel.app
 
-My first React and TypeScript app. You can browse and filter 304 Marvel characters. The source dataset is old and messy, so Zod validates every record, caps out-of-range stats at 100 and skips anything that doesn't parse. 35 real Marvel characters were missing because their publisher field held an alias, and I brought them back with an allowlist. Search and filters live in the URL and ignore accents. Each picture comes from the best source available: a local file, the Marvel Database wiki, Comic Vine, then the dataset. It works on phones, opens with an original intro animation and has tests in Vitest.
+My first React and TypeScript app. You can browse and filter 304 Marvel characters. The source dataset is old and messy, so Zod validates every record, caps out-of-range stats at 100 and skips anything that doesn't parse. 35 real Marvel characters were missing because their publisher field held an alias, and I brought them back with an allowlist. All data is fetched and cached on the server, from three sources, so no key ever reaches the browser. Search and filters live in the URL and ignore accents. Each picture comes from the best source available: a local file, the Marvel Database wiki, Comic Vine, then the dataset. It works on phones, opens with an original intro animation and has tests in Vitest.
+
+Next up: an AI-assisted review to flag the minor and filler characters the current filters can't catch, cross-checked against a second data source.
