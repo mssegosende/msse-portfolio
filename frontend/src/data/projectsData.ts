@@ -1,7 +1,8 @@
 // Scene 3 projects. Copy: design/projects-copy.md (used exactly as written).
 // `media`: the looping clip in the GIF player. Ethos and Marvel Characters use
-// the full real recordings (16:10 H.264 seamless loops + a poster frame at
-// `startAt`); the other four are still abstract placeholders: swap them for
+// real recordings, ~22 s each (Marvel: its search and filters stretch), cut to
+// 16:10 H.264 seamless loops (0.6 s crossfade, no audio) + a poster frame at
+// `startAt`; the other four are still abstract placeholders: swap them for
 // screen recordings cut the same way.
 
 export interface ShowcaseProject {
@@ -155,7 +156,7 @@ export const showcaseProjects: ShowcaseProject[] = [
     media: "/projects/marvel-characters.mp4",
     poster: "/projects/marvel-characters.jpg",
     startAt: 0,
-    seconds: 46.1,
+    seconds: 22,
     art: art(250, "62% 70%", "26% 22%"),
   },
 ];
