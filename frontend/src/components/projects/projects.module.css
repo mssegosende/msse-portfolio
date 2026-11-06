@@ -231,6 +231,7 @@
 
 .player {
   position: relative;
+  flex: none;
   aspect-ratio: 16 / 10;
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -443,6 +444,8 @@
 .slide {
   flex: 0 0 min(330px, calc(100vw - 60px));
   min-width: 0;
+  /* The mock's card height (212 -> 845 at 390 x 844); longer copy scrolls inside. */
+  height: 633px;
   scroll-snap-align: start;
 }
 .dots {

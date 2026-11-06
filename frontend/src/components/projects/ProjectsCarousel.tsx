@@ -4,7 +4,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { SectionBackdrop } from "../SectionBackdrop";
 import { Num } from "../Num";
 import { GifPlayer } from "./GifPlayer";
-import { CardText, ProjectFrame } from "./ProjectCard";
+import { CardText, ProjectFrame, ScrollText } from "./ProjectCard";
 import s from "./projects.module.css";
 
 const GAP = 12;
@@ -91,7 +91,16 @@ export const ProjectsCarousel = () => {
               aria-label={`${i + 1} of ${PROJECTS.length}: ${p.name}`}
               data-testid={`project-card-${p.id}`}
             >
-              <ProjectFrame project={p} contentStyle={{ padding: "18px 12px 52px" }}>
+              <ProjectFrame
+                project={p}
+                contentStyle={{
+                  height: "calc(100% - 28px)",
+                  boxSizing: "border-box",
+                  padding: "18px 12px 52px",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+              >
                 <GifPlayer
                   compact
                   project={p}
@@ -101,7 +110,9 @@ export const ProjectsCarousel = () => {
                   onToggle={() => setUserPaused(!paused)}
                   onEnded={reduced ? undefined : advance}
                 />
-                <CardText project={p} format="phone" tagsTop={16} />
+                <ScrollText style={{ flex: "1 1 auto", minHeight: 0 }}>
+                  <CardText project={p} format="phone" tagsTop={16} />
+                </ScrollText>
               </ProjectFrame>
             </article>
           );
