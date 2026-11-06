@@ -409,23 +409,6 @@
   color: #aeb6bf;
 }
 
-/* ---- Entrances ---- */
-
-.back {
-  min-height: 36px;
-  padding: 0 12px;
-  border: 1px solid rgba(20, 24, 29, 0.25);
-  background: rgba(255, 255, 255, 0.7);
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
-  color: #14181d;
-  cursor: pointer;
-}
-.back:hover {
-  background: #fff;
-}
-
 /* ---- Phone carousel ---- */
 
 .carousel {
