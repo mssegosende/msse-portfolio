@@ -10,6 +10,7 @@ import { Projects } from "@/components/Projects";
 import { Contact } from "@/components/Contact";
 import { RotateLock } from "@/components/RotateLock";
 import { SectionIndex } from "@/components/SectionIndex";
+import { Signature } from "@/components/Signature";
 
 function App() {
   useLenis();
@@ -23,6 +24,7 @@ function App() {
     <div className="App bg-surface font-inter text-ink antialiased">
       <NavigationDock visible={journeyDone} />
       <SectionIndex />
+      <Signature />
       {/* Design order: Ø1 hero and Ø2 capabilities (both inside the pinned hero),
           Ø3 projects, Ø4 about, Ø5 contact. */}
       <main>
