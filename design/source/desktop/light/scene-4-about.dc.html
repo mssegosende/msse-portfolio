@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Desktop · light · Scene 4 about</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Michroma&amp;family=Rajdhani:wght@300;400;500;600&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Science+Gothic:wdth,wght@50..200,100..900&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Science+Gothic:wght@100..900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#14181D}
+.grain{background-image:url(../../../assets/grain.png);background-size:220px 220px}
+.in{opacity:0;transform:translateY(14px);animation:rise .55s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.in{animation-duration:.01s;animation-delay:0s !important}}
+</style>
+</helmet>
+<div onWheel="{{onWheel}}" style="position: relative; height: 900px; overflow: hidden; background: linear-gradient(180deg, #E1E6EA 0%, #C2C9D0 60%, #7D8893 100%); color: #14181D; font-family: Inter, system-ui, sans-serif">
+
+<!-- background shadows -->
+<div aria-hidden="true" style="position: absolute; left: 380px; top: 300px; width: 1000px; height: 760px; margin: -380px 0 0 -500px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,255,255,0.6), rgba(255,255,255,0)); z-index: 0"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse 45% 35% at 78% 70%, rgba(25,32,42,0.16) 0%, rgba(25,32,42,0) 70%), radial-gradient(ellipse 120% 90% at 50% 45%, rgba(0,0,0,0) 55%, rgba(20,26,34,0.26) 100%)"></div>
+
+<div aria-hidden="true" style="position: absolute; left: 40px; top: 26px; z-index: 0; font-family: Michroma, sans-serif; font-size: 190px; line-height: 1; color: transparent; background: linear-gradient(180deg, rgba(255,255,255,0.95) 5%, rgba(160,170,182,0.5) 100%); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 12px 16px rgba(20,26,34,0.12))">HUMAN</div>
+
+<!-- 4.1 · who -->
+<div class="in" style="position: absolute; left: 56px; top: 52px; width: 740px; z-index: 5">
+<div style="display: inline-flex; padding: 9px 18px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 8px 20px -12px rgba(30,40,55,0.4); font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.12em">WHO</div>
+<h2 style="margin: 16px 0 0; font-family: Science Gothic, Michroma, sans-serif; font-weight: 200; font-stretch: 150%; font-size: 64px; line-height: 1.05; color: #14181D">THE HUMAN<br>BEHIND THE MACHINE</h2>
+<p style="margin: 34px 0 0; font-size: 19px; line-height: 1.6; color: #14181D">I'm María Sol — a full stack developer and AI engineer in Buenos Aires. I came to code through a cousin who was sure I could do it, and a computer I wanted to understand down to the parts: I built my own PC in 2020, and I've been writing software professionally since 2022.</p>
+</div>
+
+<!-- 4.2 · how I learn + since 2022 -->
+<sc-if value="{{show2}}" hint-placeholder-val="{{ true }}">
+<p class="in" style="position: absolute; left: 56px; top: 512px; width: 700px; z-index: 5; margin: 0; font-size: 17px; line-height: 1.7; color: #171C21">Piano taught me the thing I use most: different logics share patterns. Once I see the pattern, a new language or framework stops being foreign — that's how I learn, and how I walk into a system I've never seen.</p>
+<div class="in" style="position: absolute; left: 840px; top: 150px; width: 460px; z-index: 5; display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding-bottom: 26px; border-bottom: 1px solid rgba(20,24,29,0.28)">
+<div style="font-size: 14px; font-weight: 500; color: #14181D; line-height: 1.45">Shipping code since</div>
+<div style="font-family: Michroma, sans-serif; font-weight: 400; font-size: 112px; line-height: 0.95; letter-spacing: -0.01em; color: #14181D; filter: drop-shadow(0 14px 22px rgba(20,26,34,0.14))">2022</div>
+</div>
+</sc-if>
+
+<!-- 4.3 · principles, one after another -->
+<sc-if value="{{show3}}" hint-placeholder-val="{{ true }}">
+<div style="position: absolute; left: 840px; top: 330px; width: 460px; z-index: 5">
+<div class="in" style="animation-delay: 0s; padding: 22px 0; border-bottom: 1px solid rgba(20,24,29,0.28)"><h3 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 600; font-size: 17px; letter-spacing: 0.16em">CONTRACTS BEFORE CODE</h3><p style="margin: 8px 0 0; font-size: 15.5px; line-height: 1.6; color: #171C21">Typed schemas and validation at the edge aren't bureaucracy. They're what makes an agent's output something you can trust.</p></div>
+<div class="in" style="animation-delay: 0.15s; padding: 22px 0; border-bottom: 1px solid rgba(20,24,29,0.28)"><h3 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 600; font-size: 17px; letter-spacing: 0.16em">INTERFACES ARE THE PRODUCT</h3><p style="margin: 8px 0 0; font-size: 15.5px; line-height: 1.6; color: #171C21">Motion, latency and feedback are engineering decisions, not decoration.</p></div>
+<div class="in" style="animation-delay: 0.3s; padding: 22px 0"><h3 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 600; font-size: 17px; letter-spacing: 0.16em">HUMANS WHERE THEY MATTER</h3><p style="margin: 8px 0 0; font-size: 15.5px; line-height: 1.6; color: #171C21">Automate the routine, and design the exact point where a person should step in.</p></div>
+</div>
+</sc-if>
+
+<!-- site index: 1–5, this section opens its steps -->
+<nav aria-label="Sections" style="position: absolute; right: 36px; top: 250px; z-index: 8; display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: Rajdhani, sans-serif; mix-blend-mode: difference">
+<sc-for list="{{rail}}" as="b" hint-placeholder-count="8">
+<button type="button" onClick="{{b.go}}" aria-pressed="{{b.on}}" aria-label="{{b.aria}}" style="min-width: 44px; min-height: {{b.h}}px; border: 0; background: none; font: inherit; font-size: {{b.size}}px; letter-spacing: 0.08em; cursor: {{b.cursor}}; color: {{b.color}}; font-weight: {{b.weight}}">{{b.label}}</button>
+</sc-for>
+</nav>
+
+<!-- the menu stays from scene 2 on -->
+<div style="position: absolute; left: 0; right: 0; bottom: 26px; z-index: 9; display: flex; justify-content: center">
+<nav aria-label="Primary" style="display: flex; align-items: center; gap: 4px; padding: 8px 10px 8px 26px; background: rgba(255,255,255,0.94); border: 1px solid rgba(20,24,29,0.12); box-shadow: 0 18px 40px -20px rgba(25,34,48,0.5); font-family: Rajdhani, sans-serif; font-size: 14px; letter-spacing: 0.12em; flex-wrap: wrap">
+<a href="#top" style="font-family: Michroma, sans-serif; font-size: 15px; letter-spacing: 0.16em; text-decoration: none; color: #111316; margin-right: 26px">MSSE://</a>
+<div style="display: flex; align-items: center">
+<a href="#about" aria-current="true" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; text-decoration: none; color: #111316; font-weight: 600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg>ABOUT</a>
+<a href="#work" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; text-decoration: none; color: #3A414A"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3z"></path></svg>PROJECTS</a>
+<a href="#stack" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; text-decoration: none; color: #3A414A"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="6" y="6" width="12" height="12"></rect><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"></path></svg>CAPABILITIES</a>
+<span aria-hidden="true" style="width: 1px; height: 26px; background: rgba(20,24,29,0.2); margin: 0 12px"></span>
+</div>
+<button type="button" style="position: relative; display: flex; align-items: center; gap: 8px; padding: 13px 18px; background: #ECEEF1; border: 1px solid rgba(20,24,29,0.12); font: inherit; letter-spacing: inherit; color: #3A414A; cursor: pointer; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)">
+<span aria-hidden="true" style="position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: linear-gradient(225deg, transparent 50%, rgba(20,24,29,0.18) 50%); pointer-events: none; z-index: 2"></span>
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg>DARK</button>
+<a href="#contact" style="display: flex; align-items: center; gap: 8px; margin-left: 8px; padding: 14px 22px; background: #111316; color: #F4F5F7; text-decoration: none"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"></path></svg>INITIATE</a>
+</nav>
+</div>
+
+<div class="grain" aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; z-index: 20"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"beat":{"editor":"enum","options":["a1","a2","a3"],"default":"a1","section":"Scene"},"autoplay":{"editor":"boolean","default":true,"section":"Scene"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    this._order = ['a1', 'a2', 'a3'];
+    // the scroll drives it (simulated); at the last step it holds
+    this._tick = setInterval(() => {
+      const st = this.state || {};
+      const auto = st.auto !== undefined ? st.auto : (this.props.autoplay ?? true);
+      if (!auto) return;
+      const cur = st.beat || this.props.beat || 'a1';
+      const i = this._order.indexOf(cur);
+      if (i < this._order.length - 1) this.setState({ beat: this._order[i + 1] });
+    }, 2200);
+  }
+  componentWillUnmount() { clearInterval(this._tick); }
+  renderVals() {
+    const order = ['a1', 'a2', 'a3'];
+    const st = this.state || {};
+    const beat = st.beat || this.props.beat || 'a1';
+    const k = order.indexOf(beat);
+    const go = (b) => () => this.setState({ beat: b, auto: false });
+    const sec = (label, name, active, g) => ({ label: 'Ø' + label, aria: name, h: 40, size: 15, on: active ? 'true' : 'false',
+      color: active ? '#FFFFFF' : 'rgba(255,255,255,0.5)', weight: active ? 600 : 400, cursor: g ? 'pointer' : 'default', go: g || (() => {}) });
+    const sub = (n) => ({ label: 'Ø4.' + n, aria: 'Step 4.' + n, h: 30, size: 12, on: k === n - 1 ? 'true' : 'false',
+      color: k === n - 1 ? '#FFFFFF' : 'rgba(255,255,255,0.5)', weight: k === n - 1 ? 600 : 400, cursor: 'pointer', go: go(order[n - 1]) });
+    const rail = [sec('1', 'Hero'), sec('2', 'Capabilities'), sec('3', 'Projects'), sec('4', 'About', true, go('a1')), sub(1), sub(2), sub(3), sec('5', 'Contact')]
+      .map((x, i) => Object.assign({ key: i }, x));
+    const onWheel = (e) => {
+      const now = Date.now();
+      if (Math.abs(e.deltaY) < 8 || (this._lastWheel && now - this._lastWheel < 700)) return;
+      this._lastWheel = now;
+      const j = Math.max(0, Math.min(order.length - 1, k + (e.deltaY > 0 ? 1 : -1)));
+      if (j !== k) this.setState({ beat: order[j], auto: false });
+    };
+    return { rail, onWheel, show2: k >= 1, show3: k >= 2 };
+  }
+}
+</script>
+</body>
+</html>

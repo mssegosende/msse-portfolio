@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mobile · dark · Scene 1 hero</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Michroma&amp;family=Rajdhani:wght@300;400;500;600&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Science+Gothic:wdth,wght@50..200,100..900&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Science+Gothic:wght@100..900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#14181D}
+.grain{background-image:url(../../../assets/grain.png);background-size:220px 220px}
+.mq{animation:mq 38s linear infinite}
+.mq2{animation:mq2 46s linear infinite}
+@keyframes mq2{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.idle{animation:idle 7s ease-in-out infinite;transform-origin:50% 60%}
+.approach{animation:approach 1.8s cubic-bezier(.25,.6,.2,1) .2s both;transform-origin:50% 40%}
+@keyframes approach{from{transform:translate(70px,90px) scale(0.55);opacity:0.4}to{transform:none;opacity:1}}
+.hint{animation:hint 1.8s ease-in-out infinite;transform-origin:top}
+@keyframes hint{0%,100%{transform:scaleY(0.35)}50%{transform:scaleY(1)}}
+@keyframes idle{0%,100%{transform:translate(0,0) rotate(0deg)}30%{transform:translate(-4px,-6px) rotate(-0.6deg)}65%{transform:translate(3px,-2px) rotate(0.5deg)}}
+@media (prefers-reduced-motion: reduce){.mq,.mq2,.idle,.approach,.hint{animation:none}}
+</style>
+</helmet>
+<div style="position: relative; height: 844px; overflow: hidden; background: radial-gradient(ellipse 95% 80% at 50% 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.45) 100%), linear-gradient(180deg, #121315 0%, #15161B 10%, #1A1D24 20%, #21252E 30%, #2C323E 40%, #424B58 50%, #5F6B7B 60%, #7F8B9C 70%, #8E9AA8 75%, #98A4B2 80%, #A3ACB3 85%, #ABB5B7 90%, #9DAAB3 92%, #8C96A8 94%, #778396 96%, #6B7789 100%); color: #E9EDF1; font-family: Inter, system-ui, sans-serif">
+<div aria-hidden="true" style="position: absolute; left: 250px; top: 330px; width: 620px; height: 620px; margin: -310px 0 0 -310px; border-radius: 50%; background: radial-gradient(closest-side, rgba(140,160,190,0.22), rgba(140,160,190,0)); z-index: 0"></div><div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse 120% 90% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.5) 100%)"></div>
+<!-- big MSSE, two rows in opposite directions, low behind the robot -->
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 176px; z-index: 1; overflow: hidden; filter: drop-shadow(0 16px 22px rgba(30,38,50,0.14))"><div class="mq" style="display: flex; width: max-content; font-family: Michroma, sans-serif; font-size: 212px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; color: transparent; background: linear-gradient(180deg, rgba(255,255,255,0.8) 15%, rgba(255,255,255,0.1) 95%); -webkit-background-clip: text; background-clip: text"><span style="display: flex"><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span></span><span style="display: flex"><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span></span></div></div>
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 340px; z-index: 1; overflow: hidden; opacity: 0.55; filter: drop-shadow(0 16px 22px rgba(30,38,50,0.14))"><div class="mq2" style="display: flex; width: max-content; font-family: Michroma, sans-serif; font-size: 212px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; color: transparent; background: linear-gradient(180deg, rgba(255,255,255,0.8) 15%, rgba(255,255,255,0.1) 95%); -webkit-background-clip: text; background-clip: text"><span style="display: flex"><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span></span><span style="display: flex"><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span></span></div></div>
+<!-- robot lower and off to the side, one arm in frame -->
+<div aria-hidden="true" style="position: absolute; inset: 0; z-index: 3; filter: drop-shadow(0 30px 40px rgba(0,0,0,0.7))"><div class="idle" style="position: absolute; inset: 0"><img src="../../../assets/robot-silver.png" alt="" style="position: absolute; left: -155px; top: 40px; width: 874px; -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 1.5%, rgba(0,0,0,1) 70%, rgba(0,0,0,0.55) 84%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 1.5%, rgba(0,0,0,1) 70%, rgba(0,0,0,0.55) 84%, rgba(0,0,0,0) 100%)"></div></div>
+<div style="position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 22px 18px">
+<a href="#top" style="font-family: Michroma, sans-serif; font-size: 10.5px; letter-spacing: 0.16em; text-decoration: none; color: #F4F5F7">MSSE://</a>
+<div style="display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: rgba(10,12,15,0.62); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-family: Rajdhani, sans-serif; font-size: 13px; letter-spacing: 0.08em; color: #C9D0D7"><span aria-hidden="true" style="width: 6px; height: 6px; border-radius: 50%; background: #2E6FF2"></span><span>STATUS: ONLINE</span></div>
+</div>
+
+<!--BOTTOM--><div style="position: absolute; left: 0; right: 0; bottom: 128px; z-index: 10; text-align: center">
+<div style="font-family: Rajdhani, sans-serif; font-size: 12px; letter-spacing: 0.12em; color: #14181D"><span style="font-weight: 600">Ø1</span> <span style="opacity: 0.55">/ Ø5</span></div>
+<div style="margin-top: 14px; font-family: Rajdhani, sans-serif; font-size: 13px; letter-spacing: 0.3em; line-height: 1.7; color: #14181D">BUILD THE FUTURE<br><span style="color: #2E343B">ONE SYSTEM AT A TIME</span></div>
+</div>
+<div aria-hidden="true" style="position: absolute; left: 50%; bottom: 60px; transform: translateX(-50%); z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 8px">
+<span style="font-family: Rajdhani, sans-serif; font-size: 11px; letter-spacing: 0.4em; color: #24292F">SCROLL</span><span class="hint" style="width: 1px; height: 30px; background: #24292F"></span>
+</div>
+<!--/BOTTOM--><a href="#end" style="position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 10; padding: 12px 10px; font-family: Rajdhani, sans-serif; font-size: 13px; letter-spacing: 0.32em; color: #F1F3F5; text-decoration: none; white-space: nowrap">SKIP INTRO</a>
+
+<div class="grain" aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; z-index: 20"></div>
+</div>
+</x-dc>
+</body>
+</html>

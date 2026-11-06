@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Desktop · dark · Scene 5 contact</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Michroma&amp;family=Rajdhani:wght@300;400;500;600&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Science+Gothic:wdth,wght@50..200,100..900&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Science+Gothic:wght@100..900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#14181D}
+.grain{background-image:url(../../../assets/grain.png);background-size:220px 220px}
+.in{opacity:0;transform:translateY(16px);animation:rise .6s cubic-bezier(.2,.7,.2,1) forwards}
+.grid-in{opacity:0;animation:fade 1s ease forwards}
+.term::placeholder{color:#5E6670}
+.term:focus{outline:2px solid #E9EDF1;outline-offset:1px}
+@keyframes rise{to{opacity:1;transform:none}}
+@keyframes fade{to{opacity:1}}
+@media (prefers-reduced-motion: reduce){.in,.grid-in{animation-duration:.01s;animation-delay:0s !important}}
+</style>
+</helmet>
+<div onWheel="{{onWheel}}" onMouseMove="{{onGridMove}}" style="position: relative; height: 900px; overflow: hidden; background: radial-gradient(ellipse 90% 80% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.5) 100%), radial-gradient(ellipse 60% 45% at 30% 35%, rgba(140,160,190,0.30) 0%, rgba(140,160,190,0) 70%), linear-gradient(120deg, rgba(0,0,0,0) 22%, rgba(130,150,180,0.20) 40%, rgba(130,150,180,0.05) 56%, rgba(0,0,0,0) 70%), linear-gradient(180deg, #03060B 0%, #0A111A 42%, #16202C 100%); color: #E9EDF1; font-family: Inter, system-ui, sans-serif">
+
+<!-- background shadows -->
+<div aria-hidden="true" style="position: absolute; left: 970px; top: 420px; width: 1100px; height: 900px; margin: -450px 0 0 -550px; border-radius: 50%; background: radial-gradient(closest-side, rgba(140,160,190,0.22), rgba(140,160,190,0)); z-index: 0"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse 120% 90% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.5) 100%)"></div>
+
+<!-- the grid: only here at the end, bulging around the cursor -->
+<svg class="grid-in" aria-hidden="true" viewBox="0 0 1440 900" preserveAspectRatio="none" style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; -webkit-mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 25%, #000 55%); mask-image: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 25%, #000 55%)">
+<sc-for list="{{gridLines}}" as="ln" hint-placeholder-count="40"><path d="{{ln.d}}" fill="none" stroke="#E9EDF1" stroke-opacity="0.2" stroke-width="1" vector-effect="non-scaling-stroke"></path></sc-for>
+</svg>
+
+<div aria-hidden="true" style="position: absolute; right: 40px; top: 26px; z-index: 1; font-family: Michroma, sans-serif; font-size: 190px; line-height: 1; color: transparent; background: linear-gradient(180deg, rgba(255,255,255,0.17) 0%, rgba(255,255,255,0.05) 55%, rgba(0,0,0,0.3) 100%); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 12px 18px rgba(0,0,0,0.5))">SIGNAL</div>
+
+<!-- 5.1 · let's talk -->
+<div class="in" style="position: absolute; left: 56px; top: 52px; width: 520px; z-index: 5">
+<div style="display: inline-flex; padding: 9px 18px; border-radius: 999px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.22); color: #E9EDF1; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.12em">OPEN CHANNEL</div>
+<h2 style="margin: 16px 0 0; font-family: Science Gothic, Michroma, sans-serif; font-weight: 200; font-stretch: 150%; font-size: 64px; line-height: 1.05; color: #FFFFFF; text-shadow: 0 14px 40px rgba(25,32,42,0.3)">LET&#39;S<br>TALK</h2>
+<p style="margin: 30px 0 0; font-size: 17px; line-height: 1.7; color: #E9EDF1; max-width: 440px">Tell me what you're building. I answer every message — and if you share your LinkedIn, I'll send you my CV.</p>
+<div style="margin-top: 22px; font-size: 13px; font-weight: 500; color: #E9EDF1">Remote · worldwide · GMT−3</div>
+</div>
+
+<!-- 5.2 · the terminal form -->
+<sc-if value="{{show2}}" hint-placeholder-val="{{ true }}">
+<div class="in" style="position: absolute; left: 640px; top: 112px; width: 660px; z-index: 6; filter: drop-shadow(0 34px 40px rgba(0,0,0,0.55))">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: #5B646E; clip-path: polygon(34px 0, calc(100% - 18px) 0, 100% 18px, 100% 210px, calc(100% - 8px) 218px, calc(100% - 8px) calc(100% - 26px), calc(100% - 34px) 100%, 18px 100%, 0 calc(100% - 18px), 0 calc(100% - 230px), 8px calc(100% - 238px), 8px 26px)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 1px; background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 10%), linear-gradient(160deg, #3A4148 0%, #252A30 45%, #1B1F24 100%); clip-path: polygon(34px 0, calc(100% - 18px) 0, 100% 18px, 100% 210px, calc(100% - 8px) 218px, calc(100% - 8px) calc(100% - 26px), calc(100% - 34px) 100%, 18px 100%, 0 calc(100% - 18px), 0 calc(100% - 230px), 8px calc(100% - 238px), 8px 26px)"></div>
+<div aria-hidden="true" style="position: absolute; top: 12px; bottom: 12px; left: 20px; right: 20px; background: #2A3037; clip-path: polygon(26px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 26px), calc(100% - 26px) 100%, 12px 100%, 0 calc(100% - 12px), 0 26px)"></div>
+<div aria-hidden="true" style="position: absolute; top: 14px; bottom: 14px; left: 22px; right: 22px; background: repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 3px, rgba(255,255,255,0.22) 3px 4px), radial-gradient(ellipse 120% 80% at 18% 0%, #FBFCFD 0%, #E6EAED 42%, #C9D0D6 100%); clip-path: polygon(24px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 10px 100%, 0 calc(100% - 10px), 0 24px)"></div>
+<div style="position: relative; z-index: 2; height: calc(100% - 28px); box-sizing: border-box; margin: 14px 22px; padding: 26px 30px 70px; color: #14181D">
+<form style="font-family: 'JetBrains Mono', monospace">
+<div style="display: flex; align-items: center; gap: 8px; padding-bottom: 16px; border-bottom: 1px solid rgba(11,13,16,0.14)"><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: #14181D"></span><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: #5A626C"></span><span aria-hidden="true" style="width: 10px; height: 10px; border-radius: 50%; background: #4A525B"></span><span style="margin-left: 14px; font-size: 12px; color: #4A525C">msg@portfolio: ~/contact — zsh</span></div>
+<div style="padding-top: 24px; display: flex; flex-direction: column; gap: 18px; font-size: 13px; color: #14181D">
+<div>$ contact --send --secure</div>
+<div class="stack-sm" style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px">
+<label style="display: flex; flex-direction: column; gap: 8px">&gt; name:<input class="term" type="text" placeholder="your name" style="font: inherit; padding: 13px 14px; background: #FFFFFF; border: 1px solid rgba(11,13,16,0.2); color: #14181D"></label>
+<label style="display: flex; flex-direction: column; gap: 8px">&gt; email:<input class="term" type="email" placeholder="you@domain.com" style="font: inherit; padding: 13px 14px; background: #FFFFFF; border: 1px solid rgba(11,13,16,0.2); color: #14181D"></label>
+<label style="display: flex; flex-direction: column; gap: 8px"><span>&gt; company <span style="color: #5A626C">(optional)</span>:</span><input class="term" type="text" placeholder="organization / studio" style="font: inherit; padding: 13px 14px; background: #FFFFFF; border: 1px solid rgba(11,13,16,0.2); color: #14181D"></label>
+<label style="display: flex; flex-direction: column; gap: 8px"><span>&gt; linkedin <span style="color: #5A626C">(for the CV)</span>:</span><input class="term" type="url" placeholder="linkedin.com/in/…" style="font: inherit; padding: 13px 14px; background: #FFFFFF; border: 1px solid rgba(11,13,16,0.2); color: #14181D"></label>
+</div>
+<label style="display: flex; flex-direction: column; gap: 8px">&gt; message:<textarea class="term" rows="4" placeholder="describe your project, timeline, scope…" style="font: inherit; padding: 13px 14px; background: #FFFFFF; border: 1px solid rgba(11,13,16,0.2); color: #14181D; resize: vertical"></textarea></label>
+<button type="submit" style="margin-top: 6px; padding: 18px; background: #0B0D10; color: #F4F5F7; border: 0; font-family: Inter, sans-serif; font-size: 15px; font-weight: 500; cursor: pointer">Transmit message</button>
+</div>
+</form>
+</div>
+<div style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: min(280px, 74%); height: 44px; z-index: 4; text-decoration: none; color: #E9EDF1">
+<span aria-hidden="true" style="position: absolute; inset: 0; background: #5B646E; clip-path: polygon(0 100%, 20px 0, calc(100% - 20px) 0, 100% 100%)"></span>
+<span aria-hidden="true" style="position: absolute; top: 1px; left: 1px; right: 1px; bottom: 0; background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 10%), linear-gradient(160deg, #3A4148 0%, #252A30 45%, #1B1F24 100%); clip-path: polygon(0 100%, 20px 0, calc(100% - 20px) 0, 100% 100%)"></span>
+<span style="position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; height: 100%; padding-top: 2px"><span style="font-family: Michroma, sans-serif; font-size: 10px; letter-spacing: 0.16em">MSSE://</span><span aria-hidden="true" style="width: 1.5px; height: 18px; background: rgba(233,237,241,0.6)"></span><span style="font-size: 13px; font-weight: 500">Secure channel</span></span>
+</div>
+</div>
+</sc-if>
+
+<!-- 5.3 · footer, on both sides of the menu -->
+<sc-if value="{{show3}}" hint-placeholder-val="{{ true }}">
+<div class="in" aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 104px; height: 1px; background: rgba(233,237,241,0.14); z-index: 2"></div>
+<footer class="in" style="position: absolute; left: 0; right: 0; bottom: 0; height: 104px; z-index: 8; pointer-events: none">
+<div style="position: absolute; right: 56px; bottom: 34px; display: flex; gap: 10px; pointer-events: auto">
+<a href="https://github.com/mssegosende" aria-label="GitHub" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(233,237,241,0.25); background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E9EDF1" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"></path></svg>
+</a>
+<a href="#contact" aria-label="Email" style="width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(233,237,241,0.25); background: rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E9EDF1" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 7l9 6 9-6"></path></svg>
+</a>
+</div>
+</footer>
+</sc-if>
+
+<!-- site index: 1–5, this section opens its steps -->
+<nav aria-label="Sections" style="position: absolute; right: 36px; top: 250px; z-index: 8; display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: Rajdhani, sans-serif; mix-blend-mode: difference">
+<sc-for list="{{rail}}" as="b" hint-placeholder-count="8">
+<button type="button" onClick="{{b.go}}" aria-pressed="{{b.on}}" aria-label="{{b.aria}}" style="min-width: 44px; min-height: {{b.h}}px; border: 0; background: none; font: inherit; font-size: {{b.size}}px; letter-spacing: 0.08em; cursor: {{b.cursor}}; color: {{b.color}}; font-weight: {{b.weight}}">{{b.label}}</button>
+</sc-for>
+</nav>
+
+<!-- footer: name and role, bottom-left beside the menu -->
+<div style="position: absolute; left: 56px; bottom: 30px; z-index: 8">
+<div style="font-family: Michroma, sans-serif; font-size: 13px; letter-spacing: 0.18em; color: #E9EDF1">MSSE://</div>
+<div style="margin-top: 8px; font-size: 12px; line-height: 1.5; color: #E9EDF1; opacity: 0.8">© 2026 María Sol Gosende<br>Software &amp; AI engineer</div>
+</div>
+<!-- the menu stays from scene 2 on -->
+<div style="position: absolute; left: 0; right: 0; bottom: 26px; z-index: 9; display: flex; justify-content: center">
+<nav aria-label="Primary" style="display: flex; align-items: center; gap: 4px; padding: 8px 10px 8px 26px; background: rgba(14,17,21,0.92); border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 18px 40px -20px rgba(25,34,48,0.5); font-family: Rajdhani, sans-serif; font-size: 14px; letter-spacing: 0.12em; flex-wrap: wrap">
+<a href="#top" style="font-family: Michroma, sans-serif; font-size: 15px; letter-spacing: 0.16em; text-decoration: none; color: #F4F5F7; margin-right: 26px">MSSE://</a>
+<div class="dock-links" style="display: flex; align-items: center">
+<a href="#about" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; text-decoration: none; color: #AEB6BF">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg>ABOUT</a>
+<a href="#work" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; text-decoration: none; color: #AEB6BF">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3z"></path></svg>PROJECTS</a>
+<a href="#stack" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; text-decoration: none; color: #AEB6BF">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="6" y="6" width="12" height="12"></rect><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"></path></svg>CAPABILITIES</a>
+<span aria-hidden="true" style="width: 1px; height: 26px; background: rgba(233,237,241,0.2); margin: 0 12px"></span>
+</div>
+<button type="button" style="position: relative; display: flex; align-items: center; gap: 8px; padding: 13px 18px; background: #1E2329; border: 1px solid rgba(255,255,255,0.14); font: inherit; letter-spacing: inherit; color: #AEB6BF; cursor: pointer; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)">
+<span aria-hidden="true" style="position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: linear-gradient(225deg, transparent 50%, rgba(233,237,241,0.18) 50%); pointer-events: none; z-index: 2"></span>
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>LIGHT</button>
+<a href="#contact" style="display: flex; align-items: center; gap: 8px; margin-left: 8px; padding: 14px 22px; background: #F4F5F7; color: #0B0D10; text-decoration: none">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"></path></svg>INITIATE</a>
+</nav>
+</div>
+
+<div class="grain" aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; z-index: 20"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"beat":{"editor":"enum","options":["c1","c2","c3"],"default":"c1","section":"Scene"},"autoplay":{"editor":"boolean","default":true,"section":"Scene"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    this._order = ['c1', 'c2', 'c3'];
+    // the scroll drives it (simulated); at the last step it holds
+    this._tick = setInterval(() => {
+      const st = this.state || {};
+      const auto = st.auto !== undefined ? st.auto : (this.props.autoplay ?? true);
+      if (!auto) return;
+      const cur = st.beat || this.props.beat || 'c1';
+      const i = this._order.indexOf(cur);
+      if (i < this._order.length - 1) this.setState({ beat: this._order[i + 1] });
+    }, 2200);
+  }
+  componentWillUnmount() { clearInterval(this._tick); if (this._raf) cancelAnimationFrame(this._raf); }
+  gridPaths(m) {
+    const W = 1440, H = 900, S = 72, STEP = 24, R = 190, K = 0.42;
+    const warp = (x, y) => {
+      const dx = x - m.x, dy = y - m.y;
+      const f = Math.exp(-(dx * dx + dy * dy) / (R * R)) * K;
+      return (x + dx * f).toFixed(1) + ' ' + (y + dy * f).toFixed(1);
+    };
+    const lines = [];
+    for (let x = 0; x <= W; x += S) { const pts = []; for (let y = 0; y <= H; y += STEP) pts.push(warp(x, y)); lines.push({ key: 'v' + x, d: 'M' + pts.join(' L') }); }
+    for (let y = 0; y <= H; y += S) { const pts = []; for (let x = 0; x <= W; x += STEP) pts.push(warp(x, y)); lines.push({ key: 'h' + y, d: 'M' + pts.join(' L') }); }
+    return lines;
+  }
+  renderVals() {
+    const order = ['c1', 'c2', 'c3'];
+    const st = this.state || {};
+    const beat = st.beat || this.props.beat || 'c1';
+    const k = order.indexOf(beat);
+    const go = (b) => () => this.setState({ beat: b, auto: false });
+    const sec = (label, name, active, g) => ({ label: 'Ø' + label, aria: name, h: 40, size: 15, on: active ? 'true' : 'false',
+      color: active ? '#FFFFFF' : 'rgba(255,255,255,0.5)', weight: active ? 600 : 400, cursor: g ? 'pointer' : 'default', go: g || (() => {}) });
+    const sub = (n) => ({ label: 'Ø5.' + n, aria: 'Step 5.' + n, h: 30, size: 12, on: k === n - 1 ? 'true' : 'false',
+      color: k === n - 1 ? '#FFFFFF' : 'rgba(255,255,255,0.5)', weight: k === n - 1 ? 600 : 400, cursor: 'pointer', go: go(order[n - 1]) });
+    const rail = [sec('1', 'Hero'), sec('2', 'Capabilities'), sec('3', 'Projects'), sec('4', 'About'), sec('5', 'Contact', true, go('c1')), sub(1), sub(2), sub(3)]
+      .map((x, i) => Object.assign({ key: i }, x));
+    const onWheel = (e) => {
+      const now = Date.now();
+      if (Math.abs(e.deltaY) < 8 || (this._lastWheel && now - this._lastWheel < 700)) return;
+      this._lastWheel = now;
+      const j = Math.max(0, Math.min(order.length - 1, k + (e.deltaY > 0 ? 1 : -1)));
+      if (j !== k) this.setState({ beat: order[j], auto: false });
+    };
+    const m = st.g || { x: 1180, y: 760 };
+    const onGridMove = (e) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      this._pending = { x: (e.clientX - r.left) * 1440 / r.width, y: (e.clientY - r.top) * 900 / r.height };
+      if (!this._raf) this._raf = requestAnimationFrame(() => { this._raf = null; this.setState({ g: this._pending }); });
+    };
+    return { rail, onWheel, onGridMove, gridLines: this.gridPaths(m), show2: k >= 1, show3: k >= 2 };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mobile · light · Scene 4 about</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Michroma&amp;family=Rajdhani:wght@300;400;500;600&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Science+Gothic:wdth,wght@50..200,100..900&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Science+Gothic:wght@100..900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#14181D}
+.grain{background-image:url(../../../assets/grain.png);background-size:220px 220px}
+.mq{animation:mq 38s linear infinite}
+.mq2{animation:mq2 46s linear infinite}
+@keyframes mq2{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.idle{animation:idle 7s ease-in-out infinite;transform-origin:50% 60%}
+.approach{animation:approach 1.8s cubic-bezier(.25,.6,.2,1) .2s both;transform-origin:50% 40%}
+@keyframes approach{from{transform:translate(70px,90px) scale(0.55);opacity:0.4}to{transform:none;opacity:1}}
+.hint{animation:hint 1.8s ease-in-out infinite;transform-origin:top}
+@keyframes hint{0%,100%{transform:scaleY(0.35)}50%{transform:scaleY(1)}}
+@keyframes idle{0%,100%{transform:translate(0,0) rotate(0deg)}30%{transform:translate(-4px,-6px) rotate(-0.6deg)}65%{transform:translate(3px,-2px) rotate(0.5deg)}}
+@media (prefers-reduced-motion: reduce){.mq,.mq2,.idle,.approach,.hint{animation:none}}
+</style>
+</helmet>
+<div style="position: relative; height: 1240px; overflow: hidden; background: linear-gradient(180deg, #E1E6EA 0%, #C2C9D0 60%, #7D8893 100%); color: #14181D; font-family: Inter, system-ui, sans-serif">
+<div aria-hidden="true" style="position: absolute; left: 160px; top: 260px; width: 700px; height: 700px; margin: -350px 0 0 -350px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,255,255,0.6), rgba(255,255,255,0)); z-index: 0"></div><div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse 120% 90% at 50% 45%, rgba(0,0,0,0) 55%, rgba(20,26,34,0.26) 100%)"></div>
+<div aria-hidden="true" style="position: absolute; left: 10px; top: 8px; z-index: 0; font-family: Michroma, sans-serif; font-size: 96px; line-height: 1; color: transparent; background: linear-gradient(180deg, rgba(255,255,255,0.95) 5%, rgba(160,170,182,0.5) 100%); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 12px 16px rgba(20,26,34,0.12)); white-space: nowrap">HUMAN</div>
+<div style="position: absolute; left: 18px; right: 18px; top: 26px; z-index: 5">
+<div style="display: inline-flex; padding: 7px 14px; border-radius: 999px; background: #FFFFFF; box-shadow: 0 8px 20px -12px rgba(30,40,55,0.4); font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.12em">Ø4 · WHO</div><h2 style="margin: 12px 0 0; font-family: Science Gothic, Michroma, sans-serif; font-weight: 200; font-stretch: 150%; font-size: 34px; line-height: 1.08; color: #14181D">THE HUMAN<br>BEHIND THE<br>MACHINE</h2>
+<p style="margin: 22px 0 0; font-size: 16px; line-height: 1.6; color: #14181D">I'm María Sol — a full stack developer and AI engineer in Buenos Aires. I came to code through a cousin who was sure I could do it, and a computer I wanted to understand down to the parts: I built my own PC in 2020, and I've been writing software professionally since 2022.</p>
+<p style="margin: 16px 0 0; font-size: 15px; line-height: 1.65; color: #171C21">Piano taught me the thing I use most: different logics share patterns. Once I see the pattern, a new language or framework stops being foreign — that's how I learn, and how I walk into a system I've never seen.</p>
+<div style="margin-top: 34px; text-align: right"><div style="font-size: 12px; font-weight: 500; letter-spacing: 0.04em; color: #2E343B">Shipping code since</div><div style="margin-top: 6px; font-family: Michroma, sans-serif; font-size: 58px; line-height: 0.95; color: #14181D; filter: drop-shadow(0 14px 22px rgba(20,26,34,0.14))">2022</div></div>
+<div aria-hidden="true" style="margin-top: 30px; display: flex; align-items: center; gap: 10px"><span style="width: 44px; height: 3px; background: #14181D"></span><span style="flex: 1; height: 1px; background: rgba(20,24,29,0.28)"></span></div>
+<div style="display: grid; grid-template-columns: 34px 1fr; gap: 4px; padding: 16px 0; border-bottom: 1px solid rgba(20,24,29,0.28)"><div aria-hidden="true" style="font-family: Michroma, sans-serif; font-size: 11px; line-height: 1.6; color: #2E343B">Ø1</div><div><h3 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 600; font-size: 15px; letter-spacing: 0.16em">CONTRACTS BEFORE CODE</h3><p style="margin: 6px 0 0; font-size: 14px; line-height: 1.6; color: #171C21">Typed schemas and validation at the edge aren't bureaucracy. They're what makes an agent's output something you can trust.</p></div></div>
+<div style="display: grid; grid-template-columns: 34px 1fr; gap: 4px; padding: 16px 0; border-bottom: 1px solid rgba(20,24,29,0.28)"><div aria-hidden="true" style="font-family: Michroma, sans-serif; font-size: 11px; line-height: 1.6; color: #2E343B">Ø2</div><div><h3 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 600; font-size: 15px; letter-spacing: 0.16em">INTERFACES ARE THE PRODUCT</h3><p style="margin: 6px 0 0; font-size: 14px; line-height: 1.6; color: #171C21">Motion, latency and feedback are engineering decisions, not decoration.</p></div></div>
+<div style="display: grid; grid-template-columns: 34px 1fr; gap: 4px; padding: 16px 0"><div aria-hidden="true" style="font-family: Michroma, sans-serif; font-size: 11px; line-height: 1.6; color: #2E343B">Ø3</div><div><h3 style="margin: 0; font-family: Rajdhani, sans-serif; font-weight: 600; font-size: 15px; letter-spacing: 0.16em">HUMANS WHERE THEY MATTER</h3><p style="margin: 6px 0 0; font-size: 14px; line-height: 1.6; color: #171C21">Automate the routine, and design the exact point where a person should step in.</p></div></div>
+</div>
+<div style="position: absolute; left: 18px; right: 18px; bottom: 86px; z-index: 6; display: flex; align-items: center; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.12em; color: #14181D"><span><span style="font-weight: 600">Ø4.3</span> <span style="opacity: 0.55">/ Ø4.3</span></span><span aria-hidden="true" style="display: flex; gap: 6px"><span style="width: 18px; height: 2px; background: #14181D"></span><span style="width: 18px; height: 2px; background: #14181D"></span><span style="width: 18px; height: 2px; background: #14181D"></span></span></div>
+<!--DOCK--><div style="position: absolute; left: 12px; right: 12px; bottom: 14px; z-index: 9"><nav aria-label="Primary" style="display: flex; align-items: center; justify-content: space-between; padding: 5px 5px 5px 14px; background: rgba(255,255,255,0.94); border: 1px solid rgba(20,24,29,0.12); box-shadow: 0 18px 40px -20px rgba(25,34,48,0.5); font-family: Rajdhani, sans-serif; font-size: 12px; letter-spacing: 0.1em"><a href="#top" style="font-family: Michroma, sans-serif; font-size: 11px; letter-spacing: 0.14em; text-decoration: none; color: #111316">MSSE://</a><div style="display: flex; align-items: center"><a href="#about" aria-current="true" aria-label="About" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; text-decoration: none; color: #111316"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg></a><a href="#work" aria-label="Projects" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; text-decoration: none; color: #3A414A"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3z"></path></svg></a><a href="#stack" aria-label="Capabilities" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; text-decoration: none; color: #3A414A"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="6" y="6" width="12" height="12"></rect><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"></path></svg></a></div><button type="button" aria-label="Dark mode" style="position: relative; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; background: #ECEEF1; border: 1px solid rgba(20,24,29,0.12); color: #3A414A; cursor: pointer; clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"></path></svg></button><a href="#contact" style="display: flex; align-items: center; gap: 6px; height: 44px; padding: 0 12px; background: #111316; color: #F4F5F7; text-decoration: none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"></path></svg>INITIATE</a></nav></div><!--/DOCK-->
+
+<div class="grain" aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; z-index: 20"></div>
+</div>
+</x-dc>
+</body>
+</html>

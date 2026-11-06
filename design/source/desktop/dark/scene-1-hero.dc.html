@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Desktop · dark · Scene 1 hero</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;family=Michroma&amp;family=Rajdhani:wght@300;400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#14181D}
+.grain{background-image:url(../../../assets/grain.png);background-size:220px 220px}
+.idle{animation:idle 7s ease-in-out infinite;transform-origin:50% 60%}
+@keyframes idle{0%,100%{transform:translate(0,0) rotate(0deg)}30%{transform:translate(-6px,-10px) rotate(-0.6deg)}65%{transform:translate(5px,-4px) rotate(0.5deg)}}
+/* load: the title first, slowly; then the robot, heavy and gradual */
+.title-in{opacity:0;animation:fade 1s ease .1s forwards}
+.bar-in{opacity:0;animation:fade .6s ease .5s forwards}
+.robot-in{opacity:0;transform:translateY(24px);filter:blur(14px);animation:robot 1.4s cubic-bezier(.25,.6,.2,1) .6s forwards}
+@keyframes robot{to{opacity:1;transform:none;filter:blur(0)}}
+/* scroll: each HUD window appears on its own */
+.hud-in{opacity:0;transform:translateY(12px);animation:rise .45s cubic-bezier(.2,.7,.2,1) 0s forwards}
+.hint{animation:hint 1.8s ease-in-out infinite}
+@keyframes hint{0%,100%{transform:scaleY(0.35);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}}
+.marquee{animation:marquee 46s linear infinite}
+@keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes rise{to{opacity:1;transform:none}}
+@keyframes fade{to{opacity:1}}
+@media (prefers-reduced-motion: reduce){.idle,.hint,.marquee{animation:none}.title-in,.bar-in,.robot-in,.hud-in{animation-duration:.01s;animation-delay:0s}}
+</style>
+</helmet>
+<div onMouseMove="{{onMove}}" onWheel="{{onWheel}}" style="position: relative; height: 900px; overflow: hidden; background: radial-gradient(ellipse 95% 80% at 50% 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.45) 100%), linear-gradient(180deg, #121315 0%, #15161B 10%, #1A1D24 20%, #21252E 30%, #2C323E 40%, #424B58 50%, #5F6B7B 60%, #7F8B9C 70%, #8E9AA8 75%, #98A4B2 80%, #A3ACB3 85%, #ABB5B7 90%, #9DAAB3 92%, #8C96A8 94%, #778396 96%, #6B7789 100%); color: #E9EDF1; font-family: Inter, system-ui, sans-serif">
+
+<!-- background shadows -->
+<div aria-hidden="true" style="position: absolute; left: 50%; top: -60px; width: 820px; height: 820px; margin-left: -410px; border-radius: 50%; background: radial-gradient(closest-side, rgba(140,160,190,0.22), rgba(140,160,190,0)); z-index: 0"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse 60% 45% at 15% 88%, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 70%), radial-gradient(ellipse 120% 90% at 50% 40%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.5) 100%)"></div>
+
+<sc-for list="{{runs}}" as="run" hint-placeholder-count="1">
+<!-- 1 · the wordmark, first -->
+<sc-if value="{{isMarquee}}" hint-placeholder-val="{{ true }}">
+<div class="title-in" aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 130px; z-index: 1; overflow: hidden; filter: drop-shadow(0 18px 26px rgba(30,38,50,0.12))"><div class="marquee" style="display: flex; width: max-content; font-family: Michroma, sans-serif; font-size: 316px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; color: transparent; background: linear-gradient(180deg, rgba(255,255,255,0.8) 15%, rgba(255,255,255,0.1) 95%); -webkit-background-clip: text; background-clip: text"><span style="display: flex"><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span></span><span style="display: flex"><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span><span style="padding-right: 0.32em">MSSE</span></span></div></div>
+</sc-if>
+<sc-if value="{{isStatic}}" hint-placeholder-val="{{ false }}">
+<div class="title-in" aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 130px; z-index: 1; text-align: center; font-family: Michroma, sans-serif; font-size: 316px; line-height: 1; letter-spacing: -0.02em; color: transparent; background: linear-gradient(180deg, rgba(255,255,255,0.8) 15%, rgba(255,255,255,0.1) 95%); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 18px 26px rgba(30,38,50,0.12))">MSSE</div>
+</sc-if>
+
+<!-- 2 · the robot, fading in while it loads -->
+<div class="robot-in" aria-hidden="true" style="position: absolute; inset: 0; z-index: 3; pointer-events: none">
+<div style="position: absolute; inset: 0; transform: translate({{par.x}}px, {{par.y}}px); transition: transform 0.9s cubic-bezier(.2,.7,.2,1)">
+<div class="idle" style="position: absolute; inset: 0">
+<img src="../../../assets/robot-silver.png" alt="" style="position: absolute; left: -69px; top: -30px; width: 1627px; -webkit-mask-image: linear-gradient(180deg, rgba(0,0,0,1) 58%, rgba(0,0,0,0.8) 70%, rgba(0,0,0,0.45) 82%, rgba(0,0,0,0.12) 93%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(180deg, rgba(0,0,0,1) 58%, rgba(0,0,0,0.8) 70%, rgba(0,0,0,0.45) 82%, rgba(0,0,0,0.12) 93%, rgba(0,0,0,0) 100%); filter: drop-shadow(0 40px 60px rgba(0,0,0,0.7))">
+</div>
+</div>
+</div>
+
+<!-- top bar: scene 1 only -->
+<div class="bar-in" style="position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 52px 48px">
+<a href="#top" style="font-family: Michroma, sans-serif; font-size: 19px; letter-spacing: 0.2em; text-decoration: none; color: #F4F5F7">MSSE://</a>
+<div style="display: flex; align-items: center; gap: 10px; font-family: Rajdhani, sans-serif; font-size: 15px; letter-spacing: 0.08em; color: #C9D0D7"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 50%; background: #2E6FF2"></span><span>STATUS: ONLINE</span></div>
+</div>
+<a class="bar-in" href="#end" style="position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 10; padding: 14px 10px; font-family: Rajdhani, sans-serif; font-size: 14px; letter-spacing: 0.32em; color: #F1F3F5; text-decoration: none">SKIP INTRO</a>
+</sc-for>
+
+<!-- 3 · HUD windows, one per scroll step -->
+<sc-if value="{{show1}}" hint-placeholder-val="{{ true }}">
+<button type="button" class="hud-in" aria-label="Play my intro video" style="position: absolute; left: 112px; top: 400px; z-index: 10; width: 184px; padding: 0; border: 0; background: none; text-align: left; cursor: pointer; font: inherit; color: inherit">
+<span style="display: block; position: relative; height: 104px; background: #121417; overflow: hidden; box-shadow: 0 16px 30px -14px rgba(10,14,20,0.6)"><img src="../../../assets/robot-silver.png" alt="" aria-hidden="true" style="width: 100%; height: 100%; object-fit: cover; object-position: 48% 14%; filter: contrast(1.05)"><span aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,12,15,0) 40%, rgba(10,12,15,0.55) 100%)"></span><span aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; background: rgba(255,255,255,0.92); display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 24 24" fill="#0B0D10" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg></span><span style="position: absolute; right: 6px; bottom: 5px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #E9EDF1">[ 1:30 ]</span></span>
+<span style="display: block; margin-top: 9px; font-size: 12px; line-height: 1.45; color: #E9EDF1"><span style="display: block; font-weight: 500">Watch the intro</span><span style="display: block; color: #AEB6BF">What I'm building right now</span></span>
+</button>
+</sc-if>
+
+<sc-if value="{{show2}}" hint-placeholder-val="{{ true }}">
+<div class="hud-in" style="position: absolute; left: 40px; bottom: 48px; z-index: 10; padding: 14px 16px; background: rgba(10,12,15,0.62); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); font-family: 'JetBrains Mono', monospace; font-size: 10px; line-height: 1.65; letter-spacing: 0.04em; color: #E9EDF1">
+<div aria-hidden="true" style="display: flex; gap: 2px; height: 24px; margin-bottom: 12px"><sc-for list="{{bars}}" as="bar" hint-placeholder-count="20"><span style="display: block; width: {{bar.w}}px; height: 24px; background: #E9EDF1"></span></sc-for></div>
+<div>SYSTEM CHECK</div>
+<div style="color: #AEB6BF">------------------</div>
+<div>OPERATOR: M. S. GOSENDE</div>
+<div>CORE: PYTHON / TS</div>
+<div>AGENTS: LANGGRAPH</div>
+<div>LOC: −34.60 −58.38</div>
+<div>STATUS: OPEN TO WORK</div>
+<div style="color: #AEB6BF">------------------</div>
+</div>
+</sc-if>
+
+<sc-if value="{{show3}}" hint-placeholder-val="{{ true }}">
+<div class="hud-in" style="position: absolute; right: 112px; top: 200px; z-index: 10; text-align: right; font-family: Rajdhani, sans-serif; font-size: 15px; letter-spacing: 0.32em; line-height: 1.6; color: #E9EDF1">BUILD THE FUTURE<br><span style="color: #AEB6BF">ONE SYSTEM AT A TIME</span></div>
+<nav class="hud-in" aria-label="Sections" style="position: absolute; right: 36px; top: 250px; z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: Rajdhani, sans-serif; mix-blend-mode: difference"><sc-for list="{{rail}}" as="b" hint-placeholder-count="8"><span aria-label="{{b.aria}}" style="display: flex; align-items: center; justify-content: center; min-width: 44px; min-height: {{b.h}}px; font-size: {{b.size}}px; letter-spacing: 0.08em; color: {{b.color}}; font-weight: {{b.weight}}">{{b.label}}</span></sc-for></nav>
+</sc-if>
+
+<!-- 4 · the scroll indicator, last -->
+<sc-if value="{{show4}}" hint-placeholder-val="{{ true }}">
+<div class="hud-in" aria-hidden="true" style="position: absolute; left: 52px; top: 330px; z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 18px">
+<span style="writing-mode: vertical-rl; font-family: Rajdhani, sans-serif; font-size: 13px; letter-spacing: 0.4em; color: #C9D0D7">SCROLL</span>
+<span class="hint" style="display: block; width: 1px; height: 70px; background: #C9D0D7"></span>
+</div>
+</sc-if>
+
+<div class="grain" aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; z-index: 20"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"beat":{"editor":"enum","options":["load","hud1","hud2","hud3","scroll"],"default":"load","section":"Scene"},"wordmark":{"editor":"enum","options":["marquee","static"],"default":"marquee","section":"Scene"},"autoplay":{"editor":"boolean","default":true,"section":"Scene"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    this._order = ['load', 'hud1', 'hud2', 'hud3', 'scroll'];
+    this._hold = { load: 3, hud1: 1, hud2: 1, hud3: 1, scroll: 4 };   // ticks of 0.8 s
+    this._n = 0;
+    this._tick = setInterval(() => {
+      const st = this.state || {};
+      const auto = st.auto !== undefined ? st.auto : (this.props.autoplay ?? true);
+      if (!auto) return;
+      const cur = st.beat || this.props.beat || 'load';
+      this._n += 1;
+      if (this._n < this._hold[cur]) return;
+      this._n = 0;
+      const i = this._order.indexOf(cur);
+      if (i < this._order.length - 1) this.setState({ beat: this._order[i + 1] });   // at the end it holds with everything on screen
+    }, 800);
+  }
+  componentWillUnmount() { clearInterval(this._tick); if (this._raf) cancelAnimationFrame(this._raf); }
+  renderVals() {
+    const order = ['load', 'hud1', 'hud2', 'hud3', 'scroll'], labels = ['LOAD', '1', '2', '3', 'SCROLL'];
+    const st = this.state || {};
+    const beat = st.beat || this.props.beat || 'load';
+    const k = order.indexOf(beat);
+    const auto = st.auto !== undefined ? st.auto : (this.props.autoplay ?? true);
+    const mv = st.mv || { x: 0, y: 0 };
+    const par = { x: Math.round(-mv.x * 10), y: Math.round(-mv.y * 6) };
+    const onMove = (e) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      this._mv = { x: ((e.clientX - r.left) / r.width) * 2 - 1, y: ((e.clientY - r.top) / r.height) * 2 - 1 };
+      if (!this._raf) this._raf = requestAnimationFrame(() => { this._raf = null; this.setState({ mv: this._mv }); });
+    };
+    const go = (b) => {
+      this._n = 0;
+      // going back to LOAD replays the title + robot reveal
+      this.setState(b === 'load' ? { beat: b, auto: false, run: (st.run || 0) + 1 } : { beat: b, auto: false });
+    };
+    const onWheel = (e) => {
+      const now = Date.now();
+      if (Math.abs(e.deltaY) < 8 || (this._lastWheel && now - this._lastWheel < 700)) return;
+      this._lastWheel = now;
+      const j = Math.max(0, Math.min(order.length - 1, k + (e.deltaY > 0 ? 1 : -1)));
+      if (j !== k) { this._n = 0; this.setState({ beat: order[j], auto: false }); }
+    };
+    const beats = order.map((b, i) => ({
+      label: labels[i], on: b === beat ? 'true' : 'false',
+      bg: b === beat ? '#14181D' : 'transparent', color: b === beat ? '#F4F5F7' : '#14181D',
+      go: () => go(b)
+    }));
+    // barcode
+    const seed = [3, 1, 2, 1, 4, 1, 1, 2, 3, 1, 2, 2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1];
+    const bars = seed.map((w, i) => ({ key: i, w }));
+    return {
+      runs: [{ key: 'r' + (st.run || 0) }], par, onMove, onWheel, beats, bars,
+      toggleAuto: () => { this._n = 0; this.setState({ auto: !auto }); },
+      autoOn: auto ? 'true' : 'false', autoLabel: auto ? 'PAUSE' : 'AUTO',
+      isMarquee: (this.props.wordmark || 'marquee') === 'marquee', isStatic: this.props.wordmark === 'static',
+      rail: [['Ø1', 'Hero', 1], ['Ø1.1', 'Step 1.1', 2, 1], ['Ø1.2', 'Step 1.2', 2, 2], ['Ø1.3', 'Step 1.3', 2, 3], ['Ø2', 'Capabilities', 0], ['Ø3', 'Projects', 0], ['Ø4', 'About', 0], ['Ø5', 'Contact', 0]]
+        .map(([label, aria, kind, n], i) => {
+          const on = kind === 1 || (kind === 2 && Math.min(Math.max(k, 1), 3) === n);
+          return { key: i, label, aria, h: kind === 2 ? 30 : 40, size: kind === 2 ? 12 : 15, color: on ? '#FFFFFF' : 'rgba(255,255,255,0.5)', weight: on ? 600 : 400 };
+        }),
+      show1: k >= 1, show2: k >= 2, show3: k >= 3, show4: k >= 4
+    };
+  }
+}
+</script>
+</body>
+</html>

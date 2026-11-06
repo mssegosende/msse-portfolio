@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Desktop · dark · Scene 3 projects featured</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Michroma&amp;family=Rajdhani:wght@300;400;500;600&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Science+Gothic:wdth,wght@50..200,100..900&amp;display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Science+Gothic:wght@100..900&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#14181D}
+.grain{background-image:url(../../../assets/grain.png);background-size:220px 220px}
+.title-in{opacity:0;transform:translateY(10px);animation:rise .6s cubic-bezier(.2,.7,.2,1) .05s forwards}
+.rise{opacity:0;transform:translateY(40px);animation:rise .65s cubic-bezier(.2,.7,.2,1) .15s forwards}
+.sink{animation:sink .45s ease .4s forwards}
+@keyframes sink{to{opacity:0;transform:translateY(-10px) scale(0.98)}}
+@keyframes rise{to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.title-in,.rise,.sink{animation-duration:.01s;animation-delay:0s}}
+</style>
+</helmet>
+<div onWheel="{{onWheel}}" style="position: relative; height: 900px; overflow: hidden; background: radial-gradient(ellipse 90% 80% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.5) 100%), radial-gradient(ellipse 60% 45% at 22% 18%, rgba(140,160,190,0.30) 0%, rgba(140,160,190,0) 70%), linear-gradient(118deg, rgba(0,0,0,0) 22%, rgba(130,150,180,0.20) 40%, rgba(130,150,180,0.05) 56%, rgba(0,0,0,0) 70%), linear-gradient(180deg, #16202C 0%, #101823 100%); color: #E9EDF1; font-family: Inter, system-ui, sans-serif">
+
+<!-- background shadows -->
+<div aria-hidden="true" style="position: absolute; left: 50%; top: 520px; width: 1100px; height: 700px; margin: -350px 0 0 -550px; border-radius: 50%; background: radial-gradient(closest-side, rgba(140,160,190,0.22), rgba(140,160,190,0)); z-index: 0"></div>
+<div aria-hidden="true" style="position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse 60% 30% at 50% 92%, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 70%), radial-gradient(ellipse 120% 90% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.5) 100%)"></div>
+
+<div aria-hidden="true" style="position: absolute; right: 40px; top: 26px; z-index: 0; font-family: Michroma, sans-serif; font-size: 190px; line-height: 1; color: transparent; background: linear-gradient(180deg, rgba(255,255,255,0.17) 0%, rgba(255,255,255,0.05) 55%, rgba(0,0,0,0.3) 100%); -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 12px 18px rgba(0,0,0,0.5))">WORK</div>
+
+<div class="title-in" style="position: absolute; left: 56px; top: 52px; z-index: 5">
+<div style="display: inline-flex; padding: 9px 18px; border-radius: 999px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.22); color: #E9EDF1; font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.12em">SELECTED WORK</div>
+<h2 style="margin: 16px 0 0; font-family: Science Gothic, Michroma, sans-serif; font-weight: 200; font-stretch: 150%; font-size: 64px; line-height: 1; color: #E9EDF1">PROJECTS</h2>
+</div>
+<p class="title-in" style="position: absolute; left: 640px; top: 96px; z-index: 5; margin: 0; max-width: 400px; font-size: 15px; line-height: 1.6; color: #C9D0D7">Things I build to learn in public — each one a problem I wanted solved properly, from the data model up to the interface.</p>
+
+<!-- 3.1: the featured project, on its own -->
+<sc-for list="{{cards}}" as="o" hint-placeholder-count="1">
+<article class="{{o.cls}}" style="position: absolute; left: 228px; top: 277px; width: 1180px; height: 540px; zoom: 0.88; z-index: 7; filter: drop-shadow(0 34px 40px rgba(0,0,0,0.55))">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: #5B646E; clip-path: polygon(34px 0, calc(100% - 18px) 0, 100% 18px, 100% 210px, calc(100% - 8px) 218px, calc(100% - 8px) calc(100% - 26px), calc(100% - 34px) 100%, 18px 100%, 0 calc(100% - 18px), 0 calc(100% - 230px), 8px calc(100% - 238px), 8px 26px)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 1px; background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 10%), linear-gradient(160deg, #3A4148 0%, #252A30 45%, #1B1F24 100%); clip-path: polygon(34px 0, calc(100% - 18px) 0, 100% 18px, 100% 210px, calc(100% - 8px) 218px, calc(100% - 8px) calc(100% - 26px), calc(100% - 34px) 100%, 18px 100%, 0 calc(100% - 18px), 0 calc(100% - 230px), 8px calc(100% - 238px), 8px 26px)"></div>
+<div aria-hidden="true" style="position: absolute; top: 12px; bottom: 12px; left: 20px; right: 20px; background: #2A3037; clip-path: polygon(26px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 26px), calc(100% - 26px) 100%, 12px 100%, 0 calc(100% - 12px), 0 26px)"></div>
+<div aria-hidden="true" style="position: absolute; top: 14px; bottom: 14px; left: 22px; right: 22px; background: repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 3px, rgba(255,255,255,0.22) 3px 4px), radial-gradient(ellipse 120% 80% at 18% 0%, #FBFCFD 0%, #E6EAED 42%, #C9D0D6 100%); clip-path: polygon(24px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 10px 100%, 0 calc(100% - 10px), 0 24px)"></div>
+<div style="position: relative; z-index: 2; height: calc(100% - 28px); box-sizing: border-box; margin: 14px 22px; padding: 36px 40px 64px; color: #14181D; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr); gap: 40px; align-items: center">
+<div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap"><sc-for list="{{o.tags}}" as="t" hint-placeholder-count="1"><div style="display: inline-flex; align-items: center; padding: 7px 12px; border: 1.5px solid rgba(11,13,16,0.7); border-radius: 7px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.14em; color: #0B0D10">{{t}}</div></sc-for></div>
+<div style="margin-top: 24px; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px">
+<h3 style="margin: 0; font-family: Michroma, sans-serif; font-weight: 400; font-size: 40px; line-height: 1; color: #0B0D10">{{o.name}}</h3>
+<div aria-hidden="true" style="font-family: Michroma, sans-serif; font-size: 30px; line-height: 0.9; color: #0B0D10">{{o.num}}</div>
+</div>
+<div style="margin-top: 10px; font-size: 13px; font-weight: 500; color: #4A525C">{{o.status}}</div>
+<p style="margin: 16px 0 0; font-size: 16px; line-height: 1.65; color: #3A414A">{{o.body}}</p>
+<div style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; font-size: 12.5px; font-weight: 500"><sc-for list="{{o.chips}}" as="c" hint-placeholder-count="4"><span style="padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(11,13,16,0.28); color: #14181D">{{c}}</span></sc-for></div>
+</div>
+<div>
+<div style="position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: {{o.art}}; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1); clip-path: polygon(16px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 8px 100%, 0 calc(100% - 8px), 0 16px)"><span style="position: absolute; left: 18px; top: 16px; right: 18px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; line-height: 1.5; color: rgba(255,255,255,0.8); text-shadow: 0 1px 6px rgba(0,0,0,0.6)">{{o.gif}}</span><div style="position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 12px; padding: 22px 14px 12px; background: linear-gradient(180deg, rgba(5,6,8,0) 0%, rgba(5,6,8,0.8) 100%)"><button type="button" onClick="{{o.toggle}}" aria-label="{{o.pauseAria}}" style="display: flex; align-items: center; gap: 8px; min-width: 44px; min-height: 36px; padding: 0 12px; border: 1px solid rgba(255,255,255,0.55); background: rgba(10,12,15,0.45); color: #FFFFFF; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.12em; cursor: pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="#FFFFFF" aria-hidden="true"><path d="{{o.icon}}"></path></svg>{{o.pauseLabel}}</button><div aria-hidden="true" style="flex: 1; height: 2px; background: rgba(255,255,255,0.25)"><div style="width: {{o.prog}}%; height: 100%; background: #FFFFFF; transition: width 0.25s linear"></div></div><span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; color: rgba(255,255,255,0.75); white-space: nowrap">{{o.next}}</span></div></div>
+<sc-if value="{{o.hasFlow}}" hint-placeholder-val="{{ false }}">
+<div style="margin-top: 14px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-family: 'JetBrains Mono', monospace; font-size: 10.5px; letter-spacing: 0.06em; color: #14181D"><span style="border: 1px solid rgba(11,13,16,0.3); padding: 6px 10px">PR DIFF</span><span aria-hidden="true" style="color: #5A626C">→</span><span style="border: 1px solid rgba(11,13,16,0.3); padding: 6px 10px">AGENTS · RULES</span><span aria-hidden="true" style="color: #5A626C">→</span><span style="border: 1px solid rgba(11,13,16,0.6); padding: 6px 10px">RATING</span><span aria-hidden="true" style="color: #5A626C">→</span><span style="padding: 6px 10px; background: #14181D; color: #F4F5F7">&lt; THRESHOLD · HUMAN</span></div>
+</sc-if>
+</div>
+</div>
+<a href="#work" style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: min(280px, 74%); height: 44px; z-index: 4; text-decoration: none; color: #E9EDF1">
+<span aria-hidden="true" style="position: absolute; inset: 0; background: #5B646E; clip-path: polygon(0 100%, 20px 0, calc(100% - 20px) 0, 100% 100%)"></span>
+<span aria-hidden="true" style="position: absolute; top: 1px; left: 1px; right: 1px; bottom: 0; background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 10%), linear-gradient(160deg, #3A4148 0%, #252A30 45%, #1B1F24 100%); clip-path: polygon(0 100%, 20px 0, calc(100% - 20px) 0, 100% 100%)"></span>
+<span style="position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; height: 100%; padding-top: 2px"><span style="font-family: Michroma, sans-serif; font-size: 10px; letter-spacing: 0.16em">MSSE://</span><span aria-hidden="true" style="width: 1.5px; height: 18px; background: rgba(233,237,241,0.6)"></span><span style="font-size: 13px; font-weight: 500">Read the case study ↗</span></span>
+</a>
+</article>
+</sc-for>
+
+
+<!-- 3.2–3.4: the other projects fill a row of three columns, one per scroll step -->
+<sc-for list="{{row}}" as="o" hint-placeholder-count="3">
+<article class="{{o.cls}}" onClick="{{o.pick}}" role="button" tabindex="0" aria-label="Show {{o.name}} in the featured spot" style="position: absolute; left: {{o.x}}px; top: 264px; width: 375px; height: 584px; zoom: 0.88; cursor: pointer; z-index: 7; filter: drop-shadow(0 34px 40px rgba(0,0,0,0.55))">
+<div aria-hidden="true" style="position: absolute; inset: 0; background: #5B646E; clip-path: polygon(34px 0, calc(100% - 18px) 0, 100% 18px, 100% 210px, calc(100% - 8px) 218px, calc(100% - 8px) calc(100% - 26px), calc(100% - 34px) 100%, 18px 100%, 0 calc(100% - 18px), 0 calc(100% - 230px), 8px calc(100% - 238px), 8px 26px)"></div>
+<div aria-hidden="true" style="position: absolute; inset: 1px; background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 10%), linear-gradient(160deg, #3A4148 0%, #252A30 45%, #1B1F24 100%); clip-path: polygon(34px 0, calc(100% - 18px) 0, 100% 18px, 100% 210px, calc(100% - 8px) 218px, calc(100% - 8px) calc(100% - 26px), calc(100% - 34px) 100%, 18px 100%, 0 calc(100% - 18px), 0 calc(100% - 230px), 8px calc(100% - 238px), 8px 26px)"></div>
+<div aria-hidden="true" style="position: absolute; top: 12px; bottom: 12px; left: 20px; right: 20px; background: #2A3037; clip-path: polygon(26px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 26px), calc(100% - 26px) 100%, 12px 100%, 0 calc(100% - 12px), 0 26px)"></div>
+<div aria-hidden="true" style="position: absolute; top: 14px; bottom: 14px; left: 22px; right: 22px; background: repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 3px, rgba(255,255,255,0.22) 3px 4px), radial-gradient(ellipse 120% 80% at 18% 0%, #FBFCFD 0%, #E6EAED 42%, #C9D0D6 100%); clip-path: polygon(24px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 10px 100%, 0 calc(100% - 10px), 0 24px)"></div>
+<div style="position: relative; z-index: 2; height: calc(100% - 28px); box-sizing: border-box; margin: 14px 22px; padding: 20px 20px 60px; color: #14181D">
+<div aria-hidden="true" style="position: relative; aspect-ratio: 16 / 10"><div style="position: absolute; left: 7%; right: 7%; top: 0; bottom: 14%; background: {{o.art}}; clip-path: polygon(12px 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%, 0 12px)"></div><div style="position: absolute; left: 0; right: 0; top: 29%; bottom: 0; background: rgba(255,255,255,0.22); clip-path: polygon(10px 26%, 48% 26%, 56% 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 calc(26% + 10px))"></div><div style="position: absolute; left: 0; right: 0; top: calc(29% + 1px); bottom: 0; background: linear-gradient(180deg, rgba(34,38,45,0.62) 0%, rgba(10,12,15,0.9) 100%); -webkit-backdrop-filter: blur(14px) saturate(1.1); backdrop-filter: blur(14px) saturate(1.1); clip-path: polygon(10px 26%, 48% 26%, 56% 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 calc(26% + 10px))"></div><div style="position: absolute; left: 59%; right: 6%; top: calc(29% + 10px); line-height: 1.25"><div style="font-size: 14px; font-weight: 600; color: #FFFFFF">{{o.name}}</div><div style="margin-top: 3px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #AEB6BF">{{o.num}} · GIF</div></div></div>
+<div style="margin-top: 16px"><sc-for list="{{o.tags}}" as="t" hint-placeholder-count="1"><div style="display: inline-flex; align-items: center; padding: 6px 11px; border: 1.5px solid rgba(11,13,16,0.7); border-radius: 7px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.14em; color: #0B0D10">{{t}}</div></sc-for></div>
+<div style="margin-top: 12px; display: flex; align-items: flex-end; justify-content: space-between; gap: 10px">
+<h3 style="margin: 0; font-family: Michroma, sans-serif; font-weight: 400; font-size: 24px; line-height: 1; color: #0B0D10">{{o.name}}</h3>
+<div aria-hidden="true" style="font-family: Michroma, sans-serif; font-size: 20px; line-height: 0.9; color: #0B0D10">{{o.num}}</div>
+</div>
+<div style="margin-top: 6px; font-size: 12.5px; font-weight: 500; color: #4A525C">{{o.status}}</div>
+<p style="margin: 10px 0 0; font-size: 13.5px; line-height: 1.5; color: #3A414A">{{o.body}}</p>
+<div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; font-weight: 500"><sc-for list="{{o.chips}}" as="c" hint-placeholder-count="4"><span style="padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(11,13,16,0.28); color: #14181D">{{c}}</span></sc-for></div>
+</div>
+<a href="#work" style="position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: min(280px, 74%); height: 44px; z-index: 4; text-decoration: none; color: #E9EDF1">
+<span aria-hidden="true" style="position: absolute; inset: 0; background: #5B646E; clip-path: polygon(0 100%, 20px 0, calc(100% - 20px) 0, 100% 100%)"></span>
+<span aria-hidden="true" style="position: absolute; top: 1px; left: 1px; right: 1px; bottom: 0; background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 10%), linear-gradient(160deg, #3A4148 0%, #252A30 45%, #1B1F24 100%); clip-path: polygon(0 100%, 20px 0, calc(100% - 20px) 0, 100% 100%)"></span>
+<span style="position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; height: 100%; padding-top: 2px"><span style="font-family: Michroma, sans-serif; font-size: 10px; letter-spacing: 0.16em">MSSE://</span><span aria-hidden="true" style="width: 1.5px; height: 18px; background: rgba(233,237,241,0.6)"></span><span style="font-size: 13px; font-weight: 500">Case study ↗</span></span>
+</a>
+</article>
+</sc-for>
+
+<!-- site index: 1–5, this section opens its steps -->
+<nav aria-label="Sections" style="position: absolute; right: 36px; top: 250px; z-index: 8; display: flex; flex-direction: column; align-items: center; gap: 2px; font-family: Rajdhani, sans-serif; mix-blend-mode: difference">
+<sc-for list="{{rail}}" as="b" hint-placeholder-count="9">
+<button type="button" onClick="{{b.go}}" aria-pressed="{{b.on}}" aria-label="{{b.aria}}" style="min-width: 44px; min-height: {{b.h}}px; border: 0; background: none; font: inherit; font-size: {{b.size}}px; letter-spacing: 0.08em; cursor: {{b.cursor}}; color: {{b.color}}; font-weight: {{b.weight}}">{{b.label}}</button>
+</sc-for>
+</nav>
+
+<!-- the menu stays from scene 2 on -->
+<div style="position: absolute; left: 0; right: 0; bottom: 26px; z-index: 9; display: flex; justify-content: center">
+<nav aria-label="Primary" style="display: flex; align-items: center; gap: 4px; padding: 8px 10px 8px 26px; background: rgba(14,17,21,0.92); border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 18px 40px -20px rgba(25,34,48,0.5); font-family: Rajdhani, sans-serif; font-size: 14px; letter-spacing: 0.12em; flex-wrap: wrap">
+<a href="#top" style="font-family: Michroma, sans-serif; font-size: 15px; letter-spacing: 0.16em; text-decoration: none; color: #F4F5F7; margin-right: 26px">MSSE://</a>
+<div class="dock-links" style="display: flex; align-items: center">
+<a href="#about" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; text-decoration: none; color: #AEB6BF">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg>ABOUT</a>
+<a href="#work" aria-current="true" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; text-decoration: none; color: #F4F5F7; font-weight: 600">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3z"></path></svg>PROJECTS</a>
+<a href="#stack" style="display: flex; align-items: center; gap: 8px; padding: 12px 16px; text-decoration: none; color: #AEB6BF">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="6" y="6" width="12" height="12"></rect><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"></path></svg>CAPABILITIES</a>
+<span aria-hidden="true" style="width: 1px; height: 26px; background: rgba(233,237,241,0.2); margin: 0 12px"></span>
+</div>
+<button type="button" style="position: relative; display: flex; align-items: center; gap: 8px; padding: 13px 18px; background: #1E2329; border: 1px solid rgba(255,255,255,0.14); font: inherit; letter-spacing: inherit; color: #AEB6BF; cursor: pointer; clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%)">
+<span aria-hidden="true" style="position: absolute; top: 0; right: 0; width: 10px; height: 10px; background: linear-gradient(225deg, transparent 50%, rgba(233,237,241,0.18) 50%); pointer-events: none; z-index: 2"></span>
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>LIGHT</button>
+<a href="#contact" style="display: flex; align-items: center; gap: 8px; margin-left: 8px; padding: 14px 22px; background: #F4F5F7; color: #0B0D10; text-decoration: none">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"></path></svg>INITIATE</a>
+</nav>
+</div>
+
+<div class="grain" aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; z-index: 20"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+const DUR = 9000;   // mock length of each project's GIF, in ms
+const DATA = [
+  { num: 'Ø3.1', name: 'ARCTURUS', tags: ['MULTI-AGENT PR REVIEW', 'FEATURED'], status: '',
+    body: 'A LangGraph pipeline where agents review a pull request against business rules. The last agent rates the result from everything the previous states found — and a developer only steps in when that rating misses the correction threshold, not on every change.',
+    chips: ['LangGraph', 'Python', 'LLM agents', 'Human-in-the-loop'], hasFlow: true,
+    gif: '[ GIF: a PR moving through the agents — and the moment it hands off to a human ]', art: 'radial-gradient(ellipse 55% 45% at 24% 30%, rgba(214,220,226,0.6), rgba(214,220,226,0) 62%), radial-gradient(ellipse 70% 60% at 80% 76%, rgba(110,120,132,0.55), rgba(0,0,0,0) 66%), conic-gradient(from 210deg at 58% 46%, #0C0E11, #3A424C 18%, #0C0E11 38%, #6B7580 58%, #15191E 78%, #0C0E11)' },
+  { num: 'Ø3.2', name: 'ETHOS', tags: ['CLINIC APP'], status: 'Backend in progress',
+    body: "A fictional functional-medicine clinic, built end to end: React front, a Node gateway, a FastAPI data engine over PostgreSQL. Right now I'm rebuilding the appointments service from the MVP's business rules.",
+    chips: ['React', 'Node', 'FastAPI', 'PostgreSQL'], hasFlow: false, gif: '[ GIF · booking an appointment, front to database ]', art: 'radial-gradient(ellipse 55% 45% at 70% 28%, rgba(214,220,226,0.6), rgba(214,220,226,0) 62%), radial-gradient(ellipse 70% 60% at 22% 80%, rgba(110,120,132,0.55), rgba(0,0,0,0) 66%), conic-gradient(from 120deg at 58% 46%, #0C0E11, #3A424C 18%, #0C0E11 38%, #6B7580 58%, #15191E 78%, #0C0E11)' },
+  { num: 'Ø3.3', name: 'APSIS', tags: ['AI ASSISTANT'], status: 'In progress',
+    body: "An assistant I'm building for my own workflow, one module at a time. Each module gets its own agent — the first reads incoming job proposals and drafts the replies.",
+    chips: ['React', 'TypeScript', 'FastAPI', 'LLM agents'], hasFlow: false, gif: '[ GIF · a job proposal in, a drafted reply out ]', art: 'radial-gradient(ellipse 55% 45% at 40% 70%, rgba(214,220,226,0.6), rgba(214,220,226,0) 62%), radial-gradient(ellipse 70% 60% at 78% 24%, rgba(110,120,132,0.55), rgba(0,0,0,0) 66%), conic-gradient(from 300deg at 58% 46%, #0C0E11, #3A424C 18%, #0C0E11 38%, #6B7580 58%, #15191E 78%, #0C0E11)' },
+  { num: 'Ø3.4', name: 'POLARIS', tags: ['[ CATEGORY ]'], status: '[ Status ]',
+    body: "[ What Polaris is, in two sentences: the problem it solves and the one technical decision you're proudest of. ]",
+    chips: ['[ Stack ]'], hasFlow: false, gif: '[ GIF · Polaris in action ]', art: 'radial-gradient(ellipse 55% 45% at 82% 62%, rgba(214,220,226,0.6), rgba(214,220,226,0) 62%), radial-gradient(ellipse 70% 60% at 20% 30%, rgba(110,120,132,0.55), rgba(0,0,0,0) 66%), conic-gradient(from 30deg at 58% 46%, #0C0E11, #3A424C 18%, #0C0E11 38%, #6B7580 58%, #15191E 78%, #0C0E11)' }
+];
+class Component extends DCLogic {
+  componentDidMount() { this._tick = setInterval(() => this.advance(this.state || {}), 250); }
+  componentWillUnmount() { clearInterval(this._tick); }
+  // featured spot: plays each project's GIF; when it ends, the next one takes the spot. Pause stops it.
+  featured(st) {
+    const f = st.f || 0, prev = st.prev;
+    const toggle = () => this.setState({ paused: !(this.state || {}).paused });
+    const feat = (d, cls) => Object.assign({ key: d.num, cls, x: 0, pick: () => {}, toggle,
+      prog: Math.min(100, Math.round(((st.el || 0) / DUR) * 100)),
+      pauseLabel: st.paused ? 'PLAY' : 'PAUSE', pauseAria: st.paused ? 'Play the project reel' : 'Pause the project reel',
+      icon: st.paused ? 'M8 5v14l11-7z' : 'M6 5h4v14H6zM14 5h4v14h-4z', next: 'NEXT · ' + DATA[(f + 1) % 4].name }, d);
+    return (prev !== undefined && prev !== f ? [feat(DATA[prev], 'sink')] : []).concat([feat(DATA[f], 'rise')]);
+  }
+  advance(st) {
+    if (st.paused) return false;
+    const el = (st.el || 0) + 250;
+    if (el >= DUR) { const f = st.f || 0; this.setState({ f: (f + 1) % 4, prev: f, el: 0 }); }
+    else this.setState({ el });
+    return true;
+  }
+  railFor(activeSub, go, secGo) {
+    const sec = (label, name, active, g) => ({ label: 'Ø' + label, aria: name, h: 40, size: 15, on: active ? 'true' : 'false',
+      color: active ? '#FFFFFF' : 'rgba(255,255,255,0.5)', weight: active ? 600 : 400, cursor: g ? 'pointer' : 'default', go: g || (() => {}) });
+    const sub = (n) => ({ label: 'Ø3.' + n, aria: 'Project 3.' + n, h: 30, size: 12, on: activeSub === n ? 'true' : 'false',
+      color: activeSub === n ? '#FFFFFF' : 'rgba(255,255,255,0.5)', weight: activeSub === n ? 600 : 400,
+      cursor: go(n) ? 'pointer' : 'default', go: go(n) || (() => {}) });
+    return [sec('1', 'Hero'), sec('2', 'Capabilities'), sec('3', 'Projects', true, secGo), sub(1), sub(2), sub(3), sub(4),
+      sec('4', 'About'), sec('5', 'Contact')].map((x, i) => Object.assign({ key: i }, x));
+  }
+  wheel(e, step) {
+    const now = Date.now();
+    if (Math.abs(e.deltaY) < 8 || (this._lastWheel && now - this._lastWheel < 700)) return;
+    this._lastWheel = now;
+    step(e.deltaY > 0 ? 1 : -1);
+  }
+  renderVals() {
+    const st = this.state || {};
+    const f = st.f || 0;
+    const show = (i) => this.setState({ f: i, prev: f, el: 0 });
+    return {
+      cards: this.featured(st), row: [], picked: false, back: () => {},
+      rail: this.railFor(f + 1, (n) => () => show(n - 1), () => show(0)),
+      onWheel: (e) => this.wheel(e, (d) => show((f + d + 4) % 4))
+    };
+  }
+}
+</script>
+</body>
+</html>
