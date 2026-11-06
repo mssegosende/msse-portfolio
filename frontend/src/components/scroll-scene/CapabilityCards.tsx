@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type Ref } from "react";
 import { capabilityCards } from "../../data/portfolioData";
 import type { Theme } from "../../lib/themeReload";
+import { Num } from "../Num";
 import { CapabilityCard } from "./CapabilityCard";
 
 // Desktop placement at 1440 x 900 (design/HANDOFF.md): 324 x 463, 110px from
@@ -105,6 +106,9 @@ export const CapabilityCards = ({
       onPointerUp={(e) => {
         if (e.pointerType !== "mouse") paused.current = false;
       }}
+      onPointerCancel={(e) => {
+        if (e.pointerType !== "mouse") paused.current = false;
+      }}
       className={`pointer-events-auto absolute ${isMobile ? "callout-mobile left-4 right-4" : "origin-top-left"}`}
       style={
         isMobile
@@ -118,23 +122,50 @@ export const CapabilityCards = ({
             }
       }
     >
-      {prevCard && (
-        <div
-          key={`sink-${prev}-${cur}`}
-          className="cap-sink absolute inset-x-0 bottom-0"
-          aria-hidden="true"
-        >
-          <CapabilityCard card={prevCard} theme={theme} isMobile={isMobile} />
-        </div>
-      )}
-      {curCard && (
-        <div
-          key={`rise-${cur}`}
-          className={`cap-rise ${isMobile ? "relative" : "absolute inset-0"}`}
-        >
-          <CapabilityCard card={curCard} theme={theme} isMobile={isMobile} />
-        </div>
-      )}
+      <div className={isMobile ? "relative" : "absolute inset-0"}>
+        {prevCard && (
+          <div
+            key={`sink-${prev}-${cur}`}
+            className="cap-sink absolute inset-x-0 bottom-0"
+            aria-hidden="true"
+          >
+            <CapabilityCard card={prevCard} theme={theme} isMobile={isMobile} />
+          </div>
+        )}
+        {curCard && (
+          <div
+            key={`rise-${cur}`}
+            className={`cap-rise ${isMobile ? "relative" : "absolute inset-0"}`}
+          >
+            <CapabilityCard card={curCard} theme={theme} isMobile={isMobile} />
+          </div>
+        )}
+      </div>
+      {isMobile && <StepCounter index={Math.max(0, cur)} />}
     </div>
   );
 };
+
+/** Phones: Ø2.x / Ø2.3 and one bar per card, under the card. */
+const StepCounter = ({ index }: { index: number }) => (
+  <div
+    aria-hidden="true"
+    data-testid="capability-counter"
+    className="mt-2.5 flex items-center justify-between px-0.5 font-mono text-[10px] tracking-[0.12em] text-[#14181D]"
+  >
+    <span>
+      <Num value={`2.${index + 1}`} className="font-semibold" />{" "}
+      <span className="opacity-[0.55]">
+        / <Num value={`2.${capabilityCards.length}`} />
+      </span>
+    </span>
+    <span className="flex gap-1.5">
+      {capabilityCards.map((c, i) => (
+        <span
+          key={c.num}
+          className={`h-0.5 w-[18px] ${i === index ? "bg-[#14181D]" : "bg-[rgba(20,24,29,0.3)]"}`}
+        />
+      ))}
+    </span>
+  </div>
+);

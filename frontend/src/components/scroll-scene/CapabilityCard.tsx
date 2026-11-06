@@ -77,33 +77,55 @@ export const CapabilityCard = ({
         style={{ background: t.panel, clipPath: PANEL }}
       />
 
+      {/* Phones: the mock's tighter sizes (design/source/mobile/light/scene-2-capabilities.dc.html). */}
       <div
-        className={`relative z-[2] mx-[22px] my-3.5 flex flex-col px-[18px] pb-[58px] pt-6 ${
-          isMobile ? "" : "h-[calc(100%-28px)]"
+        className={`relative z-[2] mx-[22px] my-3.5 flex flex-col ${
+          isMobile ? "px-3.5 pb-[50px] pt-[18px]" : "h-[calc(100%-28px)] px-[18px] pb-[58px] pt-6"
         }`}
       >
         <div
-          className={`self-start rounded-[7px] border-[1.5px] px-[11px] py-1.5 font-mono text-[10px] tracking-[0.14em] ${t.tag}`}
+          className={`self-start rounded-[7px] border-[1.5px] font-mono tracking-[0.14em] ${t.tag} ${
+            isMobile ? "px-2.5 py-1.5 text-[9.5px]" : "px-[11px] py-1.5 text-[10px]"
+          }`}
         >
           SYS.0{card.num}
         </div>
-        <div aria-hidden="true" className={isMobile ? "h-5" : "flex-1"} />
+        <div aria-hidden="true" className={isMobile ? "h-4" : "flex-1"} />
         <div className="flex items-end justify-between gap-2.5">
           <h3
-            className={`m-0 min-w-0 font-display text-[22px] font-semibold leading-[1.05] tracking-[0.08em] ${t.title}`}
+            className={`m-0 min-w-0 font-display font-semibold leading-[1.05] tracking-[0.08em] ${t.title} ${
+              isMobile ? "text-[21px]" : "text-[22px]"
+            }`}
           >
-            <span className={`block text-[12px] tracking-[0.22em] ${t.small}`}>{card.small}</span>
+            <span
+              className={`block tracking-[0.22em] ${t.small} ${isMobile ? "text-[11px]" : "text-[12px]"}`}
+            >
+              {card.small}
+            </span>
             {card.title}
           </h3>
           <Num
             value={card.num}
-            className={`flex-none font-michroma text-[38px] leading-[0.9] ${t.title}`}
+            className={`flex-none font-michroma leading-[0.9] ${t.title} ${
+              isMobile ? "text-[32px]" : "text-[38px]"
+            }`}
           />
         </div>
-        <p className={`mt-2.5 text-[14px] leading-[1.55] ${t.body}`}>{card.text}</p>
-        <ul className="mt-3.5 flex flex-wrap gap-1.5 text-[12px] font-medium">
+        <p
+          className={`mt-2.5 leading-[1.55] ${t.body} ${isMobile ? "text-[13.5px]" : "text-[14px]"}`}
+        >
+          {card.text}
+        </p>
+        <ul
+          className={`flex flex-wrap gap-1.5 font-medium ${
+            isMobile ? "mt-3 text-[11.5px]" : "mt-3.5 text-[12px]"
+          }`}
+        >
           {card.chips.map((c) => (
-            <li key={c} className={`rounded-full border px-[11px] py-[5px] ${t.chip}`}>
+            <li
+              key={c}
+              className={`rounded-full border py-[5px] ${t.chip} ${isMobile ? "px-2.5" : "px-[11px]"}`}
+            >
               {c}
             </li>
           ))}
@@ -111,7 +133,11 @@ export const CapabilityCard = ({
       </div>
 
       {/* Bottom tab: MSSE:// │ part. Light text in both themes. */}
-      <div className="absolute bottom-0 left-1/2 z-[4] h-10 w-[min(220px,74%)] -translate-x-1/2 text-[#E9EDF1]">
+      <div
+        className={`absolute bottom-0 left-1/2 z-[4] -translate-x-1/2 text-[#E9EDF1] ${
+          isMobile ? "h-[38px] w-[min(200px,74%)]" : "h-10 w-[min(220px,74%)]"
+        }`}
+      >
         <span
           aria-hidden="true"
           className="absolute inset-0 bg-[#5B646E]"
@@ -123,9 +149,15 @@ export const CapabilityCard = ({
           style={{ background: BEZEL, clipPath: TAB }}
         />
         <span className="relative flex h-full items-center justify-center gap-2.5 pt-0.5">
-          <span className="font-michroma text-[9.5px] tracking-[0.16em]">MSSE://</span>
+          <span
+            className={`font-michroma tracking-[0.16em] ${isMobile ? "text-[9px]" : "text-[9.5px]"}`}
+          >
+            MSSE://
+          </span>
           <span aria-hidden="true" className="h-4 w-[1.5px] bg-[rgba(233,237,241,0.6)]" />
-          <span className="text-[12.5px] font-medium">{card.part}</span>
+          <span className={`font-medium ${isMobile ? "text-[12px]" : "text-[12.5px]"}`}>
+            {card.part}
+          </span>
         </span>
       </div>
     </article>

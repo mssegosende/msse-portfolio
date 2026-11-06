@@ -67,15 +67,27 @@ export const SCENE1 = { video: 0.1, check: 0.25, headline: 0.4, scroll: 0.55, en
  * ~68.5% of the width so it clears the card, its right edge ~40px short of the
  * section index; eye line at the same height as before, crown cut above the top.
  * TODO(polish): measured on the black robot at 1440 x 900 only.
- * Phones keep a tight head shot until P5; their rig shifts by `rx` instead of
- * the canvas moving.
+ * Phones (design/source/mobile/light/scene-2-capabilities.dc.html): a big head
+ * under the title, framed by the camera like desktop (applyView at css scale 1).
  */
 export const giantHeadFraming = (isMobile: boolean, viewport: Viewport): Framing => {
   const vw = vwOf(viewport.width);
   return isMobile
-    ? { scale: 1.667, x: "0%", y: "27.5%", rx: 14.6 }
+    ? { scale: PHONE_HEAD.scale, x: vw(PHONE_HEAD.dx * viewport.width), y: `${PHONE_HEAD.y}%` }
     : { scale: GIANT.scale, x: vw(GIANT.dx * viewport.height), y: `${GIANT.y}%` };
 };
+const PHONE_HEAD = { scale: 1.8, dx: 0.025, y: 43.5 };
+
+/**
+ * Phones: the robot starts further back and to the side and approaches the
+ * head shot (the mock's 70px right, 90px down, 0.55 scale), as the scroll
+ * moves from the crossfade to the first card.
+ */
+export const phoneApproachFrom = (f: Framing, viewport: Viewport): Framing => ({
+  scale: f.scale * 0.55,
+  x: vwOf(viewport.width)((parseFloat(f.x) / 100) * viewport.width + 70),
+  y: `${parseFloat(f.y) + (90 / viewport.height) * 100}%`,
+});
 // dx scales with the window height, like the rig's own offset.
 const GIANT = { scale: 4.86, dx: 0.342, y: 106.8 };
 
@@ -87,6 +99,13 @@ export const XFADE_DURATION = 0.16;
 
 /** Scene 2: the title, then one card per step (Ø2.1-Ø2.3), then a hold. */
 export const SCENE2 = { title: SCENE1.end + 0.12, cards: [1.0, 1.4, 1.8], end: 2.25 };
+
+/** Phones' scroll stops, as pin progress: the hero, each card, the end. */
+export const snapStops = (): number[] => [
+  0,
+  ...SCENE2.cards.map((c) => (c + 0.04) / SCENE2.end),
+  1,
+];
 
 /** Which card the timeline is on at time t: -1 before the first. */
 export const cardIndexAt = (t: number): number => {

@@ -2,6 +2,7 @@ import { useRef } from "react";
 import Spline from "@splinetool/react-spline";
 import { Application } from "@splinetool/runtime";
 import { profile } from "../data/portfolioData";
+import { Num } from "./Num";
 import { useTheme } from "../hooks/useTheme";
 import { MOBILE_LAYOUT_QUERY } from "../lib/layout";
 import { OVERSAMPLE, OVERSAMPLE_1 } from "../lib/spline/camera";
@@ -116,21 +117,40 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         <div className="absolute inset-0" style={{ background: "var(--hero-bg-2)" }} />
         <div
           className="subject-glow"
-          style={{ left: "58%", top: "33%", width: 900, height: 900 }}
+          style={
+            isMobile
+              ? { left: "50%", top: "39%", width: 620, height: 620 }
+              : { left: "58%", top: "33%", width: 900, height: 900 }
+          }
         />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_22%_78%,rgba(25,32,42,0.22)_0%,rgba(25,32,42,0)_70%),radial-gradient(ellipse_120%_90%_at_55%_45%,rgba(0,0,0,0)_55%,rgba(20,26,34,0.28)_100%)]" />
         <div className="bg-word bg-word--left bg-word--soft">STACK</div>
       </div>
 
-      {/* Scene 2 title. Behind the robot: the giant head sits in front of it. */}
+      {/* Scene 2 title. Desktop: behind the robot, the giant head sits in front of it.
+          Phones: in front, the head comes up under it. */}
       <div
         ref={title2Ref}
         data-testid="capabilities-title"
-        className="pointer-events-none absolute left-4 top-6 sm:left-14 sm:top-[52px]"
+        className={`pointer-events-none absolute ${
+          isMobile ? "left-[18px] top-[26px] z-[5]" : "left-14 top-[52px]"
+        }`}
       >
-        <div className="section-pill bg-white/90 shadow-none">Capabilities</div>
-        <h2 className="section-title section-title--light mt-4 leading-none sm:whitespace-nowrap">
-          What the core runs on
+        <div className="section-pill bg-white/90 shadow-none">
+          {isMobile && (
+            <>
+              <Num value="2" /> ·&nbsp;
+            </>
+          )}
+          Capabilities
+        </div>
+        <h2
+          className={`section-title section-title--light ${
+            isMobile ? "mt-3 leading-[1.08]" : "mt-4 whitespace-nowrap leading-none"
+          }`}
+        >
+          What the core {isMobile && <br />}
+          runs on
         </h2>
       </div>
 
@@ -261,7 +281,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
             data-testid="spline2-canvas-wrap"
             className={`absolute inset-0 transition-opacity duration-1000 ${
               scene2Ready ? "opacity-100" : "opacity-0"
-            }`}
+            } ${isMobile ? "hero-l2--phone" : ""}`}
           >
             {/* The drift wrappers always exist, so the timeline can bind them before
                 the scene mounts. */}

@@ -8,6 +8,8 @@ import {
   giantHeadFraming,
   headSway,
   heroFraming,
+  phoneApproachFrom,
+  snapStops,
   vwOf,
 } from "./choreography";
 
@@ -44,10 +46,25 @@ describe("giantHeadFraming", () => {
     expect(a.scale).toBe(b.scale);
   });
 
-  it("moves the rig, not the canvas, on phones", () => {
-    const f = giantHeadFraming(true, { width: 390, height: 844 });
-    expect(f.x).toBe("0%");
-    expect(f.rx).toBeTypeOf("number");
+  it("frames the phone head below the title, and approaches it from further back and right", () => {
+    const viewport = { width: 390, height: 844 };
+    const f = giantHeadFraming(true, viewport);
+    expect(parseFloat(f.y)).toBeGreaterThan(0);
+    const from = phoneApproachFrom(f, viewport);
+    expect(from.scale).toBeLessThan(f.scale);
+    expect(parseFloat(from.x)).toBeGreaterThan(parseFloat(f.x));
+    expect(parseFloat(from.y)).toBeGreaterThan(parseFloat(f.y));
+  });
+});
+
+describe("snapStops", () => {
+  it("stops on the hero, each card and the end, in order", () => {
+    const stops = snapStops();
+    expect(stops).toHaveLength(SCENE2.cards.length + 2);
+    expect(stops[0]).toBe(0);
+    expect(stops[stops.length - 1]).toBe(1);
+    expect([...stops].sort((a, b) => a - b)).toEqual(stops);
+    SCENE2.cards.forEach((_, i) => expect(cardIndexAt(stops[i + 1]! * SCENE2.end)).toBe(i));
   });
 });
 

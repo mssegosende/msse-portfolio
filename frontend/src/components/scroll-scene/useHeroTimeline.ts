@@ -20,6 +20,8 @@ import {
   giantHeadFraming,
   headSway,
   heroFraming,
+  phoneApproachFrom,
+  snapStops,
   vwOf,
 } from "./choreography";
 import type { HeroSceneRefs } from "./useHeroScenes";
@@ -204,14 +206,8 @@ export const useHeroTimeline = ({
 
     const ctx = gsap.context(() => {
       if (isMobile) {
-        // The hero is framed by its camera (applyView); its wrapper stays untransformed.
-        gsap.set(canvasWrapRef.current, { clearProps: "transform" });
-        gsap.set(canvas2WrapRef.current, {
-          scale: giant.scale,
-          x: giant.x,
-          y: giant.y,
-          transformOrigin: "50% 50%",
-        });
+        // Both scenes are framed by their cameras (applyView); the wrappers stay untransformed.
+        gsap.set([canvasWrapRef.current, canvas2WrapRef.current], { clearProps: "transform" });
       } else {
         [canvasWrapRef.current, canvas2WrapRef.current].forEach((el) =>
           gsap.set(el, { scale: VIEW_CSS_SCALE, x: 0, y: 0, transformOrigin: "50% 50%" }),
@@ -346,6 +342,23 @@ export const useHeroTimeline = ({
       // Assigned once the timeline exists.
       let syncPlayback = () => {};
 
+      // Phones: the scroll settles on the hero, on each card, or on the end, and
+      // one gesture moves one stop, whatever its length. A position far from the
+      // last stop (a jump: SKIP INTRO, the dock, a restore) re-syncs to the nearest.
+      const STOPS = snapStops();
+      let stop = 0;
+      const stepSnap = (value: number): number => {
+        const nearest = STOPS.reduce(
+          (best, s, i) => (Math.abs(s - value) < Math.abs((STOPS[best] ?? 0) - value) ? i : best),
+          0,
+        );
+        const here = STOPS[stop] ?? 0;
+        if (Math.abs(nearest - stop) > 2) stop = nearest;
+        else if (value > here + 0.002) stop = Math.min(STOPS.length - 1, stop + 1);
+        else if (value < here - 0.002) stop = Math.max(0, stop - 1);
+        return STOPS[stop] ?? value;
+      };
+
       // The pose normaliser rides the gaze ticker rather than adding its own.
       const applyGazeAndPose = () => {
         syncPlayback();
@@ -361,6 +374,7 @@ export const useHeroTimeline = ({
         applyHead1();
         if (isMobile) {
           applyView(app1Ref.current, heroView, 1);
+          applyView(app2Ref.current, scene2View, 1);
         } else {
           applyView(app1Ref.current, heroView);
           applyView(appAltRef.current, heroView);
@@ -389,6 +403,16 @@ export const useHeroTimeline = ({
           pin: true,
           scrub: 1,
           anticipatePin: 1,
+          // Phones: one card per gesture (stepSnap). Off with reduced motion.
+          snap:
+            isMobile && !reduce
+              ? {
+                  snapTo: stepSnap,
+                  delay: 0.05,
+                  duration: { min: 0.25, max: 0.7 },
+                  ease: "power1.inOut",
+                }
+              : undefined,
           onUpdate: (self) => {
             const p = self.progress;
             if (isTouchDevice && !isMobile) touchParallax(p);
@@ -422,6 +446,23 @@ export const useHeroTimeline = ({
       tl.to(bg1Ref.current, { opacity: 0, duration: XFADE_DURATION }, XFADE_AT);
       tl.to(splineLayerRef.current, { opacity: 0, duration: XFADE_DURATION }, XFADE_AT);
       tl.to(layer2Ref.current, { opacity: 1, duration: XFADE_DURATION }, XFADE_AT);
+      if (isMobile && !reduce) {
+        // Phones: the robot approaches from further back and to the side.
+        const from = phoneApproachFrom(giant, viewport);
+        tl.fromTo(
+          scene2View,
+          { scale: from.scale, x: from.x, y: from.y },
+          {
+            scale: giant.scale,
+            x: giant.x,
+            y: giant.y,
+            duration: (SCENE2.cards[0] ?? 1) - XFADE_AT,
+            ease: "power2.out",
+            immediateRender: false,
+          },
+          XFADE_AT,
+        );
+      }
       if (!isMobile && !reduce) {
         tl.fromTo(
           scene2View,
