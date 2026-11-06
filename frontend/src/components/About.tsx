@@ -10,8 +10,9 @@ const STEPS = 3;
 
 /**
  * Scene 4 · WHO (design/source/{desktop,mobile}/light/scene-4-about.dc.html).
- * Desktop: the section pins for three steps — Ø4.1 the text, Ø4.2 the story
- * (in place of the Ø4.1 text) + "since 2022", Ø4.3 the principles. Mobile: one column, all shown.
+ * Desktop: the section pins for three steps — the left column first, complete
+ * (Ø4.1 the text, Ø4.2 the story in its place), then the right column, complete
+ * (Ø4.3: "since 2022", then the principles). Mobile: one column, all shown.
  */
 export const About = () => {
   const ref = useRef<HTMLElement>(null);
@@ -60,9 +61,10 @@ export const About = () => {
           </div>
         </div>
 
+        {/* Nothing here shows while the left text is being read (Ø4.1–Ø4.2). */}
         <div className={s.right}>
           {since && (
-            <div className={`${s.reveal} ${s.since}`} data-on={on(1)} data-testid="about-stat-code">
+            <div className={`${s.reveal} ${s.since}`} data-on={on(2)} data-testid="about-stat-code">
               <div className={s.sinceLabel}>{since.label}</div>
               <div className={s.year}>{since.value}</div>
             </div>
@@ -80,7 +82,7 @@ export const About = () => {
                 data-testid={`manifesto-chapter-${p.num}`}
                 className={`${s.reveal} ${s.principle}`}
                 data-on={on(2)}
-                style={{ transitionDelay: desktop && on(2) ? `${i * 0.15}s` : undefined }}
+                style={{ transitionDelay: desktop && on(2) ? `${0.2 + i * 0.15}s` : undefined }}
               >
                 <Num value={p.num} className={s.principleNum} />
                 <div>
