@@ -21,6 +21,7 @@ import {
   headSway,
   heroFraming,
   phoneApproachFrom,
+  pinLength,
   snapStops,
   vwOf,
 } from "./choreography";
@@ -410,7 +411,7 @@ export const useHeroTimeline = ({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: isMobile ? "+=600%" : "+=700%",
+          end: pinLength(isMobile),
           pin: true,
           scrub: 1,
           anticipatePin: 1,

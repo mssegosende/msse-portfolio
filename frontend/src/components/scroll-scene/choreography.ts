@@ -57,8 +57,11 @@ export const heroFraming = (isMobile: boolean, _reduce: boolean, { width, height
   };
 };
 
-/** Scene 1's scroll steps, in timeline seconds: Ø1.1, Ø1.2, Ø1.3, then SCROLL. */
-export const SCENE1 = { video: 0.1, check: 0.25, headline: 0.4, scroll: 0.55, end: 0.7 };
+/**
+ * Scene 1's scroll steps, in timeline seconds: Ø1.1, Ø1.2, Ø1.3, then SCROLL,
+ * then a hold (María Sol's review: a long one once Ø1.3 and SCROLL show).
+ */
+export const SCENE1 = { video: 0.1, check: 0.25, headline: 0.4, scroll: 0.55, end: 0.95 };
 
 /**
  * Scene 2: the giant head, one fixed shot for the whole scene (it moves with
@@ -98,7 +101,19 @@ export const XFADE_AT = SCENE1.end;
 export const XFADE_DURATION = 0.16;
 
 /** Scene 2: the title, then one card per step (Ø2.1-Ø2.3), then a hold. */
-export const SCENE2 = { title: SCENE1.end + 0.12, cards: [1.0, 1.4, 1.8], end: 2.25 };
+export const SCENE2 = {
+  title: SCENE1.end + 0.12,
+  cards: [0.3, 0.7, 1.1].map((t) => SCENE1.end + t),
+  end: SCENE1.end + 1.55,
+};
+
+/**
+ * The pin's scroll length per timeline second, in % of the viewport height:
+ * every step keeps the same scroll pace however long the timeline gets.
+ */
+export const PIN_PER_SECOND = { desktop: 700 / 2.25, phone: 600 / 2.25 };
+export const pinLength = (isMobile: boolean): string =>
+  `+=${((isMobile ? PIN_PER_SECOND.phone : PIN_PER_SECOND.desktop) * SCENE2.end).toFixed(1)}%`;
 
 /** Phones' scroll stops, as pin progress: the hero, each card, the end. */
 export const snapStops = (): number[] => [
