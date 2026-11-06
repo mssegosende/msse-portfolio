@@ -71,7 +71,7 @@ export const giantHeadFraming = (isMobile: boolean, viewport: Viewport): Framing
     : { scale: GIANT.scale, x: vw(GIANT.dx * viewport.height), y: `${GIANT.y}%` };
 };
 // dx scales with the window height, like the rig's own offset.
-const GIANT = { scale: 6.14, dx: 0.34, y: 141.8 };
+const GIANT = { scale: 5.4, dx: 0.303, y: 121.1 };
 
 // Timeline positions, in timeline seconds.
 
