@@ -339,10 +339,10 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
           ref={skipRef}
           data-testid="skip-intro"
           onClick={skipIntro}
-          className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1.75rem)] left-1/2 -translate-x-1/2 px-2.5 py-3.5 font-display text-[14px] uppercase tracking-[0.32em] text-[#F1F3F5] sm:bottom-7 ${
+          className={`pointer-events-auto absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1.75rem)] left-1/2 -translate-x-1/2 px-2.5 py-3.5 font-display text-[14px] uppercase tracking-[0.32em] text-[#F1F3F5] data-[scene="2"]:text-[rgb(var(--hero-ink))] sm:bottom-7 ${
             // On phones the timeline drives its opacity (it hides with the cards); a CSS
             // transition would lag behind it.
-            isMobile ? "" : "transition-opacity duration-300"
+            isMobile ? "" : "transition-[opacity,color] duration-300"
           }`}
         >
           <span className="hero-bar-in">Skip intro</span>

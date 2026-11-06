@@ -374,6 +374,8 @@ export const useHeroTimeline = ({
         defaults: { ease: "none" },
         // The card on screen follows the scrubbed time.
         onUpdate: () => {
+          // SKIP INTRO turns dark over scene 2's light ground (scene 1 keeps it light).
+          if (skipRef.current) skipRef.current.dataset.scene = tl.time() >= XFADE_AT ? "2" : "1";
           const idx = cardIndexAt(tl.time());
           if (idx !== cardIndexRef.current) {
             cardIndexRef.current = idx;
