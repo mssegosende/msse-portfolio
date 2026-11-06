@@ -18,8 +18,10 @@ ScrollTrigger, Framer Motion, Lenis for smooth scrolling, and
 `@splinetool/react-spline` for the 3D scenes. Vitest and Testing Library for unit
 tests, Playwright for end-to-end tests. pnpm 9 as the package manager.
 
-**Backend** — FastAPI with Pydantic validation and Motor (async MongoDB). It serves
-exactly one endpoint that matters, `POST /api/contact`. The site renders without it.
+**Backend** — FastAPI with Pydantic validation; each contact message is emailed with
+Resend (nothing is stored). It serves exactly one endpoint that matters,
+`POST /api/contact`, and is deployed as its own Vercel project (Root Directory
+`backend`). The site renders without it.
 
 **Hosting** — AWS: a private S3 bucket behind CloudFront, defined in CloudFormation and
 deployed from GitHub Actions.
@@ -130,7 +132,7 @@ instance and would need Redis or the reverse proxy past one.
 | `frontend/src/index.css`                  | Theme tokens, fonts, and the few rules Tailwind cannot express.                                                                                                                                                                                                        |
 | `frontend/e2e/`                           | Playwright specs.                                                                                                                                                                                                                                                      |
 | `frontend/scripts/`                       | Regenerates chapter 2's static fallback (see below).                                                                                                                                                                                                                   |
-| `backend/server.py`                       | The whole API: one contact endpoint, validation, honeypot, rate limit.                                                                                                                                                                                                 |
+| `backend/server.py`                       | The whole API: one contact endpoint, validation, honeypot, rate limit, Resend email.                                                                                                                                                                                   |
 | `infra/aws/hosting.yml`                   | The AWS hosting: bucket, CloudFront distribution and the deploy role (CloudFormation).                                                                                                                                                                                 |
 
 ### Draft projects
@@ -165,24 +167,26 @@ pnpm dev            # http://localhost:3000
 | `pnpm test:coverage`                | Unit tests with a coverage report: a table in the terminal, HTML in `coverage/`. |
 | `pnpm test:e2e`                     | End-to-end tests (Playwright). Run `pnpm build` first.                           |
 
-**Backend** — only for the contact form, and it needs a MongoDB instance:
+**Backend** — only for the contact form. It needs a Resend API key to actually send;
+without one, valid messages answer 500 (not configured):
 
 ```bash
 cd backend
 python -m venv .venv
 .venv/Scripts/Activate.ps1      # PowerShell; use source .venv/bin/activate on Unix
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 uvicorn server:app --reload --port 8000
+pytest                          # Resend is mocked: the tests never send email
 ```
 
 ### Environment
 
-Neither file is versioned; `frontend/.env.example` lists the frontend keys.
+Neither file is versioned; each folder's `.env.example` lists its keys.
 
 | File            | Keys                                                                                                                              |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `frontend/.env` | `VITE_BACKEND_URL` — the contact service's base URL. Read at build time, so for deploys it is a repository variable (see Deploy). |
-| `backend/.env`  | `MONGO_URL`, `DB_NAME`, `CORS_ORIGINS`                                                                                            |
+| `backend/.env`  | `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CORS_ORIGINS`. On Vercel they are the backend project's environment variables.             |
 
 ---
 
