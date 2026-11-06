@@ -1,8 +1,6 @@
-// Portfolio content: edit this file to update the site.
-// Entries with `draft: true` hold placeholder copy. They show in development
-// with a DRAFT badge and are stripped from production (getProjects).
-// `projectBacklog` keeps real project names that have no copy yet; it is
-// never rendered.
+// Portfolio content: edit this file to update the site. The projects live in
+// projectsData.ts. `projectBacklog` keeps real project names that have no
+// copy yet; it is never rendered.
 
 export interface Profile {
   name: string;
@@ -24,20 +22,6 @@ export interface ManifestoEntry {
   num: string;
   title: string;
   text: string;
-}
-
-export interface Project {
-  id: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  tags: string[];
-  codeUrl: string;
-  liveUrl: string;
-  /** A literal Tailwind class, e.g. "md:col-span-7". */
-  span: string;
-  featured?: boolean;
-  draft?: boolean;
 }
 
 /** One scene 2 card (design/HANDOFF.md, P2). */
@@ -116,123 +100,6 @@ export const manifesto: ManifestoEntry[] = [
   },
 ];
 
-// ------------------------------------------------------------
-// PROJECTS. Spans: 7 + 5, then 4 + 4 + 4 on the 12-column grid. Change the
-// spans here, not the grid in Projects.jsx.
-// ------------------------------------------------------------
-export const projects: Project[] = [
-  {
-    id: "polaris",
-    title: "POLARIS",
-    subtitle: "AI Engineering — Agent Orchestration",
-    // DRAFT: needs the real problem it solves, what was built and the stack.
-    description:
-      "A multi-step agent runtime that plans a task, calls the services it needs and reports what it could not resolve instead of guessing. Every tool the agent reaches for sits behind a typed contract, so a malformed call fails at the edge rather than halfway through a run. State is persisted per run, which makes a failed step replayable instead of a restart.",
-    tags: ["Python", "FastAPI", "LangGraph", "PostgreSQL", "Docker"],
-    codeUrl: "",
-    liveUrl: "",
-    span: "md:col-span-7",
-    featured: true,
-    draft: true,
-  },
-  {
-    id: "ethos",
-    title: "ETHOS",
-    subtitle: "Backend — Functional Medicine Platform",
-    // DRAFT: needs what it does, the stack, and whether it is personal work
-    // or the 2021-22 Los Angeles booking platform.
-    description:
-      "Booking and patient-record infrastructure for a functional-medicine practice, where a dropped appointment and a dropped payment are the same incident. The API keeps scheduling, billing and clinical records reconciled behind one set of contracts, so the three never disagree about the same visit.",
-    tags: ["Python", "FastAPI", "PostgreSQL", "Docker"],
-    codeUrl: "",
-    liveUrl: "",
-    span: "md:col-span-5",
-    draft: true,
-  },
-  {
-    id: "vega",
-    title: "VEGA",
-    subtitle: "Data — Ingestion Pipeline",
-    // DRAFT: placeholder name. Needs the real name, what it ingests and where
-    // the output goes.
-    description:
-      "An ingestion pipeline that pulls from sources that disagree about their own schema and lands them in one normalised model. Each stage validates before it writes, so bad input is quarantined with the reason attached instead of silently reshaping the table downstream.",
-    tags: ["Python", "PostgreSQL", "Docker"],
-    codeUrl: "",
-    liveUrl: "",
-    span: "md:col-span-4",
-    draft: true,
-  },
-  {
-    id: "apsis",
-    title: "APSIS",
-    subtitle: "AI Productivity Assistant",
-    description:
-      "An assistant I'm building for my own workflow, one module at a time. Modular React + TypeScript frontend on a Vite build, FastAPI backend, with an LLM agent planned behind each module — the first reads incoming job proposals and drafts the replies.",
-    tags: ["React", "TypeScript", "Vite", "FastAPI", "LLM Agents"],
-    // TODO: public repo or live URL, if any.
-    codeUrl: "",
-    liveUrl: "",
-    span: "md:col-span-4",
-  },
-  {
-    id: "project-05",
-    title: "PROJECT 05",
-    subtitle: "Full Stack — Internal Tooling",
-    // DRAFT: placeholder slot. Needs a real project, or remove it.
-    description:
-      "A small internal tool that replaced a spreadsheet three people were editing at once. React and TypeScript on the front, a FastAPI service and a relational model behind it, containerised so it runs the same on any machine that needs it.",
-    tags: ["React", "TypeScript", "FastAPI", "PostgreSQL", "Docker"],
-    codeUrl: "",
-    liveUrl: "",
-    span: "md:col-span-4",
-    draft: true,
-  },
-];
-
-// Static class strings: Tailwind only keeps classes it can find verbatim.
-const SPAN_CLASS = {
-  4: "md:col-span-4",
-  5: "md:col-span-5",
-  6: "md:col-span-6",
-  7: "md:col-span-7",
-  12: "md:col-span-12",
-} as const;
-
-type Span = keyof typeof SPAN_CLASS;
-
-// Lay n cards out on the 12-column grid: a 7 + 5 hero row, then rows of
-// three, with a short trailing row widened so it never leaves a gap.
-export const layoutSpans = (n: number): Span[] => {
-  if (n <= 0) return [];
-  if (n === 1) return [12];
-  if (n === 2) return [7, 5];
-  if (n === 3) return [4, 4, 4];
-  if (n === 4) return [7, 5, 6, 6];
-  const spans: Span[] = [7, 5];
-  let rest = n - 2;
-  while (rest >= 3) {
-    spans.push(4, 4, 4);
-    rest -= 3;
-  }
-  if (rest === 1) spans.push(12);
-  if (rest === 2) spans.push(6, 6);
-  return spans;
-};
-
-// What the site renders. Production drops drafts and re-lays out the rest so
-// no row is left half empty.
-export const getProjects = (): Project[] => {
-  const isProduction = import.meta.env.PROD;
-  const visible = isProduction ? projects.filter((p) => !p.draft) : projects;
-  if (visible.length === projects.length) return visible;
-  const spans = layoutSpans(visible.length);
-  return visible.map((p, i) => {
-    const span = spans[i];
-    return span ? { ...p, span: SPAN_CLASS[span] } : p;
-  });
-};
-
 // Scene 2: one card at a time, mind -> nerves -> body.
 export const capabilityCards: CapabilityCard[] = [
   {
@@ -263,7 +130,7 @@ export const capabilityCards: CapabilityCard[] = [
 
 // ============================================================
 // PROJECT BACKLOG (not rendered). Real names awaiting a description before
-// they move into `projects`. `note` records only what was actually said.
+// they move into projectsData.ts. `note` records only what was actually said.
 // ============================================================
 export const projectBacklog: BacklogEntry[] = [
   {

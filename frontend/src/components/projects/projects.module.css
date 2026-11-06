@@ -1,0 +1,506 @@
+/* Scene 3 projects. Values from design/source/{desktop,mobile}/light/scene-3-*.dc.html
+   and design/CARD-SPEC.md. Desktop cards are laid out in the mock's own units
+   and scaled as a whole with `zoom` (frame + type together). */
+
+/* ---- The black framed card ---- */
+
+.frame {
+  position: relative;
+  filter: drop-shadow(0 34px 40px rgba(18, 24, 34, 0.38));
+}
+
+/* Desktop silhouette (featured and row cards). */
+.lg {
+  --outline: polygon(
+    34px 0,
+    calc(100% - 18px) 0,
+    100% 18px,
+    100% 210px,
+    calc(100% - 8px) 218px,
+    calc(100% - 8px) calc(100% - 26px),
+    calc(100% - 34px) 100%,
+    18px 100%,
+    0 calc(100% - 18px),
+    0 calc(100% - 230px),
+    8px calc(100% - 238px),
+    8px 26px
+  );
+}
+
+/* Phone silhouette (CARD-SPEC reference). */
+.sm {
+  --outline: polygon(
+    30px 0,
+    calc(100% - 16px) 0,
+    100% 16px,
+    100% 150px,
+    calc(100% - 8px) 158px,
+    calc(100% - 8px) calc(100% - 24px),
+    calc(100% - 30px) 100%,
+    16px 100%,
+    0 calc(100% - 16px),
+    0 calc(100% - 160px),
+    8px calc(100% - 168px),
+    8px 22px
+  );
+}
+
+.outline,
+.bezel,
+.gap,
+.panel {
+  position: absolute;
+  pointer-events: none;
+}
+
+.outline {
+  inset: 0;
+  background: #5b646e;
+  clip-path: var(--outline);
+}
+
+.bezel {
+  inset: 1px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 10%),
+    linear-gradient(160deg, #3a4148 0%, #252a30 45%, #1b1f24 100%);
+  clip-path: var(--outline);
+}
+
+.gap {
+  inset: 12px 20px;
+  background: #050608;
+  clip-path: polygon(
+    26px 0,
+    calc(100% - 12px) 0,
+    100% 12px,
+    100% calc(100% - 26px),
+    calc(100% - 26px) 100%,
+    12px 100%,
+    0 calc(100% - 12px),
+    0 26px
+  );
+}
+
+.panel {
+  inset: 14px 22px;
+  background: radial-gradient(ellipse 120% 70% at 20% 0%, #262b31 0%, #12151a 55%, #0b0d10 100%);
+  clip-path: polygon(
+    24px 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% calc(100% - 24px),
+    calc(100% - 24px) 100%,
+    10px 100%,
+    0 calc(100% - 10px),
+    0 24px
+  );
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  margin: 14px 22px;
+  color: #e9edf1;
+}
+
+/* Bottom tab: MSSE:// | label */
+.tab {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  z-index: 4;
+  width: min(280px, 74%);
+  height: 44px;
+  transform: translateX(-50%);
+  color: #e9edf1;
+  text-decoration: none;
+}
+.sm .tab {
+  width: min(230px, 74%);
+  height: 38px;
+}
+.tabOutline,
+.tabBezel {
+  position: absolute;
+  clip-path: polygon(0 100%, 20px 0, calc(100% - 20px) 0, 100% 100%);
+}
+.tabOutline {
+  inset: 0;
+  background: #5b646e;
+}
+.tabBezel {
+  inset: 1px 1px 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 10%),
+    linear-gradient(160deg, #3a4148 0%, #252a30 45%, #1b1f24 100%);
+}
+.tabRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+  padding-top: 2px;
+}
+.tabMark {
+  font-family: "Michroma", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+}
+.tabDivider {
+  width: 1.5px;
+  height: 18px;
+  background: rgba(233, 237, 241, 0.6);
+}
+.tabLink {
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: inherit;
+  text-decoration: none;
+}
+.tabLink:hover,
+.tabLink:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.sm .tabRow {
+  gap: 10px;
+}
+.sm .tabMark {
+  font-size: 9px;
+}
+.sm .tabDivider {
+  height: 15px;
+}
+.sm .tabLink {
+  font-size: 12px;
+}
+
+/* ---- Card type ---- */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.72);
+  border-radius: 7px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  line-height: 1.45;
+  text-transform: uppercase;
+  color: #fff;
+}
+.name {
+  min-width: 0;
+  margin: 0;
+  font-family: "Michroma", sans-serif;
+  font-weight: 400;
+  line-height: 1;
+  color: #fff;
+}
+.num {
+  font-family: "Michroma", sans-serif;
+  line-height: 0.9;
+  color: #fff;
+  white-space: nowrap;
+}
+.status {
+  font-weight: 500;
+  color: #aeb6bf;
+}
+.body {
+  margin: 0;
+  color: #b9c1ca;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  font-weight: 500;
+}
+.chip {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #e9edf1;
+}
+
+/* ---- GIF player ---- */
+
+.player {
+  position: relative;
+  flex: none;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  clip-path: polygon(
+    16px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 16px),
+    calc(100% - 16px) 100%,
+    8px 100%,
+    0 calc(100% - 8px),
+    0 16px
+  );
+}
+.video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 14px 12px;
+  background: linear-gradient(180deg, rgba(5, 6, 8, 0) 0%, rgba(5, 6, 8, 0.8) 100%);
+}
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  background: rgba(10, 12, 15, 0.45);
+  color: #fff;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+.toggle:hover {
+  border-color: #fff;
+}
+.toggle:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.track {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+.bar {
+  width: 0;
+  height: 100%;
+  background: #fff;
+}
+.next {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+}
+.compact .controls {
+  gap: 10px;
+  padding: 16px 10px 8px;
+}
+.compact .toggle {
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  font-size: 9px;
+}
+.compact .next {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+.compact {
+  clip-path: polygon(
+    14px 0,
+    calc(100% - 8px) 0,
+    100% 8px,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    8px 100%,
+    0 calc(100% - 8px),
+    0 14px
+  );
+}
+
+/* ---- Folder (row cards) ---- */
+
+.folder {
+  position: relative;
+  flex: none;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.folder:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+.folderBack {
+  position: absolute;
+  inset: 0 7% 14%;
+  overflow: hidden;
+  clip-path: polygon(12px 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 0 100%, 0 12px);
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.folder:hover .folderBack,
+.folder:focus-visible .folderBack {
+  transform: translateY(-6px);
+}
+.folderEdge,
+.folderFlap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  clip-path: polygon(
+    10px 26%,
+    48% 26%,
+    56% 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    10px 100%,
+    0 calc(100% - 10px),
+    0 calc(26% + 10px)
+  );
+}
+.folderEdge {
+  top: 29%;
+  background: rgba(255, 255, 255, 0.22);
+}
+.folderFlap {
+  top: calc(29% + 1px);
+  background: linear-gradient(180deg, rgba(34, 38, 45, 0.62) 0%, rgba(10, 12, 15, 0.9) 100%);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+}
+.folderLabel {
+  position: absolute;
+  left: 59%;
+  right: 6%;
+  top: calc(29% + 10px);
+  line-height: 1.25;
+}
+.folderName {
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+.folderMeta {
+  margin-top: 3px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: #aeb6bf;
+}
+
+/* ---- Entrances ---- */
+
+.back {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(20, 24, 29, 0.25);
+  background: rgba(255, 255, 255, 0.7);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  color: #14181d;
+  cursor: pointer;
+}
+.back:hover {
+  background: #fff;
+}
+
+/* ---- Phone carousel ---- */
+
+.carousel {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-left: 16px;
+  padding: 0 16px 48px;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+.slide {
+  flex: 0 0 min(330px, calc(100vw - 60px));
+  min-width: 0;
+  /* The mock's card height (212 -> 845 at 390 x 844); longer copy scrolls inside. */
+  height: 633px;
+  scroll-snap-align: start;
+}
+.dots {
+  display: flex;
+  gap: 6px;
+}
+.dot {
+  width: 18px;
+  height: 2px;
+  background: rgba(20, 24, 29, 0.3);
+}
+.dotOn {
+  background: #14181d;
+}
+
+/* ---- Long copy: the text column scrolls inside the card ---- */
+
+.scrollText {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.scrollText::-webkit-scrollbar {
+  display: none;
+}
+.scrollText:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+.fade {
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 56px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 56px), transparent 100%);
+}
+
+/* ---- Folder row arrows ---- */
+
+.arrow {
+  position: absolute;
+  top: 267px;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(20, 24, 29, 0.25);
+  background: rgba(255, 255, 255, 0.7);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 22px;
+  line-height: 1;
+  color: #14181d;
+  cursor: pointer;
+}
+.arrow:hover {
+  background: #fff;
+}
+.arrow:focus-visible {
+  outline: 2px solid #14181d;
+  outline-offset: 2px;
+}

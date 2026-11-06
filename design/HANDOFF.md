@@ -148,8 +148,10 @@ properly, from the data model up to the interface."; WORK word top-right.
 - **Mobile:** a **carousel**, one project at a time in the featured format
   (GIF on top, text below), next card peeking from the right, counter
   `Ø3.1 / Ø3.4` + bars + `SWIPE →`; advances when the GIF ends or on swipe.
-- Projects text: Arcturus · Ethos (Backend in progress) · Apsis (In progress)
-  as in mock C. **Polaris: placeholders until María Sol sends the text.**
+- Projects text: **`design/projects-copy.md` replaces every project above** —
+  six projects (Blaze, Alphecca, Polaris, Lynx, Ethos, Marvel Characters);
+  Arcturus and Apsis are out (no review-flow strip). Featured spot cycles all
+  six; the folder row is a 3-up carousel with ‹ › arrows; mobile Ø3.1 / Ø3.6.
 
 ## P4 · Scenes 4–5 (1.5–2 h, parallel) → deploy
 
