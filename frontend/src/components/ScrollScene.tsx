@@ -140,13 +140,13 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         <div className="bg-word bg-word--left bg-word--soft">STACK</div>
       </div>
 
-      {/* Scene 2 title. Desktop: behind the robot, the giant head sits in front of it.
-          Phones: in front, the head comes up under it. */}
+      {/* Scene 2 title, behind the robot: the giant head sits in front of it
+          (phones too, María Sol's review). */}
       <div
         ref={title2Ref}
         data-testid="capabilities-title"
         className={`pointer-events-none absolute ${
-          isMobile ? "left-[18px] top-[26px] z-[5]" : "left-14 top-[52px]"
+          isMobile ? "left-[18px] top-[26px]" : "left-14 top-[52px]"
         }`}
       >
         <div className="section-pill bg-white/90 shadow-none">

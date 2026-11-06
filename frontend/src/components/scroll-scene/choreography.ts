@@ -108,8 +108,9 @@ export const giantHeadFraming = (isMobile: boolean, viewport: Viewport): Framing
 };
 // Phone scene 2, in px (design/source/mobile/light/scene-2-capabilities.dc.html
 // at 390 x 844): the card block (card + Ø2.x counter + 6rem to the bottom),
-// the eye line above the card, crown to eyes, and the highest the crown goes.
-const PHONE_HEAD = { cardBlock: 416, eyesAbove: 115, crownToEyes: 170, topMin: 40, dx: 0.025 };
+// the eye line above the card, crown to eyes, and the highest the crown goes
+// (under the Ø2 pill: the head is in front of the title).
+const PHONE_HEAD = { cardBlock: 416, eyesAbove: 115, crownToEyes: 170, topMin: 64, dx: 0.025 };
 // The head's crown and eye line in camera units (screen offset from the centre
 // per unit of scale, in viewport heights), measured on the phone robot.
 const HEAD_N = { crown: 0.4437, eyes: 0.2858 };
