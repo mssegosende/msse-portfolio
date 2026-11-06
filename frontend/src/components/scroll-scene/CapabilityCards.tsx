@@ -268,31 +268,38 @@ export const CapabilityCards = ({
           )}
         </div>
       )}
-      {isMobile && <StepCounter index={Math.max(0, cur)} />}
+      {isMobile && <StepCounter index={Math.max(0, cur)} theme={theme} />}
     </div>
   );
 };
 
+// The counter sits on scene 2's ground, which follows the page theme: ink on
+// the light ground, light on the dark one (AA 4.5:1 in both).
+const COUNTER = {
+  light: { text: "text-[#14181D]", on: "bg-[#14181D]", off: "bg-[rgba(20,24,29,0.3)]" },
+  dark: { text: "text-[#E9EDF1]", on: "bg-[#E9EDF1]", off: "bg-[rgba(233,237,241,0.35)]" },
+};
+
 /** Phones: Ø2.x / Ø2.3 and one bar per card, under the card. */
-const StepCounter = ({ index }: { index: number }) => (
-  <div
-    aria-hidden="true"
-    data-testid="capability-counter"
-    className="mt-2.5 flex items-center justify-between px-0.5 font-mono text-[10px] tracking-[0.12em] text-[#14181D]"
-  >
-    <span>
-      <Num value={`2.${index + 1}`} className="font-semibold" />{" "}
-      <span className="opacity-[0.55]">
-        / <Num value={`2.${capabilityCards.length}`} />
+const StepCounter = ({ index, theme }: { index: number; theme: Theme }) => {
+  const c = COUNTER[theme];
+  return (
+    <div
+      aria-hidden="true"
+      data-testid="capability-counter"
+      className={`mt-2.5 flex items-center justify-between px-0.5 font-mono text-[10px] tracking-[0.12em] ${c.text}`}
+    >
+      <span>
+        <Num value={`2.${index + 1}`} className="font-semibold" />{" "}
+        <span className="opacity-[0.85]">
+          / <Num value={`2.${capabilityCards.length}`} />
+        </span>
       </span>
-    </span>
-    <span className="flex gap-1.5">
-      {capabilityCards.map((c, i) => (
-        <span
-          key={c.num}
-          className={`h-0.5 w-[18px] ${i === index ? "bg-[#14181D]" : "bg-[rgba(20,24,29,0.3)]"}`}
-        />
-      ))}
-    </span>
-  </div>
-);
+      <span className="flex gap-1.5">
+        {capabilityCards.map((card, i) => (
+          <span key={card.num} className={`h-0.5 w-[18px] ${i === index ? c.on : c.off}`} />
+        ))}
+      </span>
+    </div>
+  );
+};

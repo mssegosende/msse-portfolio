@@ -262,7 +262,13 @@
   align-items: center;
   gap: 12px;
   padding: 22px 14px 12px;
-  background: linear-gradient(180deg, rgba(5, 6, 8, 0) 0%, rgba(5, 6, 8, 0.8) 100%);
+  /* Dark enough under the labels for AA over the light clips (Blaze, Lynx). */
+  background: linear-gradient(
+    180deg,
+    rgba(5, 6, 8, 0) 0%,
+    rgba(5, 6, 8, 0.78) 40%,
+    rgba(5, 6, 8, 0.9) 100%
+  );
 }
 .toggle {
   display: flex;
@@ -300,7 +306,7 @@
   font-family: "JetBrains Mono", monospace;
   font-size: 10px;
   letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.85);
   white-space: nowrap;
 }
 .compact .controls {
@@ -406,8 +412,9 @@
   margin-top: 3px;
   font-family: "JetBrains Mono", monospace;
   font-size: 10px;
-  /* Lighter than the status grey: it sits over the blurred clip (AA 4.5:1). */
-  color: #c9d0d7;
+  /* Lighter than the status grey: it sits over the blurred clip (AA 4.5:1,
+     the lime Lynx clip included). */
+  color: #e3e8ed;
 }
 
 /* ---- Phone carousel ---- */
