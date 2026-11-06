@@ -1,13 +1,15 @@
 """The portfolio's contact service: one endpoint that emails each message to me.
 
-Deployed on Vercel as its own project (Root Directory `backend`): Vercel finds the
-FastAPI instance `app` in `server.py` with no extra config. Locally:
-`uvicorn server:app --reload --port 8000`.
+Deployed on Vercel as the `backend` service of the site's own project (see the
+root vercel.json): `/api/*` is routed here with the path unchanged, so the routes
+keep their `/api` prefix. Locally: `uvicorn server:app --reload --port 8000`.
 
 Environment (see .env.example):
 - RESEND_API_KEY    the Resend API key. Never logged, never returned.
 - CONTACT_TO_EMAIL  where the messages go.
-- CORS_ORIGINS      comma-separated origins allowed to call the API.
+- CORS_ORIGINS      comma-separated origins allowed to call the API. In production
+                    the form is same-origin and needs none; this is for local dev
+                    and for a frontend hosted elsewhere.
 """
 
 import logging
