@@ -2,12 +2,14 @@
 // `media`: the looping clip in the GIF player. Every project uses its real
 // recording (Ethos and Marvel ~22 s, Marvel its search and filters stretch;
 // Polaris 18.5 s, the whole recording; Alphecca 27 s, the whole recording,
-// the full-height crop centred on the page column; Lynx 17.6 s, without the
-// full-width conclusions the 16:10 crop would cut; Blaze 24.7 s, the whole
-// recording as María Sol asked: the landing scaled to its full width so the
-// edge-to-edge BLAZE wordmark keeps every letter, the editor cropped from the
-// left so its sidebar stays whole), as 16:10 1280x800 H.264 seamless loops
-// (0.6 s crossfade, no audio, x264 slow CRF 25) + a poster frame at `startAt`.
+// cropped 1.25x into the page column so its text reads, with the
+// recommendation and every monthly cost bar in frame at `startAt`; Lynx
+// 17.6 s, without the full-width conclusions the 16:10 crop would cut; Blaze
+// 24.7 s, the whole recording as María Sol asked: the landing scaled to its
+// full width so the edge-to-edge BLAZE wordmark keeps every letter, the
+// editor cropped from the left so its sidebar stays whole), as 16:10
+// 1280x800 H.264 seamless loops (0.6 s crossfade, no audio, x264 slow
+// CRF 25) + a poster frame at `startAt`.
 
 export interface ShowcaseProject {
   id: string;
