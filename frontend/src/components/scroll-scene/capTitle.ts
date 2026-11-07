@@ -2,11 +2,14 @@
 // word must stay readable (María Sol's review). The title keeps one line where
 // it ends clear of the head; otherwise it breaks after "WHAT THE CORE", as on
 // phones, and only shrinks if that first line still runs into the head.
+// The head follows scene 2's one scale factor (choreography scene2Scale, A9),
+// so on a narrow window the title shrinks with it, and never hides under it.
+import { scene2StageHeight } from "./choreography";
 
 /** The title's size in the mock, px. */
 export const CAP_TITLE_SIZE = 64;
-/** Smallest the title gets on a desktop window (1024 wide). */
-const MIN_SIZE = 36;
+/** Smallest the title gets on a desktop window (a 768-wide tablet needs ~22). */
+const MIN_SIZE = 20;
 /** Left edge of the title block (left-14). */
 const LEFT = 56;
 /** One-line title's bottom plus the room to the cards, at CAP_TITLE_SIZE (the mock's 180). */
@@ -15,9 +18,9 @@ const ONE_LINE_BOTTOM = 180;
 const GAP = 28;
 /**
  * The head's left edge, from the rig's framing (choreography GIANT): the
- * camera keeps its vertical field of view, so the head's size and its offset
- * from the centre both scale with the window height. Its edge sits at
- * w / 2 - HEAD_LEFT * h, the look-around turn included.
+ * head's size and its offset from the centre both scale with the height of
+ * scene 2's scaled layout (the window's on 16:10 and wider). Its edge sits at
+ * w / 2 - HEAD_LEFT * that height, the look-around turn included.
  */
 const HEAD_LEFT = 0.08;
 
@@ -41,7 +44,8 @@ export interface CapTitleFit {
 export const CAP_LEFT = LEFT;
 
 /** How far right anything in front of the head may reach, px (the head's edge minus the gap). */
-export const capHeadClear = (width: number, height: number) => width / 2 - HEAD_LEFT * height - GAP;
+export const capHeadClear = (width: number, height: number) =>
+  width / 2 - HEAD_LEFT * scene2StageHeight({ width, height }) - GAP;
 
 export const capTitleFit = (
   width: number,

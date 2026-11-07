@@ -197,6 +197,8 @@ export const CapabilityRow = ({ ref, scrollIndex, theme, titleBottom }: Capabili
       {carousel && (
         <div
           data-testid="capability-controls"
+          // Narrower than 16:10 the robot's body rises behind the controls (A9).
+          data-backed={w / h < 1.6 ? "true" : undefined}
           className={s.controls}
           style={{ left: row.left, top: row.top + row.cardH + ROW_CONTROLS - 32 }}
         >

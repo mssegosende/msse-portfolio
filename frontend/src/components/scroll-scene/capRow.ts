@@ -5,6 +5,10 @@
 // most to ROW_SHRINK of that size), they shrink, so wide windows show all
 // three. Cards that don't fit wait off the row's left edge (the row slides
 // left as each new one comes) or, when the visitor goes back, off its right.
+// A9: the cards follow scene 2's one scale factor (choreography scene2Scale)
+// but never get smaller than at 1440 x 900, where their text is the spec's
+// size: on a narrow window fewer fit and the row is a carousel sooner.
+import { scene2Scale } from "./choreography";
 import { CAP_LEFT, capHeadClear } from "./capTitle";
 
 export const CARD_W = 324;
@@ -18,6 +22,8 @@ const ROW_GAP = 16;
 export const ROW_CONTROLS = 46;
 /** Smallest share of the usual size the cards take to fit one more. */
 const ROW_SHRINK = 0.9;
+/** The smallest the cards ever get (readable): 1440 x 900's size, less ROW_SHRINK. */
+const MIN_SCALE = CARD_SCALE * ROW_SHRINK;
 
 export interface RowFit {
   /** The cards' scale (card px to screen px). */
@@ -35,21 +41,32 @@ export interface RowFit {
 }
 
 export const fitRow = (w: number, h: number, titleBottom: number, count: number): RowFit => {
-  const room = Math.max(0, capHeadClear(w, h) - CAP_LEFT);
+  const clear = Math.max(0, capHeadClear(w, h) - CAP_LEFT);
   const avail = h - titleBottom - DOCK_CLEAR;
-  const s0 =
-    CARD_SCALE * Math.min(1.25, Math.max(0.72, Math.min(h / 900, w / 1440, avail / CARD_H)));
+  // Grows with the window past 1440 x 900 (and the room above the dock); below
+  // it, keeps 1440 x 900's size.
+  const grow = Math.min(
+    1.25,
+    Math.max(1, Math.min(scene2Scale({ width: w, height: h }), avail / CARD_H)),
+  );
+  const s0 = CARD_SCALE * grow;
   let fit = 1;
-  let s = Math.min(s0, room / CARD_W);
+  // One card: at most ROW_SHRINK smaller to stay clear of the head; on the
+  // narrowest windows it may reach into the head's edge rather than shrink.
+  let s = Math.max(MIN_SCALE, Math.min(s0, clear / CARD_W));
   for (let n = count; n > 1; n--) {
-    const sn = Math.min(s0, room / (n * CARD_W + (n - 1) * ROW_GAP));
-    if (sn >= ROW_SHRINK * s0) {
+    const sn = Math.min(s0, clear / (n * CARD_W + (n - 1) * ROW_GAP));
+    if (sn >= Math.max(MIN_SCALE, ROW_SHRINK * s0)) {
       fit = n;
       s = sn;
       break;
     }
   }
+  // Short windows: down to MIN_SCALE so the row (and its controls) clears the dock.
+  const tallest = (avail - (fit < count ? ROW_CONTROLS : 0)) / CARD_H;
+  s = Math.max(MIN_SCALE, Math.min(s, tallest));
   const cardH = CARD_H * s;
+  const room = Math.max(clear, CARD_W * s);
   const free = avail - cardH - (fit < count ? ROW_CONTROLS : 0);
   return {
     s,

@@ -2,8 +2,15 @@ import { describe, expect, it } from "vitest";
 import { capHeadClear, capTitleFit } from "./capTitle";
 import { fitRow, rowOffset } from "./capRow";
 
+// A9: the cards never get smaller than at 1440 x 900 (less ROW_SHRINK), so
+// narrower windows show fewer at a time.
 const SIZES: [number, number, number][] = [
-  [1280, 720, 2],
+  [768, 1024, 1],
+  [820, 1180, 1],
+  [900, 1000, 1],
+  [1024, 768, 1],
+  [1024, 1366, 1],
+  [1280, 720, 1],
   [1440, 900, 2],
   [1920, 1080, 2],
   [2560, 1080, 3],
@@ -20,6 +27,8 @@ describe("fitRow", () => {
     ).toBeLessThanOrEqual(capHeadClear(w, h) + 0.01);
     // The row and its controls stay above the dock.
     expect(row.top + row.cardH + (fit < 3 ? 46 : 0)).toBeLessThanOrEqual(h - 100 + 0.01);
+    // Readable: never below 1440 x 900's scale (0.85) less ROW_SHRINK (0.9).
+    expect(row.s).toBeGreaterThanOrEqual(0.85 * 0.9 - 1e-9);
   });
 
   it("slides only as far as the newest card needs", () => {

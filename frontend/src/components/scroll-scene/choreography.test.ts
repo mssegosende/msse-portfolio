@@ -57,6 +57,29 @@ describe("giantHeadFraming", () => {
     expect(parseFloat(from.x)).toBeGreaterThan(parseFloat(f.x));
     expect(parseFloat(from.y)).toBeGreaterThan(parseFloat(f.y));
   });
+
+  // Screen y of a model point n at framing f: (0.5 - scale * n + y / 100) * h.
+  const crownAt = (f: { scale: number; y: string }, h: number) =>
+    (0.5 - f.scale * 0.4437 + parseFloat(f.y) / 100) * h;
+
+  it.each([
+    [390, 844, 170],
+    [430, 932, 170],
+    [700, 1000, 130],
+    [600, 1300, 130],
+  ])("phone layout %ix%i: the crown just under the title, at any height (A9)", (w, h, title) => {
+    const f = giantHeadFraming(true, { width: w, height: h }, title);
+    expect(crownAt(f, h)).toBeCloseTo(title + 6, 0);
+  });
+
+  it("frames the desktop head as in 1440x900, scaled, on a window narrower than 16:10", () => {
+    const ref = giantHeadFraming(false, { width: 1440, height: 900 });
+    const tall = giantHeadFraming(false, { width: 900, height: 1000 });
+    // The head's size on screen (scale x height) is 900/1440 of the reference.
+    expect(tall.scale * 1000).toBeCloseTo(ref.scale * 900 * (900 / 1440), 5);
+    // Its crown sits the same share of that size above the top.
+    expect(crownAt(tall, 1000)).toBeCloseTo(crownAt(ref, 900) * (900 / 1440), 5);
+  });
 });
 
 describe("snapStops", () => {

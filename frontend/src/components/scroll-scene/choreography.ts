@@ -89,31 +89,84 @@ export const SCENE1 = { video: 0.1, check: 0.25, headline: 0.4, scroll: 0.55, en
  * Phones (design/source/mobile/light/scene-2-capabilities.dc.html): a big head
  * under the title, framed by the camera like desktop (applyView at css scale 1).
  */
-export const giantHeadFraming = (isMobile: boolean, viewport: Viewport): Framing => {
+export const giantHeadFraming = (
+  isMobile: boolean,
+  viewport: Viewport,
+  /** Phones: where the title ends, px from the top (the crown goes just under it). */
+  titleBottom = PHONE_HEAD.crownY - PHONE_HEAD.crownGap,
+): Framing => {
   const vw = vwOf(viewport.width);
-  if (!isMobile) return { scale: GIANT.scale, x: vw(GIANT.dx * viewport.height), y: `${GIANT.y}%` };
-  // Phones: the face above the card, as in the mock (María Sol's review: it
-  // was too close and the card hid the face on a real phone). The card is
-  // fixed in px at the bottom, so the head is placed from the card's top: the
-  // eye line PHONE_HEAD.eyesAbove px over it, the crown PHONE_HEAD.crownToEyes
-  // px above the eyes, smaller when a short screen has less room.
+  if (!isMobile) {
+    // Scene 2 desktop is the 1440 x 900 layout scaled by one factor (A9): on a
+    // window narrower than 16:10 the head is framed as in a 16:10 frame as wide
+    // as the window, from the top, so it shrinks with the title and the cards
+    // instead of keeping the window's height.
+    const h = viewport.height;
+    const stage = scene2StageHeight(viewport);
+    return {
+      scale: (GIANT.scale * stage) / h,
+      x: vw(GIANT.dx * stage),
+      y: `${100 * ((stage / h) * (0.5 + GIANT.y / 100) - 0.5)}%`,
+    };
+  }
+  // Phones: a big head between the title and the card, as in the mock (María
+  // Sol's review: on a real phone the card hid the face; A9: on a tall window
+  // it sat small and low with an empty gap under the title). The card is fixed
+  // in px at the bottom, so the head is placed from the card's top: the eye
+  // line PHONE_HEAD.eyesAbove px over it and the crown just under the title,
+  // whatever the height, no wider than the screen.
   const h = viewport.height;
   const cardTop = h - PHONE_HEAD.cardBlock;
   const eyes = cardTop - PHONE_HEAD.eyesAbove;
-  const crownToEyes = Math.max(60, Math.min(PHONE_HEAD.crownToEyes, eyes - PHONE_HEAD.topMin));
+  const crownY = Math.max(PHONE_HEAD.topMin, titleBottom + PHONE_HEAD.crownGap);
+  const widest = (viewport.width * PHONE_HEAD.maxWidth) / HEAD_N.widthToCrownEyes;
+  const crownToEyes = Math.max(60, Math.min(eyes - crownY, widest));
   // Screen y / height = 0.5 - scale * n + y / 100, n measured on the model.
   const scale = crownToEyes / ((HEAD_N.crown - HEAD_N.eyes) * h);
-  const y = 100 * (eyes / h - 0.5 + scale * HEAD_N.eyes);
+  // Capped by the width: the crown stays under the title, the neck fills below.
+  const eyeY = Math.min(eyes, crownY + crownToEyes);
+  const y = 100 * (eyeY / h - 0.5 + scale * HEAD_N.eyes);
   return { scale, x: vw(PHONE_HEAD.dx * viewport.width), y: `${y}%` };
 };
 // Phone scene 2, in px (design/source/mobile/light/scene-2-capabilities.dc.html
 // at 390 x 844): the card block (card + Ø2.x counter + 6rem to the bottom),
-// the eye line above the card, crown to eyes, and the highest the crown goes
-// (under the Ø2 pill: the head is in front of the title).
-const PHONE_HEAD = { cardBlock: 416, eyesAbove: 115, crownToEyes: 170, topMin: 64, dx: 0.025 };
+// the eye line above the card, the crown's place under the title (crownY at
+// 390 x 844, crownGap below the title's last line), the highest the crown
+// goes (under the Ø2 pill: the head is in front of the title) and the widest
+// the head gets, as a share of the screen width (the mock's head nearly
+// spans it).
+const PHONE_HEAD = {
+  cardBlock: 416,
+  eyesAbove: 115,
+  crownY: 143,
+  crownGap: 6,
+  topMin: 64,
+  maxWidth: 0.96,
+  dx: 0.025,
+};
 // The head's crown and eye line in camera units (screen offset from the centre
-// per unit of scale, in viewport heights), measured on the phone robot.
-const HEAD_N = { crown: 0.4437, eyes: 0.2858 };
+// per unit of scale, in viewport heights), measured on the phone robot, and
+// its width over its crown-to-eyes height.
+const HEAD_N = { crown: 0.4437, eyes: 0.2858, widthToCrownEyes: 1.46 };
+
+/** The reference layout scene 2 is drawn at on desktop. */
+export const SCENE2_REF = { width: 1440, height: 900 };
+
+/**
+ * Scene 2 desktop's one scale factor (A9): the 1440 x 900 layout fitted to the
+ * window, min of the width and height ratios. The head, the title and the
+ * cards all follow it.
+ */
+export const scene2Scale = ({ width, height }: Viewport) =>
+  Math.min(width / SCENE2_REF.width, height / SCENE2_REF.height);
+
+/**
+ * The height of that scaled layout, px: the window's on 16:10 and wider (where
+ * the camera's vertical field of view already scales the head), less on a
+ * narrower window, whose extra height goes below it.
+ */
+export const scene2StageHeight = (viewport: Viewport) =>
+  Math.min(viewport.height, scene2Scale(viewport) * SCENE2_REF.height);
 
 /**
  * Phones: the robot starts further back and to the side and approaches the

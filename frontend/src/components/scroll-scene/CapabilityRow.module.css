@@ -90,6 +90,14 @@
   cursor: pointer;
   transition: opacity 0.3s ease;
 }
+/* Narrower than 16:10 the robot's dark body rises behind the controls: they
+   take the scene's pill (the CAPABILITIES pill's white and ink) so they stay
+   visible on it. */
+.controls[data-backed="true"] .control {
+  border-color: rgba(20, 24, 29, 0.35);
+  background: rgba(255, 255, 255, 0.9);
+  color: #14181d;
+}
 .control:disabled {
   opacity: 0.35;
   cursor: default;

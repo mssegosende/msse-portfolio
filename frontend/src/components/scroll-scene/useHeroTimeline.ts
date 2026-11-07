@@ -172,7 +172,25 @@ export const useHeroTimeline = ({
     };
     const vw = vwOf(viewport.width);
     const { startScale, startY, heroDx } = heroFraming(isMobile, reduce, viewport);
-    const giant = giantHeadFraming(isMobile, viewport);
+    // Scene 2's head framing, from the window as it is now (A9): desktop scales
+    // it with the title and the cards; phones put its crown just under the
+    // title (its layout box: the title's rise is a transform), which takes a
+    // line more once its font has loaded.
+    const frameGiant = () => {
+      const title2 = title2Ref.current;
+      return giantHeadFraming(
+        isMobile,
+        {
+          width: window.innerWidth || viewport.width,
+          height:
+            (isMobile ? sectionRef.current?.clientHeight : 0) ||
+            window.innerHeight ||
+            viewport.height,
+        },
+        title2?.offsetHeight ? title2.offsetTop + title2.offsetHeight : undefined,
+      );
+    };
+    const giant = frameGiant();
     const cardsEl = cardsRef.current;
 
     // Touch devices on the desktop layout (tablets) have no pointer, so the scroll
@@ -215,7 +233,37 @@ export const useHeroTimeline = ({
 
     // Desktop framing lives in these proxies and the cameras apply it (applyView).
     const heroView: ViewTransform = { scale: startScale, x: vw(heroDx), y: startY };
+    // Scene 2's framing follows the window and the title (frameGiant), so the
+    // timeline tweens only the approach: desktop a zoom factor on top of the
+    // framing, phones the way in from further back and to the side (0..1).
+    let giantNow = giant;
+    const zoom2 = { z: 1 };
+    const approach2 = { a: 1 };
     const scene2View: ViewTransform = { scale: giant.scale, x: giant.x, y: giant.y };
+    const reframe2 = () => {
+      giantNow = frameGiant();
+    };
+    window.addEventListener("resize", reframe2);
+    const title2Size = new ResizeObserver(reframe2);
+    if (title2Ref.current) title2Size.observe(title2Ref.current);
+    const updateScene2View = () => {
+      if (!isMobile) {
+        scene2View.scale = giantNow.scale * zoom2.z;
+        scene2View.x = giantNow.x;
+        scene2View.y = giantNow.y;
+        return;
+      }
+      const from = phoneApproachFrom(giantNow, {
+        width: window.innerWidth || viewport.width,
+        height: sectionRef.current?.clientHeight || viewport.height,
+      });
+      const a = approach2.a;
+      const mix = (p: number | string, q: number | string) =>
+        parseFloat(String(p)) + (parseFloat(String(q)) - parseFloat(String(p))) * a;
+      scene2View.scale = mix(from.scale, giantNow.scale);
+      scene2View.x = `${mix(from.x, giantNow.x)}%`;
+      scene2View.y = `${mix(from.y, giantNow.y)}%`;
+    };
 
     const ctx = gsap.context(() => {
       if (isMobile) {
@@ -405,6 +453,7 @@ export const useHeroTimeline = ({
         }
         applyBotRig();
         applyHead1();
+        updateScene2View();
         if (isMobile) {
           applyView(app1Ref.current, heroView, 1);
           applyView(app2Ref.current, scene2View, 1);
@@ -487,14 +536,11 @@ export const useHeroTimeline = ({
       tl.to(layer2Ref.current, { opacity: 1, duration: XFADE_DURATION }, XFADE_AT);
       if (isMobile && !reduce) {
         // Phones: the robot approaches from further back and to the side.
-        const from = phoneApproachFrom(giant, viewport);
         tl.fromTo(
-          scene2View,
-          { scale: from.scale, x: from.x, y: from.y },
+          approach2,
+          { a: 0 },
           {
-            scale: giant.scale,
-            x: giant.x,
-            y: giant.y,
+            a: 1,
             duration: (SCENE2.cards[0] ?? 1) - XFADE_AT,
             ease: "power2.out",
             immediateRender: false,
@@ -504,10 +550,10 @@ export const useHeroTimeline = ({
       }
       if (!isMobile && !reduce) {
         tl.fromTo(
-          scene2View,
-          { scale: giant.scale * 0.88 },
+          zoom2,
+          { z: 0.88 },
           {
-            scale: giant.scale,
+            z: 1,
             duration: XFADE_DURATION + 0.1,
             ease: "power2.out",
             immediateRender: false,
@@ -628,6 +674,8 @@ export const useHeroTimeline = ({
       head1Ref.current = null;
       clearTimeout(refresh);
       removeMouse?.();
+      window.removeEventListener("resize", reframe2);
+      title2Size.disconnect();
       heroVisibility.disconnect();
       if (lenis) lenis.off("scroll", onScroll);
       if (applyGazeRef.current) gsap.ticker.remove(applyGazeRef.current);

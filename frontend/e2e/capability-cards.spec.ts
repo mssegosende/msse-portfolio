@@ -50,9 +50,13 @@ const settled = (page: Page) =>
       ),
   );
 
-// How many cards fit side by side before the head.
+// How many cards fit side by side before the head. A9: the cards never get
+// smaller than at 1440x900 (less 10 %), so narrower windows show fewer.
 const DESKTOP_SIZES: { width: number; height: number; fit: number }[] = [
-  { width: 1280, height: 720, fit: 2 },
+  { width: 768, height: 1024, fit: 1 },
+  { width: 900, height: 1000, fit: 1 },
+  { width: 1024, height: 768, fit: 1 },
+  { width: 1280, height: 720, fit: 1 },
   { width: 1440, height: 790, fit: 2 }, // Safari with its toolbars on a 1440x900 screen
   { width: 1440, height: 900, fit: 2 },
   { width: 1920, height: 1080, fit: 2 },
@@ -96,8 +100,12 @@ for (const { fit, ...viewport } of DESKTOP_SIZES) {
 
       const { inRow, title, viewport: vp } = await boxes(page);
       const dock = await page.getByTestId("navigation-dock").boundingBox();
-      // The head's left edge, less its gap (capTitle.ts: capHeadClear).
-      const headClear = vp.width / 2 - 0.08 * vp.height - 28;
+      // The head's left edge, less its gap (capTitle.ts: capHeadClear): the
+      // head scales with the 1440x900 layout fitted to the window (A9).
+      const stage = Math.min(vp.height, (vp.width * 900) / 1440);
+      const headClear = vp.width / 2 - 0.08 * stage - 28;
+      // No word of the title under the head.
+      expect(title!.right).toBeLessThanOrEqual(headClear + 0.5);
       inRow.forEach((card, i) => {
         expect(card!.top).toBeGreaterThanOrEqual(0);
         expect(card!.left).toBeGreaterThanOrEqual(0);
@@ -114,14 +122,18 @@ for (const { fit, ...viewport } of DESKTOP_SIZES) {
       }
 
       // A carousel: ‹ brings the earliest card back, the arrow keys move it too.
+      // Where card `last` is the row's right-most: the ones before the row's
+      // first are off its left edge, the ones after it off its right.
+      const placesAt = (last: number) =>
+        [0, 1, 2].map((i) => (i > last ? "right" : i <= last - fit ? "left" : "in"));
       await expect(controls).toBeVisible();
       const back = page.getByRole("button", { name: "Previous capability" });
       const next = page.getByRole("button", { name: "Next capability" });
       await expect(next).toBeDisabled();
       await back.click();
-      await expect.poll(async () => (await boxes(page)).places).toEqual(["in", "in", "right"]);
+      await expect.poll(async () => (await boxes(page)).places).toEqual(placesAt(1));
       await next.press("ArrowRight");
-      await expect.poll(async () => (await boxes(page)).places).toEqual(["left", "in", "in"]);
+      await expect.poll(async () => (await boxes(page)).places).toEqual(placesAt(2));
 
       // Dragging the row to the right brings the earliest card back as well.
       const card = (await boxes(page)).inRow[0]!;
@@ -130,7 +142,7 @@ for (const { fit, ...viewport } of DESKTOP_SIZES) {
       await page.mouse.down();
       await page.mouse.move(card.left + 140, y, { steps: 8 });
       await page.mouse.up();
-      await expect.poll(async () => (await boxes(page)).places).toEqual(["in", "in", "right"]);
+      await expect.poll(async () => (await boxes(page)).places).toEqual(placesAt(1));
     });
   });
 }

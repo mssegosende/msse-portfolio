@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { CAP_TITLE_SIZE, CAP_TITLE_WIDTHS, capTitleFit } from "./capTitle";
 
-// The head's left edge as capTitleFit places it, minus the title's left and gap.
-const room = (w: number, h: number) => w / 2 - 0.08 * h - 28 - 56;
+// The head's left edge as capTitleFit places it, minus the title's left and
+// gap: the head scales with the 1440 x 900 layout fitted to the window (A9).
+const room = (w: number, h: number) => w / 2 - 0.08 * Math.min(h, (w * 900) / 1440) - 28 - 56;
 
 describe("capTitleFit", () => {
   it.each([
+    [768, 1024],
+    [820, 1180],
+    [900, 1000],
+    [1024, 768],
+    [1024, 1366],
     [1280, 720],
     [1440, 900],
     [1920, 1080],
