@@ -1,14 +1,13 @@
 // Scene 3 projects. Copy: design/projects-copy.md (used exactly as written).
-// `media`: the looping clip in the GIF player. Blaze, Polaris, Lynx, Ethos and
-// Marvel Characters use real recordings (Ethos and Marvel ~22 s, Marvel its
-// search and filters stretch; Polaris 18.5 s, the whole recording; Lynx
-// 17.6 s, without the full-width conclusions the 16:10 crop would cut; Blaze
-// 24.7 s, the whole recording as María Sol asked: the landing scaled to its
-// full width so the edge-to-edge BLAZE wordmark keeps every letter, the
-// editor cropped from the left so its sidebar stays whole), as 16:10 H.264
-// seamless loops (0.6 s crossfade, no audio) + a poster frame at `startAt`;
-// Alphecca is still an abstract placeholder (the same H.264 / poster format):
-// swap it for a screen recording cut the same way.
+// `media`: the looping clip in the GIF player. Every project uses its real
+// recording (Ethos and Marvel ~22 s, Marvel its search and filters stretch;
+// Polaris 18.5 s, the whole recording; Alphecca 27 s, the whole recording,
+// the full-height crop centred on the page column; Lynx 17.6 s, without the
+// full-width conclusions the 16:10 crop would cut; Blaze 24.7 s, the whole
+// recording as María Sol asked: the landing scaled to its full width so the
+// edge-to-edge BLAZE wordmark keeps every letter, the editor cropped from the
+// left so its sidebar stays whole), as 16:10 1280x800 H.264 seamless loops
+// (0.6 s crossfade, no audio, x264 slow CRF 25) + a poster frame at `startAt`.
 
 export interface ShowcaseProject {
   id: string;
@@ -31,8 +30,8 @@ export interface ShowcaseProject {
   /**
    * Seconds into the clip where it starts (the poster is that frame), so
    * clips playing side by side are never in sync: every project its own
-   * offset (Marvel Characters 0, Lynx 5, Polaris 7, Ethos 10, Blaze 14, the
-   * Alphecca placeholder 30; a new one takes a free value). Wrapped into the
+   * offset (Marvel Characters 0, Lynx 5, Polaris 7, Alphecca 8, Ethos 10,
+   * Blaze 14; a new one takes a free value). Wrapped into the
    * clip's length; keep the poster at the same frame.
    */
   startAt?: number;
@@ -81,8 +80,8 @@ export const showcaseProjects: ShowcaseProject[] = [
     liveUrl: "",
     media: "/projects/alphecca.mp4",
     poster: "/projects/alphecca.jpg",
-    startAt: 30,
-    seconds: 8,
+    startAt: 8,
+    seconds: 27,
     art: art(120, "70% 28%", "22% 80%"),
   },
   {
