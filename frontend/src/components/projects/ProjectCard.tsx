@@ -30,6 +30,7 @@ const TYPE: Record<
     chipsTop: number;
     chipGap: number;
     chip: CSSProperties;
+    /** Extra chip class (the phone card's stronger border). */
     chipBorder?: string;
   }
 > = {
@@ -74,7 +75,7 @@ const TYPE: Record<
     chipsTop: 12,
     chipGap: 6,
     chip: { fontSize: 11.5, padding: "5px 10px" },
-    chipBorder: "rgba(255,255,255,0.32)",
+    chipBorder: s.chipPhone,
   },
 };
 
@@ -123,11 +124,7 @@ export const CardText = ({
         aria-label="Stack"
       >
         {project.tags.map((c) => (
-          <li
-            key={c}
-            className={s.chip}
-            style={{ ...t.chip, ...(t.chipBorder ? { borderColor: t.chipBorder } : {}) }}
-          >
+          <li key={c} className={`${s.chip} ${t.chipBorder ?? ""}`} style={t.chip}>
             {c}
           </li>
         ))}

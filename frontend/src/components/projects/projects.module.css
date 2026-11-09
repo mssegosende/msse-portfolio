@@ -234,6 +234,49 @@
   border: 1px solid rgba(255, 255, 255, 0.28);
   color: #e9edf1;
 }
+.chipPhone {
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+/* Dark theme: same graphite frame and bottom tab, satin silver panel with
+   dark text (design/CARD-SPEC.md; design/source/desktop/dark/scene-3-*). */
+:global(:root[data-theme="dark"]) .gap {
+  background: #2a3037;
+}
+:global(:root[data-theme="dark"]) .panel {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0 3px,
+      rgba(255, 255, 255, 0.22) 3px 4px
+    ),
+    radial-gradient(ellipse 120% 80% at 18% 0%, #fbfcfd 0%, #e6eaed 42%, #c9d0d6 100%);
+}
+:global(:root[data-theme="dark"]) .content {
+  color: #14181d;
+}
+:global(:root[data-theme="dark"]) .tag {
+  border-color: rgba(11, 13, 16, 0.7);
+  color: #0b0d10;
+}
+:global(:root[data-theme="dark"]) .name,
+:global(:root[data-theme="dark"]) .num {
+  color: #0b0d10;
+}
+:global(:root[data-theme="dark"]) .status {
+  color: #4a525c;
+}
+:global(:root[data-theme="dark"]) .body {
+  color: #3a414a;
+}
+:global(:root[data-theme="dark"]) .chip {
+  border-color: rgba(11, 13, 16, 0.28);
+  color: #14181d;
+}
+:global(:root[data-theme="dark"]) .scrollText:focus-visible,
+:global(:root[data-theme="dark"]) .folder:focus-visible {
+  outline-color: #0b0d10;
+}
 
 /* ---- GIF player ---- */
 
