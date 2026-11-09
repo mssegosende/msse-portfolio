@@ -10,7 +10,6 @@ module.exports = {
         gothic: ['"Science Gothic"', "Michroma", "sans-serif"],
         mono: ['"JetBrains Mono"', "monospace"],
         inter: ["Inter", "sans-serif"],
-        kodemono: ['"Kode Mono"', "monospace"],
         display: ["Rajdhani", "sans-serif"],
       },
       // Two channel tokens; <alpha-value> lets `text-ink/65` use the same CSS
