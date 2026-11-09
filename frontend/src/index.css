@@ -511,17 +511,18 @@ textarea:-webkit-autofill {
   animation-direction: reverse;
 }
 
-/* Phones: the robot fades into the ground below the shoulders (and the
-   runtime's corner badge with it). The robot keeps its px size on any phone
-   height (choreography.ts), so the fade is in px too: the mock's 44.8-62 % of
-   844, ending above the headline on short screens. */
+/* Phones: the robot fades into the ground just above the Ø1 counter (and the
+   runtime's corner badge with it), 200px from the bottom on any phone height,
+   so taller phones get more robot, not a grey band. Opaque down to 554px at
+   844 (María Sol, 9 Nov): the bigger body covers both MSSE rows (to 552px),
+   so they sit behind it. */
 .hero-robot--phone {
   --fade: linear-gradient(
     180deg,
     #000 0,
-    #000 min(378px, calc(100% - 375px)),
-    rgba(0, 0, 0, 0.55) min(446px, calc(100% - 298px)),
-    rgba(0, 0, 0, 0) min(523px, calc(100% - 230px))
+    #000 calc(100% - 290px),
+    rgba(0, 0, 0, 0.55) calc(100% - 240px),
+    rgba(0, 0, 0, 0) calc(100% - 200px)
   );
   -webkit-mask-image: var(--fade);
   mask-image: var(--fade);
