@@ -243,6 +243,20 @@ textarea.input {
   cursor: wait;
   opacity: 0.6;
 }
+/* Inline field error: the notices' grey, under its input. */
+.fieldError {
+  color: #aeb6bf;
+  white-space: normal;
+}
+.input[aria-invalid="true"] {
+  border-color: rgba(233, 237, 241, 0.6);
+}
+:global(:root[data-theme="dark"]) .fieldError {
+  color: #3a414a;
+}
+:global(:root[data-theme="dark"]) .input[aria-invalid="true"] {
+  border-color: rgba(11, 13, 16, 0.6);
+}
 .notices {
   display: flex;
   flex-direction: column;

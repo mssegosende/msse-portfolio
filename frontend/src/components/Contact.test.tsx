@@ -23,13 +23,52 @@ const fillForm = async () => {
 };
 
 describe("Contact", () => {
-  it("validates before sending", async () => {
+  it("sends nothing with the required fields empty: an error under each, focus on the first", async () => {
+    const user = userEvent.setup();
+    render(<Contact />);
+    await user.click(screen.getByTestId("contact-submit-button"));
+
+    expect(screen.getByTestId("contact-name-error")).toHaveTextContent("name is required");
+    expect(screen.getByTestId("contact-email-error")).toHaveTextContent("email is required");
+    expect(screen.getByTestId("contact-message-error")).toHaveTextContent("message is required");
+    expect(screen.queryByTestId("contact-company-error")).not.toBeInTheDocument();
+    expect(screen.getByTestId("contact-name-input")).toHaveFocus();
+    expect(screen.getByTestId("contact-name-input")).toHaveAttribute("aria-invalid", "true");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("treats whitespace as empty and checks the minimum lengths", async () => {
     const user = userEvent.setup();
     render(<Contact />);
     await user.type(screen.getByTestId("contact-name-input"), "A");
+    await user.type(screen.getByTestId("contact-email-input"), "   ");
+    await user.type(screen.getByTestId("contact-message-input"), "too short");
     await user.click(screen.getByTestId("contact-submit-button"));
-    expect(screen.getByTestId("contact-error")).toHaveTextContent("name must be at least 2");
+
+    expect(screen.getByTestId("contact-name-error")).toHaveTextContent("at least 2 characters");
+    expect(screen.getByTestId("contact-email-error")).toHaveTextContent("email is required");
+    expect(screen.getByTestId("contact-message-error")).toHaveTextContent("at least 10 characters");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an invalid email, focuses it, and clears the error once fixed", async () => {
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+    const user = userEvent.setup();
+    render(<Contact />);
+    await user.type(screen.getByTestId("contact-name-input"), "Ada Lovelace");
+    await user.type(screen.getByTestId("contact-email-input"), "ada@example");
+    await user.type(screen.getByTestId("contact-message-input"), "Let's build an engine.");
+    await user.click(screen.getByTestId("contact-submit-button"));
+
+    expect(screen.getByTestId("contact-email-error")).toHaveTextContent("invalid email format");
+    expect(screen.getByTestId("contact-email-input")).toHaveFocus();
+    expect(screen.queryByTestId("contact-name-error")).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await user.type(screen.getByTestId("contact-email-input"), ".com");
+    expect(screen.queryByTestId("contact-email-error")).not.toBeInTheDocument();
+    await user.click(screen.getByTestId("contact-submit-button"));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("posts the form, honeypot included, and clears it on success", async () => {
@@ -76,6 +115,7 @@ describe("Contact", () => {
     fetchMock.mockReturnValue(new Promise(() => {}));
     const { submit } = await fillForm();
     await submit();
+    expect(screen.getByTestId("contact-submit-button")).toBeDisabled();
     await submit();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
   });

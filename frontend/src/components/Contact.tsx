@@ -15,11 +15,28 @@ const BACKEND_URL =
   import.meta.env.VITE_BACKEND_URL || (import.meta.env.DEV ? "http://localhost:8000" : "");
 const API_URL = `${BACKEND_URL}/api/contact`;
 
-const validate = ({ name, email, message }: ContactForm): string | null => {
-  if (name.trim().length < 2) return "ERR: name must be at least 2 characters";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "ERR: invalid email format";
-  if (message.trim().length < 10) return "ERR: message must be at least 10 characters";
-  return null;
+// The required fields, in the order they are checked and focused. Same rules
+// as the backend (backend/server.py ContactMessage), which answers 422.
+const REQUIRED = ["name", "email", "message"] as const;
+type RequiredField = (typeof REQUIRED)[number];
+type FieldErrors = Partial<Record<RequiredField, string>>;
+
+const fieldError = (key: RequiredField, value: string): string | undefined => {
+  const v = value.trim();
+  if (!v) return `ERR: ${key} is required`;
+  if (key === "name" && v.length < 2) return "ERR: name must be at least 2 characters";
+  if (key === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return "ERR: invalid email format";
+  if (key === "message" && v.length < 10) return "ERR: message must be at least 10 characters";
+  return undefined;
+};
+
+const validate = (form: ContactForm): FieldErrors => {
+  const errors: FieldErrors = {};
+  for (const key of REQUIRED) {
+    const error = fieldError(key, form[key]);
+    if (error) errors[key] = error;
+  }
+  return errors;
 };
 
 // Errors are notices, not transcript: one entry per message, kept apart from
@@ -60,6 +77,10 @@ interface TerminalFieldProps {
   type?: string;
   value: string;
   placeholder?: string;
+  required?: boolean;
+  /** Inline error under the input; marks it invalid. */
+  error?: string;
+  name?: string;
   onChange: (e: FieldChange) => void;
   "data-testid"?: string;
 }
@@ -70,26 +91,39 @@ const TerminalField = ({
   hint,
   multiline = false,
   type = "text",
+  error,
   ...field
-}: TerminalFieldProps) => (
-  <label className={s.field}>
-    <span className={s.label}>
-      &gt; {label}
-      {hint && (
-        <>
-          {" "}
-          <span className={s.hint}>{hint}</span>
-        </>
+}: TerminalFieldProps) => {
+  const errorId = `contact-${label}-error`;
+  const a11y = {
+    "aria-invalid": error ? true : undefined,
+    "aria-describedby": error ? errorId : undefined,
+  };
+  return (
+    <label className={s.field}>
+      <span className={s.label}>
+        &gt; {label}
+        {hint && (
+          <>
+            {" "}
+            <span className={s.hint}>{hint}</span>
+          </>
+        )}
+        :
+      </span>
+      {multiline ? (
+        <textarea rows={4} className={s.input} {...a11y} {...field} />
+      ) : (
+        <input type={type} className={s.input} {...a11y} {...field} />
       )}
-      :
-    </span>
-    {multiline ? (
-      <textarea rows={4} className={s.input} {...field} />
-    ) : (
-      <input type={type} className={s.input} {...field} />
-    )}
-  </label>
-);
+      {error && (
+        <span id={errorId} data-testid={`contact-${label}-error`} className={s.fieldError}>
+          {error}
+        </span>
+      )}
+    </label>
+  );
+};
 
 /**
  * Scene 5 · LET'S TALK (design/source/{desktop,mobile}/light/scene-5-contact.dc.html):
@@ -114,8 +148,21 @@ export const Contact = () => {
     };
   }, []);
 
-  const set = (key: keyof ContactForm) => (e: FieldChange) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }));
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+
+  const set = (key: keyof ContactForm) => (e: FieldChange) => {
+    const value = e.target.value;
+    setForm((f) => ({ ...f, [key]: value }));
+    // An error clears as soon as the field is fixed; it never appears while typing.
+    setFieldErrors((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      const error = fieldError(key as RequiredField, value);
+      if (error) next[key as RequiredField] = error;
+      else delete next[key as RequiredField];
+      return next;
+    });
+  };
 
   const pushLine = (text: string, ok = false) => setLines((prev) => [...prev, { text, ok }]);
 
@@ -136,9 +183,12 @@ export const Contact = () => {
     e.preventDefault();
     if (sending) return;
 
-    const error = validate(form);
-    if (error) {
-      showError(error);
+    const invalid = validate(form);
+    setFieldErrors(invalid);
+    const first = REQUIRED.find((key) => invalid[key]);
+    if (first) {
+      const el = e.currentTarget.elements.namedItem(first);
+      if (el instanceof HTMLElement) el.focus();
       return;
     }
 
@@ -220,6 +270,9 @@ export const Contact = () => {
                   label="name"
                   data-testid="contact-name-input"
                   value={form.name}
+                  required
+                  error={fieldErrors.name}
+                  name="name"
                   onChange={set("name")}
                   placeholder="your name"
                 />
@@ -228,6 +281,9 @@ export const Contact = () => {
                   type="email"
                   data-testid="contact-email-input"
                   value={form.email}
+                  required
+                  error={fieldErrors.email}
+                  name="email"
                   onChange={set("email")}
                   placeholder="you@domain.com"
                 />
@@ -254,6 +310,9 @@ export const Contact = () => {
                 multiline
                 data-testid="contact-message-input"
                 value={form.message}
+                required
+                error={fieldErrors.message}
+                name="message"
                 onChange={set("message")}
                 placeholder="describe your project, timeline, scope…"
               />

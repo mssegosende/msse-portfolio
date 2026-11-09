@@ -55,8 +55,14 @@ def test_name_line_breaks_stay_out_of_the_subject(client, sent):
 @pytest.mark.parametrize(
     "change",
     [
+        {"name": ""},
+        {"name": "     "},  # blank is empty once stripped
+        {"email": ""},
+        {"message": ""},
+        {"message": "             "},
         {"name": "A"},
         {"name": "   A   "},  # whitespace is stripped, as the form does
+        {"email": "ada@example"},
         {"name": "x" * 101},
         {"email": "not-an-email"},
         {"message": "too short"},
