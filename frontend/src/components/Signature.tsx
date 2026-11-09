@@ -4,41 +4,47 @@ import { useActiveSection } from "@/hooks/useActiveSection";
 
 /**
  * The floating signature, bottom-left, from scene 2 on (María Sol's review,
- * A8): the scene 5 footer's text on one line. Desktop only, like the section
- * index, in the page ink like the dock. It wraps before it reaches the dock,
- * sits below scene 2's cards, and hides while a card or the form is under it,
- * or the footer itself is on screen.
+ * A8; three lines since 9 Nov): a copy of the scene 5 footer's left block,
+ * same fonts, sizes and colours (Contact.module.css .brand / .credit, desktop):
+ * MSSE:// on its own line, then © and the role on two. Desktop only, like the
+ * section index. It hides while a card, the form or the dock is under it, or
+ * the footer itself is on screen.
  */
 export const Signature = () => {
   const { section } = useActiveSection();
-  const ref = useRef<HTMLParagraphElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const blocked = useBlocked(ref);
   const shown = section >= 1 && !blocked;
 
   return (
-    <p
+    <div
       ref={ref}
       data-testid="signature"
       aria-hidden="true"
-      className={`pointer-events-none fixed bottom-[26px] left-9 z-40 m-0 hidden max-w-[calc(50vw-380px)] text-[11px] leading-[1.5] text-ink/80 transition-opacity duration-500 lg:block ${
+      // signature-halo (index.css): readable over the robot's shoulder in
+      // scene 2, silver in dark (María Sol, 9 Nov), black in light.
+      className={`signature-halo pointer-events-none fixed bottom-[26px] left-9 z-40 hidden whitespace-nowrap transition-opacity duration-500 lg:block ${
         shown ? "opacity-100" : "opacity-0"
       }`}
     >
-      {/* It wraps between the parts, never inside one. */}
-      <span className="whitespace-nowrap">
-        <span className="font-michroma tracking-[0.16em]">{profile.shortMark}</span> ·
-      </span>{" "}
-      <span className="whitespace-nowrap">
-        © {new Date().getFullYear()} {profile.name} ·
-      </span>{" "}
-      <span className="whitespace-nowrap">Software &amp; AI engineer</span>
-    </p>
+      <p className="m-0 font-michroma text-[13px] leading-[1.5] tracking-[0.18em] text-[#14181D] dark:text-white">
+        {profile.shortMark}
+      </p>
+      {/* 10px: the footer's 8px margin plus its brand button's line box,
+          measured. Its 80 % is the colour's alpha, as in the footer. */}
+      <p className="m-0 mt-[10px] text-[12px] leading-[1.5] text-[#14181D]/80 dark:text-white/80">
+        © {new Date().getFullYear()} {profile.name}
+        <br />
+        Software &amp; AI engineer
+      </p>
+    </div>
   );
 };
 
 // What the signature never sits on: any card (scene 2's, the projects'), the
-// contact form, and the footer, which hides it as soon as it is on screen.
-const AVOID = "article, form";
+// contact form, the dock (narrow desktop windows), and the footer, which hides
+// it as soon as it is on screen.
+const AVOID = 'article, form, [data-testid="navigation-dock"]';
 
 const overlaps = (a: DOMRect, b: DOMRect) =>
   a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
