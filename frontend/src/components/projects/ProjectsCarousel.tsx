@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PROJECTS_INTRO, showcaseProjects as PROJECTS } from "@/data/projectsData";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useNearView } from "@/hooks/useNearView";
 import { useProjectsInView } from "@/hooks/useProjectsInView";
 import { SectionBackdrop } from "../SectionBackdrop";
 import { Num } from "../Num";
@@ -23,6 +24,8 @@ export const ProjectsCarousel = () => {
   const trackRef = useRef<HTMLDivElement>(null);
   const [idx, setIdx] = useState(0);
   const [inView, setInView] = useState(false);
+  // The clips load only once the carousel is a screen away (posters until then).
+  const near = useNearView(trackRef);
   const [userPaused, setUserPaused] = useState<boolean | null>(null);
   const paused = userPaused ?? reduced;
 
@@ -110,7 +113,7 @@ export const ProjectsCarousel = () => {
                   project={p}
                   nextName={next.name}
                   playing={i === idx && inView && !paused}
-                  preload={i === idx ? "auto" : "none"}
+                  preload={i === idx && near ? "auto" : "none"}
                   paused={paused}
                   onToggle={() => setUserPaused(!paused)}
                   onEnded={reduced ? undefined : advance}

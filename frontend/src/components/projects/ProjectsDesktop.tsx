@@ -6,6 +6,7 @@ import {
   type ShowcaseProject,
 } from "@/data/projectsData";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { useNearView } from "@/hooks/useNearView";
 import { useProjectsInView } from "@/hooks/useProjectsInView";
 import { scrollToY } from "@/hooks/useLenis";
 import { SectionBackdrop } from "../SectionBackdrop";
@@ -239,6 +240,8 @@ export const ProjectsDesktop = () => {
     io.observe(el);
     return () => io.disconnect();
   }, []);
+  // The clip loads only once the card is a screen away (the poster until then).
+  const near = useNearView(featuredRef);
 
   const [f, setF] = useState(0);
   // null: the default, which is paused only with reduced motion.
@@ -357,6 +360,7 @@ export const ProjectsDesktop = () => {
                       paused={paused}
                       onToggle={() => setUserPaused(!paused)}
                       onEnded={reduced ? undefined : advance}
+                      preload={near ? "auto" : "none"}
                     />
                   </div>
                 </ProjectFrame>

@@ -18,6 +18,19 @@ export const IntroTile = ({ ref }: { ref?: Ref<HTMLDivElement> }) => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [open, setOpen] = useState(false);
   const [length, setLength] = useState<string | null>(null);
+  // The tile comes in with the first scroll step, so its clip waits for the
+  // first scroll (or a hover/focus on it): nothing downloads at load.
+  const [armed, setArmed] = useState(() => window.scrollY > 0);
+  const previewRef = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    if (armed) return undefined;
+    const arm = () => setArmed(true);
+    window.addEventListener("scroll", arm, { once: true, passive: true });
+    return () => window.removeEventListener("scroll", arm);
+  }, [armed]);
+  useEffect(() => {
+    if (armed && !reduced) previewRef.current?.play().catch(() => {});
+  }, [armed, reduced]);
 
   // left-[112px]: the top bar's MSSE:// sits on the same edge (ScrollScene.tsx).
   return (
@@ -29,6 +42,8 @@ export const IntroTile = ({ ref }: { ref?: Ref<HTMLDivElement> }) => {
       <button
         type="button"
         onClick={() => setOpen(true)}
+        onPointerEnter={() => setArmed(true)}
+        onFocus={() => setArmed(true)}
         aria-haspopup="dialog"
         aria-label={`${INTRO_VIDEO.title}${length ? ` (${length})` : ""}`}
         data-testid="hero-intro-open"
@@ -37,13 +52,13 @@ export const IntroTile = ({ ref }: { ref?: Ref<HTMLDivElement> }) => {
         <span className="relative block h-[104px] overflow-hidden bg-[#121417] shadow-[0_16px_30px_-14px_rgba(10,14,20,0.6)]">
           <video
             key={reduced ? "still" : "loop"}
+            ref={previewRef}
             src={INTRO_VIDEO.src}
             poster={INTRO_VIDEO.poster}
             muted
             loop
             playsInline
-            autoPlay={!reduced}
-            preload="metadata"
+            preload={armed ? "metadata" : "none"}
             aria-hidden="true"
             tabIndex={-1}
             onLoadedMetadata={(e) => {
