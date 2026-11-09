@@ -204,9 +204,9 @@ export const Contact = () => {
 
           <div className={s.body}>
             <div className={s.chrome}>
-              <span aria-hidden="true" className={s.dot} style={{ background: "#E9EDF1" }} />
-              <span aria-hidden="true" className={s.dot} style={{ background: "#8F98A2" }} />
-              <span aria-hidden="true" className={s.dot} style={{ background: "#4A525B" }} />
+              <span aria-hidden="true" className={`${s.dot} ${s.dot1}`} />
+              <span aria-hidden="true" className={`${s.dot} ${s.dot2}`} />
+              <span aria-hidden="true" className={`${s.dot} ${s.dot3}`} />
               <span className={s.chromeTitle}>
                 <span className="hidden lg:inline">msg@portfolio: </span>~/contact — zsh
               </span>
