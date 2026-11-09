@@ -295,7 +295,7 @@ export const ProjectsDesktop = () => {
     >
       <SectionBackdrop scene="projects" />
 
-      <div ref={headRef} className="absolute inset-x-0 top-0 z-[5]">
+      <div ref={headRef} className="dissolve-in absolute inset-x-0 top-0 z-[5]">
         {/* One title block: the intro sits a fixed 64px after the title (the
             mock's x = 640 at 1440), so it stays with it at any width. */}
         <div className="absolute left-14 top-[52px] flex items-start gap-16">

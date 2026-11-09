@@ -39,6 +39,11 @@
     --bg-projects: linear-gradient(180deg, #eef1f4 0%, #dce1e6 60%, #c2c9d0 100%);
     --bg-about: linear-gradient(180deg, #e1e6ea 0%, #c2c9d0 60%, #7d8893 100%);
     --bg-contact: linear-gradient(180deg, #7d8893 0%, #c2c9d0 42%, #eef1f4 100%);
+    /* Each ground's top colour: what a leaving section dissolves into
+       (useSectionDissolve), so the next ground meets it without a seam. */
+    --top-projects: #eef1f4;
+    --top-about: #e1e6ea;
+    --top-contact: #7d8893;
     --glow: 255 255 255;
 
     /* The pinned hero: scene 1 and scene 2 grounds, and its text colours. */
@@ -104,6 +109,9 @@
         rgba(0, 0, 0, 0) 70%
       ),
       linear-gradient(180deg, #03060b 0%, #0a111a 42%, #16202c 100%);
+    --top-projects: #16202c;
+    --top-about: #101823;
+    --top-contact: #03060b;
     --glow: 120 140 165;
     /* Scenes 3-5: the glow is a faint steel haze in dark (the mocks'
        rgba(140, 160, 190, 0.22)), not the light theme's white bloom. */
@@ -360,6 +368,12 @@ textarea:-webkit-autofill {
   filter: drop-shadow(0 12px 16px rgba(20, 26, 34, 0.12));
   pointer-events: none;
   user-select: none;
+  /* Fades in as its section enters (useSectionDissolve; 0 on phones). */
+  opacity: calc(1 - var(--enter, 0));
+}
+/* A section head that fades in with its section (useSectionDissolve). */
+.dissolve-in {
+  opacity: calc(1 - var(--enter, 0));
 }
 .bg-word--left {
   left: 10px;
