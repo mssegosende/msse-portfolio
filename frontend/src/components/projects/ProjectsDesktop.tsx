@@ -42,9 +42,27 @@ const dockTop = () => {
 };
 
 /**
+ * Where the title's letters end, in px from the section top: PROJECTS is all
+ * caps, so its baseline (a zero-height probe sits on it), not its line box,
+ * whose half-leading and descender space read as empty.
+ */
+const titleInkBottom = (head: HTMLElement) => {
+  const title = head.querySelector("h2");
+  if (!title) return null;
+  const probe = document.createElement("span");
+  probe.style.cssText = "display:inline-block;width:0;height:0;vertical-align:baseline";
+  title.appendChild(probe);
+  const y = probe.getBoundingClientRect().top - head.getBoundingClientRect().top;
+  probe.remove();
+  return y;
+};
+
+/**
  * The layout, in px from the section top: the featured card centred between
  * the title block and the dock on the first screen, the folder row right
- * below it (it peeks over the dock on arrival).
+ * below it (it peeks over the dock on arrival). The title block ends where its
+ * ink does (María Sol, 9 Nov: the mock's spot read too high, the line box's
+ * centre too low; the ink's centre sits between them).
  */
 const useLayout = (headRef: RefObject<HTMLDivElement | null>) => {
   const [layout, setLayout] = useState({ k: 1, featuredTop: 260, rowTop: 790, height: 1400 });
@@ -53,14 +71,15 @@ const useLayout = (headRef: RefObject<HTMLDivElement | null>) => {
       const k = stageScale();
       const u = MOCK_ZOOM * k; // one mock unit in px
       const head = headRef.current;
-      const headBottom = head
-        ? Math.max(
-            ...[...head.children].map((c) => {
-              const el = c as HTMLElement;
-              return el.offsetTop + el.offsetHeight;
-            }),
-          )
-        : 170;
+      const intro = head?.querySelector("p:not(.section-pill)") as HTMLElement | null;
+      const ink = head ? titleInkBottom(head) : null;
+      const headBottom =
+        head && ink !== null
+          ? Math.max(
+              ink,
+              intro ? intro.getBoundingClientRect().bottom - head.getBoundingClientRect().top : 0,
+            )
+          : 170;
       const free = dockTop() - headBottom;
       const featuredTop = Math.round(headBottom + Math.max(24, (free - FEATURED.height * u) / 2));
       const rowTop = Math.round(featuredTop + (FEATURED.height + ROW_GAP) * u);
