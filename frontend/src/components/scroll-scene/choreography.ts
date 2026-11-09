@@ -29,8 +29,10 @@ export const vwOf =
  * the frame height, at scale 1), so any scale can put it at HERO_CROWN_TARGET.
  */
 // Phone hero framing at the mock's 390 x 844: zoom, pan right (share of the
-// width) and down (% of the frame).
-const PHONE_HERO = { scale: 0.94, dx: 0.222, y: -11.2 };
+// width) and down (% of the frame). Closer than the mock's 0.94 / -11.2
+// (María Sol, 9 Nov: half the screen read grey): the head whole ~55px from
+// the top, the body down to the Ø1 counter.
+const PHONE_HERO = { scale: 1.25, dx: 0.222, y: 2 };
 /** The phone mocks' height, which the phone framings are measured at. */
 export const PHONE_REF_H = 844;
 
