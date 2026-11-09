@@ -75,6 +75,10 @@
     8px calc(100% - 168px),
     8px 22px
   );
+  /* Keeps the body's margins inside the card (the desktop grid does it on
+     its own): without it they leak out and the content rides 14px up over
+     the panel's edge. */
+  display: flow-root;
   margin: 32px -6px 0;
   /* Never wider than the desktop card at 1024 (its grid column there), so a
      narrower window never gets a bigger card. Phones (≤ 450) are under it. */
@@ -427,8 +431,6 @@ textarea.input {
    breakpoint. Hairlines stay 1px. */
 @media (min-width: 768px) {
   .card {
-    /* Keeps the body's margins inside the card, as the desktop grid does. */
-    display: flow-root;
     --u: clamp(0.88px, (100vw - 260px) / 1180, 1px);
     --chamfer: polygon(
       calc(34 * var(--u)) 0,
