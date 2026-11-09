@@ -55,7 +55,7 @@ Any older handoff or context docs from previous sessions are superseded by this 
 
 ## Shared spec (applies everywhere)
 
-- **Monochrome.** Only color: the blue `#2E6FF2` STATUS dot (scene 1).
+- **Monochrome.** Only color: the pink `#F472B6` STATUS dot (scene 1; Tailwind token `status`). Changed from blue `#2E6FF2` on 9 Nov 2026; the scene-1 mocks in `source/` still show the old blue.
 - **Section titles** (CAPABILITIES / PROJECTS / WHO / LET'S TALK sections):
   `Science Gothic`, weight 200, `font-stretch: 150%`, 64 px desktop / 34 px
   mobile, line-height ~1.05. Same position in every section: left 56 px,

@@ -450,7 +450,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
             <span
               data-testid="hero-status-dot"
               aria-hidden="true"
-              className={`rounded-full bg-[#2E6FF2] animate-pulse-dot motion-reduce:animate-none ${
+              className={`rounded-full bg-status animate-pulse-dot motion-reduce:animate-none ${
                 isMobile ? "h-1.5 w-1.5" : "h-[7px] w-[7px]"
               }`}
             />

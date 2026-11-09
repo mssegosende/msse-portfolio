@@ -18,6 +18,8 @@ module.exports = {
       colors: {
         ink: "rgb(var(--ink) / <alpha-value>)",
         surface: "rgb(var(--surface) / <alpha-value>)",
+        // The site's only colour: the STATUS dot (María Sol, 9 Nov: pink, was blue #2E6FF2).
+        status: "#F472B6",
       },
       borderRadius: {
         lg: "var(--radius)",
