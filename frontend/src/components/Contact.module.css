@@ -76,6 +76,9 @@
     8px 22px
   );
   margin: 32px -6px 0;
+  /* Never wider than the desktop card at 1024 (its grid column there), so a
+     narrower window never gets a bigger card. Phones (≤ 450) are under it. */
+  max-width: calc((1024px - 260px) * 660 / 1180);
   filter: drop-shadow(0 34px 40px rgba(18, 24, 34, 0.38));
 }
 .outline,
@@ -416,6 +419,145 @@ textarea.input {
   background: rgba(255, 255, 255, 0.9);
 }
 
+/* ---- From 768 up: the desktop card, one object scaled by --u ----
+   --u is 1px at 1440 and up (the mock's card, unchanged) and follows the
+   width down so the card shrinks as a whole instead of only getting
+   narrower, floored at 0.88px (by ~1300) for legible text. Under 1024 the
+   card keeps its 1024 size (max-width above), so it never jumps at the
+   breakpoint. Hairlines stay 1px. */
+@media (min-width: 768px) {
+  .card {
+    /* Keeps the body's margins inside the card, as the desktop grid does. */
+    display: flow-root;
+    --u: clamp(0.88px, (100vw - 260px) / 1180, 1px);
+    --chamfer: polygon(
+      calc(34 * var(--u)) 0,
+      calc(100% - 18 * var(--u)) 0,
+      100% calc(18 * var(--u)),
+      100% calc(210 * var(--u)),
+      calc(100% - 8 * var(--u)) calc(218 * var(--u)),
+      calc(100% - 8 * var(--u)) calc(100% - 26 * var(--u)),
+      calc(100% - 34 * var(--u)) 100%,
+      calc(18 * var(--u)) 100%,
+      0 calc(100% - 18 * var(--u)),
+      0 calc(100% - 230 * var(--u)),
+      calc(8 * var(--u)) calc(100% - 238 * var(--u)),
+      calc(8 * var(--u)) calc(26 * var(--u))
+    );
+    filter: drop-shadow(0 calc(34 * var(--u)) calc(40 * var(--u)) rgba(18, 24, 34, 0.38));
+  }
+  .gap {
+    inset: calc(12 * var(--u)) calc(20 * var(--u));
+    clip-path: polygon(
+      calc(26 * var(--u)) 0,
+      calc(100% - 12 * var(--u)) 0,
+      100% calc(12 * var(--u)),
+      100% calc(100% - 26 * var(--u)),
+      calc(100% - 26 * var(--u)) 100%,
+      calc(12 * var(--u)) 100%,
+      0 calc(100% - 12 * var(--u)),
+      0 calc(26 * var(--u))
+    );
+  }
+  .panel {
+    inset: calc(14 * var(--u)) calc(22 * var(--u));
+    clip-path: polygon(
+      calc(24 * var(--u)) 0,
+      calc(100% - 10 * var(--u)) 0,
+      100% calc(10 * var(--u)),
+      100% calc(100% - 24 * var(--u)),
+      calc(100% - 24 * var(--u)) 100%,
+      calc(10 * var(--u)) 100%,
+      0 calc(100% - 10 * var(--u)),
+      0 calc(24 * var(--u))
+    );
+  }
+  .body {
+    margin: calc(14 * var(--u)) calc(22 * var(--u));
+    padding: calc(26 * var(--u)) calc(30 * var(--u)) calc(70 * var(--u));
+  }
+  .chrome {
+    gap: calc(8 * var(--u));
+    padding-bottom: calc(16 * var(--u));
+  }
+  .dot {
+    width: calc(10 * var(--u));
+    height: calc(10 * var(--u));
+  }
+  .chromeTitle {
+    margin-left: calc(14 * var(--u));
+    font-size: calc(12 * var(--u));
+  }
+  .form {
+    padding-top: calc(24 * var(--u));
+    gap: calc(18 * var(--u));
+    font-size: calc(13 * var(--u));
+  }
+  .pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: calc(16 * var(--u));
+  }
+  .field {
+    gap: calc(8 * var(--u));
+  }
+  .input {
+    padding: calc(13 * var(--u)) calc(14 * var(--u));
+  }
+  .submit {
+    margin-top: calc(6 * var(--u));
+    padding: calc(18 * var(--u));
+    font-size: calc(15 * var(--u));
+  }
+  .notices {
+    gap: calc(6 * var(--u));
+  }
+  .log {
+    margin-top: calc(16 * var(--u));
+    padding-top: calc(14 * var(--u));
+    gap: calc(6 * var(--u));
+    font-size: calc(12 * var(--u));
+  }
+  .tab {
+    width: min(calc(280 * var(--u)), 74%);
+    height: calc(44 * var(--u));
+  }
+  .tab::before,
+  .tab::after {
+    clip-path: polygon(0 100%, calc(20 * var(--u)) 0, calc(100% - 20 * var(--u)) 0, 100% 100%);
+  }
+  .tabInner {
+    gap: calc(12 * var(--u));
+    padding-top: calc(2 * var(--u));
+  }
+  .tabMark {
+    font-size: calc(10 * var(--u));
+  }
+  .tabRule {
+    height: calc(18 * var(--u));
+  }
+  .tabText {
+    font-size: calc(13 * var(--u));
+  }
+}
+
+/* Short screens: a tighter form so the card clears the footer at 1280 x 720. */
+@media (min-width: 768px) and (max-height: 820px) {
+  .body {
+    padding: calc(20 * var(--u)) calc(26 * var(--u)) calc(60 * var(--u));
+  }
+  .form {
+    padding-top: calc(16 * var(--u));
+    gap: calc(12 * var(--u));
+  }
+  .input {
+    padding: calc(10 * var(--u)) calc(12 * var(--u));
+  }
+  .submit {
+    padding: calc(14 * var(--u));
+  }
+}
+
 /* ---- Desktop: text left, the card right, footer on both sides of the dock ---- */
 @media (min-width: 1024px) {
   .stage {
@@ -441,76 +583,11 @@ textarea.input {
     font-size: 13px;
   }
   .card {
-    --chamfer: polygon(
-      34px 0,
-      calc(100% - 18px) 0,
-      100% 18px,
-      100% 210px,
-      calc(100% - 8px) 218px,
-      calc(100% - 8px) calc(100% - 26px),
-      calc(100% - 34px) 100%,
-      18px 100%,
-      0 calc(100% - 18px),
-      0 calc(100% - 230px),
-      8px calc(100% - 238px),
-      8px 26px
-    );
     /* As in the mock: centred in the screen above the footer band (the grid
        row fills the stage between its top and bottom padding), at any height. */
     align-self: center;
     margin: 0;
-  }
-  .body {
-    padding: 26px 30px 70px;
-  }
-  .chrome {
-    gap: 8px;
-    padding-bottom: 16px;
-  }
-  .dot {
-    width: 10px;
-    height: 10px;
-  }
-  .chromeTitle {
-    margin-left: 14px;
-    font-size: 12px;
-  }
-  .form {
-    padding-top: 24px;
-    gap: 18px;
-    font-size: 13px;
-  }
-  .pair {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-  }
-  .field {
-    gap: 8px;
-  }
-  .input {
-    padding: 13px 14px;
-  }
-  .submit {
-    margin-top: 6px;
-    padding: 18px;
-    font-size: 15px;
-  }
-  .tab {
-    width: min(280px, 74%);
-    height: 44px;
-  }
-  .tabInner {
-    gap: 12px;
-  }
-  .tabMark {
-    font-size: 10px;
-  }
-  .tabRule {
-    height: 18px;
-  }
-  .tabText {
-    font-size: 13px;
+    max-width: none;
   }
 
   /* The rule at 104 px from the bottom; the two ends level with the dock. */
@@ -539,24 +616,11 @@ textarea.input {
   }
 }
 
-/* Short desktop screens (1280 x 720): a tighter form so the card clears the footer. */
+/* Short desktop screens (1280 x 720). Bottom 120: the card and the footer
+   band fit in one screen at 720. */
 @media (min-width: 1024px) and (max-height: 820px) {
-  /* Bottom 120: the card and the footer band fit in one screen at 720. */
   .stage {
     padding-top: 40px;
     padding-bottom: 120px;
-  }
-  .body {
-    padding: 20px 26px 60px;
-  }
-  .form {
-    padding-top: 16px;
-    gap: 12px;
-  }
-  .input {
-    padding: 10px 12px;
-  }
-  .submit {
-    padding: 14px;
   }
 }
