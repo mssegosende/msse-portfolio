@@ -27,9 +27,11 @@ const THEMES = {
   dark: {
     gap: "#2A3037",
     panel:
-      "repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 3px, rgba(255,255,255,0.22) 3px 4px), radial-gradient(ellipse 120% 80% at 18% 0%, #FBFCFD 0%, #E6EAED 42%, #C9D0D6 100%)",
+      // A deeper satin than CARD-SPEC's near-white (María Sol, 9 Nov); the
+      // subtitle steps down to #3A414A to keep AA on it.
+      "repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 3px, rgba(255,255,255,0.22) 3px 4px), radial-gradient(ellipse 120% 80% at 18% 0%, #DCE1E5 0%, #C3CAD0 42%, #A9B1BA 100%)",
     tag: "text-[#0B0D10] border-[rgba(11,13,16,0.7)]",
-    small: "text-[#4A525C]",
+    small: "text-[#3A414A]",
     title: "text-[#0B0D10]",
     body: "text-[#14181D]",
     chip: "text-[#14181D] border-[rgba(11,13,16,0.35)]",

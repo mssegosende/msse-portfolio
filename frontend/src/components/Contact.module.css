@@ -260,7 +260,9 @@ textarea.input {
 }
 
 /* Dark theme: same graphite frame and tab, satin silver panel, white fields
-   and a black button (design/source/{desktop,mobile}/dark/scene-5-contact). */
+   and a black button (design/source/{desktop,mobile}/dark/scene-5-contact).
+   The silver is a deeper satin than the mock's near-white (María Sol, 9 Nov);
+   the grey text is #3A414A to keep AA on it. */
 :global(:root[data-theme="dark"]) .gap {
   background: #2a3037;
 }
@@ -271,7 +273,7 @@ textarea.input {
       rgba(255, 255, 255, 0) 0 3px,
       rgba(255, 255, 255, 0.22) 3px 4px
     ),
-    radial-gradient(ellipse 120% 80% at 18% 0%, #fbfcfd 0%, #e6eaed 42%, #c9d0d6 100%);
+    radial-gradient(ellipse 120% 80% at 18% 0%, #dce1e5 0%, #c3cad0 42%, #a9b1ba 100%);
 }
 :global(:root[data-theme="dark"]) .body {
   color: #14181d;
@@ -288,12 +290,9 @@ textarea.input {
 :global(:root[data-theme="dark"]) .dot3 {
   background: #4a525b;
 }
-:global(:root[data-theme="dark"]) .chromeTitle {
-  color: #4a525c;
-}
-/* The mock's #5A626C is 3.9-4.2:1 on the silver; #4A525C keeps AA. */
+:global(:root[data-theme="dark"]) .chromeTitle,
 :global(:root[data-theme="dark"]) .hint {
-  color: #4a525c;
+  color: #3a414a;
 }
 :global(:root[data-theme="dark"]) .input {
   background: #fff;
@@ -314,7 +313,7 @@ textarea.input {
 }
 :global(:root[data-theme="dark"]) .notices,
 :global(:root[data-theme="dark"]) .log {
-  color: #4a525c;
+  color: #3a414a;
 }
 :global(:root[data-theme="dark"]) .log {
   border-top-color: rgba(11, 13, 16, 0.14);

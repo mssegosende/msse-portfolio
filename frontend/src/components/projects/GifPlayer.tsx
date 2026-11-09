@@ -156,7 +156,7 @@ export const GifPlayer = ({
             width={compact ? 10 : 12}
             height={compact ? 10 : 12}
             viewBox="0 0 24 24"
-            fill="#FFFFFF"
+            fill="currentColor"
             aria-hidden="true"
           >
             <path d={paused ? PLAY_ICON : PAUSE_ICON} />
