@@ -370,7 +370,8 @@ textarea:-webkit-autofill {
 @media (min-width: 768px) {
   .bg-word {
     top: 26px;
-    font-size: clamp(96px, 13.2vw, 190px);
+    /* Clearly bigger than the mock's 190 (María Sol, 9 Nov: more maximalist). */
+    font-size: clamp(128px, 16.7vw, 240px);
   }
   .bg-word--left {
     left: 40px;
