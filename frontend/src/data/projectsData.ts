@@ -49,7 +49,7 @@ const art = (from: number, hi: string, lo: string) =>
   `conic-gradient(from ${from}deg at 58% 46%, #0C0E11, #3A424C 18%, #0C0E11 38%, #6B7580 58%, #15191E 78%, #0C0E11)`;
 
 export const PROJECTS_INTRO =
-  "Things I've designed and built myself, and the problems each one made me solve.";
+  "Six projects, one habit: find the mistake that would cost the most, and design so it can't happen.";
 
 export const showcaseProjects: ShowcaseProject[] = [
   {
