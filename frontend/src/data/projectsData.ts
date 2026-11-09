@@ -106,7 +106,7 @@ export const showcaseProjects: ShowcaseProject[] = [
       "It covers three BCRA ordered texts on the life cycle of a financial institution: authorities, authorization and expansion. They were chosen because they overlap, so retrieval has to pick the right source instead of getting it right by elimination. The regulations are chunked by their own numbered sections instead of by fixed size, so every chunk is a unit you can cite. Embeddings run locally, Claude only writes the final answer, and a hexagonal design keeps both the vector store and the model swappable.",
     ],
     codeUrl: "",
-    liveUrl: "",
+    liveUrl: "https://polaris-fawn-two.vercel.app",
     media: "/projects/polaris.mp4",
     poster: "/projects/polaris.jpg",
     startAt: 7,
