@@ -69,17 +69,25 @@ const BARS = [3, 1, 2, 1, 4, 1, 1, 2, 3, 1, 2, 2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 
 
 /**
  * Phones: the Ø1.2 barcode, small and quiet, under MSSE:// at the top-left
- * (María Sol's review: scene 1 felt empty beside the robot).
+ * (María Sol's review: scene 1 felt empty beside the robot), with the desktop
+ * card's data under it, plain, without the card (María Sol, 9 Nov).
  */
 export const PhoneBarcode = () => (
   <div
     aria-hidden="true"
     data-testid="hero-barcode-phone"
-    className="hero-bar-in absolute left-[18px] top-[50px] flex h-3.5 gap-px opacity-70"
+    className="hero-bar-in absolute left-[18px] top-[58px] text-[rgb(var(--hero-ink))] opacity-70"
   >
-    {BARS.map((w, i) => (
-      <span key={i} className="block h-full bg-[rgb(var(--hero-ink))]" style={{ width: w * 0.6 }} />
-    ))}
+    <div className="flex h-3.5 gap-px">
+      {BARS.map((w, i) => (
+        <span key={i} className="block h-full bg-current" style={{ width: w * 0.6 }} />
+      ))}
+    </div>
+    <div className="mt-2 font-mono text-[8px] leading-[1.6] tracking-[0.04em]">
+      {systemCheck.map((line) => (
+        <div key={line}>{line}</div>
+      ))}
+    </div>
   </div>
 );
 
