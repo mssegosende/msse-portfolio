@@ -93,7 +93,9 @@ export const CapabilityCard = ({
         >
           SYS.0{card.num}
         </div>
-        <div aria-hidden="true" className={isMobile ? "h-4" : "flex-1"} />
+        {/* At least the phones' 16px between the tag and the title: long copy
+            shrinks the spacer, never the gap (María Sol, 9 Nov). */}
+        <div aria-hidden="true" className={isMobile ? "h-4" : "min-h-4 flex-1"} />
         <div className="flex items-end justify-between gap-2.5">
           <h3
             className={`m-0 min-w-0 font-display font-semibold leading-[1.05] tracking-[0.08em] ${t.title} ${
