@@ -487,8 +487,8 @@
   font-family: "JetBrains Mono", monospace;
   font-size: 10px;
   /* Lighter than the status grey: it sits over the blurred clip (AA 4.5:1,
-     the lime Lynx clip included). */
-  color: #e3e8ed;
+     the lime Lynx and pale Polaris clips included). */
+  color: #fff;
 }
 
 /* ---- Phone carousel ---- */

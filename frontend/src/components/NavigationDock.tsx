@@ -46,7 +46,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
               onClick={() => goToSection(SECTIONS.findIndex((s) => s.id === id))}
               aria-current={current === id ? "true" : undefined}
               className={`group flex shrink-0 items-center gap-2 px-3 py-2 transition-[color,background-color] duration-300 hover:bg-ink/5 hover:text-ink ${
-                current === id ? "font-semibold text-ink" : "text-ink/65"
+                current === id ? "font-semibold text-ink" : "text-ink/65 dark:text-ink/[0.78]"
               }`}
               aria-label={label}
             >

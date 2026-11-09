@@ -284,7 +284,7 @@ export const ProjectsDesktop = () => {
             <p className="section-pill">SELECTED WORK</p>
             <h2 className="section-title mt-4">Projects</h2>
           </div>
-          <p className="m-0 mt-11 max-w-[400px] font-inter text-[15px] leading-[1.6] text-[#252B31] dark:text-[#C9D0D7]">
+          <p className="m-0 mt-11 max-w-[400px] font-inter text-[15px] leading-[1.6] text-[#252B31] dark:text-[#E9EDF1]">
             {PROJECTS_INTRO}
           </p>
         </div>

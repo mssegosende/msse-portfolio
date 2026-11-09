@@ -70,7 +70,7 @@ export const ProjectsCarousel = () => {
           &nbsp;· SELECTED WORK
         </p>
         <h2 className="section-title mt-3">Projects</h2>
-        <p className="mt-3 font-inter text-[13.5px] leading-[1.55] text-[#252B31] dark:text-[#C9D0D7]">
+        <p className="mt-3 font-inter text-[13.5px] leading-[1.55] text-[#252B31] dark:text-[#E9EDF1]">
           {PROJECTS_INTRO}
         </p>
       </div>
