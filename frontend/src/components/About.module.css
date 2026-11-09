@@ -209,8 +209,9 @@
     margin-top: 34px;
     max-width: 30em;
     overflow: hidden;
-    /* 18 px at 1440 wide, 21 at 1920, up to 22 on the widest. */
-    font-size: clamp(16px, 0.6vw + 9.5px, 22px);
+    /* A little smaller than before (María Sol, 9 Nov): 16.6 px at 1440 wide,
+       19.3 at 1920, up to 20 on the widest (was 18 / 21 / 22). */
+    font-size: clamp(15px, 0.55vw + 8.7px, 20px);
   }
   /* Once the earlier paragraphs slide up, they fade out under the title. */
   .textWindow[data-lifted="true"] {
@@ -302,7 +303,7 @@
   }
   .textWindow {
     margin-top: 24px;
-    font-size: 16px;
+    font-size: 15px;
   }
   .para {
     line-height: 1.6;
