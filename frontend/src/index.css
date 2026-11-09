@@ -299,11 +299,14 @@ textarea:-webkit-autofill {
   }
 }
 
-/* Phones and tablets are portrait-only: RotateLock covers landscape. */
+/* Phones are portrait-only: RotateLock covers a phone held sideways, and only
+   that (touch, landscape, phone-short), never a desktop window of any shape
+   (DevTools docked or in responsive mode included). Same test as the phone
+   layout's (lib/layout.ts). */
 .rotate-lock {
   display: none;
 }
-@media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
   .rotate-lock {
     display: flex;
   }

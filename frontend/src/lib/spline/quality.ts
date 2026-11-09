@@ -19,10 +19,20 @@ let step = 0;
 const natural = new WeakMap<object, number>();
 const tracked = new Set<SplineApp>();
 
+// TODO(polish): on very large windows (7500x5200) the robot fills the screen
+// but the UI keeps its px sizes; scaling both together needs a root zoom
+// checked against the pinned timeline.
+// Longest side of a buffer, well under every GPU's MAX_RENDERBUFFER_SIZE
+// (8192 at least on WebGL2), so an extreme window shape never fails to draw.
+const MAX_SIDE = 4096;
+
 const ratioFor = (app: object & { canvas?: HTMLCanvasElement }, full: number): number => {
   const box = app.canvas?.parentElement;
-  const area = (box?.clientWidth || window.innerWidth) * (box?.clientHeight || window.innerHeight);
-  return Math.min(full, Math.sqrt(MAX_PIXELS / area)) * (STEPS[step] ?? 1);
+  const w = box?.clientWidth || window.innerWidth;
+  const h = box?.clientHeight || window.innerHeight;
+  return (
+    Math.min(full, Math.sqrt(MAX_PIXELS / (w * h)), MAX_SIDE / Math.max(w, h)) * (STEPS[step] ?? 1)
+  );
 };
 
 /** The runtime's ratio for a scene being loaded, within the budget. */
@@ -51,6 +61,17 @@ const applyStep = (app: SplineApp): void => {
     /* renderer without these methods: keeps its size */
   }
 };
+
+// The runtime reads the ratio mid-resize, against the box's old size, and
+// keeps it: after a huge window (DevTools undocked, a 5K screen) a normal one
+// kept a tiny, blurred buffer. Once the window settles, set it again.
+let resizeTimer: ReturnType<typeof setTimeout> | undefined;
+if (typeof window !== "undefined") {
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => tracked.forEach(applyStep), 250);
+  });
+}
 
 let last = 0;
 let frames = 0;

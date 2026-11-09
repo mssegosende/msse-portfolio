@@ -21,6 +21,20 @@ test.describe("desktop", () => {
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     expect(reloaded).toBe(false);
   });
+
+  test("no window shape asks to rotate (DevTools docked, huge screens)", async ({ page }) => {
+    await blockSpline(page);
+    await openHome(page);
+    for (const size of [
+      { width: 1440, height: 300 },
+      { width: 900, height: 900 },
+      { width: 7500, height: 5200 },
+    ]) {
+      await page.setViewportSize(size);
+      await expect(page.getByTestId("rotate-lock")).toBeHidden();
+      await expect(page.locator("#hero")).toBeVisible();
+    }
+  });
 });
 
 test.describe("phone", () => {
