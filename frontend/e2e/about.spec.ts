@@ -3,7 +3,8 @@ import { blockSpline, DESKTOP, openHome } from "./helpers";
 
 // Scene 4 on desktop (María Sol's review): the four paragraphs appear one by
 // one in one column and stay; the right column only comes in after the
-// fourth, with the text still there.
+// fourth, with the text still there: 2022, then each principle on its own
+// scroll (9 Nov).
 
 /** Scroll to a share (0..1) of the About section, on the index's scale. */
 const scrollToAbout = async (page: Page, progress: number) => {
@@ -32,11 +33,14 @@ test("paragraphs come one by one and stay, then the right column", async ({ page
   await openHome(page);
   const expected: [number, { paragraphs: number; right: number }][] = [
     [0.05, { paragraphs: 1, right: 0 }],
-    [0.2, { paragraphs: 2, right: 0 }],
-    [0.37, { paragraphs: 3, right: 0 }],
-    [0.55, { paragraphs: 4, right: 0 }],
-    [0.75, { paragraphs: 4, right: 4 }],
-    [0.85, { paragraphs: 4, right: 4 }],
+    [0.15, { paragraphs: 2, right: 0 }],
+    [0.25, { paragraphs: 3, right: 0 }],
+    [0.35, { paragraphs: 4, right: 0 }],
+    [0.47, { paragraphs: 4, right: 1 }],
+    [0.57, { paragraphs: 4, right: 2 }],
+    [0.67, { paragraphs: 4, right: 3 }],
+    [0.77, { paragraphs: 4, right: 4 }],
+    [0.88, { paragraphs: 4, right: 4 }],
   ];
   for (const [p, want] of expected) {
     await scrollToAbout(page, p);
