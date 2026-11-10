@@ -28,11 +28,13 @@ export const vwOf =
  * native position was measured at 1440x900 (HERO_CROWN_NATIVE, a fraction of
  * the frame height, at scale 1), so any scale can put it at HERO_CROWN_TARGET.
  */
-// Phone hero framing at the mock's 390 x 844: zoom, pan right (share of the
-// width) and down (% of the frame). Closer than the mock's 0.94 / -11.2
-// (María Sol, 9 Nov: half the screen read grey): the head whole ~55px from
-// the top, the body down to the Ø1 counter.
-const PHONE_HERO = { scale: 1.25, dx: 0.222, y: 2 };
+// Phone hero framing at the mock's 390 x 844: zoom, pan (share of the width;
+// negative is left) and down (% of the frame). Closer than the mock's
+// 0.94 / -11.2 (María Sol, 9 Nov: half the screen read grey): the head whole
+// ~55px from the top, the body down to the Ø1 counter. On the left (María Sol,
+// 10 Nov): the mirror of the mock's place on the right, the head just inside
+// the left edge, so the barcode and its data sit with STATUS on the right.
+const PHONE_HERO = { scale: 1.25, dx: -0.132, y: 2 };
 /** The phone mocks' height, which the phone framings are measured at. */
 export const PHONE_REF_H = 844;
 

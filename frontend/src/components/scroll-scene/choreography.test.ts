@@ -23,12 +23,12 @@ const VIEWPORTS = [
 ];
 
 describe("heroFraming", () => {
-  it("frames phones the same with or without reduced motion, right of centre, and holds", () => {
+  it("frames phones the same with or without reduced motion, left of centre, and holds", () => {
     const phone = { width: 390, height: 844 };
     const moving = heroFraming(true, false, phone);
     expect(heroFraming(true, true, phone)).toEqual(moving);
     expect(moving.endY).toBe(moving.startY);
-    expect(moving.heroDx).toBeGreaterThan(0);
+    expect(moving.heroDx).toBeLessThan(0);
   });
 
   it("frames the desktop robot the same way with or without reduced motion, and holds", () => {

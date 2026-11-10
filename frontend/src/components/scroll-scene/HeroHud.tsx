@@ -69,30 +69,31 @@ const BARS = [3, 1, 2, 1, 4, 1, 1, 2, 3, 1, 2, 2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 
 
 // The data's type: 8px with 0.04em tracking from 390 up (the mock's), easing
 // to 7px with none at 360. The robot keeps its px size and comes ~0.7px
-// closer per px of narrower screen, so every line ends >= 10px clear of its
-// head (at 8px, STATUS: OPEN TO WORK ran into it at 375 and under it at 360).
+// closer per px of narrower screen, so every line starts >= 10px clear of its
+// head.
 const PHONE_DATA_TYPE = {
   fontSize: "clamp(7px, calc(100vw / 30 - 5px), 8px)",
   letterSpacing: "clamp(0px, calc((100vw - 360px) * 0.32 / 30), 0.32px)",
 };
 
 /**
- * Phones: the Ø1.2 barcode, small and quiet, under MSSE:// at the top-left
- * (María Sol's review: scene 1 felt empty beside the robot), with the desktop
- * card's data under it, plain, without the card (María Sol, 9 Nov).
+ * Phones: the Ø1.2 barcode, small and quiet (María Sol's review: scene 1 felt
+ * empty beside the robot), with the desktop card's data under it, plain,
+ * without the card (María Sol, 9 Nov). Right under the STATUS pill and
+ * right-aligned with it, beside the robot on the left (María Sol, 10 Nov).
  */
 export const PhoneBarcode = () => (
   <div
     aria-hidden="true"
     data-testid="hero-barcode-phone"
-    className="hero-bar-in absolute left-[18px] top-[58px] text-[rgb(var(--hero-ink))] opacity-70"
+    className="hero-bar-in absolute right-[18px] top-[62px] text-right text-[rgb(var(--hero-ink))] opacity-70"
   >
-    <div className="flex h-3.5 gap-px">
+    <div className="flex h-3.5 justify-end gap-px">
       {BARS.map((w, i) => (
         <span key={i} className="block h-full bg-current" style={{ width: w * 0.6 }} />
       ))}
     </div>
-    <div className="mt-2 font-mono leading-[1.6]" style={PHONE_DATA_TYPE}>
+    <div className="mt-1.5 font-mono leading-[1.6]" style={PHONE_DATA_TYPE}>
       {systemCheck.map((line) => (
         <div key={line}>{line}</div>
       ))}
