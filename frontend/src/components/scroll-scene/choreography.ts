@@ -13,6 +13,13 @@ export interface Viewport {
   height: number;
 }
 
+/** A line of scene 2's title on phones: its box's right end, top and bottom, px. */
+export interface TitleLine {
+  right: number;
+  top: number;
+  bottom: number;
+}
+
 /**
  * Framings are written as the body's offset from the viewport centre, in px;
  * this turns that into a % of the viewport width for the transform.
@@ -98,6 +105,8 @@ export const giantHeadFraming = (
   viewport: Viewport,
   /** Phones: where the title ends, px from the top (the crown goes just under it). */
   titleBottom = PHONE_HEAD.crownY - PHONE_HEAD.crownGap,
+  /** Phones: the title's lines and its last letter, measured (PHONE_TITLE before). */
+  title: PhoneTitle = PHONE_TITLE,
 ): Framing => {
   const vw = vwOf(viewport.width);
   if (!isMobile) {
@@ -130,9 +139,60 @@ export const giantHeadFraming = (
   const crownToEyes = Math.max(60, Math.min(span, eyes - PHONE_HEAD.topMin));
   // Screen y / height = 0.5 - scale * n + y / 100, n measured on the model.
   const scale = crownToEyes / ((HEAD_N.crown - HEAD_N.eyes) * h);
-  const y = 100 * (eyes / h - 0.5 + scale * HEAD_N.eyes);
-  return { scale, x: vw(PHONE_HEAD.dx * viewport.width), y: `${y}%` };
+  // On the right, in front of the title (María Sol, 10 Nov): the head hides
+  // the title's last letter (the N of ON) and no other, so WHAT THE and CORE
+  // read whole. Its left edge stays right of every other line's end and of
+  // the last letter's left side (the O) on their lowest inked row, where the
+  // dome is widest; the screen's right edge crops the rest of the head. The
+  // edge slopes across the letter's height, so the head rises from R81's
+  // place, up to under the Ø2 pill, to wherever that slope leaves the least of
+  // the N showing (at its top left).
+  // Its outline turned left is wider than the head the size is set from.
+  const half = (crownToEyes * HEAD_N.outlineToCrownEyes) / 2;
+  const last = title.lines[title.lines.length - 1];
+  const inked = (line: TitleLine) => {
+    const h0 = line.bottom - line.top;
+    return { top: line.top + TITLE_INK.top * h0, bottom: line.bottom - TITLE_INK.bottom * h0 };
+  };
+  const place = (crown: number) => {
+    const halfAt = (row: number) => half * headProfile((row - crown) / crownToEyes);
+    const centre = Math.max(
+      ...title.lines
+        .slice(0, -1)
+        .map((line) => line.right + PHONE_HEAD.titleClear + halfAt(inked(line).bottom)),
+      last ? title.lastLeft + PHONE_HEAD.letterClear + halfAt(inked(last).bottom) : 0,
+    );
+    // How far the edge stands right of the N's left side at its top: what shows.
+    const open = last ? centre - halfAt(inked(last).top) - title.lastLeft : 0;
+    return { crown, centre, open };
+  };
+  let best = place(eyes - crownToEyes);
+  for (let crown = best.crown - 2; crown >= PHONE_HEAD.topMin; crown -= 2) {
+    const p = place(crown);
+    if (p.open < best.open - 0.5) best = p;
+  }
+  const y = 100 * ((best.crown + crownToEyes) / h - 0.5 + scale * HEAD_N.eyes);
+  const native = viewport.width / 2 + HEAD_N.x * crownToEyes * HEAD_N.widthToCrownEyes;
+  return { scale, x: vw(best.centre - native), y: `${y}%` };
 };
+
+/** Scene 2's title on phones, px in the section: each line's box, and the last letter's left. */
+export interface PhoneTitle {
+  lines: TitleLine[];
+  lastLeft: number;
+}
+// The title at 390 (WHAT THE / CORE / RUNS ON, settled), until it is measured.
+const PHONE_TITLE: PhoneTitle = {
+  lines: [
+    { right: 274, top: 53, bottom: 103 },
+    { right: 164, top: 88, bottom: 138 },
+    { right: 259, top: 124, bottom: 174 },
+  ],
+  lastLeft: 219,
+};
+// Where the capitals' ink sits in a line's box (shares of its height from the
+// top and the bottom), measured on the title's font.
+const TITLE_INK = { top: 0.24, bottom: 0.26 };
 // Phone scene 2, in px (design/source/mobile/light/scene-2-capabilities.dc.html
 // at 390 x 844): the card block of the tallest card (its tags in two rows, as
 // Ø2.3 at 390 and every card from 375 down: card + Ø2.x counter + the gap to
@@ -140,8 +200,9 @@ export const giantHeadFraming = (
 // eye dots' half height and a little), the crown's place
 // under the title (crownY at 390 x 844, crownGap below the title's last line),
 // the highest the crown goes (under the Ø2 pill: the head is in front of the
-// title) and the head's width as a share of the screen's (the mock's ~354 of
-// 390).
+// title), the head's width as a share of the screen's (the mock's ~354 of
+// 390), and the least room between the head and a title line's end, and the
+// O (its ink ends ~4 px before the N's box; the sway moves the head ~4 px).
 const PHONE_HEAD = {
   cardBlock: 451,
   eyesMin: 26,
@@ -149,12 +210,31 @@ const PHONE_HEAD = {
   crownGap: 6,
   topMin: 64,
   width: 0.91,
-  dx: 0.025,
+  titleClear: 6,
+  letterClear: 1,
 };
 // The head's crown and eye line in camera units (screen offset from the centre
-// per unit of scale, in viewport heights), measured on the phone robot, and
-// its width over its crown-to-eyes height.
-const HEAD_N = { crown: 0.4437, eyes: 0.2858, widthToCrownEyes: 1.46 };
+// per unit of scale, in viewport heights), measured on the phone robot, its
+// width over its crown-to-eyes height (facing front), its outline's width
+// turned left (PHONE_HEAD_GAZE), and its centre's offset from the screen's
+// centre without a pan, as a share of its width, turned left.
+const HEAD_N = {
+  crown: 0.4437,
+  eyes: 0.2858,
+  widthToCrownEyes: 1.46,
+  outlineToCrownEyes: 1.6,
+  x: 0.008,
+};
+
+/**
+ * The head's half width at a depth below the crown (0 at the crown, 1 at the
+ * eye line), as a share of its widest: a dome fuller than an ellipse,
+ * measured on the phone robot.
+ */
+const headProfile = (depth: number) => {
+  const d = 1 - Math.max(0, Math.min(1, depth));
+  return Math.pow(1 - Math.pow(d, 2.5), 1 / 2.5);
+};
 
 /** The reference layout scene 2 is drawn at on desktop. */
 export const SCENE2_REF = { width: 1440, height: 900 };
@@ -176,15 +256,24 @@ export const scene2StageHeight = (viewport: Viewport) =>
   Math.min(viewport.height, scene2Scale(viewport) * SCENE2_REF.height);
 
 /**
- * Phones: the robot starts further back and to the side and approaches the
- * head shot (the mock's 70px right, 90px down, 0.55 scale), as the scroll
- * moves from the crossfade to the first card.
+ * Phones: the robot starts further back (the mock's 90px down, 0.55 scale)
+ * and on the left, where scene 1 left it, and approaches the head shot on the
+ * right as the scroll moves from the crossfade to the first card (María Sol,
+ * 10 Nov: it reads as the robot crossing from left to right).
  */
 export const phoneApproachFrom = (f: Framing, viewport: Viewport): Framing => ({
   scale: f.scale * 0.55,
-  x: vwOf(viewport.width)((parseFloat(f.x) / 100) * viewport.width + 70),
+  x: vwOf(viewport.width)(PHONE_APPROACH_X * viewport.width),
   y: `${parseFloat(f.y) + (90 / viewport.height) * 100}%`,
 });
+/** The approach's start: the head over scene 1's (~32 % of the width), as a pan. */
+const PHONE_APPROACH_X = -0.18;
+
+/**
+ * Phones, scene 2: the head's resting direction (radians), turned to the left,
+ * toward the title and the cards; headSway moves around it.
+ */
+export const PHONE_HEAD_GAZE = { x: 0, y: -0.3 };
 // dx scales with the window height, like the rig's own offset.
 const GIANT = { scale: 4.86, dx: 0.342, y: 106.8 };
 

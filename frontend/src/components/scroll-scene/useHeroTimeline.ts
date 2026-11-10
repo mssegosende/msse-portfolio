@@ -13,6 +13,7 @@ import {
   takeThemeReloadScrollY,
 } from "../../lib/themeReload";
 import {
+  PHONE_HEAD_GAZE,
   SCENE1,
   SCENE2,
   XFADE_AT,
@@ -27,6 +28,7 @@ import {
   pinLength,
   snapStops,
   vwOf,
+  type PhoneTitle,
 } from "./choreography";
 import type { HeroSceneRefs } from "./useHeroScenes";
 
@@ -63,6 +65,36 @@ export const useHeroElements = () =>
   }))[0];
 
 export type HeroElements = ReturnType<typeof useHeroElements>;
+
+/**
+ * Phones: the title heading's lines (right end, top, bottom) and its last
+ * letter's left side, px in the section (its box runs to the screen's edge, so
+ * the text is measured). Relative to the title's box, so its rise (a
+ * transform) doesn't count.
+ */
+const measureTitle = (title: HTMLElement | null): PhoneTitle | undefined => {
+  const h2 = title?.querySelector("h2");
+  if (!title || !h2) return undefined;
+  const box = title.getBoundingClientRect();
+  const dx = title.offsetLeft - box.left;
+  const dy = title.offsetTop - box.top;
+  const range = document.createRange();
+  range.selectNodeContents(h2);
+  const lines = [...range.getClientRects()]
+    .filter((r) => r.width > 0)
+    .map((r) => ({ right: r.right + dx, top: r.top + dy, bottom: r.bottom + dy }));
+  // The last letter: the last non-space character of the last text.
+  const walker = document.createTreeWalker(h2, NodeFilter.SHOW_TEXT);
+  let text: Text | null = null;
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (n.textContent?.trim()) text = n as Text;
+  }
+  const end = text ? text.data.trimEnd().length : 0;
+  if (!lines.length || !text || !end) return undefined;
+  range.setStart(text, end - 1);
+  range.setEnd(text, end);
+  return { lines, lastLeft: range.getBoundingClientRect().left + dx };
+};
 
 interface HeroTimelineOptions {
   isMobile: boolean;
@@ -188,6 +220,7 @@ export const useHeroTimeline = ({
             viewport.height,
         },
         title2?.offsetHeight ? title2.offsetTop + title2.offsetHeight : undefined,
+        isMobile ? measureTitle(title2) : undefined,
       );
     };
     const giant = frameGiant();
@@ -339,10 +372,13 @@ export const useHeroTimeline = ({
         const dt = (now - lastGaze) / 1000;
         lastGaze = now;
         if (!reduce) swayT += dt > 0.1 ? 1 / 60 : dt;
+        // Phones look left, toward the title and the cards, and sway around that.
+        const base = isMobile ? PHONE_HEAD_GAZE : { x: 0, y: 0 };
+        const sway = isMobile ? headSway(swayT, { x: 0, y: 0 }) : null;
         const target = reduce
-          ? { x: 0, y: 0 }
-          : isMobile
-            ? headSway(swayT, { x: 0, y: 0 })
+          ? base
+          : sway
+            ? { x: base.x + sway.x, y: base.y + sway.y }
             : headLook(swayT, mouseNRef.current, cursorAttention(now - mouseAtRef.current));
         cur.x += (target.x - cur.x) * 0.06;
         cur.y += (target.y - cur.y) * 0.06;

@@ -48,13 +48,14 @@ describe("giantHeadFraming", () => {
     expect(a.scale).toBe(b.scale);
   });
 
-  it("frames the phone head below the title, and approaches it from further back and right", () => {
+  it("frames the phone head below the title on the right, approached from further back and left", () => {
     const viewport = { width: 390, height: 844 };
     const f = giantHeadFraming(true, viewport);
     expect(parseFloat(f.y)).toBeGreaterThan(0);
+    expect(parseFloat(f.x)).toBeGreaterThan(0);
     const from = phoneApproachFrom(f, viewport);
     expect(from.scale).toBeLessThan(f.scale);
-    expect(parseFloat(from.x)).toBeGreaterThan(parseFloat(f.x));
+    expect(parseFloat(from.x)).toBeLessThan(0);
     expect(parseFloat(from.y)).toBeGreaterThan(parseFloat(f.y));
   });
 
@@ -73,10 +74,11 @@ describe("giantHeadFraming", () => {
     [500, 1100, 130],
     [600, 1300, 130],
   ])(
-    "phone layout %ix%i: the mock's big head with the crown just under the title",
+    "phone layout %ix%i: the mock's big head, its crown no lower than under the title",
     (w, h, title) => {
       const f = giantHeadFraming(true, { width: w, height: h }, title);
-      expect(crownAt(f, h)).toBeCloseTo(title + 6, 0);
+      expect(crownAt(f, h)).toBeLessThanOrEqual(title + 6 + 0.5);
+      expect(crownAt(f, h)).toBeGreaterThanOrEqual(64 - 0.5);
       expect(headWidth(f, h)).toBeCloseTo(w * 0.91, 0);
     },
   );
@@ -98,6 +100,46 @@ describe("giantHeadFraming", () => {
       expect(headWidth(f, h)).toBeGreaterThan(w * minShare);
     },
   );
+
+  // The head's centre on screen: the pan plus its own offset (0.008 of its width).
+  const centreAt = (f: { scale: number; x: string; y: string }, w: number, h: number) =>
+    w / 2 + 0.008 * headWidth(f, h) + (parseFloat(f.x) / 100) * w;
+
+  // The title at 390 (WHAT THE / CORE / RUNS ON), px, and its last letter's left.
+  const TITLE = {
+    lines: [
+      { right: 274, top: 53, bottom: 103 },
+      { right: 164, top: 88, bottom: 138 },
+      { right: 259, top: 124, bottom: 174 },
+    ],
+    lastLeft: 219,
+  };
+  const pan = (w: number, h: number, title = TITLE) =>
+    (parseFloat(giantHeadFraming(true, { width: w, height: h }, 168, title).x) / 100) * w;
+
+  it.each([
+    [375, 667],
+    [390, 700],
+    [390, 844],
+    [430, 932],
+  ])("phone layout %ix%i: the head on the right, still on screen", (w, h) => {
+    const f = giantHeadFraming(true, { width: w, height: h }, 168, TITLE);
+    const centre = centreAt(f, w, h);
+    expect(centre).toBeGreaterThan(w / 2);
+    expect(centre - headWidth(f, h) / 2).toBeLessThan(w - 60);
+  });
+
+  it("comes in from the right as far as the last letter's neighbour allows", () => {
+    // Where the N decides (390x844), the head follows the N's left side.
+    const moved = { ...TITLE, lastLeft: TITLE.lastLeft - 10 };
+    expect(pan(390, 844, moved)).toBeLessThan(pan(390, 844) - 5);
+    // Where WHAT THE decides (390x700), a longer first line keeps it further right.
+    const longer = {
+      ...TITLE,
+      lines: [{ ...TITLE.lines[0]!, right: 290 }, ...TITLE.lines.slice(1)],
+    };
+    expect(pan(390, 700, longer)).toBeGreaterThan(pan(390, 700) + 10);
+  });
 
   it("frames the desktop head as in 1440x900, scaled, on a window narrower than 16:10", () => {
     const ref = giantHeadFraming(false, { width: 1440, height: 900 });

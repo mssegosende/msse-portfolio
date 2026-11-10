@@ -190,7 +190,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
           className="subject-glow"
           style={
             isMobile
-              ? { left: "50%", top: "39%", width: 620, height: 620 }
+              ? { left: "72%", top: "39%", width: 620, height: 620 }
               : { left: "58%", top: "33%", width: 900, height: 900 }
           }
         />
