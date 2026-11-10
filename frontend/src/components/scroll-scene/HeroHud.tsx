@@ -157,17 +157,30 @@ export const HeroHeadline = ({
         </span>
       </div>
     )}
+    {/* Screen readers get these lines from HeroHeading, the page's h1. */}
     <div
+      aria-hidden="true"
       className={isMobile ? "hero-bar-in mt-3.5 text-[13px] leading-[1.7] tracking-[0.3em]" : ""}
     >
-      <h1 data-testid="hero-headline-1" className="font-normal">
+      <div data-testid="hero-headline-1" className="font-normal">
         Build the future
-      </h1>
+      </div>
       <p data-testid="hero-headline-2" className={isMobile ? PHONE_INK_2 : INK_2}>
         One system at a time
       </p>
     </div>
   </div>
+);
+
+/**
+ * The page's one h1, for screen readers: the visible headline (HeroHeadline)
+ * is faded in at Ø1.3 and out at the crossfade with visibility, which takes an
+ * h1 out of the accessibility tree; this one is there from load, always.
+ */
+export const HeroHeading = () => (
+  <h1 data-testid="page-heading" className="sr-only">
+    Build the future. One system at a time.
+  </h1>
 );
 
 /** Phones: SCROLL under the headline, centred, shown from the start. */

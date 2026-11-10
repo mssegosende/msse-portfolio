@@ -19,6 +19,7 @@ import {
 } from "./scroll-scene/capTitle";
 import {
   HeroHeadline,
+  HeroHeading,
   HeroWordmark,
   PhoneBarcode,
   ScrollCue,
@@ -180,6 +181,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       data-hero-in={heroIn}
       className="relative h-screen min-h-[640px] w-full overflow-hidden"
     >
+      <HeroHeading />
       {/* Scene 2 ground, under scene 1's: gradient, glow behind the head, shade,
           vignette and the STACK word. Scene 1's ground fades off it. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0">
