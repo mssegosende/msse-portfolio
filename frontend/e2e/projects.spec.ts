@@ -69,6 +69,6 @@ test("cards link only to Live, never to the code", async ({ page }) => {
   // Lynx (in the row at first) has a Live URL.
   await expect(page.getByTestId("project-live-link-lynx")).toHaveAttribute(
     "href",
-    "https://lynx-site.vercel.app",
+    "https://lynx-site-chi.vercel.app",
   );
 });

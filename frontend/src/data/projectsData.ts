@@ -4,7 +4,8 @@
 // Polaris 18.5 s, the whole recording; Alphecca 27 s, the whole recording,
 // cropped 1.25x into the page column so its text reads, with the
 // recommendation and every monthly cost bar in frame at `startAt`; Lynx
-// 17.6 s, without the full-width conclusions the 16:10 crop would cut; Blaze
+// 15 s, its live page recorded at 1440x900: 2 s on the hero, then How it
+// works, Cases and Same rule. Different life., joined by 0.5 s crossfades; Blaze
 // 24.7 s, the whole recording as María Sol asked: the landing scaled to its
 // full width so the edge-to-edge BLAZE wordmark keeps every letter, the
 // editor cropped from the left so its sidebar stays whole), as 16:10
@@ -32,8 +33,8 @@ export interface ShowcaseProject {
   /**
    * Seconds into the clip where it starts (the poster is that frame), so
    * clips playing side by side are never in sync: every project its own
-   * offset (Marvel Characters 0, Lynx 5, Polaris 7, Alphecca 8, Ethos 10,
-   * Blaze 14; a new one takes a free value). Wrapped into the
+   * offset (Marvel Characters 0, Lynx 1, on its hero, Polaris 7, Alphecca
+   * 8, Ethos 10, Blaze 14; a new one takes a free value). Wrapped into the
    * clip's length; keep the poster at the same frame.
    */
   startAt?: number;
@@ -127,11 +128,11 @@ export const showcaseProjects: ShowcaseProject[] = [
     ],
     // Code: the repo is private; don't link it.
     codeUrl: "",
-    liveUrl: "https://lynx-site.vercel.app",
+    liveUrl: "https://lynx-site-chi.vercel.app",
     media: "/projects/lynx.mp4",
     poster: "/projects/lynx.jpg",
-    startAt: 5,
-    seconds: 17.6,
+    startAt: 1,
+    seconds: 15,
     art: art(30, "82% 62%", "20% 30%"),
   },
   {

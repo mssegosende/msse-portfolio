@@ -36,7 +36,7 @@ It covers three BCRA ordered texts on the life cycle of a financial institution:
 - Subtitle: AI — Fraud & Elder-Exploitation Detection
 - Status: In progress
 - Tags: Python, pandas, Pydantic, LangGraph, Gemini, gitleaks
-- Code: none (the repo is private, don't link it) · Live: https://lynx-site.vercel.app
+- Code: none (the repo is private, don't link it) · Live: https://lynx-site-chi.vercel.app
 
 A pipeline that flags fraud, scams and financial exploitation in older adults' bank accounts. Rules detect the cases. An LLM reads the account holder's profile to tell a real case from a lookalike. Then the code decides: alert, human review or no alert.
 
