@@ -111,39 +111,42 @@ export const giantHeadFraming = (
       y: `${100 * ((stage / h) * (0.5 + GIANT.y / 100) - 0.5)}%`,
     };
   }
-  // Phones: a big head between the title and the card, as in the mock (María
-  // Sol's review: on a real phone the card hid the face; A9: on a tall window
-  // it sat small and low with an empty gap under the title). The card is fixed
-  // in px at the bottom, so the head is placed from the card's top: the eye
-  // line PHONE_HEAD.eyesAbove px over it and the crown just under the title,
-  // whatever the height, no wider than the screen.
+  // Phones: the big head of the mock, as wide as its share of the screen at
+  // any height (María Sol, 10 Nov: on a real phone it read small and centred;
+  // R53 sized it to the gap between the title and the card, which a 3-line
+  // title and a short screen close). The crown sits just under the title; the
+  // eyes go lower to make room, down to PHONE_HEAD.eyesMin over the tallest
+  // card (the head holds while the cards change; the card hides more of the
+  // face than in the mock). Where even that is short, the crown rises in front
+  // of the title, never above the Ø2 pill, and only then does the head get
+  // smaller.
   const h = viewport.height;
   const cardTop = h - PHONE_HEAD.cardBlock;
-  const eyes = cardTop - PHONE_HEAD.eyesAbove;
-  const crownY = Math.max(PHONE_HEAD.topMin, titleBottom + PHONE_HEAD.crownGap);
-  const widest = (viewport.width * PHONE_HEAD.maxWidth) / HEAD_N.widthToCrownEyes;
-  const crownToEyes = Math.max(60, Math.min(eyes - crownY, widest));
+  const span = (viewport.width * PHONE_HEAD.width) / HEAD_N.widthToCrownEyes;
+  const underTitle = Math.max(PHONE_HEAD.topMin, titleBottom + PHONE_HEAD.crownGap);
+  const eyes = Math.min(cardTop - PHONE_HEAD.eyesMin, underTitle + span);
+  const crownToEyes = Math.max(60, Math.min(span, eyes - PHONE_HEAD.topMin));
   // Screen y / height = 0.5 - scale * n + y / 100, n measured on the model.
   const scale = crownToEyes / ((HEAD_N.crown - HEAD_N.eyes) * h);
-  // Capped by the width: the crown stays under the title, the neck fills below.
-  const eyeY = Math.min(eyes, crownY + crownToEyes);
-  const y = 100 * (eyeY / h - 0.5 + scale * HEAD_N.eyes);
+  const y = 100 * (eyes / h - 0.5 + scale * HEAD_N.eyes);
   return { scale, x: vw(PHONE_HEAD.dx * viewport.width), y: `${y}%` };
 };
 // Phone scene 2, in px (design/source/mobile/light/scene-2-capabilities.dc.html
-// at 390 x 844): the card block (card + Ø2.x counter + 6rem to the bottom),
-// the eye line above the card, the crown's place under the title (crownY at
-// 390 x 844, crownGap below the title's last line), the highest the crown
-// goes (under the Ø2 pill: the head is in front of the title) and the widest
-// the head gets, as a share of the screen width (the mock's head nearly
-// spans it).
+// at 390 x 844): the card block of the tallest card (its tags in two rows, as
+// Ø2.3 at 390 and every card from 375 down: card + Ø2.x counter + the gap to
+// the bottom), the least room between the eye line and that card's top (the
+// eye dots' half height and a little), the crown's place
+// under the title (crownY at 390 x 844, crownGap below the title's last line),
+// the highest the crown goes (under the Ø2 pill: the head is in front of the
+// title) and the head's width as a share of the screen's (the mock's ~354 of
+// 390).
 const PHONE_HEAD = {
-  cardBlock: 416,
-  eyesAbove: 115,
+  cardBlock: 451,
+  eyesMin: 26,
   crownY: 143,
   crownGap: 6,
   topMin: 64,
-  maxWidth: 0.96,
+  width: 0.91,
   dx: 0.025,
 };
 // The head's crown and eye line in camera units (screen offset from the centre

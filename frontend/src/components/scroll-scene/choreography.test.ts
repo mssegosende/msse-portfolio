@@ -62,15 +62,42 @@ describe("giantHeadFraming", () => {
   const crownAt = (f: { scale: number; y: string }, h: number) =>
     (0.5 - f.scale * 0.4437 + parseFloat(f.y) / 100) * h;
 
+  const eyesAt = (f: { scale: number; y: string }, h: number) =>
+    (0.5 - f.scale * 0.2858 + parseFloat(f.y) / 100) * h;
+  // The head's width on screen: crown to eyes times the model's 1.46.
+  const headWidth = (f: { scale: number; y: string }, h: number) =>
+    (eyesAt(f, h) - crownAt(f, h)) * 1.46;
+
   it.each([
-    [390, 844, 170],
-    [430, 932, 170],
-    [700, 1000, 130],
+    [430, 932, 160],
+    [500, 1100, 130],
     [600, 1300, 130],
-  ])("phone layout %ix%i: the crown just under the title, at any height (A9)", (w, h, title) => {
-    const f = giantHeadFraming(true, { width: w, height: h }, title);
-    expect(crownAt(f, h)).toBeCloseTo(title + 6, 0);
-  });
+  ])(
+    "phone layout %ix%i: the mock's big head with the crown just under the title",
+    (w, h, title) => {
+      const f = giantHeadFraming(true, { width: w, height: h }, title);
+      expect(crownAt(f, h)).toBeCloseTo(title + 6, 0);
+      expect(headWidth(f, h)).toBeCloseTo(w * 0.91, 0);
+    },
+  );
+
+  it.each([
+    [360, 640, 168, 0.38],
+    [375, 667, 168, 0.45],
+    [390, 700, 168, 0.55],
+    [390, 844, 168, 0.9],
+    [430, 932, 168, 0.9],
+  ])(
+    "phone layout %ix%i: eyes clear of the tallest card, crown under the pill",
+    (w, h, title, minShare) => {
+      const f = giantHeadFraming(true, { width: w, height: h }, title);
+      // The tallest card's top (tags in two rows): 451 px from the bottom.
+      expect(eyesAt(f, h)).toBeLessThanOrEqual(h - 451 - 26 + 0.5);
+      expect(crownAt(f, h)).toBeGreaterThanOrEqual(64 - 0.5);
+      // Never the 60 px head R53 left on short screens (~88 px wide).
+      expect(headWidth(f, h)).toBeGreaterThan(w * minShare);
+    },
+  );
 
   it("frames the desktop head as in 1440x900, scaled, on a window narrower than 16:10", () => {
     const ref = giantHeadFraming(false, { width: 1440, height: 900 });
@@ -114,7 +141,7 @@ describe("timeline", () => {
 });
 
 describe("headSway", () => {
-  it("caps the head at ±0.35 rad whatever the cursor does", () => {
+  it("caps the head at Â±0.35 rad whatever the cursor does", () => {
     for (let t = 0; t < 60; t += 0.7) {
       const { x, y } = headSway(t, { x: 5, y: -5 });
       expect(Math.abs(x)).toBeLessThanOrEqual(0.35);
