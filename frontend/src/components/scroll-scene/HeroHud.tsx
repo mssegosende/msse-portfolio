@@ -67,6 +67,15 @@ export const HeroWordmark = ({ ref, isMobile }: { ref?: Ref<HTMLDivElement>; isM
 // Barcode bar widths, px.
 const BARS = [3, 1, 2, 1, 4, 1, 1, 2, 3, 1, 2, 2, 1, 3, 1, 1, 2, 4, 1, 2, 1, 3, 2, 1];
 
+// The data's type: 8px with 0.04em tracking from 390 up (the mock's), easing
+// to 7px with none at 360. The robot keeps its px size and comes ~0.7px
+// closer per px of narrower screen, so every line ends >= 10px clear of its
+// head (at 8px, STATUS: OPEN TO WORK ran into it at 375 and under it at 360).
+const PHONE_DATA_TYPE = {
+  fontSize: "clamp(7px, calc(100vw / 30 - 5px), 8px)",
+  letterSpacing: "clamp(0px, calc((100vw - 360px) * 0.32 / 30), 0.32px)",
+};
+
 /**
  * Phones: the Ø1.2 barcode, small and quiet, under MSSE:// at the top-left
  * (María Sol's review: scene 1 felt empty beside the robot), with the desktop
@@ -83,7 +92,7 @@ export const PhoneBarcode = () => (
         <span key={i} className="block h-full bg-current" style={{ width: w * 0.6 }} />
       ))}
     </div>
-    <div className="mt-2 font-mono text-[8px] leading-[1.6] tracking-[0.04em]">
+    <div className="mt-2 font-mono leading-[1.6]" style={PHONE_DATA_TYPE}>
       {systemCheck.map((line) => (
         <div key={line}>{line}</div>
       ))}
