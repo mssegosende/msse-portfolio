@@ -4,7 +4,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { getLenis } from "../../hooks/useLenis";
 import { VIEW_CSS_SCALE, applyView } from "../../lib/spline/camera";
 import { BOT_HOME, applyPose } from "../../lib/spline/rig";
-import { noteRenderedFrame } from "../../lib/spline/quality";
+import { noteRenderedFrame, prepareToRun } from "../../lib/spline/quality";
 import { REDUCED_MOTION_QUERY } from "../../lib/motion";
 import { isProjectsInView } from "../../lib/sceneFocus";
 import type { SplineApp, ViewTransform } from "../../lib/spline/types";
@@ -319,6 +319,7 @@ export const useHeroTimeline = ({
     // so nothing stays hidden, and the hero rebuilds stacked.
     const ctx = gsap.context(() => {}, sectionRef);
     let stopStacked = (): void => {};
+    let stopKeepProgress = (): void => {};
     const build = () => {
       if (isMobile) {
         // Both scenes are framed by their cameras (applyView); the wrappers stay untransformed.
@@ -534,6 +535,8 @@ export const useHeroTimeline = ({
         if (!app || !settledRef.current.has(app)) return;
         try {
           if (on) {
+            // A scene resized while stopped fits its box before it draws again.
+            if (app._isPaused) prepareToRun(app);
             app.play();
           } else {
             app.stop();
@@ -720,6 +723,34 @@ export const useHeroTimeline = ({
       };
 
       if (tl.scrollTrigger) heroEndRef.current = tl.scrollTrigger.end;
+
+      // Desktop: a window resize keeps the visitor at the same point of the
+      // sequence. The pin's length is a share of the viewport height, so the
+      // refresh after a resize moved the same scroll px to another beat (taller
+      // windows went back to scene 1, shorter ones on to the next card).
+      // Inside the pin only; phones are left as they were.
+      const st = tl.scrollTrigger;
+      if (st && !isMobile) {
+        let keep: number | null = null;
+        const onRefreshInit = () => {
+          keep = st.progress > 0 && st.progress < 1 ? st.progress : null;
+        };
+        const onRefresh = () => {
+          if (keep === null) return;
+          const y = st.start + keep * (st.end - st.start);
+          keep = null;
+          const lenis = getLenis();
+          if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
+          else window.scrollTo(0, y);
+          ScrollTrigger.update();
+        };
+        ScrollTrigger.addEventListener("refreshInit", onRefreshInit);
+        ScrollTrigger.addEventListener("refresh", onRefresh);
+        stopKeepProgress = () => {
+          ScrollTrigger.removeEventListener("refreshInit", onRefreshInit);
+          ScrollTrigger.removeEventListener("refresh", onRefresh);
+        };
+      }
     };
     try {
       ctx.add(build);
@@ -792,6 +823,7 @@ export const useHeroTimeline = ({
       title2Size.disconnect();
       heroVisibility.disconnect();
       stopStacked();
+      stopKeepProgress();
       if (lenis) lenis.off("scroll", onScroll);
       if (applyGazeRef.current) gsap.ticker.remove(applyGazeRef.current);
       ctx.revert();

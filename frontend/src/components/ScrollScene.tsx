@@ -155,7 +155,16 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
   useEffect(() => {
     if (isMobile) return undefined;
     let live = true;
-    const onResize = () => setViewport({ w: window.innerWidth, h: window.innerHeight });
+    // One update per frame: a drag fires resize far more often, and each one
+    // re-rendered the whole hero and its cards.
+    let frame = 0;
+    const onResize = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        setViewport({ w: window.innerWidth, h: window.innerHeight });
+      });
+    };
     const measure = () => {
       const [full, first] = Array.from(titleMeasureRef.current?.children ?? []) as HTMLElement[];
       if (live && full?.offsetWidth && first?.offsetWidth) {
@@ -167,6 +176,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     window.addEventListener("resize", onResize);
     return () => {
       live = false;
+      cancelAnimationFrame(frame);
       window.removeEventListener("resize", onResize);
     };
   }, [isMobile]);

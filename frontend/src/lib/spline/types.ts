@@ -19,6 +19,8 @@ export interface RuntimeCamera {
   quaternion?: object;
   rotation?: object;
   zoom: number;
+  /** Perspective cameras only. */
+  aspect?: number;
   projectionMatrix: { elements: number[] };
   updateProjectionMatrix: (...args: unknown[]) => unknown;
   /** Set by applyView: the view re-applied on every projection update. */
@@ -30,6 +32,8 @@ export interface RuntimeCamera {
 export interface RuntimeRenderer {
   viewportWidth: number;
   viewportHeight: number;
+  /** The ratio last set through setPixelRatio. */
+  _pixelRatio?: number;
   setAnimationLoop: (callback: unknown) => void;
   setPixelRatio: (ratio: number) => void;
   setSize: (width: number, height: number, updateStyle?: boolean) => void;
@@ -48,6 +52,16 @@ export type SplineApp = Application & {
   _renderer?: RuntimeRenderer;
   _scene?: SceneNode;
   scene?: SceneNode;
+  /** Stopped by stop(), until play(). */
+  _isPaused?: boolean;
+  /** The size _resize applies; the runtime's observer sets it from the canvas. */
+  _viewportWidth?: number;
+  _viewportHeight?: number;
+  /** Buffers, camera aspect and projection from _viewportWidth/Height. */
+  _resize?: (force?: boolean) => void;
+  /** What the runtime's ResizeObserver on the canvas's box calls. */
+  _debouncedResize?: () => void;
+  _requestRenderAutoMode?: () => void;
 };
 
 export type SplineObject = SPEObject;
