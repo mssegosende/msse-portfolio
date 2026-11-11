@@ -168,6 +168,23 @@ const neckEdges = async (page: Page) => {
   );
 };
 
+/** Count page loads in this tab (a reload adds one). Top frame only. */
+const countLoads = (page: Page) =>
+  page.addInitScript(() => {
+    if (window.top !== window) return;
+    try {
+      const n = Number(sessionStorage.getItem("e2e-loads") || 0) + 1;
+      sessionStorage.setItem("e2e-loads", String(n));
+    } catch {
+      /* no sessionStorage */
+    }
+  });
+const loads = (page: Page) =>
+  page
+    .evaluate(() => Number(sessionStorage.getItem("e2e-loads") || 0))
+    // Mid-reload there is no page to ask; the polls ask again.
+    .catch(() => -1);
+
 /**
  * The hero canvas on screen: the share of sampled pixels it drew (read right
  * after one of its frames, from its own context) and its buffer's proportions.
@@ -290,9 +307,10 @@ test.describe("desktop window resize on scene 2", () => {
       }
     });
 
-    // Narrowing a desktop window into the phone layout unmounts the desktop
-    // scenes: their dispose() threw (R88-R89) and the whole page went white,
-    // for good. Back on desktop, the hero and scene 2 draw again.
+    // A desktop window crossing the phone breakpoint reloads the page, once per
+    // crossing (lib/layoutReload): swapping the scenes in place piled up GPU
+    // memory until the driver reset (R87), and their dispose() threw (R88-R89,
+    // the page went white). Back on desktop, the hero and scene 2 draw again.
     test(`${theme}: across the phone breakpoint and back, the hero draws again`, async ({
       playwright,
       baseURL,
@@ -305,6 +323,7 @@ test.describe("desktop window resize on scene 2", () => {
       const page = await browser.newPage({ viewport: DESKTOP, deviceScaleFactor: 1, baseURL });
       const errors: string[] = [];
       page.on("pageerror", (e) => errors.push(e.message));
+      await countLoads(page);
       try {
         await openHome(page);
         await expect(page.getByTestId("spline2-canvas-wrap")).toHaveClass(/opacity-100/, {
@@ -328,9 +347,11 @@ test.describe("desktop window resize on scene 2", () => {
 
         // Scene 1, top of the page: 1440 -> 760 (phone layout) -> 1440.
         await drag(DESKTOP.width, 760);
+        await expect.poll(() => loads(page), { timeout: 30_000 }).toBe(2);
         expect(errors).toEqual([]);
         await expect.poll(sceneCanvases, { timeout: 60_000 }).toBe(2);
         await drag(760, DESKTOP.width);
+        await expect.poll(() => loads(page), { timeout: 30_000 }).toBe(3);
         expect(errors).toEqual([]);
         await expect.poll(sceneCanvases, { timeout: 90_000 }).toBe(4);
         await expect(page.getByTestId("spline-canvas-wrap")).toHaveAttribute(
@@ -362,4 +383,42 @@ test.describe("desktop window resize on scene 2", () => {
       }
     });
   }
+});
+
+// Desktop windows reload across the breakpoint, once per drag and only if the
+// drag ends on the other side; the reload keeps the point of the sequence.
+// Layout logic only: the scenes are blocked.
+test.describe("desktop window across the phone breakpoint", () => {
+  test.use({ viewport: { width: 760, height: 900 } });
+
+  test("a quick back-and-forth reloads once, at the same point of the pin", async ({ page }) => {
+    await blockSpline(page);
+    await countLoads(page);
+    await openHome(page);
+    expect(await loads(page)).toBe(1);
+    await expect(page.getByTestId("capability-cards")).toHaveAttribute("data-layout", /.+/);
+    // On the phone layout's first card; its snap settles the position.
+    await scrollToPin(page, 0.52);
+    const before = await pinProgress(page);
+
+    const width = (w: number) => page.setViewportSize({ width: w, height: 900 });
+    // Back and forth across 767, ending on the side it started: no reload.
+    for (const w of [800, 760, 820, 750, 790, 760]) {
+      await width(w);
+      await page.waitForTimeout(16);
+    }
+    await page.waitForTimeout(1500);
+    expect(await loads(page)).toBe(1);
+
+    // Back and forth again, ending on the desktop side: one reload.
+    for (const w of [800, 760, 820, 750, 900, 1100, 1440]) {
+      await width(w);
+      await page.waitForTimeout(16);
+    }
+    await expect.poll(() => loads(page), { timeout: 15_000 }).toBe(2);
+    await expect(page.locator(".pin-spacer")).toBeAttached();
+    await page.waitForTimeout(2500);
+    expect(await loads(page)).toBe(2);
+    expect(Math.abs((await pinProgress(page)) - before)).toBeLessThan(0.005);
+  });
 });

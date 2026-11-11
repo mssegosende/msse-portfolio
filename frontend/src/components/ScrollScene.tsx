@@ -5,6 +5,7 @@ import { profile } from "../data/portfolioData";
 import { Num } from "./Num";
 import { useTheme } from "../hooks/useTheme";
 import { MOBILE_LAYOUT_QUERY } from "../lib/layout";
+import { LAYOUT_RELOADS, LOADED_AS_PHONE } from "../lib/layoutReload";
 import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { OVERSAMPLE, OVERSAMPLE_1 } from "../lib/spline/camera";
 import { patchSplineRuntime } from "../lib/spline/runtime";
@@ -78,7 +79,10 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
   const altBoxRef = useRef<HTMLDivElement>(null);
 
   // A breakpoint flip rebuilds the timeline (isMobile is an effect dependency).
-  const isMobile = useMediaQuery(MOBILE_LAYOUT_QUERY);
+  // Desktop windows keep the layout they loaded with: crossing the breakpoint
+  // reloads the page (lib/layoutReload) instead of swapping the scenes here.
+  const liveMobile = useMediaQuery(MOBILE_LAYOUT_QUERY);
+  const isMobile = LAYOUT_RELOADS ? LOADED_AS_PHONE : liveMobile;
   // Reduced motion: no pin, no scrub; scene 2 gets its own screen under scene 1.
   // Also the fallback if the pinned timeline fails to build.
   const reduceMotion = useMediaQuery(REDUCED_MOTION_QUERY);

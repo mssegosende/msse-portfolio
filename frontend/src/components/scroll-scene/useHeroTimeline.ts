@@ -10,7 +10,7 @@ import { isProjectsInView } from "../../lib/sceneFocus";
 import type { SplineApp, ViewTransform } from "../../lib/spline/types";
 import {
   hasThemeReloadPosition,
-  pendingThemeReload,
+  pendingJourneyDone,
   takeThemeReloadScrollY,
 } from "../../lib/themeReload";
 import {
@@ -138,8 +138,8 @@ export const useHeroTimeline = ({
 }: HeroTimelineOptions) => {
   // A phone theme reload comes from the dock, so the sequence was already seen:
   // start with the dock shown and no SKIP INTRO.
-  const [journeyDone, setJourneyDone] = useState(!!pendingThemeReload);
-  const journeyRef = useRef(!!pendingThemeReload);
+  const [journeyDone, setJourneyDone] = useState(pendingJourneyDone);
+  const journeyRef = useRef(pendingJourneyDone);
   // Scene 2's card on screen (-1 before the first), and whether the pin is at its end.
   const [cardIndex, setCardIndex] = useState(-1);
   const cardIndexRef = useRef(-1);
