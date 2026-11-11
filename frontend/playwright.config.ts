@@ -12,6 +12,10 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // Tests tagged @gpu need the real Spline scenes rendered at speed. CI runners
+  // have no GPU (SwiftShader): the scenes never finish loading there, so CI
+  // skips them; they run locally, on a GPU.
+  grepInvert: process.env.CI ? /@gpu/ : undefined,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
   use: {
     browserName: "chromium",

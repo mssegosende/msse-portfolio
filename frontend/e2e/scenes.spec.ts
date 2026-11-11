@@ -11,7 +11,8 @@ const trackErrors = (page: Page) => {
   return errors;
 };
 
-test.describe("desktop", () => {
+// @gpu: real Spline rendering; CI (no GPU) skips these, see playwright.config.ts.
+test.describe("desktop", { tag: "@gpu" }, () => {
   test.use({ viewport: DESKTOP });
 
   test("both hero models and both chapter 2 models load", async ({ page }) => {
@@ -53,7 +54,7 @@ test.describe("when 3D is unavailable", () => {
   });
 });
 
-test.describe("phone", () => {
+test.describe("phone", { tag: "@gpu" }, () => {
   test.use(PHONE);
 
   // iOS kills the tab above two live scenes.

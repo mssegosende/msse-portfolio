@@ -104,8 +104,11 @@ for (const { fit, ...viewport } of DESKTOP_SIZES) {
       // head scales with the 1440x900 layout fitted to the window (A9).
       const stage = Math.min(vp.height, (vp.width * 900) / 1440);
       const headClear = vp.width / 2 - 0.08 * stage - 28;
-      // No word of the title under the head.
-      expect(title!.right).toBeLessThanOrEqual(headClear + 0.5);
+      // No word of the title under the head. capTitleFit sizes the title to fill
+      // the room exactly (0.08 px to spare at 768x1024 on Windows); Linux draws
+      // the same text at that fractional size ~1.5 px wider (319 vs 317.5 in
+      // CI). 2 px of margin, inside the 28 px gap before the head.
+      expect(title!.right).toBeLessThanOrEqual(headClear + 2);
       inRow.forEach((card, i) => {
         expect(card!.top).toBeGreaterThanOrEqual(0);
         expect(card!.left).toBeGreaterThanOrEqual(0);

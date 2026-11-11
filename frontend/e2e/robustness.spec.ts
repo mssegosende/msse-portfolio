@@ -22,6 +22,23 @@ const CONTENT = [
   '[data-testid="footer"]',
 ];
 
+/** Wait for running CSS transitions and animations to end (endless loops aside). */
+const revealsDone = (page: Page) =>
+  page
+    .waitForFunction(
+      () =>
+        document
+          .getAnimations()
+          .every(
+            (a) => a.playState !== "running" || a.effect?.getComputedTiming().endTime === Infinity,
+          ),
+      null,
+      { timeout: 3000 },
+    )
+    .catch(() => {
+      /* still moving after 3 s: the opacity check below says what it reached */
+    });
+
 /** Effective opacity of each element (product up the tree; hidden counts as 0). */
 const opacities = (page: Page) =>
   page.evaluate((sels) => {
@@ -77,7 +94,11 @@ for (const [name, device] of [
       const step = Math.round((device.viewport.height ?? 900) * 0.5);
       for (let y = 0; y <= total + step; y += step) {
         await page.evaluate((yy) => window.scrollTo(0, yy), Math.min(y, total));
-        await page.waitForTimeout(350);
+        // Let the reveals this position started finish (About's slow ones take
+        // 1.2 s): a fixed 350 ms sampled them mid-fade and moved on before the
+        // last chapter, fully visible over ~1,200 px of scroll, reached 1.
+        await page.waitForTimeout(150);
+        await revealsDone(page);
         for (const [sel, o] of Object.entries(await opacities(page))) {
           best[sel] = Math.max(best[sel] ?? 0, o);
         }
@@ -232,7 +253,9 @@ const heroDrawn = (page: Page) =>
     };
   });
 
-test.describe("desktop window resize on scene 2", () => {
+// @gpu: real Spline rendering (canvas buffers, framing, drawn pixels); CI skips
+// these (no GPU), see playwright.config.ts. The pin check runs in CI below.
+test.describe("desktop window resize on scene 2", { tag: "@gpu" }, () => {
   // One at a time: two pages of four software-rendered scenes starve each other.
   test.describe.configure({ mode: "default" });
 
@@ -300,8 +323,17 @@ test.describe("desktop window resize on scene 2", () => {
         const after = await shownScene2(page);
         expect(Math.abs(after.scale / before.scene.scale - 1)).toBeLessThan(0.005);
         const neckAfter = await neckEdges(page);
-        expect(Math.abs(neckAfter.left - neckBefore.left)).toBeLessThan(16);
-        expect(Math.abs(neckAfter.right - neckBefore.right)).toBeLessThan(16);
+        // The robot sways while idle (±6 px, ±0.5°) and looks around, which
+        // moves the neck by up to ~16 px between two moments (18 seen under
+        // load), and its turning shows more or less of the neck rods (width
+        // ±5 px seen). So the width (size and proportions) gets 8 px, 2 % of a
+        // 366 px neck (a framing error like R88's 0.88 zoom is ~44 px), and the
+        // place gets the sway's margin.
+        const width = (n: { left: number; right: number }) => n.right - n.left;
+        const centre = (n: { left: number; right: number }) => (n.left + n.right) / 2;
+        const neck = JSON.stringify({ neckBefore, neckAfter });
+        expect(Math.abs(width(neckAfter) - width(neckBefore)), neck).toBeLessThan(8);
+        expect(Math.abs(centre(neckAfter) - centre(neckBefore)), neck).toBeLessThan(20);
       } finally {
         await browser.close();
       }
@@ -363,8 +395,13 @@ test.describe("desktop window resize on scene 2", () => {
         await expect
           .poll(async () => (await heroDrawn(page)).drawn, { timeout: 60_000 })
           .toBeGreaterThan(0.1);
-        const hero = await heroDrawn(page);
-        expect(Math.abs(hero.aspect - 1)).toBeLessThan(0.005);
+        // Polled: when the reload lands mid-drag, the new page is still being
+        // resized, and its buffers follow ~300 ms after the drag settles (the
+        // camera keeps the proportions meanwhile). A buffer stuck at the wrong
+        // proportions never converges and fails here.
+        await expect
+          .poll(async () => Math.abs((await heroDrawn(page)).aspect - 1), { timeout: 10_000 })
+          .toBeLessThan(0.005);
 
         // And on to scene 2.
         await expect(page.getByTestId("spline2-canvas-wrap")).toHaveClass(/opacity-100/, {
@@ -391,28 +428,22 @@ test.describe("desktop window resize on scene 2", () => {
 test.describe("desktop window across the phone breakpoint", () => {
   test.use({ viewport: { width: 760, height: 900 } });
 
-  test("a quick back-and-forth reloads once, at the same point of the pin", async ({ page }) => {
+  // A drag across the breakpoint reloads once and keeps the point of the
+  // sequence. Steps in one direction: on a slow runner each step can take
+  // longer than the 400 ms settle, and a back-and-forth then rightly reloads at
+  // every pause. That timing (one reload per drag, none if it ends where it
+  // started) is covered by layoutReload.test.ts with fake timers.
+  test("crossing it reloads once, at the same point of the pin", async ({ page }) => {
     await blockSpline(page);
     await countLoads(page);
     await openHome(page);
     expect(await loads(page)).toBe(1);
-    await expect(page.getByTestId("capability-cards")).toHaveAttribute("data-layout", /.+/);
     // On the phone layout's first card; its snap settles the position.
     await scrollToPin(page, 0.52);
     const before = await pinProgress(page);
 
-    const width = (w: number) => page.setViewportSize({ width: w, height: 900 });
-    // Back and forth across 767, ending on the side it started: no reload.
-    for (const w of [800, 760, 820, 750, 790, 760]) {
-      await width(w);
-      await page.waitForTimeout(16);
-    }
-    await page.waitForTimeout(1500);
-    expect(await loads(page)).toBe(1);
-
-    // Back and forth again, ending on the desktop side: one reload.
-    for (const w of [800, 760, 820, 750, 900, 1100, 1440]) {
-      await width(w);
+    for (let w = 780; w <= 1440; w += 60) {
+      await page.setViewportSize({ width: w, height: 900 });
       await page.waitForTimeout(16);
     }
     await expect.poll(() => loads(page), { timeout: 15_000 }).toBe(2);
@@ -420,5 +451,37 @@ test.describe("desktop window across the phone breakpoint", () => {
     await page.waitForTimeout(2500);
     expect(await loads(page)).toBe(2);
     expect(Math.abs((await pinProgress(page)) - before)).toBeLessThan(0.005);
+  });
+});
+
+// The same resize drag with the scenes blocked: the pin keeps its point of the
+// sequence at every size (R88-R89). Layout and scroll only, so it runs in CI.
+test.describe("desktop window resize on scene 2, the pin", () => {
+  test.use({ viewport: DESKTOP });
+
+  test("keeps the point of the sequence at every size of a resize drag", async ({ page }) => {
+    await blockSpline(page);
+    await openHome(page);
+    await scrollToPin(page, FIRST_CARD);
+    const before = await pinProgress(page);
+    for (let i = 1; i < DRAG.length; i++) {
+      const [w0, h0] = DRAG[i - 1]!;
+      const [w1, h1] = DRAG[i]!;
+      for (let s = 1; s <= DRAG_STEPS; s++) {
+        await page.setViewportSize({
+          width: Math.round(w0 + ((w1 - w0) * s) / DRAG_STEPS),
+          height: Math.round(h0 + ((h1 - h0) * s) / DRAG_STEPS),
+        });
+        await page.waitForTimeout(16);
+      }
+      // Polled: the pin's refresh waits for 0.2 s of GSAP time, which a slow
+      // runner stretches.
+      await expect
+        .poll(async () => Math.abs((await pinProgress(page)) - before), {
+          message: `${w1}x${h1}`,
+          timeout: 30_000,
+        })
+        .toBeLessThan(0.003);
+    }
   });
 });
