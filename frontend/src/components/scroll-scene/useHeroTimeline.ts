@@ -31,6 +31,7 @@ import {
   vwOf,
   type PhoneTitle,
 } from "./choreography";
+import { pinPointToKeep } from "./keepPin";
 import type { HeroSceneRefs } from "./useHeroScenes";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -725,28 +726,37 @@ export const useHeroTimeline = ({
       if (tl.scrollTrigger) heroEndRef.current = tl.scrollTrigger.end;
 
       // Desktop: a window resize keeps the visitor at the same point of the
-      // sequence. The pin's length is a share of the viewport height, so the
-      // refresh after a resize moved the same scroll px to another beat (taller
-      // windows went back to scene 1, shorter ones on to the next card).
-      // Inside the pin only; phones are left as they were.
+      // sequence (pinPointToKeep). Only the refresh that follows a resize, and
+      // from the live scroll position: the visitor's own scroll always wins.
+      // Phones are left as they were.
       const st = tl.scrollTrigger;
       if (st && !isMobile) {
+        let resized = false;
         let keep: number | null = null;
+        const onResize = () => {
+          resized = true;
+        };
         const onRefreshInit = () => {
-          keep = st.progress > 0 && st.progress < 1 ? st.progress : null;
+          // Before the revert: the pin's start and end are still the ones the
+          // current scroll position was made against.
+          keep = pinPointToKeep({ resized, scrollY: window.scrollY, start: st.start, end: st.end });
+          resized = false;
         };
         const onRefresh = () => {
           if (keep === null) return;
-          const y = st.start + keep * (st.end - st.start);
+          const y = Math.round(st.start + keep * (st.end - st.start));
           keep = null;
+          if (Math.abs(window.scrollY - y) < 1) return;
           const lenis = getLenis();
           if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
           else window.scrollTo(0, y);
           ScrollTrigger.update();
         };
+        window.addEventListener("resize", onResize);
         ScrollTrigger.addEventListener("refreshInit", onRefreshInit);
         ScrollTrigger.addEventListener("refresh", onRefresh);
         stopKeepProgress = () => {
+          window.removeEventListener("resize", onResize);
           ScrollTrigger.removeEventListener("refreshInit", onRefreshInit);
           ScrollTrigger.removeEventListener("refresh", onRefresh);
         };
