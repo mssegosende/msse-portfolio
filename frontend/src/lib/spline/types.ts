@@ -60,7 +60,7 @@ export type SplineApp = Application & {
   /** Buffers, camera aspect and projection from _viewportWidth/Height. */
   _resize?: (force?: boolean) => void;
   /** What the runtime's ResizeObserver on the canvas's box calls. */
-  _debouncedResize?: () => void;
+  _debouncedResize?: (() => void) & { cancel?: () => void };
   _requestRenderAutoMode?: () => void;
 };
 

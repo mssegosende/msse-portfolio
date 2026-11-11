@@ -180,7 +180,24 @@ export const trackRenderQuality = (app: SplineApp): void => {
   // The runtime's observer sets _viewportWidth/Height from the canvas and then
   // calls this, looked up on the instance at call time. Private API: if it
   // changes, the runtime resizes on its own as before.
-  if (typeof app._debouncedResize === "function") app._debouncedResize = () => onBoxResize(app);
+  const own = app._debouncedResize;
+  if (typeof own !== "function") return;
+  // Wrapped, not replaced: the runtime also uses the function's own members.
+  // dispose() calls its cancel(); a plain function there threw half-way
+  // through every dispose, and the layout switch to phones (which unmounts the
+  // desktop scenes) took the whole page down with it, white for good.
+  app._debouncedResize = new Proxy(own, {
+    apply: () => onBoxResize(app),
+    get: (target, key, receiver) =>
+      key === "cancel"
+        ? () => {
+            // Disposed: stop following it, then the runtime's own cancel.
+            tracked.delete(app);
+            aspectPending.delete(app);
+            return target.cancel?.();
+          }
+        : Reflect.get(target, key, receiver),
+  });
 };
 
 /**

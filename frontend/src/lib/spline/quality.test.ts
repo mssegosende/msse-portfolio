@@ -41,8 +41,17 @@ const runtimeApp = (width: number, height: number) => {
     app._camera!.aspect = w / h;
   });
   app._resize = resize;
-  app._debouncedResize = vi.fn();
+  // The runtime's own debounced resize: a function with a cancel().
+  const ownCancel = vi.fn();
+  const ownResize = Object.assign(vi.fn(), { cancel: ownCancel });
+  app._debouncedResize = ownResize;
   app._isPaused = false;
+  /** What the runtime's dispose() does with it. */
+  const dispose = () => {
+    app._renderer = undefined;
+    // Called unconditionally, as the runtime does.
+    (app._debouncedResize as unknown as { cancel: () => void }).cancel();
+  };
   /** What the runtime's ResizeObserver does when the box changes. */
   const resizeBox = (w: number, h: number) => {
     fake.box.width = w;
@@ -51,7 +60,7 @@ const runtimeApp = (width: number, height: number) => {
     app._viewportHeight = h;
     app._debouncedResize?.();
   };
-  return { ...fake, resize, resizeBox, updateProjectionMatrix };
+  return { ...fake, resize, resizeBox, updateProjectionMatrix, ownResize, ownCancel, dispose };
 };
 
 describe("render quality", () => {
@@ -196,5 +205,26 @@ describe("render quality", () => {
     expect(setPixelRatio).not.toHaveBeenCalled();
     quality.prepareToRun(app);
     expect(setPixelRatio.mock.calls[0]?.[0]).toBeLessThan(full);
+  });
+
+  it("keeps the runtime's dispose() whole: its cancel() still works", () => {
+    const { app, ownResize, ownCancel, dispose } = runtimeApp(1866, 1170);
+    quality.cappedPixelRatio(app, 1);
+    quality.trackRenderQuality(app);
+    // A layout switch unmounts the scene; this threw before.
+    expect(dispose).not.toThrow();
+    expect(ownCancel).toHaveBeenCalledTimes(1);
+    // Box resizes still go through the coordinator, not the runtime's debounce.
+    expect(ownResize).not.toHaveBeenCalled();
+  });
+
+  it("stops following a disposed scene", () => {
+    const { app, resize, resizeBox, dispose } = runtimeApp(1866, 1170);
+    quality.cappedPixelRatio(app, 1);
+    quality.trackRenderQuality(app);
+    resizeBox(1008, 1170);
+    dispose();
+    wait(1000);
+    expect(resize).not.toHaveBeenCalled();
   });
 });

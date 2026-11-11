@@ -168,6 +168,53 @@ const neckEdges = async (page: Page) => {
   );
 };
 
+/**
+ * The hero canvas on screen: the share of sampled pixels it drew (read right
+ * after one of its frames, from its own context) and its buffer's proportions.
+ */
+const heroDrawn = (page: Page) =>
+  page.evaluate(async () => {
+    const shown = [
+      ...document.querySelectorAll<HTMLCanvasElement>('[data-testid="spline-canvas-wrap"] canvas'),
+    ].filter((c) => {
+      for (let n: Element | null = c; n; n = n.parentElement) {
+        const cs = getComputedStyle(n);
+        if (cs.visibility === "hidden" || cs.opacity === "0") return false;
+      }
+      return true;
+    });
+    if (shown.length !== 1) return { canvases: shown.length, drawn: 0, aspect: 0 };
+    const c = shown[0]!;
+    // getContext hands back the canvas's existing context; it never makes one.
+    const gl = (c.getContext("webgl2") || c.getContext("webgl")) as WebGLRenderingContext | null;
+    const drawn = await new Promise<number>((done) => {
+      const timer = setTimeout(() => done(-1), 5000);
+      c.addEventListener(
+        "rendered",
+        () => {
+          clearTimeout(timer);
+          if (!gl || gl.isContextLost()) return done(0);
+          const w = gl.drawingBufferWidth;
+          const h = gl.drawingBufferHeight;
+          const row = new Uint8Array(w * 4);
+          let lit = 0;
+          let total = 0;
+          for (let k = 1; k <= 9; k++) {
+            gl.readPixels(0, Math.floor((h * k) / 10), w, 1, gl.RGBA, gl.UNSIGNED_BYTE, row);
+            for (let x = 0; x < w; x += 4, total++) if (row[x * 4 + 3]! > 8) lit++;
+          }
+          done(lit / total);
+        },
+        { once: true },
+      );
+    });
+    return {
+      canvases: shown.length,
+      drawn,
+      aspect: c.width / c.height / (c.clientWidth / c.clientHeight),
+    };
+  });
+
 test.describe("desktop window resize on scene 2", () => {
   // One at a time: two pages of four software-rendered scenes starve each other.
   test.describe.configure({ mode: "default" });
@@ -238,6 +285,78 @@ test.describe("desktop window resize on scene 2", () => {
         const neckAfter = await neckEdges(page);
         expect(Math.abs(neckAfter.left - neckBefore.left)).toBeLessThan(16);
         expect(Math.abs(neckAfter.right - neckBefore.right)).toBeLessThan(16);
+      } finally {
+        await browser.close();
+      }
+    });
+
+    // Narrowing a desktop window into the phone layout unmounts the desktop
+    // scenes: their dispose() threw (R88-R89) and the whole page went white,
+    // for good. Back on desktop, the hero and scene 2 draw again.
+    test(`${theme}: across the phone breakpoint and back, the hero draws again`, async ({
+      playwright,
+      baseURL,
+    }) => {
+      test.setTimeout(300_000);
+      const browser = await playwright.chromium.launch({
+        executablePath: process.env.PW_CHROMIUM_PATH || undefined,
+        args: ["--enable-unsafe-swiftshader", "--enable-gpu", "--ignore-gpu-blocklist"],
+      });
+      const page = await browser.newPage({ viewport: DESKTOP, deviceScaleFactor: 1, baseURL });
+      const errors: string[] = [];
+      page.on("pageerror", (e) => errors.push(e.message));
+      try {
+        await openHome(page);
+        await expect(page.getByTestId("spline2-canvas-wrap")).toHaveClass(/opacity-100/, {
+          timeout: 90_000,
+        });
+        if (theme === "dark") {
+          await page.getByTestId("theme-toggle").dispatchEvent("click");
+          await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+        }
+        const sceneCanvases = () => page.locator('[data-testid="scene-section"] canvas').count();
+        const drag = async (from: number, to: number) => {
+          for (let s = 1; s <= DRAG_STEPS; s++) {
+            await page.setViewportSize({
+              width: Math.round(from + ((to - from) * s) / DRAG_STEPS),
+              height: DESKTOP.height,
+            });
+            await page.waitForTimeout(16);
+          }
+          await page.waitForTimeout(1000);
+        };
+
+        // Scene 1, top of the page: 1440 -> 760 (phone layout) -> 1440.
+        await drag(DESKTOP.width, 760);
+        expect(errors).toEqual([]);
+        await expect.poll(sceneCanvases, { timeout: 60_000 }).toBe(2);
+        await drag(760, DESKTOP.width);
+        expect(errors).toEqual([]);
+        await expect.poll(sceneCanvases, { timeout: 90_000 }).toBe(4);
+        await expect(page.getByTestId("spline-canvas-wrap")).toHaveAttribute(
+          "data-revealed",
+          "true",
+          { timeout: 90_000 },
+        );
+        await expect(page.getByTestId("hero-fallback")).toHaveCount(0);
+        await expect
+          .poll(async () => (await heroDrawn(page)).drawn, { timeout: 60_000 })
+          .toBeGreaterThan(0.1);
+        const hero = await heroDrawn(page);
+        expect(Math.abs(hero.aspect - 1)).toBeLessThan(0.005);
+
+        // And on to scene 2.
+        await expect(page.getByTestId("spline2-canvas-wrap")).toHaveClass(/opacity-100/, {
+          timeout: 90_000,
+        });
+        await scrollToPin(page, FIRST_CARD);
+        await expect
+          .poll(async () => {
+            const s2 = await shownScene2(page);
+            return Math.abs(s2.bufferAspect / s2.boxAspect - 1);
+          })
+          .toBeLessThan(0.005);
+        expect(errors).toEqual([]);
       } finally {
         await browser.close();
       }
