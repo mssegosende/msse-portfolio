@@ -17,6 +17,11 @@ interface CapabilityCardsProps {
   theme: Theme;
   /** Desktop: where the title ends (capTitleFit), px from the top; the cards start below. */
   titleBottom?: number;
+  /**
+   * Phones, stacked hero (reduced motion, no pin): all the cards in normal
+   * flow, the first in its usual place above the dock, the others below it.
+   */
+  stacked?: boolean;
 }
 
 /**
@@ -32,8 +37,11 @@ export const CapabilityCards = ({
   isMobile,
   theme,
   titleBottom = 180,
+  stacked = false,
 }: CapabilityCardsProps) =>
-  isMobile ? (
+  isMobile && stacked ? (
+    <StackedPhoneCards ref={ref} theme={theme} />
+  ) : isMobile ? (
     <PhoneCards ref={ref} scrollIndex={scrollIndex} autoRotate={autoRotate} theme={theme} />
   ) : (
     <CapabilityRow ref={ref} scrollIndex={scrollIndex} theme={theme} titleBottom={titleBottom} />
@@ -113,6 +121,33 @@ const PhoneCards = ({
         )}
       </div>
       <StepCounter index={Math.max(0, cur)} theme={theme} />
+    </div>
+  );
+};
+
+/**
+ * Phones, stacked: scene 2's first screen as the pin leaves it, a card above
+ * the dock, then the other cards under it on the same ground, so every card
+ * reads without the scroll sequence. Nothing moves.
+ */
+const StackedPhoneCards = ({ ref, theme }: { ref?: Ref<HTMLDivElement>; theme: Theme }) => {
+  const [first, ...rest] = capabilityCards;
+  return (
+    <div
+      ref={ref}
+      data-testid="capability-cards"
+      data-layout="phone-stacked"
+      className="pointer-events-auto relative px-4"
+    >
+      {/* The pinned layout's 6rem above the bottom edge (.callout-mobile). */}
+      <div className="flex min-h-[max(100vh,640px)] flex-col justify-end pb-24">
+        {first && <CapabilityCard card={first} theme={theme} isMobile />}
+      </div>
+      <div className="-mt-12 flex flex-col gap-4 pb-24">
+        {rest.map((card) => (
+          <CapabilityCard key={card.num} card={card} theme={theme} isMobile />
+        ))}
+      </div>
     </div>
   );
 };

@@ -3,7 +3,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Github, Mail } from "lucide-react";
 import { profile } from "../data/portfolioData";
 import { scrollToTop } from "../hooks/useLenis";
+import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useSectionStep } from "../hooks/useSectionStep";
+import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { GridField } from "./GridField";
 import { Num } from "./Num";
 import { SectionBackdrop } from "./SectionBackdrop";
@@ -131,7 +133,9 @@ const TerminalField = ({
  */
 export const Contact = () => {
   const ref = useRef<HTMLElement>(null);
-  const reached = useSectionStep(ref, 3) >= 0;
+  // Reduced motion: shown whole (the hidden states are never armed).
+  const still = useMediaQuery(REDUCED_MOTION_QUERY);
+  const reached = useSectionStep(ref, 3) >= 0 || still;
   const [form, setForm] = useState(EMPTY_FORM);
   const [lines, setLines] = useState<LogLine[]>([]);
   const [errors, setErrors] = useState<{ text: string }[]>([]);
@@ -223,7 +227,14 @@ export const Contact = () => {
   });
 
   return (
-    <section ref={ref} id="contact" data-testid="contact-section" className={s.section}>
+    <section
+      ref={ref}
+      id="contact"
+      data-testid="contact-section"
+      // The reveals' hidden states apply only once JS has armed them.
+      data-armed={!still}
+      className={s.section}
+    >
       <div className={s.stage}>
         <SectionBackdrop scene="contact" />
         <GridField />

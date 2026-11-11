@@ -1,5 +1,12 @@
 import type { Variants } from "framer-motion";
 
+/**
+ * Reduced motion: no pin, no scrub, every scene stacked and shown whole. The
+ * hidden starting states of the scroll reveals are set by JS (a data attribute
+ * written on the first render), never by CSS alone, and never with this on.
+ */
+export const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
 // Shared entrance motion for the content sections (About, Projects,
 // Capabilities, Contact).
 

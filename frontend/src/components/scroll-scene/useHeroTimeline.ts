@@ -5,6 +5,7 @@ import { getLenis } from "../../hooks/useLenis";
 import { VIEW_CSS_SCALE, applyView } from "../../lib/spline/camera";
 import { BOT_HOME, applyPose } from "../../lib/spline/rig";
 import { noteRenderedFrame } from "../../lib/spline/quality";
+import { REDUCED_MOTION_QUERY } from "../../lib/motion";
 import { isProjectsInView } from "../../lib/sceneFocus";
 import type { SplineApp, ViewTransform } from "../../lib/spline/types";
 import {
@@ -62,6 +63,8 @@ export const useHeroElements = () =>
     title2Ref: createRef<HTMLDivElement>(),
     // Scene 2's card stack (phones place it above the dock).
     cardsRef: createRef<HTMLDivElement>(),
+    // Stacked (reduced motion, or no timeline): scene 2's own screen under the hero.
+    scene2PaneRef: createRef<HTMLDivElement>(),
   }))[0];
 
 export type HeroElements = ReturnType<typeof useHeroElements>;
@@ -98,6 +101,14 @@ const measureTitle = (title: HTMLElement | null): PhoneTitle | undefined => {
 
 interface HeroTimelineOptions {
   isMobile: boolean;
+  /**
+   * No pin and no scrub: scene 1 is the hero section at its end state, scene 2
+   * its own screen right below, at its end state (reduced motion, or a
+   * timeline that failed to build).
+   */
+  stacked: boolean;
+  /** The pinned timeline threw while being built: show the hero stacked. */
+  onFail?: () => void;
   darkMode: boolean;
   sceneUrl: string;
   onJourneyEnd?: () => void;
@@ -116,6 +127,8 @@ interface HeroTimelineOptions {
  */
 export const useHeroTimeline = ({
   isMobile,
+  stacked,
+  onFail,
   darkMode,
   sceneUrl,
   onJourneyEnd,
@@ -136,8 +149,10 @@ export const useHeroTimeline = ({
   // In a ref so the layout effect doesn't depend on it (App passes a new closure
   // every render).
   const onJourneyEndRef = useRef(onJourneyEnd);
+  const onFailRef = useRef(onFail);
   useLayoutEffect(() => {
     onJourneyEndRef.current = onJourneyEnd;
+    onFailRef.current = onFail;
   });
   const applyGazeRef = useRef<(() => void) | null>(null);
   const heroEndRef = useRef(0);
@@ -177,6 +192,7 @@ export const useHeroTimeline = ({
       layer2Ref,
       title2Ref,
       cardsRef,
+      scene2PaneRef,
     } = els;
     const {
       app1Ref,
@@ -194,7 +210,8 @@ export const useHeroTimeline = ({
       l2VisibleRef,
       heroVisibleRef,
     } = scenes;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Stacked is still too: no idle motion, parallax, approach or snap.
+    const reduce = window.matchMedia(REDUCED_MOTION_QUERY).matches || stacked;
     const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
     // Phones frame against the section (the canvas), which is 100vh: on iOS the
     // large viewport, taller than innerHeight while the browser bars show.
@@ -298,7 +315,11 @@ export const useHeroTimeline = ({
       scene2View.y = `${mix(from.y, giantNow.y)}%`;
     };
 
-    const ctx = gsap.context(() => {
+    // Built inside try (ctx.add): if GSAP throws, everything it set is reverted,
+    // so nothing stays hidden, and the hero rebuilds stacked.
+    const ctx = gsap.context(() => {}, sectionRef);
+    let stopStacked = (): void => {};
+    const build = () => {
       if (isMobile) {
         // Both scenes are framed by their cameras (applyView); the wrappers stay untransformed.
         gsap.set([canvasWrapRef.current, canvas2WrapRef.current], { clearProps: "transform" });
@@ -318,16 +339,19 @@ export const useHeroTimeline = ({
         scrollCueRef.current,
       ].filter((el): el is HTMLDivElement => !!el);
       // Phones show their bottom stack (Ø1 / Ø5, headline, SCROLL) from the start;
-      // desktop reveals each window on its own step.
-      if (!isMobile) gsap.set(hud1, { autoAlpha: 0, y: 12 });
+      // desktop reveals each window on its own step. Stacked: all shown.
+      if (!isMobile && !stacked) gsap.set(hud1, { autoAlpha: 0, y: 12 });
       if (isMobile) {
         [parallax1Ref.current, parallax2Ref.current, idle1Ref.current, idle2Ref.current].forEach(
           (el) => el && gsap.set(el, { x: 0, y: 0, rotation: 0, scale: 1 }),
         );
       }
-      gsap.set(layer2Ref.current, { opacity: 0 });
-      gsap.set(title2Ref.current, { autoAlpha: 0, y: 16 });
-      gsap.set(cardsEl, { autoAlpha: 0 });
+      // Stacked: scene 2 is its own screen, shown as it ends.
+      if (!stacked) {
+        gsap.set(layer2Ref.current, { opacity: 0 });
+        gsap.set(title2Ref.current, { autoAlpha: 0, y: 16 });
+        gsap.set(cardsEl, { autoAlpha: 0 });
+      }
 
       // Idle motion, desktop only. Scene 1: a float and tilt in px inside the 1.3x
       // wrap, alive without reading as floating, on periods that don't divide each
@@ -502,6 +526,71 @@ export const useHeroTimeline = ({
       applyGazeRef.current = applyGazeAndPose;
       gsap.ticker.add(applyGazeAndPose);
 
+      // Only what is on screen renders: every scene is a full-screen GPU load, and
+      // drawing all four at once is what a laptop GPU can't keep up with. The fade
+      // follows the scrubbed time and scroll leads it, so the hero keeps running
+      // until both are past the fade and layer 2 wakes as soon as either nears it.
+      const setRunning = (app: SplineApp | null | undefined, on: boolean) => {
+        if (!app || !settledRef.current.has(app)) return;
+        try {
+          if (on) {
+            app.play();
+          } else {
+            app.stop();
+            // A load starts its loop from a timeout. One that fires after a stop()
+            // leaves the loop running on a scene marked as stopped, and stop() then
+            // does nothing.
+            app._renderer?.setAnimationLoop(null);
+          }
+        } catch {
+          /* runtime without play()/stop() */
+        }
+      };
+      if (stacked) {
+        // Each scene renders while its own screen is near view (scene 3 in view
+        // idles both, as in the pinned sequence).
+        let scene2Near = false;
+        const near = new IntersectionObserver(
+          ([e]) => {
+            scene2Near = !!e?.isIntersecting;
+          },
+          { rootMargin: "120px" },
+        );
+        // The dock comes once scene 2 is reached, as at the pin's end.
+        const reached = new IntersectionObserver(
+          ([e]) => {
+            if (!e?.isIntersecting || journeyRef.current) return;
+            journeyRef.current = true;
+            setJourneyDone(true);
+            onJourneyEndRef.current?.();
+          },
+          { rootMargin: "0px 0px -50% 0px" },
+        );
+        const pane = scene2PaneRef.current;
+        if (pane) {
+          near.observe(pane);
+          reached.observe(pane);
+        }
+        stopStacked = () => {
+          near.disconnect();
+          reached.disconnect();
+        };
+        syncPlayback = () => {
+          const idle = isProjectsInView();
+          const hero = heroVisibleRef.current && !idle;
+          const layer2 = scene2Near && !idle;
+          setRunning(app1Ref.current, hero && !showAltRef.current);
+          setRunning(appAltRef.current, hero && showAltRef.current);
+          setRunning(app2Ref.current, layer2);
+          Object.entries(l2Ref.current).forEach(([key, entry]) => {
+            if (key.startsWith("d:"))
+              setRunning(entry.app, layer2 && key === "d:" + l2VisibleRef.current);
+          });
+          if ((hero || layer2) && scenesLoadedRef.current) noteRenderedFrame();
+        };
+        return;
+      }
+
       const tl = gsap.timeline({
         defaults: { ease: "none" },
         // The card on screen follows the scrubbed time.
@@ -613,26 +702,6 @@ export const useHeroTimeline = ({
       // Hold, so the last card reads before the pin releases.
       tl.to({}, { duration: Math.max(0.01, SCENE2.end - tl.duration()) });
 
-      // Only what is on screen renders: every scene is a full-screen GPU load, and
-      // drawing all four at once is what a laptop GPU can't keep up with. The fade
-      // follows the scrubbed time and scroll leads it, so the hero keeps running
-      // until both are past the fade and layer 2 wakes as soon as either nears it.
-      const setRunning = (app: SplineApp | null | undefined, on: boolean) => {
-        if (!app || !settledRef.current.has(app)) return;
-        try {
-          if (on) {
-            app.play();
-          } else {
-            app.stop();
-            // A load starts its loop from a timeout. One that fires after a stop()
-            // leaves the loop running on a scene marked as stopped, and stop() then
-            // does nothing.
-            app._renderer?.setAnimationLoop(null);
-          }
-        } catch {
-          /* runtime without play()/stop() */
-        }
-      };
       syncPlayback = () => {
         const shown = tl.time();
         const scrolled = (tl.scrollTrigger?.progress ?? 0) * tl.duration();
@@ -651,7 +720,16 @@ export const useHeroTimeline = ({
       };
 
       if (tl.scrollTrigger) heroEndRef.current = tl.scrollTrigger.end;
-    }, sectionRef);
+    };
+    try {
+      ctx.add(build);
+    } catch (err) {
+      console.error("[hero] timeline failed; showing the scenes stacked", err);
+      if (applyGazeRef.current) gsap.ticker.remove(applyGazeRef.current);
+      stopStacked();
+      ctx.revert();
+      if (!stacked) onFailRef.current?.();
+    }
 
     // Restore the visitor's position. refresh() first, so the pin spacer restores
     // the page height before scrolling.
@@ -713,21 +791,28 @@ export const useHeroTimeline = ({
       window.removeEventListener("resize", reframe2);
       title2Size.disconnect();
       heroVisibility.disconnect();
+      stopStacked();
       if (lenis) lenis.off("scroll", onScroll);
       if (applyGazeRef.current) gsap.ticker.remove(applyGazeRef.current);
       ctx.revert();
     };
     // Depends on sceneUrl, not darkMode: a theme change rebuilds nothing. els and
     // scenes are stable objects.
-  }, [isMobile, sceneUrl, els, scenes]);
+  }, [isMobile, stacked, sceneUrl, els, scenes]);
 
   // Lands just past the pin, at the top of the projects.
   const skipIntro = () => {
-    const y = heroEndRef.current || window.innerHeight * 7;
+    const projects = document.getElementById("projects");
+    const y = stacked
+      ? (projects?.getBoundingClientRect().top ?? 0) + window.scrollY - 4
+      : heroEndRef.current || window.innerHeight * 7;
     const lenis = getLenis();
     if (lenis) lenis.scrollTo(y + 4, { duration: 1.1 });
     else window.scrollTo({ top: y + 4, behavior: "smooth" });
   };
 
-  return { journeyDone, skipIntro, cardIndex, atEnd };
+  // Stacked: scene 2 as it ends, every card out.
+  return stacked
+    ? { journeyDone, skipIntro, cardIndex: cardIndexAt(SCENE2.end), atEnd: true }
+    : { journeyDone, skipIntro, cardIndex, atEnd };
 };

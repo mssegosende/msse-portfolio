@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { REDUCED_MOTION_QUERY } from "@/lib/motion";
 
 // The page's sections in order (the hero holds scenes 1 and 2).
 const ORDER = ["hero", "projects", "about", "contact"] as const;
@@ -21,19 +22,20 @@ const clamp = (v: number) => Math.min(1, Math.max(0, v));
  * - an entering section's background word and head fade in (`--enter`, read
  *   by .bg-word and .dissolve-in in index.css), and its top edge feathers
  *   into that same colour.
- * Phones keep their transitions. Reduced motion: the fade, no blur.
+ * Phones keep their transitions. Reduced motion: none (no scrub), every
+ * section shown whole.
  * Never on the Spline canvas itself: opacity and blur on a section, no transform.
  */
 export const useSectionDissolve = () => {
   useEffect(() => {
     const desktop = window.matchMedia("(min-width: 1024px)");
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const reduce = window.matchMedia(REDUCED_MOTION_QUERY);
     let raf = 0;
 
     const update = () => {
       raf = 0;
       const vh = window.innerHeight;
-      const on = desktop.matches;
+      const on = desktop.matches && !reduce.matches;
       let backdrop = "";
       ORDER.forEach((id, i) => {
         const el = document.getElementById(id);
@@ -43,8 +45,7 @@ export const useSectionDissolve = () => {
         const leave = on && next ? clamp((vh - r.bottom) / (LEAVE * vh)) : 0;
         const enter = on && i > 0 ? clamp((r.top - ENTER_END * vh) / ((1 - ENTER_END) * vh)) : 0;
         el.style.opacity = leave > 0 ? (1 - leave).toFixed(3) : "";
-        el.style.filter =
-          leave > 0 && !reduce.matches ? `blur(${(leave * BLUR).toFixed(2)}px)` : "";
+        el.style.filter = leave > 0 ? `blur(${(leave * BLUR).toFixed(2)}px)` : "";
         el.style.setProperty("--enter", enter.toFixed(3));
         // The edges where two grounds meet feather into the backdrop colour:
         // a leaving section's bottom (ramping in fast, so nothing jumps), an
@@ -70,11 +71,13 @@ export const useSectionDissolve = () => {
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
     desktop.addEventListener("change", schedule);
+    reduce.addEventListener("change", schedule);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
       desktop.removeEventListener("change", schedule);
+      reduce.removeEventListener("change", schedule);
     };
   }, []);
 };

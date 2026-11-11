@@ -465,16 +465,19 @@ textarea:-webkit-autofill {
 /* Load: the wordmark, the bar and the robot land together. The fades wait for
    the hero section's data-hero-in (the robot revealed, or a short cap), then
    run with the robot's own timing. */
-.hero-title-in,
-.hero-bar-in {
+/* Shown by default: the hidden state needs data-hero-in="false", written by JS. */
+[data-hero-in="false"] .hero-title-in,
+[data-hero-in="false"] .hero-bar-in {
   opacity: 0;
-  animation: hero-fade 1.4s cubic-bezier(0.25, 0.6, 0.2, 1) forwards paused;
 }
 [data-hero-in="true"] .hero-title-in,
 [data-hero-in="true"] .hero-bar-in {
-  animation-play-state: running;
+  animation: hero-fade 1.4s cubic-bezier(0.25, 0.6, 0.2, 1) both;
 }
 @keyframes hero-fade {
+  from {
+    opacity: 0;
+  }
   to {
     opacity: 1;
   }
@@ -651,8 +654,8 @@ textarea:-webkit-autofill {
   .hero-hint {
     animation: none;
   }
-  .hero-title-in,
-  .hero-bar-in {
+  [data-hero-in="true"] .hero-title-in,
+  [data-hero-in="true"] .hero-bar-in {
     animation-duration: 0.01s;
   }
   .hero-robot {

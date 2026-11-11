@@ -36,7 +36,8 @@ const docTop = (el: Element) => el.getBoundingClientRect().top + window.scrollY;
 
 const heroPin = () => {
   const hero = document.getElementById("hero");
-  if (!hero) return null;
+  // Stacked (reduced motion): no pin; scene 1 and 2 are sections of their own.
+  if (!hero || hero.dataset.stacked === "true") return null;
   const parent = hero.parentElement;
   const spacer = parent?.classList.contains("pin-spacer") ? parent : hero;
   const start = docTop(spacer);
@@ -53,14 +54,12 @@ export const measureSections = (): (SectionRange | null)[] => {
   const maxScroll = document.documentElement.scrollHeight - vh;
   const pin = heroPin();
   return SECTIONS.map((s, i) => {
-    if (s.id === "hero") {
-      if (!pin) return null;
+    if (s.id === "hero" && pin) {
       const stepAt = [pin.start, pin.at(SCENE1.check), pin.at(SCENE1.headline)];
       const targets = [SCENE1.video, SCENE1.check, SCENE1.headline].map((t) => pin.at(t + 0.08));
       return { start: pin.start, stepAt, targets };
     }
-    if (s.id === "capabilities") {
-      if (!pin) return null;
+    if (s.id === "capabilities" && pin) {
       const stepAt = SCENE2.cards.map((t) => pin.at(t));
       const targets = SCENE2.cards.map((t) => pin.at(t + 0.08));
       return { start: pin.at(XFADE_AT), stepAt, targets };

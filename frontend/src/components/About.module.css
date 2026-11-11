@@ -23,17 +23,16 @@
   z-index: 5;
 }
 
-/* Rise in (0.55 s, as the mock's .in); data-on comes from the scroll step. */
+/* Rise in (0.55 s, as the mock's .in); data-on comes from the scroll step.
+   Shown by default: the hidden state needs data-armed, written by JS. */
 .reveal {
-  opacity: 0;
-  transform: translateY(14px);
   transition:
     opacity 0.55s cubic-bezier(0.2, 0.7, 0.2, 1),
     transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.reveal[data-on="true"] {
-  opacity: 1;
-  transform: none;
+.section[data-armed="true"] .reveal:not([data-on="true"]) {
+  opacity: 0;
+  transform: translateY(14px);
 }
 @media (prefers-reduced-motion: reduce) {
   .reveal {
@@ -231,7 +230,7 @@
     margin-top: 1em;
   }
   /* A paragraph takes room only once it is out, so the slide measures what shows. */
-  .para:not([data-on="true"]) {
+  .section[data-armed="true"] .para:not([data-on="true"]) {
     display: none;
   }
   .para[data-on="true"] {
@@ -330,5 +329,25 @@
   .para[data-on="true"] {
     transition: none;
     animation: none;
+  }
+}
+
+/* Desktop, reduced motion: no pin; the end state (all four paragraphs, 2022
+   and the principles) in normal flow, as tall as it needs. */
+@media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
+  .section {
+    height: auto;
+  }
+  .stage {
+    position: relative;
+    height: auto;
+    min-height: 100vh;
+    padding-bottom: 116px;
+  }
+  .left {
+    height: auto;
+  }
+  .textWindow {
+    overflow: visible;
   }
 }

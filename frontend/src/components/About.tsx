@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { profile, manifesto } from "../data/portfolioData";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useSectionProgress, useSectionStep } from "../hooks/useSectionStep";
+import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { SectionBackdrop } from "./SectionBackdrop";
 import { Num } from "./Num";
 import s from "./About.module.css";
@@ -36,9 +37,18 @@ export const About = () => {
   const step = useSectionStep(ref, STEPS);
   const progress = useSectionProgress(ref);
   const desktop = useMediaQuery("(min-width: 1024px)");
-  const reached = step >= 0;
-  const shownParas = desktop ? PARA_AT.filter((at) => progress >= at).length : reached ? 4 : 0;
-  const rightOn = desktop ? progress >= SINCE_AT : reached;
+  // Reduced motion: no pin, everything shown (the hidden states are never armed).
+  const still = useMediaQuery(REDUCED_MOTION_QUERY);
+  const paced = desktop && !still;
+  const reached = still || step >= 0;
+  const shownParas = still
+    ? PARAGRAPHS.length
+    : desktop
+      ? PARA_AT.filter((at) => progress >= at).length
+      : reached
+        ? 4
+        : 0;
+  const rightOn = paced ? progress >= SINCE_AT : reached;
   const since = profile.stats[0];
   const shown = Math.max(step, 0) + 1;
 
@@ -49,7 +59,7 @@ export const About = () => {
   useLayoutEffect(() => {
     const win = windowRef.current;
     const stack = stackRef.current;
-    if (!desktop || !win || !stack) {
+    if (!paced || !win || !stack) {
       setLift(0);
       return undefined;
     }
@@ -59,10 +69,17 @@ export const About = () => {
     ro?.observe(win);
     ro?.observe(stack);
     return () => ro?.disconnect();
-  }, [desktop, shownParas]);
+  }, [paced, shownParas]);
 
   return (
-    <section ref={ref} id="about" data-testid="about-section" className={s.section}>
+    <section
+      ref={ref}
+      id="about"
+      data-testid="about-section"
+      // The reveals' hidden states apply only once JS has armed them.
+      data-armed={!still}
+      className={s.section}
+    >
       <div className={s.stage}>
         <SectionBackdrop scene="about" />
 
@@ -90,14 +107,14 @@ export const About = () => {
             <div
               ref={stackRef}
               className={s.textStack}
-              style={desktop ? { transform: `translateY(${-lift}px)` } : undefined}
+              style={paced ? { transform: `translateY(${-lift}px)` } : undefined}
             >
               {PARAGRAPHS.map((p, i) => (
                 <p
                   key={i}
                   className={`${s.reveal} ${s.para} ${p.kind === "bio" ? s.intro : s.story}`}
                   data-on={i < shownParas}
-                  data-dim={desktop && lift > 0 && i < shownParas - 1}
+                  data-dim={paced && lift > 0 && i < shownParas - 1}
                   data-testid={`about-paragraph-${i + 1}`}
                 >
                   {p.text}
@@ -131,7 +148,7 @@ export const About = () => {
                 key={p.num}
                 data-testid={`manifesto-chapter-${p.num}`}
                 className={`${s.reveal} ${s.slow} ${s.principle}`}
-                data-on={desktop ? progress >= (PRINCIPLE_AT[i] ?? 1) : reached}
+                data-on={paced ? progress >= (PRINCIPLE_AT[i] ?? 1) : reached}
               >
                 <Num value={p.num} className={s.principleNum} />
                 <div>
