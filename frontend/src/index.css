@@ -1716,3 +1716,21 @@ textarea:-webkit-autofill {
 :root[data-theme="dark"] .crt-tile-tint {
   background: #6ebaef;
 }
+
+/* Section crossfades (useSectionDissolve, desktop with motion): each section
+   after the hero is pulled up over the last screen of the one before, by a
+   screen plus the crossfade's scroll, so the change plays in place. */
+:root[data-xf="on"] .xf-overlap {
+  margin-top: calc(-100vh - var(--xf-vh, 112) * 1vh);
+}
+/* Projects holds its last screen for the crossfade into About. */
+:root[data-xf="on"] .xf-tail {
+  height: calc(var(--xf-vh, 112) * 1vh);
+}
+:root[data-xf="on"] #projects {
+  --xf-pin: calc(var(--xf-vh, 112) * 1vh);
+}
+/* The crossfade times its parts; their own reveal transitions would lag it. */
+:root[data-xf="on"] [data-xf] {
+  transition: none;
+}

@@ -247,6 +247,11 @@
   .section {
     height: 700vh;
   }
+  /* Plus the crossfades in from Projects and out to Contact, which play over
+     its first and last screens (useSectionDissolve). */
+  :global(:root[data-xf="on"]) .section {
+    height: calc(700vh + 2 * var(--xf-vh, 112) * 1vh);
+  }
   .stage {
     position: sticky;
     top: 0;

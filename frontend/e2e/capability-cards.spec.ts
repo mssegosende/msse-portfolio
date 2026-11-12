@@ -56,6 +56,10 @@ const DESKTOP_SIZES = [
   { width: 2560, height: 1440 },
 ];
 
+// Desktop pin progress at a point of the hero's timeline: SCENE2.end (2.5)
+// plus scene 2's exit into Projects (SCENE2_EXIT, 0.36; choreography.ts).
+const at = (t: number) => t / (0.95 + 1.55 + 0.36);
+
 for (const viewport of DESKTOP_SIZES) {
   test.describe(`desktop ${viewport.width}x${viewport.height}`, () => {
     test.use({ viewport });
@@ -64,11 +68,12 @@ for (const viewport of DESKTOP_SIZES) {
       await blockSpline(page);
       await openHome(page);
 
-      // Inside each card's step, then the end: the card and the rail follow the scroll.
+      // Inside each card's step, then the last card's end (before scene 2's
+      // exit): the card and the rail follow the scroll.
       for (const [progress, step] of [
-        [0.58, 0],
-        [0.74, 1],
-        [0.99, 2],
+        [at(1.45), 0],
+        [at(1.85), 1],
+        [at(2.475), 2],
       ] as const) {
         await scrollToPin(page, progress);
         await expect.poll(async () => (await boxes(page)).active).toBe(step);
@@ -92,7 +97,7 @@ for (const viewport of DESKTOP_SIZES) {
     test("the rail scrolls to its card's step", async ({ page }) => {
       await blockSpline(page);
       await openHome(page);
-      await scrollToPin(page, 0.58);
+      await scrollToPin(page, at(1.45));
       await page.getByRole("button", { name: "02 INTERFACE" }).click();
       await expect.poll(async () => (await boxes(page)).active, { timeout: 8000 }).toBe(1);
     });

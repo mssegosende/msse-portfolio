@@ -1,5 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
-import { blockSpline, DESKTOP, openHome, PHONE, pinProgress, scrollToPin } from "./helpers";
+import {
+  blockSpline,
+  DESKTOP,
+  HERO_PIN,
+  openHome,
+  PHONE,
+  pinProgress,
+  scrollToPin,
+} from "./helpers";
 
 // Content never depends on an animation running. With reduced motion there
 // is no pin and no scrub: every scene is stacked in normal flow and shown
@@ -91,7 +99,7 @@ for (const [name, device] of [
       test.setTimeout(120_000);
       await blockSpline(page);
       await page.goto("/");
-      await expect(page.locator(".pin-spacer")).toBeAttached();
+      await expect(page.locator(HERO_PIN)).toBeAttached();
       const best: Record<string, number> = {};
       const total = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
       const step = Math.round((device.viewport.height ?? 900) * 0.5);
@@ -120,8 +128,9 @@ for (const [name, device] of [
 // a share of the viewport height) and resize all four scenes on every step.
 // After any resize the frame must match the one before it at the same size.
 
-// Scene 2's first card: (SCENE1.end + 0.3 + 0.08) / SCENE2.end (choreography.ts).
-const FIRST_CARD = (0.95 + 0.3 + 0.08) / (0.95 + 1.55);
+// Scene 2's first card: (SCENE1.end + 0.3 + 0.08) / (SCENE2.end + SCENE2_EXIT)
+// (choreography.ts; desktop, where scene 2's exit is in the pin).
+const FIRST_CARD = (0.95 + 0.3 + 0.08) / (0.95 + 1.55 + 0.36);
 // Steps between those sizes, 16 ms apart, like a window drag. CI renders in
 // software (seconds per frame), so it takes fewer.
 const DRAG_STEPS = process.env.CI ? 8 : 30;
@@ -310,7 +319,7 @@ test.describe("desktop window across the phone breakpoint", () => {
       await page.waitForTimeout(16);
     }
     await expect.poll(() => loads(page), { timeout: 15_000 }).toBe(2);
-    await expect(page.locator(".pin-spacer")).toBeAttached();
+    await expect(page.locator(HERO_PIN)).toBeAttached();
     await page.waitForTimeout(2500);
     expect(await loads(page)).toBe(2);
     expect(Math.abs((await pinProgress(page)) - before)).toBeLessThan(0.005);

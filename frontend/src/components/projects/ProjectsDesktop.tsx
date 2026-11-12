@@ -17,6 +17,7 @@ import { seekToStart } from "./clip";
 import { GifPlayer } from "./GifPlayer";
 import { FitName, ScrollText } from "./ProjectCard";
 import { ProjectMedia } from "./ProjectMedia";
+import { useCrossfade } from "@/hooks/useSectionDissolve";
 
 const N = PROJECTS.length;
 
@@ -223,10 +224,24 @@ export const ProjectsDesktop = () => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
   const sectionRef = useRef<HTMLElement>(null);
   useProjectsInView(sectionRef);
+  // Scene 2 -> 3: Projects comes in over scene 2's exit, pinned at the top.
+  useCrossfade(sectionRef, null, true, -1);
   // The section is the 1440-wide design scaled to the window's width (María
   // Sol, 12 Nov: the cards keep their share of the frame, type and all).
   const { kw } = useFrame();
   const zoom = clampScale(kw, 0.7, 2);
+  // The content's height, for its sticky last screen.
+  const holdRef = useRef<HTMLDivElement>(null);
+  const [holdH, setHoldH] = useState(900);
+  useEffect(() => {
+    const el = holdRef.current;
+    if (!el) return undefined;
+    const measure = () => setHoldH(el.offsetHeight);
+    measure();
+    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    ro?.observe(el);
+    return () => ro?.disconnect();
+  }, []);
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
 
@@ -270,7 +285,9 @@ export const ProjectsDesktop = () => {
       ref={sectionRef}
       id="projects"
       data-testid="projects-section"
-      className="relative overflow-hidden bg-crt-bg"
+      // xf-overlap: the section crossfades (useSectionDissolve).
+      // overflow-x-clip, not hidden: the last screen is sticky.
+      className="xf-overlap relative overflow-x-clip bg-crt-bg"
     >
       <div aria-hidden="true" className="crt-grid absolute inset-0" />
       <div
@@ -281,129 +298,146 @@ export const ProjectsDesktop = () => {
         WORK
       </div>
 
+      {/* The content holds its last screen for the crossfade into About
+          (sticky at its own bottom; the xf-tail after it gives it the room).
+          --xf-pin: once its own pin is over, the section is drawn a pin's
+          length lower than its box (GSAP's translate), and sticky works on
+          the box. */}
       <div
-        className="relative mx-auto flex max-w-[1440px] flex-col gap-14 px-16 pb-20 pt-24"
-        style={{ zoom }}
+        ref={holdRef}
+        className="sticky"
+        style={{ top: `calc(100vh - ${holdH}px - var(--xf-pin, 0px))` }}
       >
-        <ProjectsHead isMobile={false} />
-
         <div
-          ref={featuredRef}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
+          className="relative mx-auto flex max-w-[1440px] flex-col gap-14 px-16 pb-20 pt-24"
+          style={{ zoom }}
         >
-          <article
-            key={project.id}
-            aria-label={`Featured project: ${project.name}`}
-            data-testid="project-featured"
-            className="crt-frame crt-fade-in relative grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]"
+          <div data-xf="head">
+            <ProjectsHead isMobile={false} />
+          </div>
+
+          <div
+            ref={featuredRef}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
           >
-            <Nodes />
-            <div className="border-r border-crt-line p-5">
-              <GifPlayer
-                project={project}
-                nextName={next.name}
-                playing={playing}
-                paused={paused}
-                onToggle={() => setUserPaused(!paused)}
-                onEnded={reduced ? undefined : advance}
-                preload={near ? "auto" : "none"}
-              />
-            </div>
-            {/* The info column takes the media's height; longer copy scrolls. */}
-            <div className="relative min-h-0">
-              <div className="absolute inset-0 flex flex-col">
-                <CardHead project={project} featured />
-                <div className="flex min-h-0 flex-1 flex-col gap-3 px-[22px] pb-[22px] pt-[26px]">
-                  <FitName
-                    as="h3"
-                    name={project.name}
-                    size={48}
-                    className="crt-name m-0 font-michroma font-normal uppercase leading-[1.1] tracking-[0.04em]"
-                  />
-                  <div className="font-vt text-[20px] uppercase tracking-[0.12em] text-crt-dim">
-                    {project.subtitle}
-                  </div>
-                  <ScrollText style={{ flex: "1 1 auto", minHeight: 0, marginTop: 6 }}>
-                    {project.paragraphs.map((p) => (
-                      <p
-                        key={p.slice(0, 32)}
-                        className="m-0 mb-3 text-[15px] leading-[1.6] text-crt-text-2"
-                      >
-                        {p}
-                      </p>
-                    ))}
-                  </ScrollText>
-                </div>
-                <div className="border-t border-[var(--crt-line-row)] px-[22px] pb-5 pt-3.5">
-                  <Chips tags={project.tags} />
-                </div>
-                <ProjectLinks project={project} />
+            <article
+              key={project.id}
+              aria-label={`Featured project: ${project.name}`}
+              data-testid="project-featured"
+              className="crt-frame crt-fade-in relative grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]"
+            >
+              <Nodes />
+              <div className="border-r border-crt-line p-5">
+                <GifPlayer
+                  project={project}
+                  nextName={next.name}
+                  playing={playing}
+                  paused={paused}
+                  onToggle={() => setUserPaused(!paused)}
+                  onEnded={reduced ? undefined : advance}
+                  preload={near ? "auto" : "none"}
+                />
               </div>
-            </div>
-          </article>
-        </div>
-
-        <div
-          role="group"
-          aria-label="All projects"
-          data-testid="projects-row"
-          className="grid grid-cols-3 gap-8"
-        >
-          {grid.map((ring) => {
-            const p = PROJECTS[ring]!;
-            return (
-              <article
-                key={p.id}
-                className="crt-frame relative flex cursor-pointer flex-col"
-                onClick={() => pick(ring)}
-                onMouseEnter={() => setHoverId(p.id)}
-                onMouseLeave={() => setHoverId((h) => (h === p.id ? null : h))}
-                data-testid={`project-card-${p.id}`}
-              >
-                <Nodes />
-                <CardHead project={p} />
-                <div className="px-3.5 pt-3.5">
-                  <Folder
-                    project={p}
-                    onPick={() => pick(ring)}
-                    active={!reduced && (hoverId === p.id || focusId === p.id)}
-                    onFocusChange={(on) =>
-                      setFocusId((cur) => (on ? p.id : cur === p.id ? null : cur))
-                    }
-                  />
-                </div>
-                <div className="flex flex-1 flex-col gap-2 px-4 pt-[18px]">
-                  <FitName
-                    as="h3"
-                    name={p.name}
-                    size={22}
-                    className="crt-name crt-name--sm m-0 font-michroma font-normal uppercase tracking-[0.04em]"
-                  />
-                  <div className="font-vt text-[18px] uppercase tracking-[0.1em] text-crt-dim">
-                    {p.subtitle}
+              {/* The info column takes the media's height; longer copy scrolls. */}
+              <div className="relative min-h-0">
+                <div className="absolute inset-0 flex flex-col">
+                  <CardHead project={project} featured />
+                  <div className="flex min-h-0 flex-1 flex-col gap-3 px-[22px] pb-[22px] pt-[26px]">
+                    <FitName
+                      as="h3"
+                      name={project.name}
+                      size={48}
+                      className="crt-name m-0 font-michroma font-normal uppercase leading-[1.1] tracking-[0.04em]"
+                    />
+                    <div className="font-vt text-[20px] uppercase tracking-[0.12em] text-crt-dim">
+                      {project.subtitle}
+                    </div>
+                    <ScrollText style={{ flex: "1 1 auto", minHeight: 0, marginTop: 6 }}>
+                      {project.paragraphs.map((p) => (
+                        <p
+                          key={p.slice(0, 32)}
+                          className="m-0 mb-3 text-[15px] leading-[1.6] text-crt-text-2"
+                        >
+                          {p}
+                        </p>
+                      ))}
+                    </ScrollText>
                   </div>
-                  <ScrollText style={{ maxHeight: 132, marginTop: 4 }}>
-                    {p.paragraphs.map((t) => (
-                      <p
-                        key={t.slice(0, 32)}
-                        className="m-0 mb-2.5 text-[14px] leading-[1.55] text-crt-text-2"
-                      >
-                        {t}
-                      </p>
-                    ))}
-                  </ScrollText>
+                  <div className="border-t border-[var(--crt-line-row)] px-[22px] pb-5 pt-3.5">
+                    <Chips tags={project.tags} />
+                  </div>
+                  <ProjectLinks project={project} />
                 </div>
-                <div className="px-4 py-3.5">
-                  <Chips tags={p.tags} />
-                </div>
-                <ProjectLinks project={p} />
-              </article>
-            );
-          })}
-          <TerminalTile />
+              </div>
+            </article>
+          </div>
+
+          <div
+            role="group"
+            aria-label="All projects"
+            data-testid="projects-row"
+            data-xf="cards"
+            className="grid grid-cols-3 gap-8"
+          >
+            {grid.map((ring) => {
+              const p = PROJECTS[ring]!;
+              return (
+                <article
+                  key={p.id}
+                  className="crt-frame relative flex cursor-pointer flex-col"
+                  onClick={() => pick(ring)}
+                  onMouseEnter={() => setHoverId(p.id)}
+                  onMouseLeave={() => setHoverId((h) => (h === p.id ? null : h))}
+                  data-testid={`project-card-${p.id}`}
+                >
+                  <Nodes />
+                  <CardHead project={p} />
+                  <div className="px-3.5 pt-3.5">
+                    <Folder
+                      project={p}
+                      onPick={() => pick(ring)}
+                      active={!reduced && (hoverId === p.id || focusId === p.id)}
+                      onFocusChange={(on) =>
+                        setFocusId((cur) => (on ? p.id : cur === p.id ? null : cur))
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-2 px-4 pt-[18px]">
+                    <FitName
+                      as="h3"
+                      name={p.name}
+                      size={22}
+                      className="crt-name crt-name--sm m-0 font-michroma font-normal uppercase tracking-[0.04em]"
+                    />
+                    <div className="font-vt text-[18px] uppercase tracking-[0.1em] text-crt-dim">
+                      {p.subtitle}
+                    </div>
+                    <ScrollText style={{ maxHeight: 132, marginTop: 4 }}>
+                      {p.paragraphs.map((t) => (
+                        <p
+                          key={t.slice(0, 32)}
+                          className="m-0 mb-2.5 text-[14px] leading-[1.55] text-crt-text-2"
+                        >
+                          {t}
+                        </p>
+                      ))}
+                    </ScrollText>
+                  </div>
+                  <div className="px-4 py-3.5">
+                    <Chips tags={p.tags} />
+                  </div>
+                  <ProjectLinks project={p} />
+                </article>
+              );
+            })}
+            <TerminalTile />
+          </div>
         </div>
       </div>
+      {/* The room the sticky content holds in (a box: sticky stops at the
+          section's content edge, so padding would give it none). */}
+      <div aria-hidden="true" className="xf-tail" />
       <div aria-hidden="true" className="crt-scanlines absolute inset-0" />
     </section>
   );

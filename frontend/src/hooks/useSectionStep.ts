@@ -1,4 +1,5 @@
 import { useEffect, useState, type RefObject } from "react";
+import { SECTION_XF_VH } from "@/components/scroll-scene/choreography";
 
 // Same rule as the section index (lib/sections.ts): a section is reached when
 // its top passes 40 % of the viewport, and its steps split its height evenly.
@@ -9,8 +10,15 @@ const PROBE = 0.4;
  * How far into a scrolled section the visitor is, on the index's scale: below
  * 0 before it is reached, then 0 to 1 over the section's height (step k of n
  * starts at k / n). For reveals finer than the index's steps.
+ * `crossfaded`: the section crossfades in and out (desktop with motion,
+ * <html data-xf="on">; useSectionDissolve), which takes a crossfade's scroll
+ * at each end (its CSS adds both): the progress runs between them, so its
+ * reveal keeps its pace.
  */
-export const useSectionProgress = (ref: RefObject<HTMLElement | null>): number => {
+export const useSectionProgress = (
+  ref: RefObject<HTMLElement | null>,
+  crossfaded = false,
+): number => {
   const [progress, setProgress] = useState(-1);
 
   useEffect(() => {
@@ -20,7 +28,11 @@ export const useSectionProgress = (ref: RefObject<HTMLElement | null>): number =
       const el = ref.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      setProgress((window.innerHeight * PROBE - rect.top + 1) / el.offsetHeight);
+      const xf =
+        crossfaded && document.documentElement.dataset.xf === "on"
+          ? (window.innerHeight * SECTION_XF_VH) / 100
+          : 0;
+      setProgress((window.innerHeight * PROBE - rect.top - xf + 1) / (el.offsetHeight - 2 * xf));
     };
     const schedule = () => {
       if (!raf) raf = requestAnimationFrame(update);
@@ -33,7 +45,7 @@ export const useSectionProgress = (ref: RefObject<HTMLElement | null>): number =
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
     };
-  }, [ref]);
+  }, [ref, crossfaded]);
 
   return progress;
 };

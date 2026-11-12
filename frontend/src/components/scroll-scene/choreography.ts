@@ -310,8 +310,21 @@ export const SCENE2 = {
  * every step keeps the same scroll pace however long the timeline gets.
  */
 export const PIN_PER_SECOND = { desktop: 700 / 2.25, phone: 600 / 2.25 };
-export const pinLength = (isMobile: boolean): string =>
-  `+=${((isMobile ? PIN_PER_SECOND.phone : PIN_PER_SECOND.desktop) * SCENE2.end).toFixed(1)}%`;
+/**
+ * Desktop, normal motion: after scene 2's hold, the hero's exit into Projects,
+ * timeline seconds. It is the scene 1 -> 2 crossfade's own length (the HUD
+ * leaving at XFADE_AT through the title's rise and the first card), so every
+ * section change plays over the same scroll (María Sol, 12 Nov).
+ */
+export const SCENE2_EXIT = 0.36;
+/** The hero timeline's length: desktop with motion adds scene 2's exit. */
+export const heroEnd = (isMobile: boolean, reduce = false): number =>
+  SCENE2.end + (isMobile || reduce ? 0 : SCENE2_EXIT);
+/** A section crossfade's scroll, % of the viewport height (~112: the 1 -> 2 one). */
+export const SECTION_XF_VH = PIN_PER_SECOND.desktop * SCENE2_EXIT;
+
+export const pinLength = (isMobile: boolean, reduce = false): string =>
+  `+=${((isMobile ? PIN_PER_SECOND.phone : PIN_PER_SECOND.desktop) * heroEnd(isMobile, reduce)).toFixed(1)}%`;
 
 /** Phones' scroll stops, as pin progress: the hero, each card, the end. */
 export const snapStops = (): number[] => [

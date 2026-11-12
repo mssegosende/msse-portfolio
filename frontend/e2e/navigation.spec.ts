@@ -7,7 +7,9 @@ test.describe("desktop", () => {
   test("the footer logo returns to the very top", async ({ page }) => {
     await blockSpline(page);
     await openHome(page);
-    await page.getByTestId("footer").scrollIntoViewIfNeeded();
+    // The page's end: the footer comes in with Contact's crossfade (desktop),
+    // so it shows once that has played, not as soon as its box is on screen.
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await page.getByTestId("footer-brand").click();
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
   });

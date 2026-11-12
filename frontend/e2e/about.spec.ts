@@ -6,12 +6,18 @@ import { blockSpline, DESKTOP, openHome } from "./helpers";
 // beside it (the full text is in the DOM for screen readers); each principle
 // comes in on its own stretch of the pinned scroll.
 
-/** Scroll to a share (0..1) of the About section, on the index's scale. */
+/**
+ * Scroll to a share (0..1) of the About section, on its reveal's scale
+ * (useSectionProgress): the crossfades in and out (--xf-vh at each end, on
+ * desktop with motion) are outside it.
+ */
 const scrollToAbout = async (page: Page, progress: number) => {
   await page.evaluate((p) => {
     const el = document.getElementById("about")!;
     const top = el.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo(0, top - 0.4 * innerHeight + p * el.offsetHeight);
+    const vh = Number(document.documentElement.style.getPropertyValue("--xf-vh")) || 0;
+    const xf = (innerHeight * vh) / 100;
+    window.scrollTo(0, top - 0.4 * innerHeight + xf + p * (el.offsetHeight - 2 * xf));
   }, progress);
 };
 

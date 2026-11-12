@@ -4,7 +4,6 @@ import { useLenis, pinScrollToTopOnReload } from "@/hooks/useLenis";
 import { pendingJourneyDone } from "@/lib/themeReload";
 import { useLayoutReload } from "@/lib/layoutReload";
 import { useTitleTicker } from "@/hooks/useTitleTicker";
-import { useSectionDissolve } from "@/hooks/useSectionDissolve";
 import { ScrollScene } from "@/components/ScrollScene";
 import { NavigationDock } from "@/components/NavigationDock";
 import { About } from "@/components/About";
@@ -18,7 +17,6 @@ import { CrtFilters } from "@/components/crt/CrtFilters";
 function App() {
   useLenis();
   useTitleTicker();
-  useSectionDissolve();
   useEffect(pinScrollToTopOnReload, []);
   // The dock appears once the hero sequence has been seen and then stays. A
   // theme reload on phones (lib/themeReload) comes back with it shown.

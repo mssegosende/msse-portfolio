@@ -8,6 +8,7 @@ import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { clampScale, useFrame } from "../hooks/useFrame";
 import { GridField } from "./GridField";
 import s from "./Contact.module.css";
+import { useCrossfade } from "@/hooks/useSectionDissolve";
 
 // Production: same origin (Vercel routes /api/* to the backend service).
 // Dev: the local uvicorn. VITE_BACKEND_URL overrides both.
@@ -145,6 +146,8 @@ const TerminalField = ({
  */
 export const Contact = () => {
   const ref = useRef<HTMLElement>(null);
+  // 4 -> 5: About's stage holds its last screen; Contact comes in, pinned.
+  useCrossfade(ref, "about", true, -3);
   // Reduced motion: shown whole (the hidden states are never armed).
   const still = useMediaQuery(REDUCED_MOTION_QUERY);
   const reached = useSectionStep(ref, 3) >= 0 || still;
@@ -252,7 +255,8 @@ export const Contact = () => {
       data-testid="contact-section"
       // The reveals' hidden states apply only once JS has armed them.
       data-armed={!still}
-      className={s.section}
+      // xf-overlap: the section crossfades (useSectionDissolve).
+      className={`xf-overlap ${s.section}`}
     >
       {/* The perspective floor (GridField, in the grid token) under a fade,
           then the page grid (Contact.dc.html): the section's, unscaled. */}
@@ -265,7 +269,7 @@ export const Contact = () => {
         TALK
       </div>
       <div className={s.stage} style={stageStyle}>
-        <div className={`${s.head} ${s.reveal}`} {...rise(0)}>
+        <div className={`${s.head} ${s.reveal}`} {...rise(0)} data-xf="head">
           <span className="crt-pill self-start font-vt">05 // CONTACT</span>
           {/* Phones: LET'S / TALK inside crosshair corners, with two ghost copies
               that jump sideways now and then (ContactM.dc.html). */}
@@ -451,7 +455,12 @@ export const Contact = () => {
         </div>
 
         {/* CHANNEL OPEN: base, time, GitHub and a small radar. */}
-        <aside className={`crt-frame ${s.channel} ${s.reveal}`} aria-label="Channel" {...rise(1)}>
+        <aside
+          className={`crt-frame ${s.channel} ${s.reveal}`}
+          aria-label="Channel"
+          {...rise(1)}
+          data-xf="cards"
+        >
           <div className={s.channelInfo}>
             <div className={s.channelHead}>
               <span className="crt-glow-label">CHANNEL OPEN</span>
@@ -490,7 +499,12 @@ export const Contact = () => {
           </div>
         </aside>
 
-        <footer data-testid="footer" className={`${s.footer} ${s.reveal}`} {...rise(2)}>
+        <footer
+          data-testid="footer"
+          className={`${s.footer} ${s.reveal}`}
+          {...rise(2)}
+          data-xf="cards"
+        >
           {/* To the very top: the hero is pinned, so its element would land mid-sequence. */}
           <button
             type="button"

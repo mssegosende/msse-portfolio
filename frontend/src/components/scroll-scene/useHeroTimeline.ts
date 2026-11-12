@@ -36,11 +36,13 @@ import {
   heroFraming,
   phoneApproachFrom,
   pinLength,
+  SCENE2_EXIT,
   snapStops,
   vwOf,
   type PhoneTitle,
 } from "./choreography";
 import { pinPointToKeep } from "./keepPin";
+import { XF } from "../../hooks/useSectionDissolve";
 import type { HeroSceneRefs } from "./useHeroScenes";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -674,7 +676,7 @@ export const useHeroTimeline = ({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: pinLength(isMobile),
+          end: pinLength(isMobile, reduce),
           pin: true,
           scrub: 1,
           anticipatePin: 1,
@@ -762,6 +764,16 @@ export const useHeroTimeline = ({
       }
       // Hold, so the last card reads before the pin releases.
       tl.to({}, { duration: Math.max(0.01, SCENE2.end - tl.duration()) });
+
+      // Desktop: scene 2 leaves the way scene 1 did (the section crossfade
+      // into Projects, useSectionDissolve): its title and labels go first and
+      // fast, then the whole scene fades to the ground, in place (the pin
+      // holds) while Projects comes in over it.
+      if (!isMobile && !reduce) {
+        tl.to(title2Ref.current, { autoAlpha: 0, duration: SCENE2_EXIT * XF.headOut }, SCENE2.end);
+        tl.to(sectionRef.current, { opacity: 0, duration: SCENE2_EXIT * XF.out }, SCENE2.end);
+        tl.to({}, { duration: SCENE2_EXIT }, SCENE2.end);
+      }
 
       syncPlayback = () => {
         const shown = tl.time();

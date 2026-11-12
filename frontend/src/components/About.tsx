@@ -7,13 +7,15 @@ import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { at, clampScale, useFrame } from "../hooks/useFrame";
 import { DataRow } from "./crt/CrtPieces";
 import s from "./About.module.css";
+import { useCrossfade } from "@/hooks/useSectionDissolve";
 
 const STEPS = 3;
 
 // Desktop reveal, on the section's progress (700vh, pinned for six screens):
 // the bio types itself in a terminal panel from arrival (BioTerminal); the
 // dossier ("since 2022") and each principle come in on their own stretch of
-// scroll, then about 1.3 screens of hold before Contact.
+// scroll, then about 1.3 screens of hold before Contact. The crossfades in
+// and out add their scroll at both ends (About.module.css), outside this pace.
 const PRINCIPLE_AT = [0.52, 0.62, 0.72];
 
 // The bio: today's four paragraphs, unchanged.
@@ -67,8 +69,10 @@ const PORTRAIT_IN_MS = 1200;
  */
 export const About = () => {
   const ref = useRef<HTMLElement>(null);
+  // 3 -> 4: Projects holds its last screen; About's sticky stage holds its first.
+  useCrossfade(ref, "projects", false, -2);
   const step = useSectionStep(ref, STEPS);
-  const progress = useSectionProgress(ref);
+  const progress = useSectionProgress(ref, true);
   const desktop = useMediaQuery("(min-width: 1024px)");
   // Reduced motion: no pin, everything shown (the hidden states are never armed).
   const still = useMediaQuery(REDUCED_MOTION_QUERY);
@@ -103,7 +107,8 @@ export const About = () => {
       data-testid="about-section"
       // The reveals' hidden states apply only once JS has armed them.
       data-armed={!still}
-      className={s.section}
+      // xf-overlap: the section crossfades (useSectionDissolve).
+      className={`xf-overlap ${s.section}`}
     >
       <div className={s.stage}>
         <div aria-hidden="true" className="crt-grid absolute inset-0" />
@@ -112,7 +117,7 @@ export const About = () => {
         </div>
 
         <div className={s.leftCol} style={leftBox}>
-          <div className={`${s.reveal} ${s.head}`} data-on={reached}>
+          <div className={`${s.reveal} ${s.head}`} data-on={reached} data-xf="head">
             <span className="crt-pill self-start font-vt">04 // WHO</span>
             <h2
               className={`crt-glow m-0 font-michroma font-normal uppercase text-crt-title ${s.title}`}
@@ -121,7 +126,7 @@ export const About = () => {
             </h2>
           </div>
 
-          <div className={s.left}>
+          <div className={s.left} data-xf="cards">
             {/* The bio types itself in, once (María Sol, 12 Nov): a fixed-height
                 terminal panel; today's text, unchanged. */}
             <BioTerminal paragraphs={BIO} reduced={still} start={portraitIn} className={s.bio} />
