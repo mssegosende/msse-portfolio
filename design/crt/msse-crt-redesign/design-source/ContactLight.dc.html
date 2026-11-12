@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contact · Let's talk · Light</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;family=Michroma&amp;family=VT323&amp;display=swap">
+<style>
+body{margin:0;background:#EAEFF5}
+a{color:#24405D}a:hover{color:#0E2C4C}
+input::placeholder,textarea::placeholder{color:#8394A6}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; overflow: hidden; background: #EAEFF5; color: #24405D; font-family: 'Inter', sans-serif">
+  <div aria-hidden="true" style="position: absolute; left: -200px; right: -200px; bottom: -120px; height: 520px; transform: perspective(700px) rotateX(62deg); transform-origin: 50% 100%; background-image: linear-gradient(rgba(31,95,175,0.176) 1px, transparent 1px), linear-gradient(90deg, rgba(31,95,175,0.176) 1px, transparent 1px); background-size: 56px 56px"></div>
+  <div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 640px; background: linear-gradient(180deg, #EAEFF5 70%, rgba(238,243,248,0))"></div>
+  <div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 900px; background-image: linear-gradient(rgba(31,95,175,0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(31,95,175,0.028) 1px, transparent 1px); background-size: 48px 48px"></div>
+
+  <div style="position: absolute; left: 64px; top: 80px; display: flex; flex-direction: column; gap: 16px">
+    <span style="align-self: flex-start; padding: 4px 12px; border: 1px solid rgba(31,95,175,0.4); font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 0.16em; color: #193755">05 // CONTACT</span>
+    <h2 style="margin: 0; font-family: 'Michroma', sans-serif; font-weight: 400; font-size: 76px; letter-spacing: 0.04em; color: #0E2C4C; text-shadow: 0 0 0.6px rgba(20,70,150,0.5), 0 0 14px rgba(60,130,240,0.22)">LET'S TALK</h2>
+  </div>
+
+  <form style="position: absolute; left: 64px; top: 260px; width: 780px; border: 1px solid rgba(31,95,175,0.4); border-radius: 6px; background: rgba(250,252,255,0.9); box-shadow: 0 0 10px rgba(40,110,220,0.18); overflow: hidden">
+    <div style="height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border-bottom: 1px solid rgba(31,95,175,0.36)">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #24405D">msse@contact: ~/new-message</span>
+      <span aria-hidden="true" style="display: flex; gap: 6px">
+        <span style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #24405D"></span>
+        <span style="width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid #24405D"></span>
+        <span style="width: 9px; height: 9px; border-radius: 50%; background: #0E2C4C; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span>
+      </span>
+    </div>
+    <div style="padding: 22px 22px 8px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; font-family: 'JetBrains Mono', monospace">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="c-name" style="font-size: 12px; letter-spacing: 0.1em; color: #566C83">&gt; NAME</label>
+        <input id="c-name" type="text" placeholder="your name" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: transparent; border: none; border-bottom: 1px solid rgba(31,95,175,0.4); color: #0E2C4C; font-family: 'JetBrains Mono', monospace; font-size: 15px; outline-color: #0E2C4C">
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <label for="c-email" style="font-size: 12px; letter-spacing: 0.1em; color: #566C83">&gt; EMAIL</label>
+        <input id="c-email" type="email" placeholder="you@company.com" style="height: 44px; box-sizing: border-box; padding: 0 12px; background: transparent; border: none; border-bottom: 1px solid rgba(31,95,175,0.4); color: #0E2C4C; font-family: 'JetBrains Mono', monospace; font-size: 15px; outline-color: #0E2C4C">
+      </div>
+      <div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px">
+        <label for="c-li" style="font-size: 12px; letter-spacing: 0.1em; color: #566C83">&gt; LINKEDIN <span style="color: #8394A6">(OPTIONAL)</span></label>
+        <input id="c-li" type="url" placeholder="linkedin.com/in/..." style="height: 44px; box-sizing: border-box; padding: 0 12px; background: transparent; border: none; border-bottom: 1px solid rgba(31,95,175,0.4); color: #0E2C4C; font-family: 'JetBrains Mono', monospace; font-size: 15px; outline-color: #0E2C4C">
+      </div>
+      <div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px">
+        <label for="c-msg" style="font-size: 12px; letter-spacing: 0.1em; color: #566C83">&gt; MESSAGE</label>
+        <textarea id="c-msg" rows="4" placeholder="what are you building?" style="box-sizing: border-box; padding: 10px 12px; background: rgba(31,95,175,0.024); border: 1px solid rgba(31,95,175,0.28); color: #0E2C4C; font-family: 'JetBrains Mono', monospace; font-size: 15px; line-height: 1.6; resize: none; outline-color: #0E2C4C"></textarea>
+      </div>
+    </div>
+    <div style="padding: 14px 22px 22px; display: flex; align-items: center; justify-content: space-between">
+      <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #718498">$ send --to msse <span aria-hidden="true" style="display: inline-block; width: 8px; height: 14px; vertical-align: -2px; background: #0E2C4C; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span></span>
+      <button type="submit" style="min-height: 48px; padding: 0 26px; background: #193755; border: none; color: #EAEFF5; font-family: 'VT323', monospace; font-size: 24px; letter-spacing: 0.16em; box-shadow: 0 0 10px rgba(40,110,220,0.18)">SEND &gt;&gt;</button>
+    </div>
+  </form>
+
+  <div style="position: absolute; left: 920px; top: 260px; width: 456px; border: 1px solid rgba(31,95,175,0.336); background: rgba(250,252,255,0.85)">
+    <span aria-hidden="true" style="position: absolute; left: -4px; top: -4px; width: 7px; height: 7px; border-radius: 50%; background: #0E2C4C; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span>
+    <span aria-hidden="true" style="position: absolute; right: -4px; top: -4px; width: 7px; height: 7px; border-radius: 50%; background: #0E2C4C; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span>
+    <span aria-hidden="true" style="position: absolute; left: -4px; bottom: -4px; width: 7px; height: 7px; border-radius: 50%; background: #0E2C4C; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span>
+    <span aria-hidden="true" style="position: absolute; right: -4px; bottom: -4px; width: 7px; height: 7px; border-radius: 50%; background: #0E2C4C; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span>
+    <div style="height: 48px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; border-bottom: 1px solid rgba(31,95,175,0.336); font-family: 'VT323', monospace; font-size: 24px; letter-spacing: 0.12em">
+      <span style="color: #0E2C4C; text-shadow: 0 0 0.6px rgba(20,70,150,0.5), 0 0 14px rgba(60,130,240,0.22)">CHANNEL OPEN</span>
+      <span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 50%; background: #F472B6; box-shadow: 0 0 10px #F472B6"></span>
+    </div>
+    <div style="height: 46px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; border-bottom: 1px solid rgba(31,95,175,0.224); font-family: 'VT323', monospace; font-size: 22px; letter-spacing: 0.1em">
+      <span>BASE</span><span style="color: #0E2C4C">BUENOS AIRES · GMT-3</span>
+    </div>
+    <div style="height: 46px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 18px; border-bottom: 1px solid rgba(31,95,175,0.224); font-family: 'VT323', monospace; font-size: 22px; letter-spacing: 0.1em">
+      <span>GITHUB</span><a href="https://github.com/mssegosende" style="color: #0E2C4C; text-decoration: none">MSSEGOSENDE &gt;</a>
+    </div>
+    <div style="position: relative; height: 150px; margin: 18px; border: 1px solid rgba(31,95,175,0.16); background-image: linear-gradient(rgba(31,95,175,0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(31,95,175,0.08) 1px, transparent 1px); background-size: 20px 20px">
+      <span aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border: 1.5px solid #1B3856; border-radius: 50%; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span>
+      <span aria-hidden="true" style="position: absolute; left: 50%; top: 18px; bottom: 18px; width: 1px; background: rgba(31,95,175,0.48)"></span>
+      <span aria-hidden="true" style="position: absolute; top: 50%; left: 18px; right: 18px; height: 1px; background: rgba(31,95,175,0.48)"></span>
+      <span style="position: absolute; right: 10px; bottom: 8px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #24405D">[signal.open]</span>
+    </div>
+  </div>
+
+  <footer style="position: absolute; left: 64px; right: 64px; bottom: 32px; height: 56px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(31,95,175,0.32); font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 0.14em; color: #486079">
+    <span style="font-family: 'Michroma', sans-serif; font-size: 15px; color: #0E2C4C; text-shadow: 0 0 0.6px rgba(20,70,150,0.5), 0 0 14px rgba(60,130,240,0.22)">MSSE://</span>
+    <span style="display: flex; gap: 28px"><a href="https://github.com/mssegosende" style="text-decoration: none">GITHUB</a><a href="#" style="text-decoration: none">LINKEDIN</a></span>
+    <span>© 2026 MARÍA SOL GOSENDE</span>
+  </footer>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(10,40,90,0.05) 0px, rgba(10,40,90,0.05) 1px, transparent 1px, transparent 3px)"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

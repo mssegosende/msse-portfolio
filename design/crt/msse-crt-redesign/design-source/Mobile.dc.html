@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Scene 2 · Mobile</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;family=Michroma&amp;family=VT323&amp;display=swap">
+<style>
+body{margin:0;background:#020409}
+a{color:#7DC6F6}a:hover{color:#D4F2FF}
+button{cursor:pointer}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #020409; color: #C8ECFE; font-family: 'Inter', sans-serif">
+  <div aria-hidden="true" style="position: absolute; inset: 0; background-image: linear-gradient(rgba(108,185,238,0.069) 1px, transparent 1px), linear-gradient(90deg, rgba(108,185,238,0.069) 1px, transparent 1px); background-size: 32px 32px; background-position: 3px 0"></div>
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 80px; width: 390px; height: 340px; background: radial-gradient(closest-side, rgba(108,185,238,0.109), rgba(108,185,238,0.0))"></div>
+
+  <div style="position: absolute; left: 22px; top: 26px; right: 22px; display: flex; justify-content: space-between; align-items: flex-start">
+    <div>
+      <div style="font-family: 'VT323', monospace; font-size: 18px; letter-spacing: 0.14em; color: #60AEE6">02 // CAPABILITIES</div>
+      <h2 style="margin: 4px 0 0; font-family: 'Michroma', sans-serif; font-weight: 400; font-size: 17px; letter-spacing: 0.05em; color: #DAF8FF; text-shadow: 0 0 10px rgba(108,185,238,0.828)">WHAT THE CORE RUNS ON</h2>
+    </div>
+    <span aria-label="Status online" style="margin-top: 6px; width: 8px; height: 8px; border-radius: 50%; background: #F472B6; box-shadow: 0 0 10px #F472B6"></span>
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 168px; width: 64px; height: 5px; background: rgba(204,238,254,0.6); filter: blur(1.5px)"></div>
+  <div aria-hidden="true" style="position: absolute; right: 0; top: 300px; width: 50px; height: 7px; background: rgba(204,238,254,0.4); filter: blur(2px)"></div>
+
+  <div style="position: absolute; left: 71px; top: 122px; width: 248px; height: 234px">
+    <pre aria-label="Rotating ASCII render of the active subsystem" style="margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 9px; line-height: 9px; letter-spacing: 0; white-space: pre; color: #B9E7FE; text-shadow: 0 0 3px rgba(108,185,238,0.878), 0 0 9px rgba(108,185,238,0.293)">{{ascii}}</pre>
+    <div aria-hidden="true" style="position: absolute; left: -18px; top: -18px; width: 30px; height: 30px; border-left: 3px solid #D4F2FF; border-top: 3px solid #D4F2FF"></div>
+    <div aria-hidden="true" style="position: absolute; right: -18px; top: -18px; width: 30px; height: 30px; border-right: 3px solid #D4F2FF; border-top: 3px solid #D4F2FF"></div>
+    <div aria-hidden="true" style="position: absolute; left: -18px; bottom: -18px; width: 30px; height: 30px; border-left: 3px solid #D4F2FF; border-bottom: 3px solid #D4F2FF"></div>
+    <div aria-hidden="true" style="position: absolute; right: -18px; bottom: -18px; width: 30px; height: 30px; border-right: 3px solid #D4F2FF; border-bottom: 3px solid #D4F2FF"></div>
+    <div style="position: absolute; right: 0; bottom: -40px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #D4F2FF; text-shadow: 0 0 6px rgba(108,185,238,0.78)">[msse.{{cap.num}}]</div>
+  </div>
+
+  <div role="group" aria-label="Subsystems" style="position: absolute; left: 16px; right: 16px; top: 414px; display: flex; justify-content: center; gap: 8px">
+    <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+      <sc-if value="{{s.active}}" hint-placeholder-val="{{false}}">
+        <button type="button" onClick="{{s.pick}}" aria-pressed="true" style="min-height: 44px; padding: 4px 12px; background: rgba(108,185,238,0.109); border: 1px solid #D4F2FF; color: #DAF8FF; font-family: 'VT323', monospace; font-size: 19px; letter-spacing: 0.1em; box-shadow: 0 0 12px rgba(108,185,238,0.439)">{{s.n}} {{s.label}}</button>
+      </sc-if>
+      <sc-if value="{{s.idle}}" hint-placeholder-val="{{true}}">
+        <button type="button" onClick="{{s.pick}}" aria-pressed="false" style="min-height: 44px; padding: 4px 12px; background: transparent; border: 1px solid rgba(125,198,246,0.349); color: #6CB9EE; font-family: 'VT323', monospace; font-size: 19px; letter-spacing: 0.1em">{{s.n}} {{s.label}}</button>
+      </sc-if>
+    </sc-for>
+  </div>
+
+  <div style="position: absolute; left: 16px; right: 16px; top: 476px; border: 1px solid rgba(125,198,246,0.5); background: rgba(3,9,18,0.85); box-shadow: 0 0 22px rgba(108,185,238,0.073)">
+    <span aria-hidden="true" style="position: absolute; left: -4px; top: -4px; width: 7px; height: 7px; border-radius: 50%; background: #D4F2FF; box-shadow: 0 0 8px #6EBAEF"></span>
+    <span aria-hidden="true" style="position: absolute; right: -4px; top: -4px; width: 7px; height: 7px; border-radius: 50%; background: #D4F2FF; box-shadow: 0 0 8px #6EBAEF"></span>
+    <span aria-hidden="true" style="position: absolute; left: -4px; bottom: -4px; width: 7px; height: 7px; border-radius: 50%; background: #D4F2FF; box-shadow: 0 0 8px #6EBAEF"></span>
+    <span aria-hidden="true" style="position: absolute; right: -4px; bottom: -4px; width: 7px; height: 7px; border-radius: 50%; background: #D4F2FF; box-shadow: 0 0 8px #6EBAEF"></span>
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; border-bottom: 1px solid rgba(125,198,246,0.451)">
+      <div>
+        <div style="font-family: 'VT323', monospace; font-size: 17px; letter-spacing: 0.2em; color: #6CB9EE">{{cap.part}}</div>
+        <h3 style="margin: 4px 0 0; font-family: 'Michroma', sans-serif; font-weight: 400; font-size: 17px; letter-spacing: 0.04em; color: #DAF8FF; text-shadow: 0 0 10px rgba(108,185,238,0.731)">{{cap.title}}</h3>
+      </div>
+      <span style="font-family: 'Michroma', sans-serif; font-size: 44px; line-height: 1; color: #EEF8FF; text-shadow: 0 0 3px #EEF8FF, 0 0 14px rgba(108,185,238,0.926), 0 0 34px rgba(108,185,238,0.322)">{{cap.num}}</span>
+    </div>
+    <p style="margin: 0; padding: 12px 16px; font-size: 14px; line-height: 1.5; color: #8FD2FB; border-bottom: 1px solid rgba(125,198,246,0.3)">{{cap.text}}</p>
+    <div style="height: 38px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid rgba(125,198,246,0.3); font-family: 'VT323', monospace; font-size: 19px; letter-spacing: 0.08em">
+      <span style="text-shadow: 0 0 5px rgba(108,185,238,0.683)">FUNCTION</span><span style="color: #DAF8FF">{{cap.funcShort}}</span>
+    </div>
+    <div style="height: 38px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 1px solid rgba(125,198,246,0.3); font-family: 'VT323', monospace; font-size: 19px; letter-spacing: 0.08em">
+      <span style="text-shadow: 0 0 5px rgba(108,185,238,0.683)">SHIPPED IN</span><span style="color: #DAF8FF">{{cap.shipped}}</span>
+    </div>
+    <div style="padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 6px">
+      <sc-for list="{{cap.chips}}" as="chip" hint-placeholder-count="4">
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 3px 10px; border: 1px solid rgba(125,198,246,0.5); border-radius: 999px; color: #D4F2FF">{{chip}}</span>
+      </sc-for>
+    </div>
+  </div>
+
+  <button type="button" style="position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); min-height: 44px; padding: 0 12px; background: transparent; border: none; color: #8DD1FA; font-family: 'VT323', monospace; font-size: 19px; letter-spacing: 0.2em">SKIP INTRO &gt;&gt;</button>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 1px, transparent 1px, transparent 3px)"></div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse 85% 75% at 50% 45%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%)"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { t: 0, step: 0, prev: 0, m0: -99999, manual: false, last: 0 };
+  }
+  componentDidMount() {
+    this.t0 = Date.now();
+    this.timer = setInterval(() => {
+      const t = Date.now() - this.t0;
+      const s = this.state;
+      if (!s.manual && t - s.last > 7000) {
+        this.setState({ t: t, prev: s.step, step: (s.step + 1) % 3, m0: t, last: t });
+      } else {
+        this.setState({ t: t });
+      }
+    }, 80);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  go(i) {
+    const s = this.state;
+    if (i === s.step) { this.setState({ manual: true }); return; }
+    this.setState({ prev: s.step, step: i, m0: s.t, manual: true });
+  }
+  hash(n) { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); }
+  sdf(kind, x, y, z) {
+    if (kind === 0) return Math.sqrt(x * x + y * y + z * z) - 0.82;
+    if (kind === 1) {
+      const c = Math.cos(1.1), s = Math.sin(1.1);
+      const y2 = y * c - z * s, z2 = y * s + z * c;
+      const qx = Math.sqrt(x * x + z2 * z2) - 0.6;
+      return Math.sqrt(qx * qx + y2 * y2) - 0.27;
+    }
+    const b = 0.52, r = 0.07;
+    const qx = Math.abs(x) - b, qy = Math.abs(y) - b, qz = Math.abs(z) - b;
+    const ox = Math.max(qx, 0), oy = Math.max(qy, 0), oz = Math.max(qz, 0);
+    return Math.sqrt(ox * ox + oy * oy + oz * oz) + Math.min(Math.max(qx, Math.max(qy, qz)), 0) - r;
+  }
+  ascii(cols, rows, t, prev, step, k) {
+    const RAMP = " .`'-:;~=+*xzXUOZ0#%@";
+    const R = rows / 2 * 0.98;
+    const ay = t * 0.0006, ax = 0.4 + 0.3 * Math.sin(t * 0.00035);
+    const cy = Math.cos(ay), sy = Math.sin(ay), cx = Math.cos(ax), sx = Math.sin(ax);
+    const self = this;
+    const mixing = prev !== step && k < 1;
+    let lx = 0, ly = 0, lz = 0;
+    const f = function (x, y, z) {
+      const x1 = x * cy - z * sy, z1 = x * sy + z * cy;
+      const y1 = y * cx - z1 * sx, z2 = y * sx + z1 * cx;
+      lx = x1; ly = y1; lz = z2;
+      const b = self.sdf(step, x1, y1, z2);
+      if (!mixing) return b;
+      const a = self.sdf(prev, x1, y1, z2);
+      return a + (b - a) * k;
+    };
+    let w0 = 0;
+    if (step === 0) w0 += mixing ? k : 1;
+    if (prev === 0 && mixing) w0 += 1 - k;
+    const Lx = -0.45, Ly = 0.55, Lz = -0.7;
+    const Ln = Math.sqrt(Lx * Lx + Ly * Ly + Lz * Lz);
+    const glitch = (t % 3400) < 180;
+    const seed = Math.floor(t / 90);
+    const lines = [];
+    for (let j = 0; j < rows; j++) {
+      const v = -(j + 0.5 - rows / 2) / R;
+      let line = '';
+      for (let i = 0; i < cols; i++) {
+        const u = (i + 0.5 - cols / 2) * 0.6 / R;
+        let z = -2, hit = false;
+        for (let s = 0; s < 32; s++) {
+          const d = f(u, v, z);
+          if (d < 0.004) { hit = true; break; }
+          z += d;
+          if (z > 2) break;
+        }
+        if (!hit) { line += ' '; continue; }
+        const hx = lx, hy = ly, hz = lz;
+        const e = 0.01;
+        const nx = f(u + e, v, z) - f(u - e, v, z);
+        const ny = f(u, v + e, z) - f(u, v - e, z);
+        const nz = f(u, v, z + e) - f(u, v, z - e);
+        const nn = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+        let diff = (nx * Lx + ny * Ly + nz * Lz) / (nn * Ln);
+        if (diff < 0) diff = 0;
+        let lum = 0.1 + 0.85 * diff;
+        if (w0 > 0) {
+          const r = Math.sqrt(hx * hx + hy * hy + hz * hz) || 1;
+          const lat = Math.asin(Math.max(-1, Math.min(1, hy / r)));
+          const lon = Math.atan2(hz, hx);
+          const st = Math.PI / 9;
+          const fa = Math.abs(lat / st - Math.round(lat / st));
+          const fo = Math.abs(lon / st - Math.round(lon / st));
+          if (fa < 0.09 || fo < 0.07) lum += 0.4 * w0; else lum -= 0.12 * w0;
+        }
+        let idx = Math.floor(Math.max(0, Math.min(1, lum)) * (RAMP.length - 1));
+        if (idx < 1) idx = 1;
+        line += RAMP[idx];
+      }
+      if (glitch && this.hash(j * 13.1 + seed) > 0.8) {
+        const n = 1 + Math.floor(this.hash(j + seed * 7.3) * 5);
+        line = ' '.repeat(n) + line.slice(0, cols - n);
+      }
+      lines.push(line);
+    }
+    return lines.join('\n');
+  }
+  renderVals() {
+    const s = this.state;
+    const k0 = Math.max(0, Math.min(1, (s.t - s.m0) / 900));
+    const k = k0 * k0 * (3 - 2 * k0);
+    const CAPS = [
+      { num: '01', short: 'HEAD', part: 'THE HEAD', title: 'AI ENGINEERING', funcShort: 'AGENTS · EVALS', shipped: 'BLAZE · LYNX', text: 'Multi-agent pipelines and LLM features that live inside real products, with evals so I know when they break.', chips: ['Python', 'LangGraph', 'Gemini API', 'Evals'] },
+      { num: '02', short: 'HANDS', part: 'THE HANDS', title: 'FRONTEND', funcShort: 'MOTION · 3D', shipped: 'BLAZE · MARVEL', text: 'Interfaces that feel physical: scroll-driven motion, 3D scenes and editors that stay fast on a phone.', chips: ['React', 'TypeScript', 'Vite', 'GSAP'] },
+      { num: '03', short: 'TORSO', part: 'THE TORSO', title: 'BACKEND', funcShort: 'APIS · DATA', shipped: 'ETHOS · THIS SITE', text: 'APIs with clear contracts: validation at the edge, rate limits, and services that stay boring in production.', chips: ['FastAPI', 'Python', 'PostgreSQL', 'MongoDB'] }
+    ];
+    const steps = CAPS.map((c, i) => ({ n: c.num, label: c.short, active: i === s.step, idle: i !== s.step, pick: () => this.go(i) }));
+    return {
+      ascii: this.ascii(46, 26, s.t, s.prev, s.step, k),
+      cap: CAPS[s.step],
+      steps: steps
+    };
+  }
+}
+</script>
+</body>
+</html>

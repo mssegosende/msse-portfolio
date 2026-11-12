@@ -1,0 +1,286 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-11-12T15:00:00Z"
+  },
+  "title": "Portfolio · dirección CRT / HUD",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Hero.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "01 · Escena 1 · dark"
+    },
+    "Main.dc.html": {
+      "x": 1520,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "02 · Escena 2 sin robot · dark",
+      "is_interactive": true
+    },
+    "Projects.dc.html": {
+      "x": 3040,
+      "y": 0,
+      "w": 1440,
+      "h": 2000,
+      "title": "03 · Projects · dark"
+    },
+    "About.dc.html": {
+      "x": 4560,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "04 · About · dark"
+    },
+    "Contact.dc.html": {
+      "x": 6080,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "05 · Contact + footer · dark"
+    },
+    "HeroLight.dc.html": {
+      "x": 0,
+      "y": 2420,
+      "w": 1440,
+      "h": 900,
+      "title": "01 · Escena 1 · light"
+    },
+    "MainLight.dc.html": {
+      "x": 1520,
+      "y": 2420,
+      "w": 1440,
+      "h": 900,
+      "title": "02 · Escena 2 · light",
+      "is_interactive": true
+    },
+    "ProjectsLight.dc.html": {
+      "x": 3040,
+      "y": 2420,
+      "w": 1440,
+      "h": 2000,
+      "title": "03 · Projects · light"
+    },
+    "AboutLight.dc.html": {
+      "x": 4560,
+      "y": 2420,
+      "w": 1440,
+      "h": 900,
+      "title": "04 · About · light"
+    },
+    "ContactLight.dc.html": {
+      "x": 6080,
+      "y": 2420,
+      "w": 1440,
+      "h": 900,
+      "title": "05 · Contact · light"
+    },
+    "Cards.dc.html": {
+      "x": 0,
+      "y": 4840,
+      "w": 1440,
+      "h": 900,
+      "title": "Cards · 3 caminos"
+    },
+    "Mobile.dc.html": {
+      "x": 1520,
+      "y": 4840,
+      "w": 390,
+      "h": 844,
+      "title": "Escena 2 · celu · dark",
+      "is_interactive": true
+    },
+    "MobileLight.dc.html": {
+      "x": 1990,
+      "y": 4840,
+      "w": 390,
+      "h": 844,
+      "title": "Escena 2 · celu · light",
+      "is_interactive": true
+    },
+    "System.dc.html": {
+      "x": 2460,
+      "y": 4840,
+      "w": 970,
+      "h": 844,
+      "title": "Sistema · fósforo azul"
+    },
+    "HeroAscii.dc.html": {
+      "x": 0,
+      "y": 1020,
+      "w": 1440,
+      "h": 900,
+      "title": "01b · Escena 1 · robot ASCII",
+      "is_interactive": true
+    },
+    "FullDark.dc.html": {
+      "x": 7680,
+      "y": 0,
+      "w": 1440,
+      "h": 5600,
+      "title": "Página completa · dark",
+      "is_interactive": true
+    },
+    "FullLight.dc.html": {
+      "x": 9200,
+      "y": 0,
+      "w": 1440,
+      "h": 5600,
+      "title": "Página completa · light",
+      "is_interactive": true
+    },
+    "MobileFullDark.dc.html": {
+      "x": 10720,
+      "y": 0,
+      "w": 390,
+      "h": 5088,
+      "title": "Celu completo · dark",
+      "is_interactive": true
+    },
+    "MobileFullLight.dc.html": {
+      "x": 11190,
+      "y": 0,
+      "w": 390,
+      "h": 5088,
+      "title": "Celu completo · light",
+      "is_interactive": true
+    },
+    "HeroM.dc.html": {
+      "x": 0,
+      "y": 6080,
+      "w": 390,
+      "h": 844,
+      "title": "Celu · escena 1 · dark"
+    },
+    "ProjectsM.dc.html": {
+      "x": 470,
+      "y": 6080,
+      "w": 390,
+      "h": 820,
+      "title": "Celu · projects · dark"
+    },
+    "AboutM.dc.html": {
+      "x": 940,
+      "y": 6080,
+      "w": 390,
+      "h": 1160,
+      "title": "Celu · about · dark"
+    },
+    "ContactM.dc.html": {
+      "x": 1410,
+      "y": 6080,
+      "w": 390,
+      "h": 1420,
+      "title": "Celu · contact · dark"
+    },
+    "HeroMLight.dc.html": {
+      "x": 1880,
+      "y": 6080,
+      "w": 390,
+      "h": 844,
+      "title": "Celu · escena 1 · light"
+    },
+    "ProjectsMLight.dc.html": {
+      "x": 2350,
+      "y": 6080,
+      "w": 390,
+      "h": 820,
+      "title": "Celu · projects · light"
+    },
+    "AboutMLight.dc.html": {
+      "x": 2820,
+      "y": 6080,
+      "w": 390,
+      "h": 1160,
+      "title": "Celu · about · light"
+    },
+    "ContactMLight.dc.html": {
+      "x": 3290,
+      "y": 6080,
+      "w": 390,
+      "h": 1420,
+      "title": "Celu · contact · light"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Hero.dc.html",
+    "HeroAscii.dc.html",
+    "Projects.dc.html",
+    "About.dc.html",
+    "Contact.dc.html",
+    "HeroLight.dc.html",
+    "MainLight.dc.html",
+    "ProjectsLight.dc.html",
+    "AboutLight.dc.html",
+    "ContactLight.dc.html",
+    "Cards.dc.html",
+    "Mobile.dc.html",
+    "MobileLight.dc.html",
+    "System.dc.html",
+    "FullDark.dc.html",
+    "FullLight.dc.html",
+    "MobileFullDark.dc.html",
+    "MobileFullLight.dc.html",
+    "HeroM.dc.html",
+    "ProjectsM.dc.html",
+    "AboutM.dc.html",
+    "ContactM.dc.html",
+    "HeroMLight.dc.html",
+    "ProjectsMLight.dc.html",
+    "AboutMLight.dc.html",
+    "ContactMLight.dc.html"
+  ],
+  "notes": {
+    "titulo": {
+      "x": 0,
+      "y": -300,
+      "text": "Portfolio · fósforo azul — DARK",
+      "kind": "title1",
+      "maxW": 7520
+    },
+    "light": {
+      "x": 0,
+      "y": 2120,
+      "text": "LIGHT — el mismo azul, en tinta sobre papel",
+      "kind": "title1",
+      "maxW": 7520
+    },
+    "extras": {
+      "x": 0,
+      "y": 4540,
+      "text": "Cards, celu y sistema",
+      "kind": "title1",
+      "maxW": 3430
+    },
+    "full": {
+      "x": 7680,
+      "y": -300,
+      "text": "Página completa — dark y light",
+      "kind": "title1",
+      "maxW": 2960
+    },
+    "mobfull": {
+      "x": 10720,
+      "y": -300,
+      "text": "Celu completo",
+      "kind": "title1",
+      "maxW": 860
+    },
+    "mobrow": {
+      "x": 0,
+      "y": 5780,
+      "text": "Secciones del celu",
+      "kind": "title1",
+      "maxW": 3680
+    }
+  },
+  "designSystems": []
+}

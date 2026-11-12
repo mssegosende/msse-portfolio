@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Projects · Mobile · Light</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&amp;family=JetBrains+Mono:wght@400;500&amp;family=Michroma&amp;family=VT323&amp;display=swap">
+<style>
+body{margin:0;background:#EBF0F5}
+a{color:#26425F}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 820px; overflow: hidden; background: #EBF0F5; color: #26425F; font-family: 'Inter', sans-serif">
+  <div aria-hidden="true" style="position: absolute; inset: 0; background-image: linear-gradient(rgba(31,95,175,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(31,95,175,0.04) 1px, transparent 1px); background-size: 32px 32px"></div>
+  <div aria-hidden="true" style="position: absolute; right: -30px; top: 40px; font-family: 'Michroma', sans-serif; font-size: 110px; line-height: 1; color: rgba(31,95,175,0.04)">WORK</div>
+
+  <div style="position: relative; padding: 56px 20px 0; display: flex; flex-direction: column; gap: 12px">
+    <span style="align-self: flex-start; padding: 3px 10px; border: 1px solid rgba(31,95,175,0.44); font-family: 'VT323', monospace; font-size: 17px; letter-spacing: 0.16em; color: #1B3856">03 // SELECTED WORK</span>
+    <h2 style="margin: 0; font-family: 'Michroma', sans-serif; font-weight: 400; font-size: 40px; letter-spacing: 0.04em; color: #163452; text-shadow: 0 0 0.6px rgba(20,70,150,0.5), 0 0 14px rgba(31,95,175,0.176)">PROJECTS</h2>
+    <p style="margin: 0; font-size: 15px; line-height: 1.55; color: #435B75">Things I've designed and built myself, and the problems each one made me solve.</p>
+  </div>
+
+  <div style="position: relative; margin-top: 28px; display: flex; gap: 14px; padding: 0 20px 6px; overflow-x: auto; scroll-snap-type: x mandatory">
+    <sc-for list="{{projects}}" as="p" hint-placeholder-count="6">
+      <div style="position: relative; flex: 0 0 310px; scroll-snap-align: start; display: flex; flex-direction: column; border: 1px solid rgba(31,95,175,0.4); background: rgba(250,252,255,0.88)">
+        <span aria-hidden="true" style="position: absolute; left: -4px; top: -4px; width: 7px; height: 7px; border-radius: 50%; background: #203C5A; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span>
+        <span aria-hidden="true" style="position: absolute; right: -4px; top: -4px; width: 7px; height: 7px; border-radius: 50%; background: #203C5A; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span>
+        <span aria-hidden="true" style="position: absolute; left: -4px; bottom: -4px; width: 7px; height: 7px; border-radius: 50%; background: #203C5A; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span>
+        <span aria-hidden="true" style="position: absolute; right: -4px; bottom: -4px; width: 7px; height: 7px; border-radius: 50%; background: #203C5A; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span>
+        <div style="height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border-bottom: 1px solid rgba(31,95,175,0.4); font-family: 'VT323', monospace; font-size: 19px; letter-spacing: 0.12em">
+          <span style="color: #1B3856">{{p.num}}</span>
+          <span style="color: #445C76">{{p.tag}}</span>
+        </div>
+        <div style="padding: 12px 12px 0">
+          <div style="position: relative; aspect-ratio: 16 / 10; background: radial-gradient(ellipse 70% 70% at 45% 40%, #C9D2DB, #E0E6ED); border: 1px solid rgba(31,95,175,0.2); overflow: hidden">
+            <img src="{{p.img}}" alt="{{p.name}} screen" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover">
+            <span aria-hidden="true" style="position: absolute; left: 10px; top: 10px; width: 16px; height: 16px; border-left: 2px solid #203C5A; border-top: 2px solid #203C5A"></span>
+            <span aria-hidden="true" style="position: absolute; right: 10px; bottom: 10px; width: 16px; height: 16px; border-right: 2px solid #203C5A; border-bottom: 2px solid #203C5A"></span>
+            <div aria-hidden="true" style="position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(10,40,90,0.087) 0px, rgba(10,40,90,0.087) 1px, transparent 1px, transparent 3px)"></div>
+          </div>
+        </div>
+        <div style="padding: 16px 14px 0; display: flex; flex-direction: column; gap: 6px; flex: 1">
+          <h3 style="margin: 0; font-family: 'Michroma', sans-serif; font-weight: 400; font-size: 19px; letter-spacing: 0.04em; color: #163452; text-shadow: 0 0 0.6px rgba(20,70,150,0.5), 0 0 14px rgba(31,95,175,0.176)">{{p.name}}</h3>
+          <div style="font-family: 'VT323', monospace; font-size: 17px; letter-spacing: 0.08em; color: #5A7087">{{p.sub}}</div>
+          <p style="margin: 4px 0 0; font-size: 14px; line-height: 1.5; color: #435B75">{{p.lead}}</p>
+        </div>
+        <div style="padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 6px">
+          <sc-for list="{{p.tags}}" as="t" hint-placeholder-count="4">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 3px 9px; border: 1px solid rgba(31,95,175,0.4); border-radius: 999px">{{t}}</span>
+          </sc-for>
+        </div>
+        <sc-if value="{{p.hasLinks}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; border-top: 1px solid rgba(31,95,175,0.4)">
+            <sc-if value="{{p.hasCode}}" hint-placeholder-val="{{false}}">
+              <a href="{{p.code}}" style="flex: 1; min-height: 44px; display: flex; align-items: center; justify-content: center; font-family: 'VT323', monospace; font-size: 19px; letter-spacing: 0.14em; text-decoration: none">CODE &gt;</a>
+            </sc-if>
+            <sc-if value="{{p.hasLive}}" hint-placeholder-val="{{true}}">
+              <a href="{{p.live}}" style="flex: 1; min-height: 44px; display: flex; align-items: center; justify-content: center; font-family: 'VT323', monospace; font-size: 19px; letter-spacing: 0.14em; text-decoration: none">LIVE &gt;</a>
+            </sc-if>
+          </div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position: relative; margin-top: 18px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px">
+    <span aria-hidden="true" style="display: flex; gap: 6px">
+      <span style="width: 18px; height: 3px; background: #203C5A; box-shadow: 0 0 10px rgba(40,110,220,0.18)"></span>
+      <span style="width: 8px; height: 3px; background: rgba(31,95,175,0.32)"></span>
+      <span style="width: 8px; height: 3px; background: rgba(31,95,175,0.32)"></span>
+      <span style="width: 8px; height: 3px; background: rgba(31,95,175,0.32)"></span>
+      <span style="width: 8px; height: 3px; background: rgba(31,95,175,0.32)"></span>
+      <span style="width: 8px; height: 3px; background: rgba(31,95,175,0.32)"></span>
+    </span>
+    <span style="font-family: 'VT323', monospace; font-size: 18px; letter-spacing: 0.12em; color: #445C76">01 / 06 · SWIPE &gt;</span>
+  </div>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, rgba(10,40,90,0.05) 0px, rgba(10,40,90,0.05) 1px, transparent 1px, transparent 3px)"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const P = [
+      { num: 'Ø3.1', tag: 'FEATURED', slug: 'blaze', img: '/_blob/73770374e597d9862caebb85d45889aa', name: 'BLAZE', sub: 'AI — CO-AUTHORING MARKDOWN EDITOR', lead: 'A Markdown editor where the AI works as a co-author, not a ghostwriter. Suggestions appear as a diff inside the text.', tags: ['React', 'TypeScript', 'Tiptap', 'LLM'], code: '', live: '' },
+      { num: 'Ø3.2', tag: '', slug: 'alphecca', img: '/_blob/50440565e563bd7493dce852765e4e52', name: 'ALPHECCA', sub: 'AI — LLM SELECTION & COST', lead: 'A Python app that helps choose an LLM for a specific workload, and estimates the real monthly cost.', tags: ['Python', 'Streamlit', 'pandas', 'Altair'], code: '', live: '' },
+      { num: 'Ø3.3', tag: 'IN PROGRESS', slug: 'polaris', img: '/_blob/c6640b65b543c1e8ad30ade56d32125b', name: 'POLARIS', sub: 'AI — RAG FOR BCRA REGULATIONS', lead: 'Answers compliance questions about BCRA rules in plain language and cites the exact section it comes from.', tags: ['Python', 'RAG', 'Claude', 'ChromaDB'], code: '', live: '' },
+      { num: 'Ø3.4', tag: 'IN PROGRESS', slug: 'lynx', img: '/_blob/625e8d3d229e8bfad199cc66d0b01e4b', name: 'LYNX', sub: 'AI — FRAUD & ELDER EXPLOITATION', lead: 'A pipeline that flags fraud, scams and financial exploitation in older adults’ bank accounts.', tags: ['Python', 'Pydantic', 'LangGraph', 'Gemini'], code: '', live: 'https://lynx-site.vercel.app' },
+      { num: 'Ø3.5', tag: '', slug: 'ethos', img: '/_blob/c49cf663e9697574984c49dfb980eea2', name: 'ETHOS', sub: 'FULL STACK — CLINIC BOOKING', lead: 'A booking platform for a fictional functional-medicine clinic, built as a study project.', tags: ['React', 'FastAPI', 'Node.js', 'PostgreSQL'], code: '', live: 'https://ethos-health-bice.vercel.app' },
+      { num: 'Ø3.6', tag: '', slug: 'marvel', img: '/_blob/322921a31d8688f134ae4e5b4f25284f', name: 'MARVEL CHARACTERS', sub: 'FRONTEND — CHARACTER BROWSER', lead: 'My first React and TypeScript app: browse and filter 304 Marvel characters.', tags: ['Next.js', 'TypeScript', 'Zod', 'Vitest'], code: 'https://github.com/mssegosende/17.1-marvel-characters', live: '' }
+    ];
+    return { projects: P.map((p) => ({ ...p, hasCode: !!p.code, hasLive: !!p.live, hasLinks: !!(p.code || p.live) })) };
+  }
+}
+</script>
+</body>
+</html>
