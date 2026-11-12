@@ -11,6 +11,8 @@ module.exports = {
         mono: ['"JetBrains Mono"', "monospace"],
         inter: ["Inter", "sans-serif"],
         display: ["Rajdhani", "sans-serif"],
+        // CRT redesign: HUD labels, data rows, buttons, rails.
+        vt: ["VT323", "monospace"],
       },
       // Two channel tokens; <alpha-value> lets `text-ink/65` use the same CSS
       // variable as the raw CSS, so a theme flip is one attribute.
@@ -19,6 +21,18 @@ module.exports = {
         surface: "rgb(var(--surface) / <alpha-value>)",
         // The site's only colour: the STATUS dot (María Sol, 9 Nov: pink, was blue #2E6FF2).
         status: "#F472B6",
+        // CRT redesign tokens (index.css); hex values, so no /alpha modifiers.
+        crt: {
+          bg: "var(--crt-bg)",
+          core: "var(--crt-core)",
+          title: "var(--crt-title)",
+          text: "var(--crt-text)",
+          "text-2": "var(--crt-text-2)",
+          dim: "var(--crt-dim)",
+          phosphor: "var(--crt-phosphor)",
+          node: "var(--crt-node)",
+          line: "var(--crt-line)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -13,6 +13,7 @@ import { Contact } from "@/components/Contact";
 import { RotateLock } from "@/components/RotateLock";
 import { SectionIndex } from "@/components/SectionIndex";
 import { Signature } from "@/components/Signature";
+import { CrtFilters } from "@/components/crt/CrtFilters";
 
 function App() {
   useLenis();
@@ -26,6 +27,8 @@ function App() {
 
   return (
     <div className="App bg-surface font-inter text-ink antialiased">
+      {/* The CRT palette filters, referenced by url(#crt-dark / #crt-light). */}
+      <CrtFilters />
       <NavigationDock visible={journeyDone} />
       <SectionIndex />
       <Signature />

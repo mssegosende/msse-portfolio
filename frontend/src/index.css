@@ -147,6 +147,85 @@
   }
 }
 
+/* CRT / HUD redesign tokens (design/crt/msse-crt-redesign/SPEC-crt-redesign.md
+   §1, values from its .dc.html files). On :root only, like the page-theme
+   variables above: the hero section is fixed to data-theme="dark" and must not
+   flip them. Phase 1 only defines them; each section adopts them in its phase. */
+@layer base {
+  :root {
+    /* Light: blue ink on cool paper. */
+    --crt-bg: #eaeff5;
+    --crt-core: #0e2c4c;
+    --crt-title: #0e2c4c;
+    --crt-text: #193755;
+    --crt-text-2: #24405d;
+    --crt-dim: #4c647c;
+    --crt-phosphor: #1f5faf;
+    /* Frame nodes and crosshair corners (MainLight). */
+    --crt-node: #1b3856;
+    --crt-node-glow: 0 0 10px rgba(40, 110, 220, 0.18);
+    --crt-line: rgba(31, 95, 175, 0.4);
+    /* Data-row dividers (MainLight). */
+    --crt-line-row: rgba(31, 95, 175, 0.2);
+    --crt-grid: rgba(31, 95, 175, 0.036);
+    --crt-panel: rgba(250, 252, 255, 0.85);
+    --crt-frame-shadow: 0 0 10px rgba(40, 110, 220, 0.18);
+    --crt-row-label: #24405d;
+    --crt-row-value: #193755;
+    --crt-scan: rgba(10, 40, 90, 0.055);
+    /* Glow in light is a soft halo, not bloom, for titles and labels alike. */
+    --crt-glow-title: 0 0 0.6px rgba(20, 70, 150, 0.5), 0 0 14px rgba(60, 130, 240, 0.22);
+    --crt-glow-label: 0 0 0.6px rgba(20, 70, 150, 0.5), 0 0 14px rgba(60, 130, 240, 0.22);
+    --crt-vignette: radial-gradient(
+      ellipse 75% 70% at 50% 45%,
+      rgba(10, 40, 90, 0) 55%,
+      rgba(10, 40, 90, 0.175) 100%
+    );
+  }
+
+  :root[data-theme="dark"] {
+    /* Dark: phosphor blue, sampled from the portrait (assets/photo_ramp.json). */
+    --crt-bg: #020409;
+    --crt-core: #defbff;
+    --crt-title: #eef8ff;
+    --crt-text: #c8ecfe;
+    --crt-text-2: #8fd2fb;
+    --crt-dim: #6cb9ee;
+    --crt-phosphor: #7dc6f6;
+    --crt-node: #d4f2ff;
+    --crt-node-glow: 0 0 8px #6ebaef;
+    --crt-line: rgba(125, 198, 246, 0.5);
+    --crt-line-row: rgba(125, 198, 246, 0.3);
+    --crt-grid: rgba(110, 186, 239, 0.06);
+    --crt-panel: rgba(3, 9, 18, 0.82);
+    --crt-frame-shadow:
+      0 0 30px rgba(108, 185, 238, 0.073), inset 0 0 40px rgba(108, 185, 238, 0.031);
+    --crt-row-label: #c8ecfe;
+    --crt-row-value: #daf8ff;
+    --crt-scan: rgba(0, 0, 0, 0.2);
+    --crt-glow-title:
+      0 0 3px var(--crt-core), 0 0 18px rgba(110, 186, 239, 0.6), 0 0 50px rgba(110, 186, 239, 0.25);
+    --crt-glow-label: 0 0 6px rgba(110, 186, 239, 0.7);
+    --crt-vignette: radial-gradient(
+      ellipse 75% 70% at 50% 45%,
+      rgba(0, 0, 0, 0) 55%,
+      rgba(0, 0, 0, 0.7) 100%
+    );
+  }
+
+  /* Phones (HeroM): a wider, softer vignette. Same test as lib/layout.ts. */
+  @media (max-width: 767px),
+    (hover: none) and (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+    :root[data-theme="dark"] {
+      --crt-vignette: radial-gradient(
+        ellipse 90% 75% at 50% 45%,
+        rgba(0, 0, 0, 0) 60%,
+        rgba(0, 0, 0, 0.6) 100%
+      );
+    }
+  }
+}
+
 html.lenis,
 html.lenis body {
   height: auto;
@@ -665,4 +744,171 @@ textarea:-webkit-autofill {
   .intro-dialog[open]::backdrop {
     animation: none;
   }
+}
+
+/* ---- CRT / HUD redesign (phase 1): shared classes, unused until each
+   section's phase mounts them. None of them animates. ---- */
+
+/* Glow: big titles / wordmark, and HUD labels. Paragraphs (Inter) get none. */
+.crt-glow {
+  text-shadow: var(--crt-glow-title);
+}
+.crt-glow-label {
+  text-shadow: var(--crt-glow-label);
+}
+
+/* Overlays (pointer-events: none). Scanlines are a static layer: never
+   animated, so they cost no repaint per frame (unlike .scanline-overlay). */
+.crt-scanlines {
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, var(--crt-scan) 0 1px, transparent 1px 3px);
+}
+/* Hero and scene 2 only. */
+.crt-vignette {
+  pointer-events: none;
+  background-image: var(--crt-vignette);
+}
+.crt-grid {
+  pointer-events: none;
+  background-image:
+    linear-gradient(var(--crt-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--crt-grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+@media (min-width: 768px) {
+  .crt-grid {
+    background-size: 48px 48px;
+  }
+}
+
+/* Luminance -> palette (CrtFilters.tsx). The -inv variants invert first, for
+   recordings of the opposite theme's UI (CSS filters chain left to right). */
+.crt-filter-dark {
+  filter: url(#crt-dark);
+}
+.crt-filter-dark-inv {
+  filter: invert(1) url(#crt-dark);
+}
+.crt-filter-light {
+  filter: url(#crt-light);
+}
+.crt-filter-light-inv {
+  filter: invert(1) url(#crt-light);
+}
+
+/* Frame with nodes: 1px line, panel fill, a 7px glowing dot on each corner
+   (CrtFrame). Extra .crt-node dots go where a divider meets the frame. */
+.crt-frame {
+  position: relative;
+  border: 1px solid var(--crt-line);
+  background: var(--crt-panel);
+  box-shadow: var(--crt-frame-shadow);
+}
+.crt-node {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--crt-node);
+  box-shadow: var(--crt-node-glow);
+  pointer-events: none;
+}
+
+/* Crosshair corners: four L corners around the thing in focus (Crosshair).
+   --ch-size, --ch-w (line: 3-4px desktop, 2-3px phones) and --ch-offset
+   (negative: outside the box) are set per use. */
+.crt-crosshair {
+  position: absolute;
+  inset: var(--ch-offset, 0);
+  pointer-events: none;
+}
+.crt-crosshair > span {
+  position: absolute;
+  width: var(--ch-size, 24px);
+  height: var(--ch-size, 24px);
+  border: 0 solid var(--crt-node);
+}
+.crt-crosshair > span:nth-child(1) {
+  left: 0;
+  top: 0;
+  border-left-width: var(--ch-w, 2px);
+  border-top-width: var(--ch-w, 2px);
+}
+.crt-crosshair > span:nth-child(2) {
+  right: 0;
+  top: 0;
+  border-right-width: var(--ch-w, 2px);
+  border-top-width: var(--ch-w, 2px);
+}
+.crt-crosshair > span:nth-child(3) {
+  left: 0;
+  bottom: 0;
+  border-left-width: var(--ch-w, 2px);
+  border-bottom-width: var(--ch-w, 2px);
+}
+.crt-crosshair > span:nth-child(4) {
+  right: 0;
+  bottom: 0;
+  border-right-width: var(--ch-w, 2px);
+  border-bottom-width: var(--ch-w, 2px);
+}
+
+/* Data row: VT323 label left, value right, 42px, divider below (DataRow). */
+.crt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 42px;
+  box-sizing: border-box;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--crt-line-row);
+  font-family: "VT323", monospace;
+  font-size: 22px;
+  letter-spacing: 0.1em;
+}
+.crt-row__label {
+  color: var(--crt-row-label);
+  text-shadow: var(--crt-glow-label);
+}
+.crt-row__value {
+  color: var(--crt-row-value);
+  text-align: right;
+}
+
+/* Terminal window: title bar `msse@…: ~/…` + three circles, the last filled
+   (TerminalWindow). */
+.crt-term {
+  border: 1px solid var(--crt-line);
+  border-radius: 6px;
+  background: var(--crt-panel);
+  overflow: hidden;
+}
+.crt-term__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--crt-line);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: var(--crt-row-label);
+}
+.crt-term__dots {
+  display: flex;
+  gap: 6px;
+}
+.crt-term__dots > span {
+  width: 9px;
+  height: 9px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1.5px solid var(--crt-row-label);
+}
+.crt-term__dots > span:last-child {
+  border: 0;
+  background: var(--crt-title);
+  box-shadow: var(--crt-node-glow);
 }
