@@ -18,7 +18,8 @@ test.describe("desktop", () => {
     let reloaded = false;
     page.on("framenavigated", () => (reloaded = true));
     await page.getByTestId("theme-toggle").dispatchEvent("click");
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    // Pages open in dark (CRT redesign); the toggle goes to light.
+    await expect(page.locator("html")).not.toHaveAttribute("data-theme", "dark");
     expect(reloaded).toBe(false);
   });
 
@@ -50,7 +51,8 @@ test.describe("phone", () => {
       page.waitForEvent("load"),
       page.getByTestId("theme-toggle").dispatchEvent("click"),
     ]);
-    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    // Pages open in dark (CRT redesign); the toggle goes to light.
+    await expect(page.locator("html")).not.toHaveAttribute("data-theme", "dark");
     await expect.poll(() => pinProgress(page)).toBeCloseTo(before, 1);
     // The sequence was already seen: the dock comes back shown.
     await expect(page.getByTestId("navigation-dock")).toHaveCSS("opacity", "1");

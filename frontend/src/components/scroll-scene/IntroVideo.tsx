@@ -23,7 +23,7 @@ const PLAY = (
  * thumbnail is a muted looping preview in the CRT palette (the poster with
  * reduced motion); WATCH THE TOUR opens the player.
  */
-export const IntroTile = ({ ref }: { ref?: Ref<HTMLDivElement> }) => {
+export const IntroTile = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale?: number }) => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [open, setOpen] = useState(false);
   const [length, setLength] = useState<string | null>(null);
@@ -45,63 +45,70 @@ export const IntroTile = ({ ref }: { ref?: Ref<HTMLDivElement> }) => {
     <div
       ref={ref}
       data-testid="hero-intro-tile"
-      className="crt-frame absolute left-16 top-[33.3%] w-[300px]"
+      // Hero.dc.html: 64,300, 300 wide (~21vw), scaled with the window.
+      className="absolute left-[4.44vw] top-[33.3%]"
       onPointerEnter={() => setArmed(true)}
     >
-      {(
-        [
-          "left-[-4px] top-[-4px]",
-          "right-[-4px] top-[-4px]",
-          "bottom-[-4px] left-[-4px]",
-          "bottom-[-4px] right-[-4px]",
-        ] as const
-      ).map((pos) => (
-        <span key={pos} aria-hidden="true" className={`crt-node ${pos}`} />
-      ))}
-      <div className="flex h-10 items-center justify-between border-b border-crt-line px-3.5 font-vt text-[20px] tracking-[0.12em]">
-        <span className="text-[var(--crt-row-value)]">CH.01 · README TOUR</span>
-        <span aria-hidden="true" className="crt-term__dots">
-          <span />
-          <span />
-          <span />
-        </span>
-      </div>
-      <div className="relative m-3.5 h-[152px] overflow-hidden border border-crt-line [background:var(--crt-media)]">
-        <video
-          key={reduced ? "still" : "loop"}
-          ref={previewRef}
-          src={INTRO_VIDEO.src}
-          poster={INTRO_VIDEO.poster}
-          muted
-          loop
-          playsInline
-          preload={armed ? "metadata" : "none"}
-          aria-hidden="true"
-          tabIndex={-1}
-          onLoadedMetadata={(e) => {
-            const d = e.currentTarget.duration;
-            if (Number.isFinite(d) && d > 0) setLength(clock(d));
-          }}
-          className="crt-media-filter h-full w-full object-cover"
-        />
-        <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
-          {PLAY}
-        </span>
-        <span aria-hidden="true" className="crt-scanlines crt-scanlines--media absolute inset-0" />
-      </div>
-      <div className="flex items-center justify-between px-3.5 pb-3.5">
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          onFocus={() => setArmed(true)}
-          aria-haspopup="dialog"
-          aria-label={`${INTRO_VIDEO.title}${length ? ` (${length})` : ""}`}
-          data-testid="hero-intro-open"
-          className="crt-button min-h-11 px-3.5 text-[21px]"
-        >
-          WATCH THE TOUR
-        </button>
-        <span className="font-mono text-[11px] text-crt-dim">[{VIDEO_COUNT_LABEL}]</span>
+      {/* The load fade on the whole frame: never a border alone. */}
+      <div className="crt-frame hero-bar-in relative w-[300px]" style={{ zoom: scale }}>
+        {(
+          [
+            "left-[-4px] top-[-4px]",
+            "right-[-4px] top-[-4px]",
+            "bottom-[-4px] left-[-4px]",
+            "bottom-[-4px] right-[-4px]",
+          ] as const
+        ).map((pos) => (
+          <span key={pos} aria-hidden="true" className={`crt-node ${pos}`} />
+        ))}
+        <div className="flex h-10 items-center justify-between border-b border-crt-line px-3.5 font-vt text-[20px] tracking-[0.12em]">
+          <span className="text-[var(--crt-row-value)]">CH.01 · README TOUR</span>
+          <span aria-hidden="true" className="crt-term__dots">
+            <span />
+            <span />
+            <span />
+          </span>
+        </div>
+        <div className="relative m-3.5 h-[152px] overflow-hidden border border-crt-line [background:var(--crt-media)]">
+          <video
+            key={reduced ? "still" : "loop"}
+            ref={previewRef}
+            src={INTRO_VIDEO.src}
+            poster={INTRO_VIDEO.poster}
+            muted
+            loop
+            playsInline
+            preload={armed ? "metadata" : "none"}
+            aria-hidden="true"
+            tabIndex={-1}
+            onLoadedMetadata={(e) => {
+              const d = e.currentTarget.duration;
+              if (Number.isFinite(d) && d > 0) setLength(clock(d));
+            }}
+            className="crt-media-filter h-full w-full object-cover"
+          />
+          <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
+            {PLAY}
+          </span>
+          <span
+            aria-hidden="true"
+            className="crt-scanlines crt-scanlines--media absolute inset-0"
+          />
+        </div>
+        <div className="flex items-center justify-between px-3.5 pb-3.5">
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            onFocus={() => setArmed(true)}
+            aria-haspopup="dialog"
+            aria-label={`${INTRO_VIDEO.title}${length ? ` (${length})` : ""}`}
+            data-testid="hero-intro-open"
+            className="crt-button min-h-11 px-3.5 text-[21px]"
+          >
+            WATCH THE TOUR
+          </button>
+          <span className="font-mono text-[11px] text-crt-dim">[{VIDEO_COUNT_LABEL}]</span>
+        </div>
       </div>
       {open && <IntroPlayer reduced={reduced} onClose={() => setOpen(false)} />}
     </div>

@@ -73,11 +73,13 @@ const instrument = () => {
   }
 };
 
-// Start dark the way a phone theme reload does (lib/themeReload), at the top.
-const startDark = () => {
+// Start in a theme the way a phone theme reload does (lib/themeReload), at the
+// top. Both themes, explicitly: the default changed (dark since the CRT
+// redesign; light when the baseline was recorded).
+const startTheme = (theme) => {
   window.sessionStorage.setItem(
     "theme-reload",
-    JSON.stringify({ theme: "dark", pin: 0, journeyDone: false, t: Date.now() }),
+    JSON.stringify({ theme, pin: 0, journeyDone: false, t: Date.now() }),
   );
 };
 
@@ -210,7 +212,7 @@ const oneRun = async (browser, { phone, dark }) => {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript(instrument);
-  if (dark) await page.addInitScript(startDark);
+  await page.addInitScript(startTheme, dark ? "dark" : "light");
   const cdp = await context.newCDPSession(page);
   await cdp.send("Performance.enable");
   if (phone) await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });

@@ -6,7 +6,44 @@ import type { ReactNode, Ref } from "react";
 // theme's --crt-* tokens (the hero section itself is fixed to data-theme="dark",
 // so no Tailwind dark: variants in here).
 
-/** MSSE in phosphor, behind the robot. Static: the CRT design has no marquee. */
+// The sign's bad tubes: each letter on its own random timing (seeded, so the
+// server and the client agree), dropping out for a moment now and then.
+const tube = (n: number) => {
+  const r = (k: number) => {
+    const x = Math.sin(n * 12.9898 + k * 78.233) * 43758.5453;
+    return x - Math.floor(x);
+  };
+  return {
+    animationDuration: `${(4.5 + r(1) * 7).toFixed(2)}s`,
+    animationDelay: `${(-r(2) * 9).toFixed(2)}s`,
+  };
+};
+
+const COPIES = 3;
+
+/** One run of the sign: MSSE · MSSE · MSSE ·, every letter its own tube. */
+const NeonRun = ({ run }: { run: number }) => (
+  <span className="flex shrink-0">
+    {Array.from({ length: COPIES }, (_, c) => (
+      <span key={c} className="flex shrink-0">
+        {"MSSE".split("").map((ch, k) => (
+          <span key={k} className="neon-tube" style={tube(run * 100 + c * 10 + k)}>
+            {ch}
+          </span>
+        ))}
+        <span className="neon-sep">·</span>
+      </span>
+    ))}
+  </span>
+);
+
+/**
+ * MSSE behind the robot: a neon sign (María Sol, 12 Nov). A seamless,
+ * endless marquee in one direction (two identical runs sliding by one run's
+ * width: never a gap), each letter's tube flickering on its own timing, the
+ * glow breathing; a wide halo and a slight softness make it read as distant.
+ * Paused while the hero is off screen. Reduced motion: one still, steady MSSE.
+ */
 export const HeroWordmark = ({
   ref,
   isMobile,
@@ -18,10 +55,17 @@ export const HeroWordmark = ({
   <div
     ref={ref}
     aria-hidden="true"
-    className={`pointer-events-none absolute inset-x-0 ${isMobile ? "top-[96px]" : "top-[16.67%]"}`}
+    className={`pointer-events-none absolute inset-x-0 overflow-hidden ${isMobile ? "top-[96px]" : "top-[16.67%]"}`}
   >
     <div className={`hero-title-in hero-wordmark ${isMobile ? "hero-wordmark--phone" : ""}`}>
-      MSSE
+      {/* The breathing on its own box: the load fade owns the outer one's animation. */}
+      <div className="neon-breathe">
+        <div className="hero-marquee flex w-max motion-reduce:hidden">
+          <NeonRun run={0} />
+          <NeonRun run={1} />
+        </div>
+        <div className="hidden motion-reduce:block">MSSE</div>
+      </div>
     </div>
   </div>
 );
@@ -31,50 +75,55 @@ export const HeroWordmark = ({
 // with the window height and stays centred: the box is in vh from the centre.
 const VH = (px: number) => `${(px / 900) * 100}vh`;
 
-/** [core.head] crosshair around the robot's head, with its tags. */
-export const HeadCrosshair = ({ isMobile }: { isMobile: boolean }) => {
+/**
+ * [core.head] crosshair around the robot's head, with its tags. The timeline
+ * moves and sizes the box onto the head every frame (headScreenRect); until it
+ * has read the head, the box sits where the design puts it.
+ */
+export const HeadCrosshair = ({
+  ref,
+  isMobile,
+}: {
+  ref?: Ref<HTMLDivElement>;
+  isMobile: boolean;
+}) => {
   const tag = "absolute whitespace-nowrap font-mono text-crt-node crt-glow-label";
-  if (isMobile) {
-    // HeroM.dc.html at 390x844: box 92,140 200x240, tag above it.
-    return (
-      <div aria-hidden="true" data-testid="hero-crosshair" className="hero-bar-in">
-        <div className="absolute left-[92px] top-[140px] h-[240px] w-[200px]">
-          <Corners size={24} width={2} />
-        </div>
-        <span className={`${tag} left-[92px] top-[118px] text-[11px]`}>[core.head]</span>
-      </div>
-    );
-  }
   return (
     <div aria-hidden="true" data-testid="hero-crosshair" className="hero-bar-in">
       <div
-        className="absolute"
-        style={{
-          left: `calc(50% - ${VH(15)} - ${VH(180)})`,
-          top: VH(28),
-          width: VH(360),
-          height: VH(372),
-        }}
+        ref={ref}
+        data-testid="hero-crosshair-box"
+        className="absolute will-change-transform"
+        style={
+          isMobile
+            ? // HeroM.dc.html at 390x844: box 92,140 200x240.
+              { left: 92, top: 140, width: 200, height: 240 }
+            : {
+                left: `calc(50% - ${VH(15)} - ${VH(180)})`,
+                top: VH(28),
+                width: VH(360),
+                height: VH(372),
+              }
+        }
       >
-        <Corners size={40} width={3} />
-        {/* The centre mark (Hero.dc.html: 12x2 and 2x12 at 194,150). */}
+        <Corners size={isMobile ? 24 : 40} width={isMobile ? 2 : 3} />
+        {!isMobile && (
+          <>
+            {/* The centre mark (Hero.dc.html: 12x2 and 2x12 at 194,150 of 360x372). */}
+            <span className="absolute left-[54%] top-[40.6%] h-[2px] w-3 bg-crt-node" />
+            <span className="absolute left-[55.3%] top-[39%] h-3 w-[2px] bg-crt-node" />
+          </>
+        )}
         <span
-          className="absolute h-[2px] w-3 bg-crt-node"
-          style={{ left: VH(194), top: VH(150) }}
-        />
-        <span
-          className="absolute h-3 w-[2px] bg-crt-node"
-          style={{ left: VH(199), top: VH(145) }}
-        />
-        <span className={`${tag} text-[14px]`} style={{ left: VH(-45), top: VH(-24) }}>
+          className={`${tag} ${isMobile ? "-top-[22px] left-0 text-[11px]" : "-left-[45px] -top-6 text-[14px]"}`}
+        >
           [core.head]
         </span>
-        <span
-          className={`${tag} text-[14px]`}
-          style={{ left: "calc(100% + 15px)", top: "calc(100% + 4px)" }}
-        >
-          [msse.online]
-        </span>
+        {!isMobile && (
+          <span className={`${tag} left-[calc(100%+15px)] top-[calc(100%+4px)] text-[14px]`}>
+            [msse.online]
+          </span>
+        )}
       </div>
     </div>
   );
@@ -120,26 +169,29 @@ const CHECKS = [
 ] as const;
 
 /** Ø1.2: barcode + SYSTEM CHECK, bottom-left. */
-export const SystemCheck = ({ ref }: { ref?: Ref<HTMLDivElement> }) => (
-  <div
-    ref={ref}
-    data-testid="hero-system-check"
-    className="absolute bottom-14 left-16 w-[340px] border border-crt-line bg-[var(--crt-panel)] px-4 py-3.5"
-  >
-    <div aria-hidden="true" className="flex h-[34px] items-end gap-0.5">
-      {BARS.map((b, i) => (
-        <span key={i} className="block bg-crt-node" style={{ width: b.w, height: b.h }} />
-      ))}
-    </div>
-    <div className="mt-2.5 font-mono text-[11px] leading-[1.7] text-crt-text-2">
-      <div>
-        <span className="text-crt-text">SYSTEM CHECK</span> · MSSE-01
+export const SystemCheck = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale?: number }) => (
+  // Hero.dc.html: 64,bottom 56, 340 wide (~24vw), scaled with the window.
+  <div ref={ref} data-testid="hero-system-check" className="absolute bottom-[6.2vh] left-[4.44vw]">
+    {/* The load fade on the whole window: the frame never shows alone. */}
+    <div
+      className="hero-bar-in w-[340px] border border-crt-line bg-[var(--crt-panel)] px-4 py-3.5"
+      style={{ zoom: scale }}
+    >
+      <div aria-hidden="true" className="flex h-[34px] items-end gap-0.5">
+        {BARS.map((b, i) => (
+          <span key={i} className="block bg-crt-node" style={{ width: b.w, height: b.h }} />
+        ))}
       </div>
-      {CHECKS.map(([name, dots]) => (
-        <div key={name}>
-          &gt; {name} {dots} <span className="text-crt-title">OK</span>
+      <div className="mt-2.5 font-mono text-[11px] leading-[1.7] text-crt-text-2">
+        <div>
+          <span className="text-crt-text">SYSTEM CHECK</span> · MSSE-01
         </div>
-      ))}
+        {CHECKS.map(([name, dots]) => (
+          <div key={name}>
+            &gt; {name} {dots} <span className="text-crt-title">OK</span>
+          </div>
+        ))}
+      </div>
     </div>
   </div>
 );
@@ -148,10 +200,13 @@ export const SystemCheck = ({ ref }: { ref?: Ref<HTMLDivElement> }) => (
 export const HeroHeadline = ({
   ref,
   isMobile,
+  scale = 1,
   children,
 }: {
   ref?: Ref<HTMLDivElement>;
   isMobile: boolean;
+  /** Desktop: the HUD's scale with the window (22px type, ~1.5vw at 1440). */
+  scale?: number;
   /** Phones: the WATCH THE VIDEOS button under the lines. */
   children?: ReactNode;
 }) => (
@@ -160,11 +215,11 @@ export const HeroHeadline = ({
     className={`hero-headline absolute font-inter font-extralight uppercase tracking-[0.3em] ${
       isMobile
         ? "inset-x-0 top-[590px] text-center text-[15px] leading-[1.7]"
-        : "right-16 top-[58px] text-right text-[22px] leading-[1.6]"
+        : "right-[4.44vw] top-[6.4vh] text-right text-[22px] leading-[1.6]"
     }`}
   >
     {/* Screen readers get these lines from HeroHeading, the page's h1. */}
-    <div aria-hidden="true" className={isMobile ? "hero-bar-in" : ""}>
+    <div aria-hidden="true" className="hero-bar-in" style={isMobile ? undefined : { zoom: scale }}>
       <div data-testid="hero-headline-1" className="text-crt-title crt-glow-label">
         Build the future
       </div>
@@ -199,9 +254,9 @@ const Scroll = ({ ref, isMobile }: { ref?: Ref<HTMLDivElement>; isMobile: boolea
         : "bottom-[30px] -ml-10 gap-2 text-[20px]"
     }`}
   >
-    <span className={isMobile ? "hero-bar-in" : ""}>Scroll</span>
+    <span className="hero-bar-in">Scroll</span>
     <span
-      className={`hero-hint block w-px bg-[linear-gradient(180deg,var(--crt-title),transparent)] ${
+      className={`hero-bar-in hero-hint block w-px bg-[linear-gradient(180deg,var(--crt-title),transparent)] ${
         isMobile ? "h-[26px]" : "h-9"
       }`}
     />

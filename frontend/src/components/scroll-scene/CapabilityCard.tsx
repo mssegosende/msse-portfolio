@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import type { CapabilityCard as Card } from "../../data/portfolioData";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { DataRow } from "../crt/CrtPieces";
-import { ScrollText } from "../projects/ProjectCard";
 import { TICK_MS, wavePath, type Shape } from "./ascii";
 
 // Option A "Dossier" (design/crt/msse-crt-redesign/design-source/Main.dc.html
@@ -19,7 +18,6 @@ const NODES_DESKTOP = [
   "left-[-4px] top-[49px]",
   "right-[-4px] top-[49px]",
   "left-[177px] top-[49px]",
-  "left-[177px] top-[229px]",
 ];
 const NODES_PHONE = NODES_DESKTOP.slice(0, 4);
 
@@ -49,8 +47,14 @@ const Scope = ({ step, part }: { step: Shape; part: string }) => {
           });
     if (boxRef.current) io?.observe(boxRef.current);
     const t0 = performance.now();
+    // On screen is not enough: before the first card the cards sit hidden
+    // (visibility / opacity) inside the pinned hero, and drawing then cost
+    // scene 1 frames (perf/crt-phase3.json).
+    const shown = () =>
+      boxRef.current?.checkVisibility?.({ opacityProperty: true, visibilityProperty: true }) ??
+      true;
     const id = setInterval(() => {
-      if (onScreen && !document.hidden) draw(performance.now() - t0);
+      if (onScreen && !document.hidden && shown()) draw(performance.now() - t0);
     }, TICK_MS);
     return () => {
       clearInterval(id);
@@ -121,9 +125,8 @@ export const CapabilityCard = ({ card, isMobile }: { card: Card; isMobile: boole
             <span className="crt-dossier__num font-michroma text-[44px] leading-none">{num}</span>
           </div>
           <div className="border-b border-[var(--crt-line-row)] px-4 py-3">
-            <ScrollText style={{ maxHeight: 63 }}>
-              <p className="m-0 text-[14px] leading-[1.5] text-crt-text-2">{card.text}</p>
-            </ScrollText>
+            {/* The whole body, always (María Sol, 12 Nov): never clipped. */}
+            <p className="m-0 text-[14px] leading-[1.5] text-crt-text-2">{card.text}</p>
           </div>
           <div className="crt-dossier__rows--phone">
             <DataRow label="FUNCTION">{card.function}</DataRow>
@@ -147,8 +150,10 @@ export const CapabilityCard = ({ card, isMobile }: { card: Card; isMobile: boole
             </span>
             <span aria-hidden="true" className="crt-dossier__icon" />
           </div>
-          <div className="grid grid-cols-[180px_minmax(0,1fr)] border-b border-crt-line">
-            <div className="relative flex h-[180px] items-center justify-center border-r border-crt-line">
+          <div className="relative grid grid-cols-[180px_minmax(0,1fr)] border-b border-crt-line">
+            {/* Where this row's divider meets the box's: follows the row's height. */}
+            <span aria-hidden="true" className="crt-node -bottom-1 left-[177px]" />
+            <div className="relative flex min-h-[180px] items-center justify-center border-r border-crt-line">
               <span
                 aria-hidden="true"
                 className="crt-dossier__bracket left-4 top-4 border-l border-t"
@@ -167,16 +172,14 @@ export const CapabilityCard = ({ card, isMobile }: { card: Card; isMobile: boole
               />
               <span className="crt-dossier__num font-michroma text-[72px] leading-none">{num}</span>
             </div>
-            <div className="flex h-[180px] flex-col justify-center gap-2.5 px-6 py-[22px]">
+            <div className="flex min-h-[180px] flex-col justify-center gap-2.5 px-6 py-[22px]">
               <div className="font-vt text-[20px] tracking-[0.22em] text-crt-dim">{card.small}</div>
               <h3 className="crt-dossier__title m-0 font-michroma text-[23px] font-normal tracking-[0.05em]">
                 {card.title}
               </h3>
-              {/* The body stays the long copy from portfolioData: it scrolls
-                  inside its three lines, with the fade (as the project cards). */}
-              <ScrollText style={{ maxHeight: 66, minHeight: 0 }}>
-                <p className="m-0 text-[14px] leading-[1.55] text-crt-text-2">{card.text}</p>
-              </ScrollText>
+              {/* The whole body, always (María Sol, 12 Nov): the card grows to
+                  fit it, and ScrollScene scales the card to the room there is. */}
+              <p className="m-0 text-[14px] leading-[1.55] text-crt-text-2">{card.text}</p>
             </div>
           </div>
           <DataRow label="FUNCTION">{card.function}</DataRow>

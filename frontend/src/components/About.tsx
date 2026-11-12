@@ -1,26 +1,23 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { BioTerminal, TypeLine } from "./BioTerminal";
 import { profile, manifesto } from "../data/portfolioData";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useSectionProgress, useSectionStep } from "../hooks/useSectionStep";
 import { REDUCED_MOTION_QUERY } from "../lib/motion";
+import { at, clampScale, useFrame } from "../hooks/useFrame";
 import { DataRow } from "./crt/CrtPieces";
 import s from "./About.module.css";
 
 const STEPS = 3;
 
-// Desktop reveal, on the section's progress (700vh, pinned for six screens).
-// The four paragraphs one by one, then the dossier ("since 2022") and each
-// principle on its own stretch of scroll, ~0.7 screen each (María Sol, 9 Nov);
-// then about 1.3 screens of hold before Contact. The index's thirds: Ø4.1 the
-// paragraphs, Ø4.2 the dossier and principles 1-2, Ø4.3 principle 3 and the hold.
-const PARA_AT = [0, 0.1, 0.2, 0.3];
-const SINCE_AT = 0.42;
+// Desktop reveal, on the section's progress (700vh, pinned for six screens):
+// the bio types itself in a terminal panel from arrival (BioTerminal); the
+// dossier ("since 2022") and each principle come in on their own stretch of
+// scroll, then about 1.3 screens of hold before Contact.
 const PRINCIPLE_AT = [0.52, 0.62, 0.72];
 
-const PARAGRAPHS = [
-  ...profile.bio.map((text) => ({ text, kind: "bio" as const })),
-  ...profile.story.map((text) => ({ text, kind: "story" as const })),
-];
+// The bio: today's four paragraphs, unchanged.
+const BIO = [...profile.bio, ...profile.story];
 
 // The dossier's rows (About.dc.html).
 const ROWS: [string, string][] = [
@@ -40,6 +37,14 @@ const SIGNAL = (() => {
   return d;
 })();
 
+// The dossier at its design size (About.dc.html), px, and the room kept
+// above the dock.
+const DOSSIER_W = 656;
+/** The text column (title, bio panel, principles) beside it, px. */
+const TEXT_W = 616;
+const DOSSIER_H = 712;
+const DOCK_ROOM = 110;
+
 const NODES = [
   "left-[-4px] top-[-4px]",
   "right-[-4px] top-[-4px]",
@@ -47,12 +52,18 @@ const NODES = [
   "bottom-[-4px] right-[-4px]",
 ];
 
+// How long the dossier takes to come in (the reveal's slow transition) before
+// the bio and the data rows start typing, ms.
+const PORTRAIT_IN_MS = 1200;
+
 /**
- * Scene 4 · WHO, CRT look (design/crt/.../About*.dc.html). Desktop: the
- * section pins while the bio's four paragraphs appear one by one in the left
- * column (today's text, unchanged); then the SUBJECT MSSE-01 dossier comes in
- * on the right and each principle row under the text. Mobile: one column,
- * the dossier first, all shown.
+ * Scene 4 · WHO, CRT look (design/crt/.../About*.dc.html), in the order María
+ * Sol asked (12 Nov): first the SUBJECT MSSE-01 dossier with the portrait
+ * (a fade and a scanline sweeping down the photo), then, as soon as it is in,
+ * the bio types itself in the code panel beside it while the dossier's data
+ * rows type in too. Desktop: dossier left, title, bio panel and principles
+ * right, side by side; the principles come in on their own stretch of the
+ * pinned scroll. Phones: the dossier, then the bio panel, then the principles.
  */
 export const About = () => {
   const ref = useRef<HTMLElement>(null);
@@ -63,34 +74,27 @@ export const About = () => {
   const still = useMediaQuery(REDUCED_MOTION_QUERY);
   const paced = desktop && !still;
   const reached = still || step >= 0;
-  const shownParas = still
-    ? PARAGRAPHS.length
-    : desktop
-      ? PARA_AT.filter((at) => progress >= at).length
-      : reached
-        ? 4
-        : 0;
-  const rightOn = paced ? progress >= SINCE_AT : reached;
+  // The dossier comes in on arrival; the typing waits for it.
+  const rightOn = reached;
+  const [portraitIn, setPortraitIn] = useState(still);
+  useEffect(() => {
+    if (!rightOn || portraitIn) return undefined;
+    const t = setTimeout(() => setPortraitIn(true), PORTRAIT_IN_MS);
+    return () => clearTimeout(t);
+  }, [rightOn, portraitIn]);
   const since = profile.stats[0];
 
-  // Desktop: how far the paragraphs slide up so the newest one shows whole.
-  const windowRef = useRef<HTMLDivElement>(null);
-  const stackRef = useRef<HTMLDivElement>(null);
-  const [lift, setLift] = useState(0);
-  useLayoutEffect(() => {
-    const win = windowRef.current;
-    const stack = stackRef.current;
-    if (!paced || !win || !stack) {
-      setLift(0);
-      return undefined;
-    }
-    const measure = () => setLift(Math.max(0, Math.ceil(stack.scrollHeight - win.clientHeight)));
-    measure();
-    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
-    ro?.observe(win);
-    ro?.observe(stack);
-    return () => ro?.disconnect();
-  }, [paced, shownParas]);
+  // Desktop: the title column and the dossier keep their places in the
+  // 1440 x 900 frame and one scale, the window's width capped where the
+  // height runs out (María Sol, 12 Nov), so the title keeps its proportion
+  // to the dossier at every size.
+  const { width, height, kw, kh } = useFrame();
+  const k = clampScale(
+    Math.min(kw, (height - 96 * kh - DOCK_ROOM) / DOSSIER_H, (width - 60 - 760 * kw) / TEXT_W),
+  );
+  // Dossier left (64), the text column right of it (760), side by side.
+  const leftBox = desktop ? { ...at(760, 96), zoom: k, width: TEXT_W } : undefined;
+  const rightBox = desktop ? { ...at(64, 96), zoom: k, width: DOSSIER_W } : undefined;
 
   return (
     <section
@@ -107,59 +111,40 @@ export const About = () => {
           HUMAN
         </div>
 
-        <div className={`${s.reveal} ${s.head}`} data-on={reached}>
-          <span className="crt-pill self-start font-vt">04 // WHO</span>
-          <h2
-            className={`crt-glow m-0 font-michroma font-normal uppercase text-crt-title ${s.title}`}
-          >
-            The human behind the machine
-          </h2>
-        </div>
-
-        <div className={s.left}>
-          <div
-            ref={windowRef}
-            className={s.textWindow}
-            data-lifted={desktop && lift > 0}
-            data-testid="about-text"
-          >
-            <div
-              ref={stackRef}
-              className={s.textStack}
-              style={paced ? { transform: `translateY(${-lift}px)` } : undefined}
+        <div className={s.leftCol} style={leftBox}>
+          <div className={`${s.reveal} ${s.head}`} data-on={reached}>
+            <span className="crt-pill self-start font-vt">04 // WHO</span>
+            <h2
+              className={`crt-glow m-0 font-michroma font-normal uppercase text-crt-title ${s.title}`}
             >
-              {PARAGRAPHS.map((p, i) => (
-                <p
-                  key={i}
-                  className={`${s.reveal} ${s.para}`}
-                  data-on={i < shownParas}
-                  data-dim={paced && lift > 0 && i < shownParas - 1}
-                  data-testid={`about-paragraph-${i + 1}`}
+              The human behind the machine
+            </h2>
+          </div>
+
+          <div className={s.left}>
+            {/* The bio types itself in, once (María Sol, 12 Nov): a fixed-height
+                terminal panel; today's text, unchanged. */}
+            <BioTerminal paragraphs={BIO} reduced={still} start={portraitIn} className={s.bio} />
+
+            {/* Principles as three VT323 rows (SPEC §6). */}
+            <div className={s.principles}>
+              {manifesto.map((p, i) => (
+                <article
+                  key={p.num}
+                  data-testid={`manifesto-chapter-${p.num}`}
+                  className={`${s.reveal} ${s.slow} ${s.principle}`}
+                  data-on={paced ? progress >= (PRINCIPLE_AT[i] ?? 1) : reached}
                 >
-                  {p.text}
-                </p>
+                  <span className="crt-section-label">{p.num}</span>
+                  <h3 className={s.principleTitle}>{p.title}</h3>
+                </article>
               ))}
             </div>
           </div>
-
-          {/* Principles as three VT323 rows (SPEC §6). */}
-          <div className={s.principles}>
-            {manifesto.map((p, i) => (
-              <article
-                key={p.num}
-                data-testid={`manifesto-chapter-${p.num}`}
-                className={`${s.reveal} ${s.slow} ${s.principle}`}
-                data-on={paced ? progress >= (PRINCIPLE_AT[i] ?? 1) : reached}
-              >
-                <span className="crt-section-label">{p.num}</span>
-                <h3 className={s.principleTitle}>{p.title}</h3>
-              </article>
-            ))}
-          </div>
         </div>
 
-        {/* The dossier: nothing here shows until the fourth paragraph is out. */}
-        <div className={`${s.reveal} ${s.slow} ${s.right}`} data-on={rightOn}>
+        {/* The dossier: first in, on arrival. */}
+        <div className={`${s.reveal} ${s.slow} ${s.right}`} data-on={rightOn} style={rightBox}>
           <div className={`crt-frame relative ${s.dossier}`}>
             {NODES.map((pos) => (
               <span key={pos} aria-hidden="true" className={`crt-node ${pos}`} />
@@ -171,7 +156,7 @@ export const About = () => {
             <div className={s.subject}>
               <div className={s.portraitCell}>
                 {/* A dark screen in both themes: the portrait is the same image. */}
-                <div className={s.screen}>
+                <div className={s.screen} data-sweep={rightOn && !still ? "true" : undefined}>
                   <img
                     src="/about/maria-sol-portrait.jpg"
                     alt="María Sol Gosende, portrait built from glowing digits"
@@ -203,7 +188,7 @@ export const About = () => {
             <div className={s.rows}>
               {ROWS.map(([label, value]) => (
                 <DataRow key={label} label={label}>
-                  {value}
+                  <TypeLine text={value} start={portraitIn} reduced={still} />
                 </DataRow>
               ))}
             </div>

@@ -1,10 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { blockSpline, DESKTOP, openHome } from "./helpers";
 
-// Scene 4 on desktop (María Sol's review): the four paragraphs appear one by
-// one in one column and stay; the right column only comes in after the
-// fourth, with the text still there: 2022, then each principle on its own
-// scroll (9 Nov).
+// Scene 4 on desktop (CRT redesign, María Sol 12 Nov): the SUBJECT MSSE-01
+// dossier comes in first, then the bio types itself in a terminal panel
+// beside it (the full text is in the DOM for screen readers); each principle
+// comes in on its own stretch of the pinned scroll.
 
 /** Scroll to a share (0..1) of the About section, on the index's scale. */
 const scrollToAbout = async (page: Page, progress: number) => {
@@ -21,40 +21,32 @@ const state = (page: Page) =>
       [...document.querySelectorAll(sel)].filter((e) => e.getAttribute("data-on") === "true")
         .length;
     return {
-      paragraphs: on('[data-testid^="about-paragraph-"]'),
       right: on('[data-testid="about-stat-code"], [data-testid^="manifesto-chapter-"]'),
     };
   });
 
 test.use({ viewport: DESKTOP });
 
-test("paragraphs come one by one and stay, then the right column", async ({ page }) => {
+test("the dossier first, the bio as text, then each principle", async ({ page }) => {
   await blockSpline(page);
   await openHome(page);
-  const expected: [number, { paragraphs: number; right: number }][] = [
-    [0.05, { paragraphs: 1, right: 0 }],
-    [0.15, { paragraphs: 2, right: 0 }],
-    [0.25, { paragraphs: 3, right: 0 }],
-    [0.35, { paragraphs: 4, right: 0 }],
-    [0.47, { paragraphs: 4, right: 1 }],
-    [0.57, { paragraphs: 4, right: 2 }],
-    [0.67, { paragraphs: 4, right: 3 }],
-    [0.77, { paragraphs: 4, right: 4 }],
-    [0.88, { paragraphs: 4, right: 4 }],
+  const expected: [number, number][] = [
+    [0.05, 1],
+    [0.57, 2],
+    [0.67, 3],
+    [0.77, 4],
+    [0.88, 4],
   ];
-  for (const [p, want] of expected) {
+  for (const [p, right] of expected) {
     await scrollToAbout(page, p);
-    await expect.poll(() => state(page)).toEqual(want);
+    await expect.poll(async () => (await state(page)).right).toBe(right);
   }
-  // The newest paragraph shows whole inside the text column (once the slide
-  // settles), and the column ends above the dock.
-  const win = (await page.getByTestId("about-text").boundingBox())!;
+  // The bio: its four paragraphs as real text, unchanged.
+  const paragraphs = page.locator('[data-testid^="about-paragraph-"]');
+  await expect(paragraphs).toHaveCount(4);
+  await expect(paragraphs.first()).toContainText("I am María Sol");
+  // The typing panel ends above the dock.
+  const panel = (await page.getByTestId("about-text").boundingBox())!;
   const dock = (await page.getByTestId("navigation-dock").boundingBox())!;
-  await expect
-    .poll(async () => {
-      const last = (await page.getByTestId("about-paragraph-4").boundingBox())!;
-      return last.y >= win.y - 1 && last.y + last.height <= win.y + win.height + 1;
-    })
-    .toBe(true);
-  expect(win.y + win.height).toBeLessThanOrEqual(dock.y);
+  expect(panel.y + panel.height).toBeLessThanOrEqual(dock.y);
 });

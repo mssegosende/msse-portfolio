@@ -77,10 +77,11 @@ export const heroFraming = (isMobile: boolean, _reduce: boolean, { width, height
     };
   }
   // CRT redesign (Hero.dc.html): pulled back so the head shows whole, the
-  // crown ~6% from the top, the shoulders ~80% of the width.
+  // shoulders ~80% of the width; the head high in the frame (María Sol,
+  // 12 Nov), the crown ~1.5% from the top.
   const HERO_SCALE = 1.3;
   const HERO_CROWN_NATIVE = 0.0456;
-  const HERO_CROWN_TARGET = 0.06;
+  const HERO_CROWN_TARGET = 0.015;
   const yAt = (scale: number) =>
     (HERO_CROWN_TARGET - 0.5 - (HERO_CROWN_NATIVE - 0.5) * scale) * 100;
   const y = yAt(HERO_SCALE);

@@ -1,7 +1,9 @@
 import { createContext, useContext } from "react";
 import type { Theme } from "@/lib/themeReload";
 
-export const DEFAULT_THEME: Theme = "light";
+// The CRT redesign opens in phosphor (María Sol, 12 Nov), whatever the
+// system preference.
+export const DEFAULT_THEME: Theme = "dark";
 
 export interface ThemeContextValue {
   theme: Theme;

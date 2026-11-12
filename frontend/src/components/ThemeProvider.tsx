@@ -8,8 +8,8 @@ import {
 } from "@/lib/themeReload";
 
 /**
- * Every load starts in light, the designed default; the toggle lasts for the
- * session and is not persisted. Exception: on phones the toggle reloads the
+ * Every load starts in dark (phosphor), the designed default, whatever the
+ * system preference; the toggle lasts for the session and is not persisted. Exception: on phones the toggle reloads the
  * page (lib/themeReload), and that reload starts in the chosen theme.
  */
 const INITIAL_THEME = pendingThemeReload?.theme || DEFAULT_THEME;
@@ -21,8 +21,9 @@ const applyTheme = (theme: Theme) => {
   else root.removeAttribute("data-theme");
 };
 
-// Apply before the first paint, so a reload into dark never flashes light.
-if (typeof document !== "undefined" && INITIAL_THEME !== DEFAULT_THEME) applyTheme(INITIAL_THEME);
+// Apply before the first paint (index.html already says dark), so a reload
+// into light never flashes dark.
+if (typeof document !== "undefined") applyTheme(INITIAL_THEME);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState(INITIAL_THEME);

@@ -5,6 +5,7 @@ import { scrollToTop } from "../hooks/useLenis";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useSectionStep } from "../hooks/useSectionStep";
 import { REDUCED_MOTION_QUERY } from "../lib/motion";
+import { clampScale, useFrame } from "../hooks/useFrame";
 import { GridField } from "./GridField";
 import s from "./Contact.module.css";
 
@@ -48,6 +49,9 @@ const RX_WAVE = (() => {
   }
   return d;
 })();
+
+// Contact's desktop screen at its design size (Contact.dc.html), px tall.
+const CONTACT_H = 930;
 
 // Errors are notices, not transcript: one entry per message, kept apart from
 // the log. Resubmitting the same invalid field restarts its timer instead of
@@ -228,6 +232,13 @@ export const Contact = () => {
     }
   };
 
+  // Desktop: the 1440-wide design scaled to the window's width, capped so the
+  // whole screen (title, form, footer) fits its height (María Sol, 12 Nov).
+  const desktop = useMediaQuery("(min-width: 1024px)");
+  const { kw, height } = useFrame();
+  const zoom = clampScale(Math.min(kw, height / CONTACT_H));
+  const stageStyle = desktop ? { zoom, minHeight: `calc(100vh / ${zoom})` } : undefined;
+
   // Ø5.1 text, Ø5.2 the card, Ø5.3 the footer: one after another on arrival.
   const rise = (i: number) => ({
     "data-on": reached,
@@ -243,18 +254,17 @@ export const Contact = () => {
       data-armed={!still}
       className={s.section}
     >
-      <div className={s.stage}>
-        {/* The perspective floor (GridField, in the grid token) under a fade,
-            then the page grid (Contact.dc.html). */}
-        <div aria-hidden="true" className={s.floor}>
-          <GridField />
-        </div>
-        <div aria-hidden="true" className={s.floorFade} />
-        <div aria-hidden="true" className="crt-grid absolute inset-0" />
-        <div aria-hidden="true" className={`crt-bg-word font-michroma ${s.word}`}>
-          TALK
-        </div>
-
+      {/* The perspective floor (GridField, in the grid token) under a fade,
+          then the page grid (Contact.dc.html): the section's, unscaled. */}
+      <div aria-hidden="true" className={s.floor}>
+        <GridField />
+      </div>
+      <div aria-hidden="true" className={s.floorFade} />
+      <div aria-hidden="true" className="crt-grid absolute inset-0" />
+      <div aria-hidden="true" className={`crt-bg-word font-michroma ${s.word}`}>
+        TALK
+      </div>
+      <div className={s.stage} style={stageStyle}>
         <div className={`${s.head} ${s.reveal}`} {...rise(0)}>
           <span className="crt-pill self-start font-vt">05 // CONTACT</span>
           {/* Phones: LET'S / TALK inside crosshair corners, with two ghost copies
@@ -525,8 +535,8 @@ export const Contact = () => {
             © {new Date().getFullYear()} {profile.name.toUpperCase()}
           </span>
         </footer>
-        <div aria-hidden="true" className="crt-scanlines pointer-events-none absolute inset-0" />
       </div>
+      <div aria-hidden="true" className="crt-scanlines pointer-events-none absolute inset-0" />
     </section>
   );
 };

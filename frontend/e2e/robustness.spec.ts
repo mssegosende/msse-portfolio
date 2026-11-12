@@ -229,9 +229,10 @@ test.describe("desktop window across the phone breakpoint, drawn", { tag: "@gpu"
           "true",
           { timeout: 90_000 },
         );
-        if (theme === "dark") {
+        // Pages open in dark; light is one toggle away.
+        if (theme === "light") {
           await page.getByTestId("theme-toggle").dispatchEvent("click");
-          await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+          await expect(page.locator("html")).not.toHaveAttribute("data-theme", "dark");
         }
         const sceneCanvases = () => page.locator('[data-testid="scene-section"] canvas').count();
         const drag = async (from: number, to: number) => {

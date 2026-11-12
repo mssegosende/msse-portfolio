@@ -247,7 +247,9 @@ html.lenis body {
 
 body {
   margin: 0;
-  background: rgb(var(--surface));
+  /* The CRT ground under every section: a crossfade between two sections
+     shows it, never white or black. */
+  background: var(--crt-bg);
   color: rgb(var(--ink));
   font-family: "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -582,34 +584,118 @@ textarea:-webkit-autofill {
   filter: none;
 }
 
-/* The MSSE wordmark behind the robot, in phosphor with the CRT glow
-   (Hero.dc.html: Michroma 330px at 1440, top 150; HeroM: 92px, top 96).
-   Static: the CRT design has no marquee. */
+/* The MSSE sign behind the robot: a neon sign seen from a distance (María
+   Sol, 12 Nov). Michroma, the design's 330px at 1440 (HeroM: 92px), with a
+   wide halo and a slight softness on the letters (never on the canvas). */
 .hero-wordmark {
   font-family: "Michroma", sans-serif;
-  font-size: 22.92vw;
+  /* Small enough that the whole word, with its sway, stays on screen. */
+  font-size: 19.5vw;
+  text-align: center;
   line-height: 1;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  text-align: center;
-  color: rgba(31, 95, 175, 0.72);
-  text-shadow: var(--crt-glow-title);
+  color: rgba(31, 95, 175, 0.82);
+  text-shadow:
+    0 0 1px rgba(20, 70, 150, 0.6),
+    0 0 22px rgba(60, 130, 240, 0.5),
+    0 0 70px rgba(60, 130, 240, 0.3);
+  filter: blur(0.6px);
 }
 :root[data-theme="dark"] .hero-wordmark {
-  color: #6cb9ee;
+  color: #74bdf0;
   text-shadow:
     0 0 4px #eef8ff,
-    0 0 30px rgba(108, 185, 238, 0.715),
-    0 0 90px rgba(108, 185, 238, 0.39);
+    0 0 34px rgba(108, 185, 238, 0.8),
+    0 0 110px rgba(108, 185, 238, 0.45);
+  filter: blur(0.7px);
 }
+/* Phones: the same share of the width, always whole on screen. */
 .hero-wordmark--phone {
-  font-size: 92px;
+  font-size: 19.5vw;
 }
 :root[data-theme="dark"] .hero-wordmark--phone {
   text-shadow:
     0 0 3px #eef8ff,
-    0 0 18px rgba(108, 185, 238, 0.7),
-    0 0 50px rgba(71, 145, 202, 0.4);
+    0 0 18px rgba(108, 185, 238, 0.75),
+    0 0 50px rgba(71, 145, 202, 0.45);
+}
+/* The sign's marquee: one direction, endless and seamless (two identical
+   runs, sliding by one run's width), at the pre-redesign marquee's speed
+   (~8.7vw/s). Paused while the hero is off screen. */
+.hero-marquee {
+  animation: hero-marquee 33s linear infinite;
+}
+[data-offscreen="true"] .hero-marquee,
+[data-offscreen="true"] .neon-tube,
+[data-offscreen="true"] .neon-breathe {
+  animation-play-state: paused;
+}
+@keyframes hero-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.neon-sep {
+  padding: 0 0.28em;
+}
+/* Bad tubes: each letter drops out briefly, twice in a row now and then, on
+   its own duration and delay (HeroHud.tsx). */
+.neon-tube {
+  animation-name: neon-tube;
+  animation-timing-function: steps(1, end);
+  animation-iteration-count: infinite;
+}
+@keyframes neon-tube {
+  0%,
+  96.9% {
+    opacity: 1;
+  }
+  97%,
+  97.9% {
+    opacity: 0.1;
+  }
+  98%,
+  98.6% {
+    opacity: 1;
+  }
+  98.7%,
+  99.6% {
+    opacity: 0.15;
+  }
+}
+/* Neon: the glow breathes (0.85-1 over 4 s), and now and then a letter drops
+   out for ~80 ms (one every 7.3 s, another every 9.1 s). */
+.neon-breathe {
+  animation: neon-breathe 4s ease-in-out infinite alternate;
+}
+@keyframes neon-breathe {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.85;
+  }
+}
+/* Depth: a soft shade right around the robot, between the sign and the
+   robot, so its outline separates from the sign. */
+.crt-robot-shade {
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 30% 58% at 50% 58%,
+    rgba(234, 239, 245, 0.55) 0%,
+    rgba(234, 239, 245, 0) 70%
+  );
+}
+:root[data-theme="dark"] .crt-robot-shade {
+  background: radial-gradient(
+    ellipse 30% 58% at 50% 58%,
+    rgba(2, 4, 9, 0.6) 0%,
+    rgba(2, 4, 9, 0) 70%
+  );
 }
 
 /* Desktop: the robot fades out from mid-torso, as in Hero.dc.html (the
@@ -636,11 +722,17 @@ textarea:-webkit-autofill {
   background: #6ebaef;
   mix-blend-mode: color;
 }
+/* The robot in front of the sign (María Sol, 12 Nov): sharper and brighter
+   than the sign, with a rim of the neon behind it (a glow around the
+   silhouette), on the robot's wrapper, never the canvas. Light: blue ink and
+   a thin blue rim. Dark: raised highlights and a phosphor rim; the color-blend
+   layer above tints it. */
 .crt-robot-filter {
-  filter: url(#crt-light);
+  filter: url(#crt-light) drop-shadow(0 0 1px #1f5faf) drop-shadow(0 0 7px rgba(31, 95, 175, 0.35));
 }
 :root[data-theme="dark"] .crt-robot-filter {
-  filter: none;
+  filter: contrast(1.12) brightness(1.08) drop-shadow(0 0 1.5px rgba(222, 251, 255, 0.85))
+    drop-shadow(0 0 12px rgba(110, 186, 239, 0.5));
 }
 /* Phones in light: the palette filter cost frames on the phone stand-in
    (scene 1 at 47 fps against 56 before, perf/crt-phase2.json), so phones keep
@@ -649,7 +741,7 @@ textarea:-webkit-autofill {
 @media (max-width: 767px),
   (hover: none) and (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
   :root:not([data-theme="dark"]) .crt-robot-filter {
-    filter: none;
+    filter: drop-shadow(0 0 1px #1f5faf) drop-shadow(0 0 6px rgba(31, 95, 175, 0.3));
   }
   :root:not([data-theme="dark"]) .crt-robot-tint {
     display: block;
@@ -779,7 +871,10 @@ textarea:-webkit-autofill {
     animation-duration: 0.01s;
     animation-delay: 0s;
   }
-  .hero-hint {
+  .hero-hint,
+  .hero-marquee,
+  .neon-breathe,
+  .neon-tube {
     animation: none;
   }
   [data-hero-in="true"] .hero-title-in,
@@ -1163,8 +1258,10 @@ textarea:-webkit-autofill {
 /* Phones: 9px as designed, smaller on shorter screens so the object keeps
    clear of the rail and the card above the dock. */
 .crt-ascii--phone {
-  font-size: clamp(6px, calc((100svh - 636px) / 26), 9px);
-  line-height: clamp(6px, calc((100svh - 636px) / 26), 9px);
+  /* The room above the rail and card block (CapabilityCards writes --cap-top):
+     the card shows its whole body, the object takes what is left, 9px at most. */
+  font-size: clamp(3px, calc((var(--cap-top, 600px) - 140px) / 26), 9px);
+  line-height: clamp(3px, calc((var(--cap-top, 600px) - 140px) / 26), 9px);
 }
 .crt-ascii-scan {
   background: rgba(31, 95, 175, 0.28);
@@ -1189,6 +1286,11 @@ textarea:-webkit-autofill {
   border: 1.5px solid var(--crt-row-label);
 }
 
+/* The section index (01-05) sits over the sign and the cards: the panel
+   fill keeps it legible. */
+.crt-index-btn {
+  background: var(--crt-panel);
+}
 /* The rail: 01 MIND · 02 INTERFACE · 03 ENGINE. */
 .crt-rail-btn {
   border: 1px solid rgba(31, 95, 175, 0.238);
@@ -1540,6 +1642,71 @@ textarea:-webkit-autofill {
     animation: none;
   }
   .crt-fade-in {
+    animation: none;
+  }
+}
+
+/* About's bio terminal (BioTerminal.tsx): JetBrains Mono on a fixed line
+   height, so nothing shifts or reflows while characters resolve. The dashed
+   box is About.dc.html's bio panel. */
+.crt-bio {
+  position: relative;
+  box-sizing: border-box;
+  padding: 14px 16px;
+  border: 1px dashed var(--crt-line);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  color: var(--crt-text-2);
+}
+.crt-bio__view {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+/* The read lines fade out at the top once the text scrolls. */
+.crt-bio__view[data-scrolled="true"] {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 63px);
+  mask-image: linear-gradient(180deg, transparent 0, #000 63px);
+}
+.crt-bio__text {
+  transition: transform 0.25s ease-out;
+}
+.crt-bio__line {
+  height: 21px;
+  line-height: 21px;
+  white-space: pre;
+}
+.crt-bio__flick {
+  color: var(--crt-core);
+  text-shadow: var(--crt-glow-label);
+}
+.crt-bio__cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 15px;
+  margin-left: 1px;
+  vertical-align: -3px;
+  background: var(--crt-core);
+  box-shadow: var(--crt-node-glow);
+  animation: caret-blink 1.1s step-end infinite;
+}
+.crt-bio__probe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  visibility: hidden;
+  white-space: pre;
+  pointer-events: none;
+}
+/* Reduced motion: all of it at once, scrollable. */
+.crt-bio[data-reduced="true"] .crt-bio__view {
+  overflow-y: auto;
+}
+@media (prefers-reduced-motion: reduce) {
+  .crt-bio__text {
+    transition: none;
+  }
+  .crt-bio__cursor {
     animation: none;
   }
 }

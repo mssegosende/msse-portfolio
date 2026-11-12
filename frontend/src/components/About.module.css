@@ -41,18 +41,24 @@
   letter-spacing: 0.16em;
 }
 .title {
-  font-size: 25px;
+  /* AboutM.dc.html: 25px at 390, with the width. */
+  font-size: clamp(22px, 6.41vw, 32px);
   line-height: 1.3;
   letter-spacing: 0.04em;
+}
+/* Phones: the column's pieces are the stage's own items (ordered below). */
+.leftCol {
+  display: contents;
 }
 .right {
   order: 1;
   margin-top: 26px;
 }
+/* Phones: the bio panel right under the dossier, then the principles. */
 .left {
   order: 2;
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column;
 }
 
 /* Rise in (0.55 s); data-on comes from the scroll step. Shown by default: the
@@ -79,12 +85,21 @@
 }
 .para {
   margin: 0;
+  /* Paragraphs in Inter (SPEC §1: VT323 labels and rows, Michroma titles). */
+  font-family: "Inter", sans-serif;
   font-size: 15px;
   line-height: 1.6;
   color: var(--crt-text-2);
 }
 .para + .para {
   margin-top: 1em;
+}
+
+/* The bio terminal (BioTerminal): a fixed height, the column's width. */
+.bio {
+  margin-top: 22px;
+  width: 100%;
+  height: 300px;
 }
 
 /* Principles: three VT323 rows. */
@@ -148,6 +163,24 @@
 :global(:root:not([data-theme="dark"])) .screen {
   box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.6);
 }
+/* The portrait comes in with a scanline sweeping down the photo, once. */
+.screen[data-sweep="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6%;
+  height: 6%;
+  background: linear-gradient(180deg, transparent, rgba(222, 251, 255, 0.55), transparent);
+  box-shadow: 0 0 18px rgba(110, 186, 239, 0.7);
+  animation: portrait-sweep 1.1s ease-in 0.15s both;
+  pointer-events: none;
+}
+@keyframes portrait-sweep {
+  to {
+    top: 100%;
+  }
+}
 .portrait {
   position: absolute;
   inset: 0;
@@ -206,7 +239,9 @@
   transition-duration: 1.2s;
 }
 
-/* ---- Desktop: pinned; head + bio + principles left, the dossier right ---- */
+/* ---- Desktop: pinned; the title column and the dossier are blocks of the
+   1440 x 900 frame, placed and scaled by About.tsx (left/top in %, zoom, all
+   sizes below in design px) ---- */
 @media (min-width: 1024px) {
   /* Pinned for six screens; About.tsx paces the reveal on it. */
   .section {
@@ -216,23 +251,20 @@
     position: sticky;
     top: 0;
     height: 100vh;
-    display: grid;
-    /* Right 140: clear of the section index. Bottom 116: above the dock. */
-    padding: 96px 140px 116px 64px;
-    grid-template-columns: minmax(0, 560fr) minmax(0, 600fr);
-    grid-template-rows: auto minmax(0, 1fr);
-    grid-template-areas:
-      "head right"
-      "left right";
-    column-gap: 72px;
-    row-gap: 22px;
+    display: block;
+    padding: 0;
   }
   .word {
     bottom: -60px;
-    font-size: 240px;
+    font-size: 16.7vw;
+  }
+  .leftCol {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    z-index: 2;
   }
   .head {
-    grid-area: head;
     gap: 22px;
   }
   .head :global(.crt-pill) {
@@ -240,18 +272,22 @@
     font-size: 20px;
   }
   .title {
-    font-size: clamp(30px, 4.4vh, 40px);
+    font-size: 40px;
     line-height: 1.25;
   }
   .left {
-    grid-area: left;
     flex-direction: column;
-    min-height: 0;
+    margin-top: 22px;
+  }
+  /* About.dc.html: the bio panel between the title and the principles, in
+     design px (the column is scaled). */
+  .bio {
+    margin-top: 0;
+    height: 330px;
   }
   .right {
-    grid-area: right;
+    position: absolute;
     margin-top: 0;
-    align-self: start;
   }
   /* One column for all four paragraphs. */
   .textWindow {
@@ -259,7 +295,7 @@
     min-height: 0;
     margin-top: 0;
     overflow: hidden;
-    font-size: clamp(14px, 0.4vw + 9.5px, 17px);
+    font-size: 16px;
   }
   /* Once the earlier paragraphs slide up, they fade out under the title. */
   .textWindow[data-lifted="true"] {
@@ -289,9 +325,9 @@
     margin-top: 20px;
   }
   .principle {
-    min-height: clamp(42px, 6vh, 54px);
+    min-height: 54px;
     gap: 20px;
-    font-size: clamp(21px, 2.9vh, 26px);
+    font-size: 26px;
     letter-spacing: 0.1em;
   }
   .dossierHead {
@@ -301,11 +337,7 @@
   }
   .subject {
     display: grid;
-    /* The portrait column shrinks on short screens so the dossier clears the dock. */
-    grid-template-columns: min(330px, calc((100vh - 96px - 116px - 330px) * 0.846 + 32px)) minmax(
-        0,
-        1fr
-      );
+    grid-template-columns: 330px minmax(0, 1fr);
   }
   .portraitCell {
     padding: 16px;
@@ -317,15 +349,16 @@
     align-items: flex-start;
     justify-content: center;
     gap: 6px;
-    padding: 24px 28px;
+    padding: 24px 22px;
   }
   .sinceLabel {
     max-width: none;
     font-size: 22px;
     letter-spacing: 0.18em;
   }
+  /* The design's 80px overran the 326px cell (Michroma's wide digits). */
   .year {
-    font-size: clamp(56px, 8.9vh, 80px);
+    font-size: 68px;
   }
   .rows :global(.crt-row) {
     min-height: 44px;
@@ -339,16 +372,6 @@
   .signal {
     display: block;
     padding: 16px 20px;
-  }
-}
-
-/* Short desktop screens (1280 x 720): the signal goes so the dossier clears the dock. */
-@media (min-width: 1024px) and (max-height: 820px) {
-  .stage {
-    padding-top: 64px;
-  }
-  .signal {
-    display: none;
   }
 }
 

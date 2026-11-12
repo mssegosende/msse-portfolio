@@ -110,6 +110,9 @@ export const AsciiObject = ({
     const height = isMobile ? pre.offsetHeight || rows * 9 : rows * 12;
     const tick = () => {
       if (!showing.current) return;
+      // Hidden by an ancestor (the stacked or pinned scene 2 before it shows).
+      if (pre.checkVisibility?.({ opacityProperty: true, visibilityProperty: true }) === false)
+        return;
       const now = performance.now();
       const t = now - t0;
       const m = morph.current;

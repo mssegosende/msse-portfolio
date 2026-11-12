@@ -11,6 +11,11 @@ import { patchSplineRuntime } from "../lib/spline/runtime";
 import { SceneBoundary } from "./spline/SceneBoundary";
 import { CapabilityCards } from "./scroll-scene/CapabilityCards";
 import { scene2Scale } from "./scroll-scene/choreography";
+import { at, clampScale, FRAME } from "../hooks/useFrame";
+import { DOSSIER_H, DOSSIER_TOP, DOSSIER_W } from "./scroll-scene/CapabilityCards";
+
+// Room kept under scene 2's card for the dock, px.
+const DOCK_ROOM = 100;
 import { AsciiObject } from "./scroll-scene/AsciiObject";
 import type { Shape } from "./scroll-scene/ascii";
 import { goToSection } from "../hooks/useActiveSection";
@@ -55,6 +60,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     bg1Ref,
     wordmarkRef,
     topBarRef,
+    crosshairRef,
     introRef,
     checkRef,
     scrollCueRef,
@@ -120,6 +126,8 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     const io = new IntersectionObserver(
       ([e]) => {
         el.style.visibility = e?.isIntersecting ? "" : "hidden";
+        // CSS loops (the sign's marquee and tubes) pause with it.
+        el.dataset.offscreen = e?.isIntersecting ? "false" : "true";
       },
       { rootMargin: "-1px 0px" },
     );
@@ -156,7 +164,35 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     };
   }, [isMobile]);
   const stageK = scene2Scale(viewport);
-  // The 1440 x 900 stage, centred and scaled (a plain DOM box, not a canvas).
+  // Each scene 2 block keeps its place in the 1440 x 900 frame and scales with
+  // the window's width, capped where the height runs out (María Sol, 12 Nov:
+  // fluid, never a fixed small card): nothing overflows or reaches the title,
+  // the rail or the dock.
+  const kw = viewport.width / FRAME.width;
+  const kh = viewport.height / FRAME.height;
+  const kTitle = clampScale(Math.min(kw, 1.25 * kh));
+  const kObject = clampScale(Math.min(kw, kh));
+  // Scene 1's HUD (tour tile, SYSTEM CHECK, BUILD THE FUTURE, top bar, rail):
+  // Hero.dc.html's sizes at the window's width, capped by its height, so they
+  // grow on big screens and shrink on small ones without reaching the head
+  // or the dock (María Sol, 12 Nov).
+  const kHud = clampScale(Math.min(kw, 1.15 * kh), 0.75, 1.9);
+  // The card's height follows its body (never clipped): measured, then fitted.
+  const [dossierH, setDossierH] = useState(DOSSIER_H);
+  const kCard = clampScale(
+    Math.min(
+      kw,
+      (viewport.height - DOSSIER_TOP * kh - DOCK_ROOM) / dossierH,
+      (viewport.width - 64 - 800 * kw) / DOSSIER_W,
+    ),
+  );
+  /** A block of the frame at (x, y), scaled by k from its top-left corner. */
+  const block = (x: number, y: number, k: number, children: ReactNode, className = "") => (
+    <div className={`absolute ${className}`} style={at(x, y)}>
+      <div style={{ zoom: k }}>{children}</div>
+    </div>
+  );
+  // The decor (glow, streaks, STACK): the whole frame scaled, centred.
   const stage = (children: ReactNode) => (
     <div
       className="pointer-events-none absolute left-1/2 top-1/2 h-[900px] w-[1440px]"
@@ -229,22 +265,24 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
           : "inset-0"
       }`}
     >
-      <div className={isMobile ? "" : "absolute left-16 top-[52px]"}>
-        <div
-          className={`crt-section-label font-vt tracking-[0.14em] ${isMobile ? "text-[18px]" : "text-[22px]"}`}
-        >
-          02 // CAPABILITIES
-        </div>
-        <h2
-          className={`crt-glow m-0 font-michroma font-normal uppercase text-[var(--crt-row-value)] ${
-            isMobile
-              ? "mt-1 whitespace-nowrap text-[clamp(14px,4.3vw,17px)] tracking-[0.05em]"
-              : "mt-1.5 text-[34px] tracking-[0.06em]"
-          }`}
-        >
-          What the core runs on
-        </h2>
-      </div>
+      {(isMobile ? (c: ReactNode) => <div>{c}</div> : (c: ReactNode) => block(64, 52, kTitle, c))(
+        <>
+          <div
+            className={`crt-section-label font-vt tracking-[0.14em] ${isMobile ? "text-[18px]" : "text-[22px]"}`}
+          >
+            02 // CAPABILITIES
+          </div>
+          <h2
+            className={`crt-glow m-0 font-michroma font-normal uppercase text-[var(--crt-row-value)] ${
+              isMobile
+                ? "mt-1 whitespace-nowrap text-[clamp(14px,4.3vw,17px)] tracking-[0.05em]"
+                : "mt-1.5 text-[34px] tracking-[0.06em]"
+            }`}
+          >
+            What the core runs on
+          </h2>
+        </>,
+      )}
       {isMobile ? (
         <span
           role="img"
@@ -252,7 +290,14 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
           className="mt-1.5 h-2 w-2 rounded-full bg-status shadow-[0_0_10px_#F472B6]"
         />
       ) : (
-        <div className="crt-glow-label absolute right-16 top-[62px] flex items-center gap-2.5 font-vt text-[22px] tracking-[0.14em] text-crt-text">
+        <div
+          className="crt-glow-label absolute flex items-center gap-2.5 font-vt text-[22px] tracking-[0.14em] text-crt-text"
+          style={{
+            right: `${(64 / FRAME.width) * 100}%`,
+            top: `${(62 / FRAME.height) * 100}%`,
+            zoom: kTitle,
+          }}
+        >
           <span
             aria-hidden="true"
             className="h-2 w-2 rounded-full bg-status shadow-[0_0_10px_#F472B6]"
@@ -262,7 +307,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       )}
     </div>
   );
-  const scene2Title = isMobile ? scene2TitleBox : stage(scene2TitleBox);
+  const scene2Title = scene2TitleBox;
   const scene2Head = (
     <>
       {/* Layer 2: the robot has left (SPEC §3). In its place, the ASCII object:
@@ -285,10 +330,11 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
             <AsciiObject step={step} isMobile reduced={reduceMotion} />
           </div>
         ) : (
-          stage(
-            <div className="absolute left-[150px] top-[210px]">
-              <AsciiObject step={step} isMobile={false} reduced={reduceMotion} />
-            </div>,
+          block(
+            150,
+            210,
+            kObject,
+            <AsciiObject step={step} isMobile={false} reduced={reduceMotion} />,
           )
         )}
       </div>
@@ -301,6 +347,8 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       onPick={pickStep}
       isMobile={isMobile}
       stacked={stacked}
+      scale={{ rail: kObject, card: kCard }}
+      onCardHeight={setDossierH}
     />
   );
   const scene2Cards = (
@@ -315,7 +363,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
               : `absolute inset-x-0 top-0 ${PANE_H}`
         }`}
       >
-        {isMobile ? cards : stage(cards)}
+        {cards}
       </div>
     </>
   );
@@ -352,6 +400,8 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         </div>
 
         <HeroWordmark ref={wordmarkRef} isMobile={isMobile} />
+        {/* Depth: a soft shade between the sign and the robot. */}
+        <div aria-hidden="true" className="crt-robot-shade absolute inset-0" />
 
         {/* Layer A: the hero scene */}
         <div ref={splineLayerRef} className="absolute inset-0">
@@ -455,9 +505,9 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         {!stacked && scene2Head}
         {/* Scene 1 HUD, one window per scroll step (Ø1.1-Ø1.3), then SCROLL. Phones
           get the headline and SCROLL only. */}
-        {!isMobile && <IntroTile ref={introRef} />}
-        {!isMobile && <SystemCheck ref={checkRef} />}
-        <HeroHeadline ref={headlineRef} isMobile={isMobile}>
+        {!isMobile && <IntroTile ref={introRef} scale={kHud} />}
+        {!isMobile && <SystemCheck ref={checkRef} scale={kHud} />}
+        <HeroHeadline ref={headlineRef} isMobile={isMobile} scale={kHud}>
           {isMobile && <IntroButtonPhone />}
         </HeroHeadline>
         {isMobile ? <ScrollCuePhone ref={scrollCueRef} /> : <ScrollCue ref={scrollCueRef} />}
@@ -465,12 +515,15 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         {/* Top bar, scene 1 only: MSSE:// and STATUS, and the crosshair on the
             head (they leave together at the crossfade). */}
         <div ref={topBarRef} className="pointer-events-none absolute inset-0">
-          <HeadCrosshair isMobile={isMobile} />
+          <HeadCrosshair ref={crosshairRef} isMobile={isMobile} />
           {/* The CSS load fade sits on this inner box; GSAP owns the outer one. */}
           <div
             className={`hero-bar-in absolute flex items-center ${
-              isMobile ? "inset-x-5 top-[22px] justify-between" : "left-16 top-14 gap-[18px]"
+              isMobile
+                ? "inset-x-5 top-[22px] justify-between"
+                : "left-[4.44vw] top-[6.2vh] gap-[18px]"
             }`}
+            style={isMobile ? undefined : { zoom: kHud }}
           >
             <span
               data-testid="hero-brand"

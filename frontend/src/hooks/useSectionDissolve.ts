@@ -1,83 +1,65 @@
 import { useEffect } from "react";
-import { REDUCED_MOTION_QUERY } from "@/lib/motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 // The page's sections in order (the hero holds scenes 1 and 2).
 const ORDER = ["hero", "projects", "about", "contact"] as const;
 
-/** A leaving section is gone once its bottom is this far up the screen. */
-const LEAVE = 0.6;
-/** An entering section's word and head are whole once its top is this high. */
-const ENTER_END = 0.3;
-const BLUR = 8; // px, at the end of a leave
-
-const clamp = (v: number) => Math.min(1, Math.max(0, v));
+// The scroll it takes, as the hero's scene 1 -> 2 crossfade does: about half
+// a screen (XFADE_DURATION 0.16 of the pin's 2.5 timeline seconds over its
+// ~780vh), scrubbed with the hero's scrub: 1 and ease: none.
+const LEAVE = { start: "bottom 80%", end: "bottom 30%" };
+const ENTER = { start: "top 80%", end: "top 30%" };
 
 /**
- * Desktop scene transitions after scene 2, as smooth as 1 -> 2 (María Sol,
- * 9 Nov; the design: content dissolves on the way out with fade + blur).
- * Scrubbed by the scroll, so both directions play it:
- * - a leaving section (its bottom rising through the screen) fades and blurs
- *   out, over the next ground's top colour (<main> takes it), so the next
- *   ground meets it without a seam;
- * - an entering section's background word and head fade in (`--enter`, read
- *   by .bg-word and .dissolve-in in index.css), and its top edge feathers
- *   into that same colour.
- * Phones keep their transitions. Reduced motion: none (no scrub), every
- * section shown whole.
- * Never on the Spline canvas itself: opacity and blur on a section, no transform.
+ * Every section change after scene 2 plays the hero's scene 1 -> 2 crossfade
+ * (María Sol, 12 Nov: THE transition of the site): the same GSAP tweens
+ * scrubbed by ScrollTrigger, same scroll length, scrub and easing. The leaving
+ * section fades out as its bottom rises; the entering one fades in whole as
+ * its top comes up: frames and content together, never a border alone. No
+ * blur, no mask. Both directions (scrubbed). Desktop only (phones keep their
+ * plain scroll); reduced motion: none, every section shown whole.
+ * Opacity on a section, never on the Spline canvas, no transform.
  */
 export const useSectionDissolve = () => {
   useEffect(() => {
-    const desktop = window.matchMedia("(min-width: 1024px)");
-    const reduce = window.matchMedia(REDUCED_MOTION_QUERY);
-    let raf = 0;
-
-    const update = () => {
-      raf = 0;
-      const vh = window.innerHeight;
-      const on = desktop.matches && !reduce.matches;
-      let backdrop = "";
+    const mm = gsap.matchMedia();
+    mm.add("(min-width: 1024px) and (prefers-reduced-motion: no-preference)", () => {
       ORDER.forEach((id, i) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        const r = el.getBoundingClientRect();
-        const next = ORDER[i + 1];
-        const leave = on && next ? clamp((vh - r.bottom) / (LEAVE * vh)) : 0;
-        const enter = on && i > 0 ? clamp((r.top - ENTER_END * vh) / ((1 - ENTER_END) * vh)) : 0;
-        el.style.opacity = leave > 0 ? (1 - leave).toFixed(3) : "";
-        el.style.filter = leave > 0 ? `blur(${(leave * BLUR).toFixed(2)}px)` : "";
-        el.style.setProperty("--enter", enter.toFixed(3));
-        // The edges where two grounds meet feather into the backdrop colour:
-        // a leaving section's bottom (ramping in fast, so nothing jumps), an
-        // entering one's top. No mask once a section has arrived.
-        const feather =
-          leave > 0
-            ? `linear-gradient(0deg, transparent 0, #000 ${(Math.min(1, leave * 4) * 30).toFixed(1)}vh)`
-            : enter > 0
-              ? `linear-gradient(180deg, transparent 0, #000 ${(enter * 40).toFixed(1)}vh)`
-              : "";
-        el.style.maskImage = feather;
-        el.style.webkitMaskImage = feather;
-        if (leave > 0 && next) backdrop = `var(--top-${next})`;
+        const section = document.getElementById(id);
+        if (!section) return;
+        // The pinned hero scrolls as its pin spacer.
+        const parent = section.parentElement;
+        const trigger = parent?.classList.contains("pin-spacer") ? parent : section;
+        if (ORDER[i + 1]) {
+          gsap.fromTo(
+            section,
+            { opacity: 1 },
+            {
+              opacity: 0,
+              ease: "none",
+              immediateRender: false,
+              scrollTrigger: { trigger, ...LEAVE, scrub: 1 },
+            },
+          );
+        }
+        if (i > 0) {
+          gsap.fromTo(
+            section,
+            { opacity: 0 },
+            {
+              opacity: 1,
+              ease: "none",
+              immediateRender: false,
+              scrollTrigger: { trigger, ...ENTER, scrub: 1 },
+            },
+          );
+        }
       });
-      const main = document.querySelector("main");
-      if (main) main.style.backgroundColor = backdrop;
-    };
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    desktop.addEventListener("change", schedule);
-    reduce.addEventListener("change", schedule);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      desktop.removeEventListener("change", schedule);
-      reduce.removeEventListener("change", schedule);
-    };
+      ScrollTrigger.refresh();
+    });
+    return () => mm.revert();
   }, []);
 };

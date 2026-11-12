@@ -9,6 +9,7 @@ import { profile } from "@/data/portfolioData";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useNearView } from "@/hooks/useNearView";
 import { useProjectsInView } from "@/hooks/useProjectsInView";
+import { clampScale, useFrame } from "@/hooks/useFrame";
 import { scrollToY } from "@/hooks/useLenis";
 import { Num } from "../Num";
 import { TerminalWindow } from "../crt/CrtPieces";
@@ -159,9 +160,7 @@ const Folder = ({
 
 /** The section head: pill, PROJECTS, intro (Projects.dc.html). */
 export const ProjectsHead = ({ isMobile }: { isMobile: boolean }) => (
-  <div
-    className={`dissolve-in relative flex flex-col ${isMobile ? "gap-3" : "max-w-[760px] gap-4"}`}
-  >
+  <div className={`relative flex flex-col ${isMobile ? "gap-3" : "max-w-[760px] gap-4"}`}>
     <span
       className={`crt-pill self-start font-vt tracking-[0.16em] ${
         isMobile ? "px-2.5 py-[3px] text-[17px]" : "px-3 py-1 text-[20px]"
@@ -224,6 +223,10 @@ export const ProjectsDesktop = () => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
   const sectionRef = useRef<HTMLElement>(null);
   useProjectsInView(sectionRef);
+  // The section is the 1440-wide design scaled to the window's width (María
+  // Sol, 12 Nov: the cards keep their share of the frame, type and all).
+  const { kw } = useFrame();
+  const zoom = clampScale(kw, 0.7, 2);
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
 
@@ -272,12 +275,16 @@ export const ProjectsDesktop = () => {
       <div aria-hidden="true" className="crt-grid absolute inset-0" />
       <div
         aria-hidden="true"
-        className="crt-bg-word absolute -right-5 top-10 font-michroma text-[260px] leading-none"
+        className="crt-bg-word absolute -right-5 top-10 font-michroma leading-none"
+        style={{ fontSize: 260 * zoom }}
       >
         WORK
       </div>
 
-      <div className="relative mx-auto flex max-w-[1440px] flex-col gap-14 px-16 pb-20 pt-24">
+      <div
+        className="relative mx-auto flex max-w-[1440px] flex-col gap-14 px-16 pb-20 pt-24"
+        style={{ zoom }}
+      >
         <ProjectsHead isMobile={false} />
 
         <div

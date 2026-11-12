@@ -4,6 +4,16 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { getLenis } from "../../hooks/useLenis";
 import { VIEW_CSS_SCALE, applyView } from "../../lib/spline/camera";
 import { BOT_HOME, applyPose } from "../../lib/spline/rig";
+import { headScreenRect } from "../../lib/spline/headScreen";
+
+// Scene 1's crosshair around the head: its box over the head's projected box
+// (Hero.dc.html: 360 x 372 around a ~270 x 330 head), and how fast it follows.
+// The head mesh's 3D box projects a little taller than the head reads, so
+// the box keeps its height and widens.
+const CROSS_PAD = { x: 1.22, y: 1.0 };
+// Room above the box for its [core.head] tag, px.
+const CROSS_TOP = 24;
+const CROSS_EASE = 0.2;
 import { noteRenderedFrame, prepareToRun } from "../../lib/spline/quality";
 import { REDUCED_MOTION_QUERY } from "../../lib/motion";
 import { isProjectsInView } from "../../lib/sceneFocus";
@@ -15,7 +25,6 @@ import {
 } from "../../lib/themeReload";
 import {
   PHONE_HEAD_GAZE,
-  SCENE1,
   SCENE2,
   XFADE_AT,
   XFADE_DURATION,
@@ -55,6 +64,8 @@ export const useHeroElements = () =>
     bg1Ref: createRef<HTMLDivElement>(),
     wordmarkRef: createRef<HTMLDivElement>(),
     topBarRef: createRef<HTMLDivElement>(),
+    // Scene 1's [core.head] crosshair box: it tracks the robot's head.
+    crosshairRef: createRef<HTMLDivElement>(),
     introRef: createRef<HTMLDivElement>(),
     checkRef: createRef<HTMLDivElement>(),
     scrollCueRef: createRef<HTMLDivElement>(),
@@ -185,6 +196,7 @@ export const useHeroTimeline = ({
       bg1Ref,
       wordmarkRef,
       topBarRef,
+      crosshairRef,
       introRef,
       checkRef,
       scrollCueRef,
@@ -345,9 +357,9 @@ export const useHeroTimeline = ({
         headlineRef.current,
         scrollCueRef.current,
       ].filter((el): el is HTMLDivElement => !!el);
-      // Phones show their bottom stack (Ø1 / Ø5, headline, SCROLL) from the start;
-      // desktop reveals each window on its own step. Stacked: all shown.
-      if (!isMobile && !stacked) gsap.set(hud1, { autoAlpha: 0, y: 12 });
+      // CRT redesign: scene 1's HUD shows whole from load, with the robot
+      // (María Sol, 12 Nov: not one window per scroll step); it leaves at the
+      // crossfade.
       if (isMobile) {
         [parallax1Ref.current, parallax2Ref.current, idle1Ref.current, idle2Ref.current].forEach(
           (el) => el && gsap.set(el, { x: 0, y: 0, rotation: 0, scale: 1 }),
@@ -530,8 +542,47 @@ export const useHeroTimeline = ({
           l2Desktop().forEach((e) => applyView(e.app, scene2View));
         }
       };
-      applyGazeRef.current = applyGazeAndPose;
-      gsap.ticker.add(applyGazeAndPose);
+      // Scene 1's crosshair follows the robot's head (María Sol, 12 Nov): the
+      // head's box projected through the scene camera each frame, eased, in
+      // this same ticker; only while scene 1 shows. A transform and a size on
+      // the overlay's own box, never on the canvas.
+      const cross = { x: 0, y: 0, w: 0, h: 0, on: false };
+      const trackHead = () => {
+        const box = crosshairRef.current;
+        const sec = sectionRef.current;
+        const bar = topBarRef.current;
+        if (!box || !sec || !heroVisibleRef.current) return;
+        if (bar && Number(gsap.getProperty(bar, "opacity")) < 0.01) return;
+        const alt = !isMobile && showAltRef.current;
+        const r = headScreenRect(alt ? appAltRef.current : app1Ref.current);
+        if (!r) return;
+        const s = sec.getBoundingClientRect();
+        // The design's box around the head (Hero.dc.html: 360 x 372 around a
+        // ~270 x 330 head), centred on it.
+        const w = r.width * CROSS_PAD.x;
+        const h = r.height * CROSS_PAD.y;
+        const x = r.left - s.left + r.width / 2 - w / 2;
+        const y = Math.max(CROSS_TOP, r.top - s.top + r.height / 2 - h / 2);
+        const k = cross.on && !reduce ? CROSS_EASE : 1;
+        cross.x += (x - cross.x) * k;
+        cross.y += (y - cross.y) * k;
+        cross.w += (w - cross.w) * k;
+        cross.h += (h - cross.h) * k;
+        if (!cross.on) {
+          cross.on = true;
+          box.style.left = "0px";
+          box.style.top = "0px";
+        }
+        box.style.transform = `translate3d(${cross.x.toFixed(1)}px, ${cross.y.toFixed(1)}px, 0)`;
+        box.style.width = `${cross.w.toFixed(1)}px`;
+        box.style.height = `${cross.h.toFixed(1)}px`;
+      };
+      const tick = () => {
+        applyGazeAndPose();
+        trackHead();
+      };
+      applyGazeRef.current = tick;
+      gsap.ticker.add(tick);
 
       // Only what is on screen renders: every scene is a full-screen GPU load, and
       // drawing all four at once is what a laptop GPU can't keep up with. The fade
@@ -649,14 +700,7 @@ export const useHeroTimeline = ({
         },
       });
 
-      // ---- scene 1: each HUD window on its own step, then SCROLL; it holds ------
-      const rise = { autoAlpha: 1, y: 0, duration: 0.06, ease: "power1.out" };
-      if (!isMobile) {
-        tl.to(introRef.current, rise, SCENE1.video);
-        tl.to(checkRef.current, rise, SCENE1.check);
-        tl.to(headlineRef.current, rise, SCENE1.headline);
-        tl.to(scrollCueRef.current, rise, SCENE1.scroll);
-      }
+      // ---- scene 1: the HUD is there from load; scene 1 holds until the crossfade.
 
       // ---- scene 1 -> 2: the HUD, MSSE:// and STATUS leave; the grounds and the
       // robots crossfade while the giant head comes in -----------------------------
