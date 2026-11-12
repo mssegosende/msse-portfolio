@@ -7,6 +7,10 @@ import { canRender3D, releaseGlContext, watchContextLoss } from "../../lib/splin
 import { L2_DESKTOP_URLS, themeModel } from "../../lib/spline/scenes";
 import type { SceneNode, SplineApp, SplineObject } from "../../lib/spline/types";
 
+/** Scene 2 used to load its own Spline scene (the giant head); the CRT
+ * redesign replaced it with the ASCII object. */
+const SCENE2_SPLINE = false;
+
 /** A loaded layer 2 mount and the parts of it the ticker writes to. */
 export interface L2Entry {
   app: SplineApp;
@@ -214,23 +218,19 @@ export const useHeroScenes = (
   };
 
   const revealed = loaded || failed;
-  // Scene 2 mounts as soon as the hero has loaded, not on scroll: a flick reaches
-  // the crossfade in half a second, faster than any scroll threshold. Its loop
-  // stays paused until near the crossfade (the timeline's playback sync).
-  const mountScene2 = revealed;
-  // Ready once its mounts have drawn; on desktop, every model that hasn't failed
-  // (if both fail, the fallback PNG shows).
-  const scene2Ready = isMobile
-    ? !!drawn2["m:" + slot2Url]
-    : l2Alive.length > 0 && l2Alive.every((u) => drawn2["d:" + u]);
-  const scene2Dead = scene2Failed || (!isMobile && l2Alive.length === 0);
-
-  // Scene 2 watchdog: fallback render if it never comes up.
-  useEffect(() => {
-    if (!mountScene2 || scene2Ready || scene2Dead) return;
-    const t = setTimeout(() => setScene2Failed(true), 25000);
-    return () => clearTimeout(t);
-  }, [mountScene2, scene2Ready, scene2Dead]);
+  // CRT redesign (SPEC §3): the robot leaves at the end of scene 1 and scene 2
+  // shows a text object, so no Spline scene loads for scene 2 any more (it
+  // used to mount one per model as soon as the hero loaded). Its loader,
+  // watchdog and fallback go with it; the timeline's layer 2 hooks find no
+  // scene and do nothing. The hero's own render loop already stops once it
+  // has faded out (the timeline's playback sync).
+  const mountScene2 = SCENE2_SPLINE;
+  const scene2Ready = mountScene2
+    ? isMobile
+      ? !!drawn2["m:" + slot2Url]
+      : l2Alive.length > 0 && l2Alive.every((u) => drawn2["d:" + u])
+    : false;
+  const scene2Dead = mountScene2 && (scene2Failed || (!isMobile && l2Alive.length === 0));
 
   // Release each slot's GPU context when its scene goes away, from the canvas it
   // recorded at load. Sweeping the DOM in cleanup doesn't work: by then the
@@ -260,11 +260,12 @@ export const useHeroScenes = (
     };
   }, [slot2Url]);
 
-  // Frame times mean nothing while scenes are still loading.
+  // Frame times mean nothing while scenes are still loading. Without a scene 2,
+  // the hero alone counts.
   const scenesLoadedRef = useRef(false);
   useLayoutEffect(() => {
-    scenesLoadedRef.current = scene2Ready || scene2Dead;
-  }, [scene2Ready, scene2Dead]);
+    scenesLoadedRef.current = mountScene2 ? scene2Ready || scene2Dead : revealed;
+  }, [mountScene2, scene2Ready, scene2Dead, revealed]);
 
   // The alternate mount has a fixed key and is desktop only: its context is
   // released only when it unmounts (entering the phone layout, or leaving).

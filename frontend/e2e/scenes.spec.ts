@@ -15,14 +15,15 @@ const trackErrors = (page: Page) => {
 test.describe("desktop", { tag: "@gpu" }, () => {
   test.use({ viewport: DESKTOP });
 
-  test("both hero models and both chapter 2 models load", async ({ page }) => {
+  // Scene 2 loads no Spline scene since the CRT redesign: the hero's two models only.
+  test("both hero models load", async ({ page }) => {
     const errors = trackErrors(page);
     await openHome(page);
     await expect(page.getByTestId("spline-canvas-wrap")).toHaveAttribute("data-revealed", "true", {
       timeout: 30_000,
     });
     await expect(page.getByTestId("hero-fallback")).toHaveCount(0);
-    await expect.poll(() => sceneCanvases(page), { timeout: 30_000 }).toBe(4);
+    await expect.poll(() => sceneCanvases(page), { timeout: 30_000 }).toBe(2);
     expect(errors).toEqual([]);
   });
 });
@@ -57,16 +58,16 @@ test.describe("when 3D is unavailable", () => {
 test.describe("phone", { tag: "@gpu" }, () => {
   test.use(PHONE);
 
-  // iOS kills the tab above two live scenes.
-  test("never mounts more than two scenes", async ({ page }) => {
+  // iOS kills the tab above two live scenes; since the CRT redesign there is one.
+  test("mounts the hero alone", async ({ page }) => {
     const errors = trackErrors(page);
     await openHome(page);
     await expect(page.getByTestId("spline-canvas-wrap")).toHaveAttribute("data-revealed", "true", {
       timeout: 30_000,
     });
-    await expect.poll(() => sceneCanvases(page), { timeout: 30_000 }).toBe(2);
+    await expect.poll(() => sceneCanvases(page), { timeout: 30_000 }).toBe(1);
     await scrollToPin(page, 0.7);
-    expect(await sceneCanvases(page)).toBe(2);
+    expect(await sceneCanvases(page)).toBe(1);
     expect(errors).toEqual([]);
   });
 });

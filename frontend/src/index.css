@@ -1117,3 +1117,202 @@ textarea:-webkit-autofill {
   background: var(--crt-title);
   box-shadow: var(--crt-node-glow);
 }
+
+/* ---- CRT redesign phase 3: scene 2 without the robot ---- */
+
+.crt-section-label {
+  color: #718498;
+}
+:root[data-theme="dark"] .crt-section-label {
+  color: #60aee6;
+}
+.crt-scene2-glow {
+  background: radial-gradient(closest-side, rgba(31, 95, 175, 0.062), rgba(31, 95, 175, 0));
+}
+:root[data-theme="dark"] .crt-scene2-glow {
+  background: radial-gradient(closest-side, rgba(108, 185, 238, 0.1), rgba(108, 185, 238, 0));
+}
+/* The short light streaks at the edges (Main.dc.html). */
+.crt-streak {
+  background: rgba(31, 95, 175, 0.48);
+}
+:root[data-theme="dark"] .crt-streak {
+  background: rgba(204, 238, 254, 0.6);
+}
+.crt-stack-word {
+  color: rgba(31, 95, 175, 0.03);
+}
+:root[data-theme="dark"] .crt-stack-word {
+  color: rgba(125, 198, 246, 0.045);
+}
+
+/* The ASCII object. */
+.crt-ascii {
+  color: #2c4864;
+  text-shadow: var(--crt-glow-label);
+}
+:root[data-theme="dark"] .crt-ascii {
+  color: #b9e7fe;
+  text-shadow:
+    0 0 4px rgba(108, 185, 238, 0.878),
+    0 0 12px rgba(108, 185, 238, 0.293);
+}
+/* Phones: 9px as designed, smaller on shorter screens so the object keeps
+   clear of the rail and the card above the dock. */
+.crt-ascii--phone {
+  font-size: clamp(6px, calc((100svh - 636px) / 26), 9px);
+  line-height: clamp(6px, calc((100svh - 636px) / 26), 9px);
+}
+.crt-ascii-scan {
+  background: rgba(31, 95, 175, 0.28);
+  box-shadow: 0 0 10px rgba(40, 110, 220, 0.18);
+}
+:root[data-theme="dark"] .crt-ascii-scan {
+  background: rgba(204, 238, 254, 0.35);
+  box-shadow: 0 0 12px rgba(108, 185, 238, 0.78);
+}
+.crt-ascii-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--crt-node);
+  box-shadow: var(--crt-node-glow);
+}
+.crt-ascii-ring {
+  width: 9px;
+  height: 9px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 1.5px solid var(--crt-row-label);
+}
+
+/* The rail: 01 MIND · 02 INTERFACE · 03 ENGINE. */
+.crt-rail-btn {
+  border: 1px solid rgba(31, 95, 175, 0.238);
+  background: transparent;
+  color: #677b90;
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+.crt-rail-btn:hover {
+  color: var(--crt-row-value);
+}
+.crt-rail-btn[aria-pressed="true"] {
+  border-color: var(--crt-node);
+  background: rgba(31, 95, 175, 0.067);
+  color: var(--crt-row-value);
+  text-shadow: var(--crt-glow-label);
+  box-shadow: 0 0 10px rgba(40, 110, 220, 0.18);
+}
+:root[data-theme="dark"] .crt-rail-btn {
+  border-color: rgba(125, 198, 246, 0.349);
+  color: #6cb9ee;
+}
+:root[data-theme="dark"] .crt-rail-btn[aria-pressed="true"] {
+  border-color: #d4f2ff;
+  background: rgba(108, 185, 238, 0.109);
+  color: #daf8ff;
+  text-shadow: 0 0 6px rgba(108, 185, 238, 0.878);
+  box-shadow: 0 0 14px rgba(108, 185, 238, 0.439);
+}
+
+/* The Dossier card. */
+.crt-dossier__title {
+  color: var(--crt-row-value);
+  text-shadow: var(--crt-glow-label);
+}
+:root[data-theme="dark"] .crt-dossier__title {
+  text-shadow:
+    0 0 2px #daf8ff,
+    0 0 10px rgba(108, 185, 238, 0.731);
+}
+.crt-dossier__num {
+  color: var(--crt-title);
+  text-shadow: var(--crt-glow-title);
+}
+:root[data-theme="dark"] .crt-dossier__num {
+  text-shadow:
+    0 0 3px #eef8ff,
+    0 0 16px rgba(108, 185, 238, 0.926),
+    0 0 44px rgba(108, 185, 238, 0.351);
+}
+.crt-dossier__icon {
+  width: 22px;
+  height: 14px;
+  box-sizing: border-box;
+  border: 1.5px solid var(--crt-row-label);
+  border-radius: 3px;
+}
+:root[data-theme="dark"] .crt-dossier__icon {
+  box-shadow: 0 0 6px rgba(108, 185, 238, 0.585);
+}
+.crt-dossier__bracket {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: #486079;
+  border-width: 0;
+  border-style: solid;
+}
+.crt-dossier__bracket.border-l {
+  border-left-width: 1.5px;
+}
+.crt-dossier__bracket.border-r {
+  border-right-width: 1.5px;
+}
+.crt-dossier__bracket.border-t {
+  border-top-width: 1.5px;
+}
+.crt-dossier__bracket.border-b {
+  border-bottom-width: 1.5px;
+}
+:root[data-theme="dark"] .crt-dossier__bracket {
+  border-color: #8dd1fa;
+}
+/* Phones: the design's 19px, down to 16px so the approved values keep to
+   one line (ETHOS · POLARIS · THIS SITE). */
+.crt-dossier__rows--phone .crt-row {
+  min-height: 38px;
+  padding: 0 16px;
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.crt-chip {
+  padding: 3px 10px;
+  border: 1px solid var(--crt-line);
+  border-radius: 999px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--crt-node);
+}
+/* The oscilloscope. */
+.crt-scope {
+  background-image:
+    linear-gradient(rgba(31, 95, 175, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(31, 95, 175, 0.1) 1px, transparent 1px);
+  background-size: 24px 21px;
+}
+:root[data-theme="dark"] .crt-scope {
+  background-image:
+    linear-gradient(rgba(125, 198, 246, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 198, 246, 0.16) 1px, transparent 1px);
+}
+.crt-scope__wave {
+  stroke: var(--crt-row-label);
+  filter: drop-shadow(0 0 3px rgba(40, 110, 220, 0.35));
+}
+:root[data-theme="dark"] .crt-scope__wave {
+  filter: drop-shadow(0 0 4px #6ebaef);
+}
+
+/* SKIP INTRO moves to the bottom centre in scene 2 (Main.dc.html); the
+   timeline marks the button's scene. */
+.crt-skip[data-scene="2"] {
+  right: auto;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+}

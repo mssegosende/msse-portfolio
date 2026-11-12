@@ -1,181 +1,193 @@
+import { useEffect, useRef } from "react";
 import type { CapabilityCard as Card } from "../../data/portfolioData";
-import type { Theme } from "../../lib/themeReload";
-import { Num } from "../Num";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
+import { DataRow } from "../crt/CrtPieces";
 import { ScrollText } from "../projects/ProjectCard";
+import { TICK_MS, wavePath, type Shape } from "./ascii";
 
-// The black framed card, layer by layer (design/CARD-SPEC.md).
-const FRAME =
-  "polygon(30px 0, calc(100% - 16px) 0, 100% 16px, 100% 150px, calc(100% - 8px) 158px, calc(100% - 8px) calc(100% - 24px), calc(100% - 30px) 100%, 16px 100%, 0 calc(100% - 16px), 0 calc(100% - 160px), 8px calc(100% - 168px), 8px 22px)";
-const GAP =
-  "polygon(26px 0, calc(100% - 12px) 0, 100% 12px, 100% calc(100% - 26px), calc(100% - 26px) 100%, 12px 100%, 0 calc(100% - 12px), 0 26px)";
-const PANEL =
-  "polygon(24px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 24px), calc(100% - 24px) 100%, 10px 100%, 0 calc(100% - 10px), 0 24px)";
-const TAB = "polygon(0 100%, 20px 0, calc(100% - 20px) 0, 100% 100%)";
-const BEZEL =
-  "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 10%), linear-gradient(160deg, #3A4148 0%, #252A30 45%, #1B1F24 100%)";
+// Option A "Dossier" (design/crt/msse-crt-redesign/design-source/Main.dc.html
+// and Mobile.dc.html): a frame with nodes, SUBSYSTEM header, the boxed
+// number beside part / title / body, data rows, and an oscilloscope.
+// Colours are the page theme's --crt-* tokens.
 
-const THEMES = {
-  light: {
-    gap: "#050608",
-    panel: "radial-gradient(ellipse 120% 70% at 20% 0%, #262B31 0%, #12151A 55%, #0B0D10 100%)",
-    tag: "text-white border-white/[0.72]",
-    small: "text-[#AEB6BF]",
-    title: "text-white",
-    body: "text-[#C9D0D7]",
-    chip: "text-[#E9EDF1] border-white/[0.32]",
-  },
-  dark: {
-    gap: "#2A3037",
-    panel:
-      // A deeper satin than CARD-SPEC's near-white (María Sol, 9 Nov); the
-      // subtitle steps down to #3A414A to keep AA on it.
-      "repeating-linear-gradient(90deg, rgba(255,255,255,0) 0 3px, rgba(255,255,255,0.22) 3px 4px), radial-gradient(ellipse 120% 80% at 18% 0%, #DCE1E5 0%, #C3CAD0 42%, #A9B1BA 100%)",
-    tag: "text-[#0B0D10] border-[rgba(11,13,16,0.7)]",
-    small: "text-[#3A414A]",
-    title: "text-[#0B0D10]",
-    body: "text-[#14181D]",
-    chip: "text-[#14181D] border-[rgba(11,13,16,0.35)]",
-  },
-};
+const NODES_DESKTOP = [
+  "left-[-4px] top-[-4px]",
+  "right-[-4px] top-[-4px]",
+  "bottom-[-4px] left-[-4px]",
+  "bottom-[-4px] right-[-4px]",
+  // Where the dividers meet the frame and each other.
+  "left-[-4px] top-[49px]",
+  "right-[-4px] top-[49px]",
+  "left-[177px] top-[49px]",
+  "left-[177px] top-[229px]",
+];
+const NODES_PHONE = NODES_DESKTOP.slice(0, 4);
 
-/**
- * One scene 2 card. Desktop: the reference size, 324 x 463 (the parent scales
- * the whole card). Phones: full width, its height from the content.
- */
-export const CapabilityCard = ({
-  card,
-  theme,
-  isMobile,
-}: {
-  card: Card;
-  theme: Theme;
-  isMobile: boolean;
-}) => {
-  const t = THEMES[theme];
+const WAVE_W = 536;
+const WAVE_H = 84;
+
+/** The oscilloscope: a moving wave and the frame counter (still with reduced motion). */
+const Scope = ({ step, part }: { step: Shape; part: string }) => {
+  const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const pathRef = useRef<SVGPathElement>(null);
+  const frameRef = useRef<HTMLSpanElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const draw = (t: number) => {
+      pathRef.current?.setAttribute("d", wavePath(t, step, WAVE_W, WAVE_H));
+      if (frameRef.current)
+        frameRef.current.textContent = String(Math.floor(t / TICK_MS)).padStart(6, "0");
+    };
+    draw(0);
+    if (reduced) return undefined;
+    let onScreen = false;
+    const io =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(([e]) => {
+            onScreen = !!e?.isIntersecting;
+          });
+    if (boxRef.current) io?.observe(boxRef.current);
+    const t0 = performance.now();
+    const id = setInterval(() => {
+      if (onScreen && !document.hidden) draw(performance.now() - t0);
+    }, TICK_MS);
+    return () => {
+      clearInterval(id);
+      io?.disconnect();
+    };
+  }, [step, reduced]);
   return (
-    <article
-      data-testid={`capability-card-${card.num}`}
-      className={`relative flow-root drop-shadow-[0_34px_40px_rgba(18,24,34,0.38)] ${
-        isMobile ? "w-full" : "h-[463px] w-[324px]"
-      }`}
-    >
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-[#5B646E]"
-        style={{ clipPath: FRAME }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-px"
-        style={{ background: BEZEL, clipPath: FRAME }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-5 inset-y-3"
-        style={{ background: t.gap, clipPath: GAP }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-[22px] inset-y-3.5"
-        style={{ background: t.panel, clipPath: PANEL }}
-      />
-
-      {/* Phones: the mock's tighter sizes (design/source/mobile/light/scene-2-capabilities.dc.html). */}
-      <div
-        className={`relative z-[2] mx-[22px] my-3.5 flex flex-col ${
-          isMobile ? "px-3.5 pb-[50px] pt-[18px]" : "h-[calc(100%-28px)] px-[18px] pb-[58px] pt-6"
-        }`}
-      >
-        <div
-          className={`self-start rounded-[7px] border-[1.5px] font-mono tracking-[0.14em] ${t.tag} ${
-            isMobile ? "px-2.5 py-1.5 text-[9.5px]" : "px-[11px] py-1.5 text-[10px]"
-          }`}
+    <div ref={boxRef} className="px-5 pb-3.5 pt-4">
+      <div className="crt-scope h-[84px] border border-[var(--crt-line-row)]">
+        <svg
+          aria-hidden="true"
+          width="100%"
+          height="82"
+          viewBox={`0 0 ${WAVE_W} ${WAVE_H}`}
+          preserveAspectRatio="none"
+          className="block"
         >
-          SYS.0{card.num}
-        </div>
-        {/* At least the phones' 16px between the tag and the title: long copy
-            shrinks the spacer, never the gap (María Sol, 9 Nov). */}
-        <div aria-hidden="true" className={isMobile ? "h-4" : "min-h-4 flex-1"} />
-        <div className="flex items-end justify-between gap-2.5">
-          <h3
-            className={`m-0 min-w-0 font-display font-semibold leading-[1.05] tracking-[0.08em] ${t.title} ${
-              isMobile ? "text-[21px]" : "text-[22px]"
-            }`}
-          >
-            <span
-              className={`block tracking-[0.22em] ${t.small} ${isMobile ? "text-[11px]" : "text-[12px]"}`}
-            >
-              {card.small}
-            </span>
-            {card.title}
-          </h3>
-          <Num
-            value={card.num}
-            className={`flex-none font-michroma leading-[0.9] ${t.title} ${
-              isMobile ? "text-[32px]" : "text-[38px]"
-            }`}
-          />
-        </div>
-        {/* Long copy scrolls inside the card, with the project cards' fade
-            (design/content-final.md): the card and its fonts never change.
-            Phones size the card from its content, so the body keeps the
-            mock's four lines (13.5px x 1.55 x 4). */}
-        <ScrollText
-          style={{
-            flex: "0 1 auto",
-            minHeight: 0,
-            marginTop: 10,
-            ...(isMobile ? { maxHeight: 84 } : null),
-          }}
-        >
-          <p
-            className={`m-0 leading-[1.55] ${t.body} ${isMobile ? "text-[13.5px]" : "text-[14px]"}`}
-          >
-            {card.text}
-          </p>
-        </ScrollText>
-        <ul
-          className={`flex flex-wrap gap-1.5 font-medium ${
-            isMobile ? "mt-3 text-[11.5px]" : "mt-3.5 text-[12px]"
-          }`}
-        >
-          {card.chips.map((c) => (
-            <li
-              key={c}
-              className={`rounded-full border py-[5px] ${t.chip} ${isMobile ? "px-2.5" : "px-[11px]"}`}
-            >
-              {c}
-            </li>
-          ))}
-        </ul>
+          <path ref={pathRef} className="crt-scope__wave" fill="none" strokeWidth="1.6" />
+        </svg>
       </div>
-
-      <CardTab part={card.part} isMobile={isMobile} />
-    </article>
+      <div className="mt-2 flex justify-between font-mono text-[11px] tracking-[0.08em] text-crt-dim">
+        <span>SIG · {part}</span>
+        <span>
+          FRAME <span ref={frameRef}>000000</span>
+        </span>
+        <span>LINK · MSSE://{part}</span>
+      </div>
+    </div>
   );
 };
 
-/** Bottom tab: MSSE:// │ part. Light text in both themes. */
-const CardTab = ({ part, isMobile }: { part: string; isMobile: boolean }) => (
-  <div
-    className={`absolute bottom-0 left-1/2 z-[4] -translate-x-1/2 text-[#E9EDF1] ${
-      isMobile ? "h-[38px] w-[min(200px,74%)]" : "h-10 w-[min(220px,74%)]"
-    }`}
-  >
-    <span aria-hidden="true" className="absolute inset-0 bg-[#5B646E]" style={{ clipPath: TAB }} />
-    <span
-      aria-hidden="true"
-      className="absolute inset-x-px bottom-0 top-px"
-      style={{ background: BEZEL, clipPath: TAB }}
-    />
-    <span className="relative flex h-full items-center justify-center gap-2.5 pt-0.5">
-      <span
-        className={`font-michroma tracking-[0.16em] ${isMobile ? "text-[9px]" : "text-[9.5px]"}`}
-      >
-        MSSE://
-      </span>
-      <span aria-hidden="true" className="h-4 w-[1.5px] bg-[rgba(233,237,241,0.6)]" />
-      <span className={`font-medium ${isMobile ? "text-[12px]" : "text-[12.5px]"}`}>{part}</span>
-    </span>
-  </div>
+const Chips = ({ chips }: { chips: string[] }) => (
+  <ul className="m-0 flex list-none flex-wrap justify-end gap-1.5 p-0">
+    {chips.map((c) => (
+      <li key={c} className="crt-chip">
+        {c}
+      </li>
+    ))}
+  </ul>
 );
+
+/**
+ * One scene 2 card, the Dossier. Desktop: 576 wide in the 1440 x 900 stage.
+ * Phones: full width, one at a time under the ASCII object.
+ */
+export const CapabilityCard = ({ card, isMobile }: { card: Card; isMobile: boolean }) => {
+  const step = (Number(card.num) - 1) as Shape;
+  const num = card.num.padStart(2, "0");
+  const nodes = isMobile ? NODES_PHONE : NODES_DESKTOP;
+  return (
+    <article
+      data-testid={`capability-card-${card.num}`}
+      aria-label={`Subsystem ${num}: ${card.title}`}
+      className={`crt-frame crt-dossier relative ${isMobile ? "w-full" : "w-[576px]"}`}
+    >
+      {nodes.map((pos) => (
+        <span key={pos} aria-hidden="true" className={`crt-node ${pos}`} />
+      ))}
+      {isMobile ? (
+        <>
+          <div className="flex items-center justify-between gap-3 border-b border-crt-line px-4 py-3.5">
+            <div>
+              <div className="font-vt text-[17px] tracking-[0.2em] text-crt-dim">{card.small}</div>
+              <h3 className="crt-dossier__title m-0 mt-1 font-michroma text-[17px] font-normal tracking-[0.04em]">
+                {card.title}
+              </h3>
+            </div>
+            <span className="crt-dossier__num font-michroma text-[44px] leading-none">{num}</span>
+          </div>
+          <div className="border-b border-[var(--crt-line-row)] px-4 py-3">
+            <ScrollText style={{ maxHeight: 63 }}>
+              <p className="m-0 text-[14px] leading-[1.5] text-crt-text-2">{card.text}</p>
+            </ScrollText>
+          </div>
+          <div className="crt-dossier__rows--phone">
+            <DataRow label="FUNCTION">{card.function}</DataRow>
+            <DataRow label="SHIPPED IN">{card.shippedIn}</DataRow>
+          </div>
+          <div className="px-4 py-3">
+            <ul className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+              {card.chips.map((c) => (
+                <li key={c} className="crt-chip">
+                  {c}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex h-[52px] items-center justify-between border-b border-crt-line px-5">
+            <span className="crt-glow-label font-vt text-[28px] tracking-[0.1em] text-[var(--crt-row-value)]">
+              SUBSYSTEM {num}
+            </span>
+            <span aria-hidden="true" className="crt-dossier__icon" />
+          </div>
+          <div className="grid grid-cols-[180px_minmax(0,1fr)] border-b border-crt-line">
+            <div className="relative flex h-[180px] items-center justify-center border-r border-crt-line">
+              <span
+                aria-hidden="true"
+                className="crt-dossier__bracket left-4 top-4 border-l border-t"
+              />
+              <span
+                aria-hidden="true"
+                className="crt-dossier__bracket right-4 top-4 border-r border-t"
+              />
+              <span
+                aria-hidden="true"
+                className="crt-dossier__bracket bottom-4 left-4 border-b border-l"
+              />
+              <span
+                aria-hidden="true"
+                className="crt-dossier__bracket bottom-4 right-4 border-b border-r"
+              />
+              <span className="crt-dossier__num font-michroma text-[72px] leading-none">{num}</span>
+            </div>
+            <div className="flex h-[180px] flex-col justify-center gap-2.5 px-6 py-[22px]">
+              <div className="font-vt text-[20px] tracking-[0.22em] text-crt-dim">{card.small}</div>
+              <h3 className="crt-dossier__title m-0 font-michroma text-[23px] font-normal tracking-[0.05em]">
+                {card.title}
+              </h3>
+              {/* The body stays the long copy from portfolioData: it scrolls
+                  inside its three lines, with the fade (as the project cards). */}
+              <ScrollText style={{ maxHeight: 66, minHeight: 0 }}>
+                <p className="m-0 text-[14px] leading-[1.55] text-crt-text-2">{card.text}</p>
+              </ScrollText>
+            </div>
+          </div>
+          <DataRow label="FUNCTION">{card.function}</DataRow>
+          <DataRow label="SHIPPED IN">{card.shippedIn}</DataRow>
+          <div className="crt-row py-2">
+            <span className="crt-row__label">STACK</span>
+            <Chips chips={card.chips} />
+          </div>
+          <Scope step={step} part={card.part} />
+        </>
+      )}
+    </article>
+  );
+};

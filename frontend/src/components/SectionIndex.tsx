@@ -21,7 +21,7 @@ export const SectionIndex = () => {
       aria-label="Sections"
       data-testid="section-index"
       aria-hidden={shown ? undefined : true}
-      className={`fixed right-9 top-[28vh] z-40 hidden flex-col items-center gap-0.5 font-mono tracking-[0.06em] transition-opacity duration-500 lg:flex ${
+      className={`fixed right-3 top-[28vh] z-40 hidden flex-col items-center gap-0.5 font-mono tracking-[0.06em] transition-opacity duration-500 lg:flex ${
         shown ? "opacity-100" : "pointer-events-none opacity-0"
       }`}
     >

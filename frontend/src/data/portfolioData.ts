@@ -26,17 +26,23 @@ export interface ManifestoEntry {
   text: string;
 }
 
-/** One scene 2 card (design/HANDOFF.md, P2). */
+/** One scene 2 card: the "Dossier" (design/crt/.../Main.dc.html). */
 export interface CapabilityCard {
-  /** Plain number, shown as Ø1. */
+  /** Plain number, shown as 01. */
   num: string;
-  /** The bottom tab: MSSE:// │ part. */
+  /** The subsystem: rail label, SIG · / LINK · tags (MIND, INTERFACE, ENGINE). */
   part: string;
-  /** The small line above the title. */
+  /** The small line above the title (THE MIND…). */
   small: string;
   title: string;
   text: string;
   chips: string[];
+  /** FUNCTION row (approved by María Sol, 12 Nov). */
+  function: string;
+  /** SHIPPED IN row: projects that use it (approved by María Sol, 12 Nov). */
+  shippedIn: string;
+  /** The ASCII object for this step: sphere, torus or rounded cube. */
+  shape: "SPHERE" | "TORUS" | "CUBE";
 }
 
 export interface BacklogEntry {
@@ -108,6 +114,8 @@ export const manifesto: ManifestoEntry[] = [
 
 // Scene 2: one card at a time, mind -> nerves -> body.
 export const capabilityCards: CapabilityCard[] = [
+  // The design's order (CRT redesign): MIND, INTERFACE, ENGINE. The robot is
+  // gone from scene 2, so the parts are no longer body parts (SPEC §3).
   {
     num: "1",
     part: "MIND",
@@ -115,22 +123,31 @@ export const capabilityCards: CapabilityCard[] = [
     title: "AI ENGINEERING",
     text: "I build LLM systems where the model advises and the code decides. Rules find the candidates, the model weighs them against context, and confidence thresholds turn its answer into an action, with dismissing held to a higher bar than flagging. Anything uncertain, and any failed call, goes to a human instead of disappearing. LLMs are probabilistic, so the risk is mine to own: every pipeline is evaluated against labeled data (precision, recall, F1) and every model is compared on cost and latency before it ships.",
     chips: ["LangGraph", "LangChain", "RAG", "Evals"],
+    function: "AGENTS · RAG · EVALS",
+    shippedIn: "BLAZE · POLARIS · LYNX",
+    shape: "SPHERE",
   },
   {
     num: "2",
-    part: "NERVES",
-    small: "THE NERVOUS SYSTEM",
-    title: "BACKEND",
-    text: "Python and FastAPI are my main backend, with Node.js and NestJS when the service calls for it. I start from the business rules: a domain layer that knows nothing about the framework or the database, organized with clean and hexagonal architecture, and I move from one well-built service to microservices only when the problem asks for it. I like the problems that look simple until you write them down, like a slot that must never be booked twice. PostgreSQL underneath, Pydantic at the edges, pytest around the rules, Docker around it all.",
-    chips: ["Python", "FastAPI", "PostgreSQL", "Node"],
-  },
-  {
-    num: "3",
-    part: "BODY",
-    small: "THE BODY",
+    part: "INTERFACE",
+    small: "THE INTERFACE",
     title: "FRONTEND",
     text: "On the frontend I focus on the data layer: what the interface needs from the server, and what happens when the answer doesn't arrive as expected. I build with React and TypeScript on Next.js, loading data in Server Components whenever the page allows it, so less code and no secrets reach the browser. Types disappear at runtime, so I validate server responses with Zod before they reach a component, and a broken contract shows up as a clear error instead of a blank screen.",
     chips: ["React", "TypeScript", "Next.js", "Zod", "GSAP"],
+    function: "MOTION · 3D · EDITORS",
+    shippedIn: "BLAZE · MARVEL · ETHOS",
+    shape: "TORUS",
+  },
+  {
+    num: "3",
+    part: "ENGINE",
+    small: "THE ENGINE",
+    title: "BACKEND",
+    text: "Python and FastAPI are my main backend, with Node.js and NestJS when the service calls for it. I start from the business rules: a domain layer that knows nothing about the framework or the database, organized with clean and hexagonal architecture, and I move from one well-built service to microservices only when the problem asks for it. I like the problems that look simple until you write them down, like a slot that must never be booked twice. PostgreSQL underneath, Pydantic at the edges, pytest around the rules, Docker around it all.",
+    chips: ["Python", "FastAPI", "PostgreSQL", "Node"],
+    function: "APIS · CONTRACTS · DATA",
+    shippedIn: "ETHOS · POLARIS · THIS SITE",
+    shape: "CUBE",
   },
 ];
 

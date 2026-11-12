@@ -131,64 +131,6 @@ const DRAG: [number, number][] = [
   [1440, 900],
 ];
 
-/** The layer 2 canvas on screen: its buffer and its CSS box. */
-const shownScene2 = (page: Page) =>
-  page.evaluate(() => {
-    const shown = [
-      ...document.querySelectorAll<HTMLCanvasElement>('[data-testid="spline2-canvas-wrap"] canvas'),
-    ].filter((c) => getComputedStyle(c).visibility === "visible");
-    if (shown.length !== 1) throw new Error(`${shown.length} layer 2 canvases shown`);
-    const c = shown[0]!;
-    return {
-      bufferAspect: c.width / c.height,
-      boxAspect: c.clientWidth / c.clientHeight,
-      scale: c.width / c.clientWidth,
-    };
-  });
-
-/**
- * The robot's neck at 1440x900 (left and right edge, px): layer 2 alone over a
- * key colour. The head turns as it looks around; the neck only sways a few px.
- */
-const neckEdges = async (page: Page) => {
-  const restore = await page.evaluateHandle(() => {
-    const sec = document.querySelector<HTMLElement>('[data-testid="scene-section"]')!;
-    let l2: Element | null = document.querySelector('[data-testid="spline2-canvas-wrap"]');
-    while (l2 && l2.parentElement !== sec) l2 = l2.parentElement;
-    const hidden = [...sec.children].filter((ch): ch is HTMLElement => ch !== l2);
-    hidden.forEach((ch) => (ch.style.visibility = "hidden"));
-    sec.style.background = "#00ff00";
-    return () => {
-      hidden.forEach((ch) => (ch.style.visibility = ""));
-      sec.style.background = "";
-    };
-  });
-  const png = await page.screenshot({ clip: { x: 0, y: 690, width: 1360, height: 20 } });
-  await restore.evaluate((undo) => undo());
-  return page.evaluate(
-    async (src) => {
-      const img = new Image();
-      img.src = src;
-      await img.decode();
-      const ctx = document.createElement("canvas").getContext("2d")!;
-      ctx.canvas.width = img.width;
-      ctx.canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-      const row = ctx.getImageData(0, 10, img.width, 1).data;
-      let left = -1;
-      let right = -1;
-      for (let x = 400; x < img.width; x++) {
-        const key = row[x * 4]! < 90 && row[x * 4 + 1]! > 170 && row[x * 4 + 2]! < 90;
-        if (key) continue;
-        if (left < 0) left = x;
-        right = x;
-      }
-      return { left, right };
-    },
-    `data:image/png;base64,${png.toString("base64")}`,
-  );
-};
-
 /** Count page loads in this tab (a reload adds one). Top frame only. */
 const countLoads = (page: Page) =>
   page.addInitScript(() => {
@@ -255,94 +197,18 @@ const heroDrawn = (page: Page) =>
 
 // @gpu: real Spline rendering (canvas buffers, framing, drawn pixels); CI skips
 // these (no GPU), see playwright.config.ts. The pin check runs in CI below.
-test.describe("desktop window resize on scene 2", { tag: "@gpu" }, () => {
+// Scene 2 has no Spline scene since the CRT redesign (an ASCII object in its
+// place), so its buffer and framing checks went with it; the pin check runs
+// in CI below.
+test.describe("desktop window across the phone breakpoint, drawn", { tag: "@gpu" }, () => {
   // One at a time: two pages of four software-rendered scenes starve each other.
   test.describe.configure({ mode: "default" });
 
   for (const theme of ["light", "dark"] as const) {
-    test(`${theme}: same beat, same framing and same resolution after a resize drag`, async ({
-      playwright,
-      baseURL,
-    }) => {
-      test.setTimeout(300_000);
-      // Its own browser, on the GPU where there is one (frame times like a
-      // visitor's); without one Chromium falls back to software WebGL.
-      const browser = await playwright.chromium.launch({
-        executablePath: process.env.PW_CHROMIUM_PATH || undefined,
-        args: ["--enable-unsafe-swiftshader", "--enable-gpu", "--ignore-gpu-blocklist"],
-      });
-      const page = await browser.newPage({ viewport: DESKTOP, deviceScaleFactor: 1, baseURL });
-      try {
-        await openHome(page);
-        await expect(page.getByTestId("spline2-canvas-wrap")).toHaveClass(/opacity-100/, {
-          timeout: 90_000,
-        });
-        if (theme === "dark") {
-          await page.getByTestId("theme-toggle").dispatchEvent("click");
-          await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
-        }
-        await scrollToPin(page, FIRST_CARD);
-        const before = { progress: await pinProgress(page), scene: await shownScene2(page) };
-        const neckBefore = await neckEdges(page);
-        expect(neckBefore.left).toBeGreaterThan(0);
-
-        for (let i = 1; i < DRAG.length; i++) {
-          const [w0, h0] = DRAG[i - 1]!;
-          const [w1, h1] = DRAG[i]!;
-          for (let s = 1; s <= DRAG_STEPS; s++) {
-            await page.setViewportSize({
-              width: Math.round(w0 + ((w1 - w0) * s) / DRAG_STEPS),
-              height: Math.round(h0 + ((h1 - h0) * s) / DRAG_STEPS),
-            });
-            await page.waitForTimeout(16);
-          }
-          await page.waitForTimeout(1000);
-          const label = `${w1}x${h1}`;
-          // Polled: with software WebGL the frames are so long that the pin's
-          // refresh (0.2 s of GSAP time, lag-smoothed) can take a few seconds.
-          // Same point of the sequence.
-          await expect
-            .poll(async () => Math.abs((await pinProgress(page)) - before.progress), {
-              message: label,
-              timeout: 30_000,
-            })
-            .toBeLessThan(0.003);
-          // The buffer has the box's proportions.
-          await expect
-            .poll(
-              async () => {
-                const s2 = await shownScene2(page);
-                return Math.abs(s2.bufferAspect / s2.boxAspect - 1);
-              },
-              { message: label, timeout: 30_000 },
-            )
-            .toBeLessThan(0.005);
-        }
-
-        // Back at 1440x900: the resolution and the framing it had before.
-        const after = await shownScene2(page);
-        expect(Math.abs(after.scale / before.scene.scale - 1)).toBeLessThan(0.005);
-        const neckAfter = await neckEdges(page);
-        // The robot sways while idle (±6 px, ±0.5°) and looks around, which
-        // moves the neck by up to ~16 px between two moments (18 seen under
-        // load), and its turning shows more or less of the neck rods (width
-        // ±5 px seen). So the width (size and proportions) gets 8 px, 2 % of a
-        // 366 px neck (a framing error like R88's 0.88 zoom is ~44 px), and the
-        // place gets the sway's margin.
-        const width = (n: { left: number; right: number }) => n.right - n.left;
-        const centre = (n: { left: number; right: number }) => (n.left + n.right) / 2;
-        const neck = JSON.stringify({ neckBefore, neckAfter });
-        expect(Math.abs(width(neckAfter) - width(neckBefore)), neck).toBeLessThan(8);
-        expect(Math.abs(centre(neckAfter) - centre(neckBefore)), neck).toBeLessThan(20);
-      } finally {
-        await browser.close();
-      }
-    });
-
     // A desktop window crossing the phone breakpoint reloads the page, once per
     // crossing (lib/layoutReload): swapping the scenes in place piled up GPU
     // memory until the driver reset (R87), and their dispose() threw (R88-R89,
-    // the page went white). Back on desktop, the hero and scene 2 draw again.
+    // the page went white). Back on desktop, the hero draws again.
     test(`${theme}: across the phone breakpoint and back, the hero draws again`, async ({
       playwright,
       baseURL,
@@ -358,9 +224,11 @@ test.describe("desktop window resize on scene 2", { tag: "@gpu" }, () => {
       await countLoads(page);
       try {
         await openHome(page);
-        await expect(page.getByTestId("spline2-canvas-wrap")).toHaveClass(/opacity-100/, {
-          timeout: 90_000,
-        });
+        await expect(page.getByTestId("spline-canvas-wrap")).toHaveAttribute(
+          "data-revealed",
+          "true",
+          { timeout: 90_000 },
+        );
         if (theme === "dark") {
           await page.getByTestId("theme-toggle").dispatchEvent("click");
           await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
@@ -381,11 +249,13 @@ test.describe("desktop window resize on scene 2", { tag: "@gpu" }, () => {
         await drag(DESKTOP.width, 760);
         await expect.poll(() => loads(page), { timeout: 30_000 }).toBe(2);
         expect(errors).toEqual([]);
-        await expect.poll(sceneCanvases, { timeout: 60_000 }).toBe(2);
+        // Phones: the theme's hero alone.
+        await expect.poll(sceneCanvases, { timeout: 60_000 }).toBe(1);
         await drag(760, DESKTOP.width);
         await expect.poll(() => loads(page), { timeout: 30_000 }).toBe(3);
         expect(errors).toEqual([]);
-        await expect.poll(sceneCanvases, { timeout: 90_000 }).toBe(4);
+        // Desktop: both hero models.
+        await expect.poll(sceneCanvases, { timeout: 90_000 }).toBe(2);
         await expect(page.getByTestId("spline-canvas-wrap")).toHaveAttribute(
           "data-revealed",
           "true",
@@ -403,17 +273,6 @@ test.describe("desktop window resize on scene 2", { tag: "@gpu" }, () => {
           .poll(async () => Math.abs((await heroDrawn(page)).aspect - 1), { timeout: 10_000 })
           .toBeLessThan(0.005);
 
-        // And on to scene 2.
-        await expect(page.getByTestId("spline2-canvas-wrap")).toHaveClass(/opacity-100/, {
-          timeout: 90_000,
-        });
-        await scrollToPin(page, FIRST_CARD);
-        await expect
-          .poll(async () => {
-            const s2 = await shownScene2(page);
-            return Math.abs(s2.bufferAspect / s2.boxAspect - 1);
-          })
-          .toBeLessThan(0.005);
         expect(errors).toEqual([]);
       } finally {
         await browser.close();

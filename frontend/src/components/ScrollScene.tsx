@@ -1,24 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Spline from "@splinetool/react-spline";
 import { Application } from "@splinetool/runtime";
 import { profile } from "../data/portfolioData";
-import { Num } from "./Num";
 import { useTheme } from "../hooks/useTheme";
 import { MOBILE_LAYOUT_QUERY } from "../lib/layout";
 import { LAYOUT_RELOADS, LOADED_AS_PHONE } from "../lib/layoutReload";
 import { REDUCED_MOTION_QUERY } from "../lib/motion";
-import { OVERSAMPLE, OVERSAMPLE_1 } from "../lib/spline/camera";
+import { OVERSAMPLE_1 } from "../lib/spline/camera";
 import { patchSplineRuntime } from "../lib/spline/runtime";
-import { L2_DESKTOP_URLS } from "../lib/spline/scenes";
-import { ReleasingBox } from "./spline/ReleasingBox";
 import { SceneBoundary } from "./spline/SceneBoundary";
 import { CapabilityCards } from "./scroll-scene/CapabilityCards";
-import {
-  CAP_TITLE_SIZE,
-  CAP_TITLE_WIDTHS,
-  capTitleFit,
-  type CapTitleWidths,
-} from "./scroll-scene/capTitle";
+import { scene2Scale } from "./scroll-scene/choreography";
+import { AsciiObject } from "./scroll-scene/AsciiObject";
+import type { Shape } from "./scroll-scene/ascii";
+import { goToSection } from "../hooks/useActiveSection";
 import {
   HeadCrosshair,
   HeroHeadline,
@@ -46,9 +41,6 @@ const HERO_IN_CAP = 6000;
 export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => {
   const { theme } = useTheme();
   const darkMode = theme === "dark";
-  // Scene 2's cards follow the page theme; the section itself is fixed to
-  // data-theme="dark", so its children set the page theme explicitly.
-  const pageTheme = darkMode ? "dark" : "light";
 
   const els = useHeroElements();
   const {
@@ -93,23 +85,14 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     refs: sceneRefs,
     sceneUrl,
     slot1Url,
-    slot2Url,
     heroAltUrl,
-    l2VisibleUrl,
     showAlt,
     failed,
     revealed,
-    mountScene2,
-    scene2Ready,
-    scene2Dead,
     onHeroLoad,
     onHeroFail,
     onAltLoad,
     onAltFail,
-    onLayer2Load,
-    onLayer2MobileFail,
-    onLayer2DesktopFail,
-    onLayer2Gone,
   } = useHeroScenes(isMobile, darkMode, { canvasWrapRef, slot1BoxRef, altBoxRef, canvas2WrapRef });
 
   // The load fades (wordmark, top bar) wait for the robot so all three land
@@ -147,46 +130,43 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     };
   }, [sectionRef]);
 
-  // Scene 2's title stays readable beside the giant head (capTitleFit): it
-  // breaks onto two lines, and shrinks only if it must, where one line would
-  // run under the head. The cards start below wherever it ends.
+  // Scene 2 desktop is the 1440 x 900 design scaled to the window (A9's one
+  // factor, scene2Scale). The title no longer dodges a giant head: the robot
+  // has left (CRT redesign), so the old title fit (capTitleFit) has nothing to
+  // fit around.
   const [viewport, setViewport] = useState(() => ({
-    w: window.innerWidth,
-    h: window.innerHeight,
+    width: window.innerWidth,
+    height: window.innerHeight,
   }));
-  const [titleWidths, setTitleWidths] = useState<CapTitleWidths>(CAP_TITLE_WIDTHS);
-  const titleMeasureRef = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     if (isMobile) return undefined;
-    let live = true;
-    // One update per frame: a drag fires resize far more often, and each one
-    // re-rendered the whole hero and its cards.
+    // One update per frame: a drag fires resize far more often.
     let frame = 0;
     const onResize = () => {
       if (frame) return;
       frame = requestAnimationFrame(() => {
         frame = 0;
-        setViewport({ w: window.innerWidth, h: window.innerHeight });
+        setViewport({ width: window.innerWidth, height: window.innerHeight });
       });
     };
-    const measure = () => {
-      const [full, first] = Array.from(titleMeasureRef.current?.children ?? []) as HTMLElement[];
-      if (live && full?.offsetWidth && first?.offsetWidth) {
-        setTitleWidths({ full: full.offsetWidth, first: first.offsetWidth });
-      }
-    };
-    measure();
-    void document.fonts?.ready.then(measure);
     window.addEventListener("resize", onResize);
     return () => {
-      live = false;
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", onResize);
     };
   }, [isMobile]);
-  const titleFit = capTitleFit(viewport.w, viewport.h, titleWidths);
+  const stageK = scene2Scale(viewport);
+  // The 1440 x 900 stage, centred and scaled (a plain DOM box, not a canvas).
+  const stage = (children: ReactNode) => (
+    <div
+      className="pointer-events-none absolute left-1/2 top-1/2 h-[900px] w-[1440px]"
+      style={{ transform: `translate(-50%, -50%) scale(${stageK})` }}
+    >
+      {children}
+    </div>
+  );
 
-  const { journeyDone, skipIntro, cardIndex, atEnd } = useHeroTimeline({
+  const { journeyDone, skipIntro, cardIndex } = useHeroTimeline({
     isMobile,
     stacked,
     onFail: () => setStackedFallback(true),
@@ -197,151 +177,135 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     scenes: sceneRefs,
   });
 
+  // Scene 2's step (0..2): the scroll's card in the pinned sequence (before
+  // the first card, the first); stacked, the rail's pick.
+  const [pickedStep, setPickedStep] = useState(0);
+  const step = (stacked ? pickedStep : Math.max(0, cardIndex)) as Shape;
+  const pickStep = (i: number) => {
+    if (stacked) setPickedStep(i);
+    else goToSection(1, i);
+  };
+
   // Scene 2's pieces: inside the pinned hero, or (stacked) on their own screen
   // right below it.
   const scene2Ground = (
     <>
-      {/* Scene 2 ground, under scene 1's: gradient, glow behind the head, shade,
-          vignette and the STACK word. Scene 1's ground fades off it. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0" style={{ background: "var(--hero-bg-2)" }} />
-        <div
-          className="subject-glow"
-          style={
-            isMobile
-              ? { left: "72%", top: "39%", width: 620, height: 620 }
-              : { left: "58%", top: "33%", width: 900, height: 900 }
-          }
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_55%_at_22%_78%,rgba(25,32,42,0.22)_0%,rgba(25,32,42,0)_70%),radial-gradient(ellipse_120%_90%_at_55%_45%,rgba(0,0,0,0)_55%,rgba(20,26,34,0.28)_100%)]" />
-        <div className="bg-word bg-word--left bg-word--soft">STACK</div>
-      </div>
-    </>
-  );
-  const scene2Title = (
-    <>
-      {/* Scene 2 title, behind the robot: the giant head sits in front of it
-          (phones too, María Sol's review). */}
-      <div
-        ref={title2Ref}
-        data-testid="capabilities-title"
-        className={`pointer-events-none absolute ${
-          isMobile ? "left-[18px] top-[26px]" : "left-14 top-[52px]"
-        }`}
-      >
-        <div className="section-pill bg-white/90 shadow-none">
-          {isMobile && (
+      {/* Scene 2 ground (Main*.dc.html), under scene 1's: the CRT ground, its
+          grid, a soft glow behind the object, the light streaks and STACK. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-crt-bg" />
+        <div className="crt-grid absolute inset-0" />
+        {isMobile ? (
+          <>
+            <div className="crt-scene2-glow absolute left-0 top-20 h-[340px] w-full" />
+            <div className="crt-streak absolute left-0 top-[168px] h-[5px] w-16 blur-[1.5px]" />
+            <div className="crt-streak absolute right-0 top-[300px] h-[7px] w-[50px] opacity-70 blur-[2px]" />
+          </>
+        ) : (
+          stage(
             <>
-              <Num value="2" /> ·&nbsp;
-            </>
-          )}
-          Capabilities
-        </div>
-        <h2
-          className={`section-title section-title--light ${
-            isMobile ? "mt-3 leading-[1.08]" : "mt-4 whitespace-nowrap leading-none"
-          }`}
-          style={isMobile ? undefined : { fontSize: titleFit.size }}
-        >
-          What the core {(isMobile || titleFit.lines === 2) && <br />}
-          runs on
-        </h2>
-        {/* The title's lines at full size, measured in the loaded font for capTitleFit. */}
-        {!isMobile && (
-          <span
-            ref={titleMeasureRef}
-            aria-hidden="true"
-            className="section-title invisible absolute left-0 top-0 whitespace-nowrap"
-            style={{ fontSize: CAP_TITLE_SIZE }}
-          >
-            <span className="inline-block">What the core runs on</span>
-            <span className="inline-block">What the core</span>
-          </span>
+              <div className="crt-scene2-glow absolute left-[60px] top-[170px] h-[640px] w-[820px]" />
+              <div className="crt-stack-word absolute -bottom-[70px] left-9 font-michroma text-[250px] leading-none tracking-[0.02em]">
+                STACK
+              </div>
+              <div className="crt-streak absolute left-0 top-[262px] h-[7px] w-[150px] blur-[1.5px]" />
+              <div className="crt-streak absolute left-0 top-[284px] h-[3px] w-[88px] opacity-75 blur-[1px]" />
+              <div className="crt-streak absolute left-0 top-[548px] h-[10px] w-[120px] opacity-50 blur-[2.5px]" />
+              <div className="crt-streak absolute left-0 top-[566px] h-1 w-[60px] blur-[1px]" />
+              <div className="crt-streak absolute left-[712px] top-[640px] h-[5px] w-[70px] opacity-70 blur-[1.5px]" />
+            </>,
+          )
         )}
       </div>
     </>
   );
+  const scene2TitleBox = (
+    <div
+      ref={title2Ref}
+      data-testid="capabilities-title"
+      className={`pointer-events-none absolute ${
+        isMobile
+          ? "left-[22px] right-[22px] top-[26px] flex items-start justify-between"
+          : "inset-0"
+      }`}
+    >
+      <div className={isMobile ? "" : "absolute left-16 top-[52px]"}>
+        <div
+          className={`crt-section-label font-vt tracking-[0.14em] ${isMobile ? "text-[18px]" : "text-[22px]"}`}
+        >
+          02 // CAPABILITIES
+        </div>
+        <h2
+          className={`crt-glow m-0 font-michroma font-normal uppercase text-[var(--crt-row-value)] ${
+            isMobile
+              ? "mt-1 whitespace-nowrap text-[clamp(14px,4.3vw,17px)] tracking-[0.05em]"
+              : "mt-1.5 text-[34px] tracking-[0.06em]"
+          }`}
+        >
+          What the core runs on
+        </h2>
+      </div>
+      {isMobile ? (
+        <span
+          role="img"
+          aria-label="Status online"
+          className="mt-1.5 h-2 w-2 rounded-full bg-status shadow-[0_0_10px_#F472B6]"
+        />
+      ) : (
+        <div className="crt-glow-label absolute right-16 top-[62px] flex items-center gap-2.5 font-vt text-[22px] tracking-[0.14em] text-crt-text">
+          <span
+            aria-hidden="true"
+            className="h-2 w-2 rounded-full bg-status shadow-[0_0_10px_#F472B6]"
+          />
+          <span>STATUS: ONLINE</span>
+        </div>
+      )}
+    </div>
+  );
+  const scene2Title = isMobile ? scene2TitleBox : stage(scene2TitleBox);
   const scene2Head = (
     <>
-      {/* Layer 2: scene 2's giant head */}
+      {/* Layer 2: the robot has left (SPEC §3). In its place, the ASCII object:
+          text, not WebGL, so scene 2 frees the GPU. No Spline scene loads here
+          any more; the crossfade still fades this layer in. */}
       <div
         ref={layer2Ref}
+        data-scene2-layer=""
         className={`pointer-events-none absolute ${stacked ? `inset-x-0 top-0 ${PANE_H}` : "inset-0"}`}
       >
-        <div className="absolute inset-0">
-          {/* Fallback PNG only when the live scene fails; while loading, the layer
-              shows nothing. */}
-          {scene2Dead && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <img
-                src="/robot-alpha.png"
-                alt="MSG·01 humanoid unit — static render"
-                data-testid="features-robot-fallback"
-                className="relative h-[80vh] object-contain md:h-[95vh]"
-              />
-            </div>
-          )}
-
-          <div
-            ref={canvas2WrapRef}
-            data-testid="spline2-canvas-wrap"
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              scene2Ready ? "opacity-100" : "opacity-0"
-            } ${isMobile ? "hero-l2--phone" : ""}`}
-          >
-            {/* The drift wrappers always exist, so the timeline can bind them before
-                the scene mounts. */}
-            <div ref={parallax2Ref} className="absolute inset-0">
-              <div ref={idle2Ref} className="absolute inset-0">
-                {mountScene2 && !scene2Dead && (
-                  <>
-                    {isMobile
-                      ? slot2Url && (
-                          <div className="absolute inset-0">
-                            <SceneBoundary
-                              key={slot2Url}
-                              name="layer 2 mobile"
-                              onFail={onLayer2MobileFail}
-                            >
-                              <Spline
-                                scene={slot2Url}
-                                onLoad={(app) => onLayer2Load("m:" + slot2Url, app)}
-                              />
-                            </SceneBoundary>
-                          </div>
-                        )
-                      : L2_DESKTOP_URLS.map((url) => (
-                          <ReleasingBox
-                            key={url}
-                            onGone={() => onLayer2Gone(url)}
-                            className={`absolute left-1/2 top-1/2 ${url === l2VisibleUrl ? "" : "invisible opacity-0"}`}
-                            style={{
-                              width: `${OVERSAMPLE * 100}%`,
-                              height: `${OVERSAMPLE * 100}%`,
-                              transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE})`,
-                            }}
-                          >
-                            {/* If one model fails the other shows (l2VisibleUrl); if both fail, the PNG. */}
-                            <SceneBoundary
-                              name={"layer 2 " + url}
-                              onFail={() => onLayer2DesktopFail(url)}
-                            >
-                              <Spline scene={url} onLoad={(app) => onLayer2Load("d:" + url, app)} />
-                            </SceneBoundary>
-                          </ReleasingBox>
-                        ))}
-                  </>
-                )}
-              </div>
-            </div>
+        {/* The timeline binds these wrappers (camera framing, drift); they
+            stay, empty. */}
+        <div ref={canvas2WrapRef} data-testid="spline2-canvas-wrap" className="absolute inset-0">
+          <div ref={parallax2Ref} className="absolute inset-0">
+            <div ref={idle2Ref} className="absolute inset-0" />
           </div>
         </div>
+        {isMobile ? (
+          <div className="absolute left-1/2 top-[110px] -translate-x-1/2">
+            <AsciiObject step={step} isMobile reduced={reduceMotion} />
+          </div>
+        ) : (
+          stage(
+            <div className="absolute left-[150px] top-[210px]">
+              <AsciiObject step={step} isMobile={false} reduced={reduceMotion} />
+            </div>,
+          )
+        )}
       </div>
     </>
   );
+  const cards = (
+    <CapabilityCards
+      ref={cardsRef}
+      active={step}
+      onPick={pickStep}
+      isMobile={isMobile}
+      stacked={stacked}
+    />
+  );
   const scene2Cards = (
     <>
-      {/* Scene 2's cards, in front of the robot. */}
+      {/* Scene 2's rail and card, in front of the object. */}
       <div
         className={`pointer-events-none z-10 ${
           !stacked
@@ -351,15 +315,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
               : `absolute inset-x-0 top-0 ${PANE_H}`
         }`}
       >
-        <CapabilityCards
-          ref={cardsRef}
-          scrollIndex={cardIndex}
-          autoRotate={journeyDone && atEnd}
-          isMobile={isMobile}
-          theme={pageTheme}
-          titleBottom={titleFit.bottom}
-          stacked={stacked}
-        />
+        {isMobile ? cards : stage(cards)}
       </div>
     </>
   );

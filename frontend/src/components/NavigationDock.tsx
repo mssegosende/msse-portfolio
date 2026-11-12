@@ -43,7 +43,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
           ).map((pos) => (
             <span key={pos} aria-hidden="true" className={`crt-node ${pos}`} />
           ))}
-          <div className="flex w-full max-w-[calc(100vw-1.5rem)] items-center justify-between gap-0.5 overflow-x-auto p-1.5 sm:w-auto sm:justify-start sm:gap-1 sm:px-2.5">
+          <div className="flex w-full max-w-[calc(100vw-1.5rem)] items-center justify-between gap-0.5 overflow-x-auto p-1.5 [scrollbar-width:none] sm:w-auto sm:justify-start sm:gap-1 sm:px-2.5">
             <button
               data-testid="nav-brand"
               onClick={scrollToTop}
@@ -58,7 +58,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
                 data-testid={testid}
                 onClick={() => goToSection(SECTIONS.findIndex((s) => s.id === id))}
                 aria-current={current === id ? "true" : undefined}
-                className="crt-dock__link group flex min-h-11 shrink-0 items-center gap-2 px-3"
+                className="crt-dock__link group flex min-h-11 shrink-0 items-center gap-2 px-2.5 sm:px-3"
                 aria-label={label}
               >
                 <Icon size={15} />
@@ -75,7 +75,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
             <button
               data-testid="theme-toggle"
               onClick={toggle}
-              className="crt-dock__toggle flex min-h-11 shrink-0 items-center gap-2 px-3"
+              className="crt-dock__toggle flex min-h-11 shrink-0 items-center gap-2 px-2.5 sm:px-3"
               aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
               title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             >
@@ -87,7 +87,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
             <button
               data-testid="nav-cta-button"
               onClick={() => goToSection(SECTIONS.findIndex((s) => s.id === "contact"))}
-              className="crt-dock__cta ml-1 flex min-h-11 shrink-0 items-center gap-1.5 px-3 font-vt text-[21px] uppercase tracking-[0.14em] sm:gap-2 sm:px-4"
+              className="crt-dock__cta ml-1 flex min-h-11 shrink-0 items-center gap-1.5 px-2.5 font-vt text-[17px] uppercase tracking-[0.1em] sm:gap-2 sm:px-4 sm:text-[21px] sm:tracking-[0.14em]"
             >
               <Send size={12} />
               <span>Initiate</span>
