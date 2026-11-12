@@ -1,30 +1,62 @@
-/* Scene 4 · WHO. Values from design/source/{desktop,mobile}/light/scene-4-about.dc.html. */
+/* Scene 4 · WHO, CRT look. Values from design/crt/msse-crt-redesign/design-source/About*.dc.html. */
 
 .section {
-  /* Text colour: #14181D on the light ground; the dark theme keeps its ink. */
-  --tx: 20 24 29;
   position: relative;
 }
-:global(:root[data-theme="dark"]) .section {
-  --tx: var(--ink);
-}
 
+/* Phones: one column, the dossier first, then the principles and the bio
+   (AboutM.dc.html). */
 .stage {
   position: relative;
   overflow: hidden;
-  background: var(--bg-about);
-  color: rgb(var(--tx));
-  padding: 26px 18px 150px;
+  display: flex;
+  flex-direction: column;
+  background: var(--crt-bg);
+  color: var(--crt-text-2);
+  padding: 56px 20px 130px;
 }
 
+.word {
+  position: absolute;
+  left: 30px;
+  bottom: -40px;
+  font-size: 110px;
+  line-height: 1;
+}
+
+.head,
 .left,
 .right {
   position: relative;
-  z-index: 5;
+  z-index: 2;
+}
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.head :global(.crt-pill) {
+  padding: 3px 10px;
+  font-size: 17px;
+  letter-spacing: 0.16em;
+}
+.title {
+  font-size: 25px;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+}
+.right {
+  order: 1;
+  margin-top: 26px;
+}
+.left {
+  order: 2;
+  display: flex;
+  flex-direction: column-reverse;
 }
 
-/* Rise in (0.55 s, as the mock's .in); data-on comes from the scroll step.
-   Shown by default: the hidden state needs data-armed, written by JS. */
+/* Rise in (0.55 s); data-on comes from the scroll step. Shown by default: the
+   hidden state needs data-armed, written by JS. */
 .reveal {
   transition:
     opacity 0.55s cubic-bezier(0.2, 0.7, 0.2, 1),
@@ -41,140 +73,142 @@
   }
 }
 
-.title {
-  margin-top: 12px;
-  line-height: 1.08;
+/* The bio: today's text, unchanged. */
+.textWindow {
+  margin-top: 22px;
 }
-
-/* Mobile: the bio (Ø4.1) and the story (Ø4.2) keep their own sizes. */
-.intro {
-  margin: 22px 0 0;
-  font-size: 16px;
-  line-height: 1.6;
-}
-
-.story {
-  margin: 16px 0 0;
+.para {
+  margin: 0;
   font-size: 15px;
-  line-height: 1.65;
-  color: rgb(var(--tx) / 0.95);
+  line-height: 1.6;
+  color: var(--crt-text-2);
+}
+.para + .para {
+  margin-top: 1em;
 }
 
-/* The mock's 16 px between paragraphs. */
-.intro + .intro {
-  margin-top: 16px;
+/* Principles: three VT323 rows. */
+.principles {
+  margin-top: 26px;
+  border-top: 1px solid var(--crt-line);
 }
-
-/* "Shipping code since 2022": right-aligned on mobile. */
-.since {
-  margin-top: 34px;
-  text-align: right;
-}
-.sinceLabel {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  line-height: 1.45;
-  color: rgb(var(--tx) / 0.88);
-}
-.year {
-  margin-top: 6px;
-  font-family: "Michroma", sans-serif;
-  font-size: 58px;
-  line-height: 0.95;
-  letter-spacing: -0.01em;
-  filter: drop-shadow(0 14px 22px rgba(20, 26, 34, 0.14));
-}
-
-/* Accent bar between the text and the principles (mobile only). */
-.accent {
-  margin-top: 30px;
+.principle {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-.accent > span:first-child {
-  width: 44px;
-  height: 3px;
-  background: rgb(var(--tx));
-}
-.accent > span:last-child {
-  flex: 1;
-  height: 1px;
-  background: rgb(var(--tx) / 0.28);
-}
-
-.principle {
-  display: grid;
-  grid-template-columns: 34px 1fr;
-  gap: 4px;
-  padding: 16px 0;
-  border-bottom: 1px solid rgb(var(--tx) / 0.28);
-}
-.principle:last-child {
-  border-bottom: 0;
-}
-.principleNum {
-  font-family: "Michroma", sans-serif;
-  font-size: 11px;
-  line-height: 1.6;
-  color: rgb(var(--tx) / 0.88);
+  gap: 16px;
+  min-height: 50px;
+  border-bottom: 1px solid var(--crt-line);
+  font-family: "VT323", monospace;
+  font-size: 21px;
+  letter-spacing: 0.08em;
 }
 .principleTitle {
   margin: 0;
-  font-family: "Rajdhani", sans-serif;
-  font-weight: 600;
-  font-size: 15px;
-  letter-spacing: 0.16em;
+  font-size: inherit;
+  font-weight: 400;
   text-transform: uppercase;
-}
-.principleText {
-  margin: 6px 0 0;
-  font-size: 14px;
-  line-height: 1.6;
-  color: rgb(var(--tx) / 0.95);
+  color: var(--crt-row-value);
+  text-shadow: var(--crt-glow-label);
 }
 
-/* Mobile step counter, above the dock. */
-.counter {
-  position: absolute;
-  left: 18px;
-  right: 18px;
-  bottom: 86px;
-  z-index: 6;
+/* The dossier: SUBJECT MSSE-01. */
+.dossier {
+  /* crt-frame gives the line, the panel fill and the glow. */
+  display: block;
+}
+.dossierHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  height: 46px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--crt-line);
+  font-family: "VT323", monospace;
+  font-size: 25px;
+  letter-spacing: 0.1em;
 }
-.counter b {
-  font-weight: 600;
-}
-.counterTotal {
-  opacity: 0.55;
-}
-.bars {
+.subject {
   display: flex;
-  gap: 6px;
+  flex-direction: column;
+  border-bottom: 1px solid var(--crt-line);
 }
-.bars > span {
-  width: 18px;
-  height: 2px;
-  background: rgb(var(--tx));
-  opacity: 0.25;
-  transition: opacity 0.3s;
+.portraitCell {
+  padding: 12px;
+  border-bottom: 1px solid var(--crt-line);
 }
-.bars > span[data-on="true"] {
-  opacity: 1;
+/* Shown whole (no side crop): its own aspect ratio, contained. A dark screen
+   in light too, with an inner shadow and light corner brackets. */
+.screen {
+  position: relative;
+  aspect-ratio: 1856 / 2194;
+  overflow: hidden;
+  background: #020409;
+  border: 1px solid rgba(125, 198, 246, 0.294);
+}
+:global(:root:not([data-theme="dark"])) .screen {
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.6);
+}
+.portrait {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.bracket {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-color: #d4f2ff;
+}
+.since {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+.sinceLabel {
+  max-width: 7em;
+  font-family: "VT323", monospace;
+  font-size: 18px;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--crt-dim);
+}
+.year {
+  font-size: 58px;
+  line-height: 1;
+  color: var(--crt-title);
+  text-shadow: var(--crt-glow-title);
+}
+:global(:root[data-theme="dark"]) .year {
+  text-shadow:
+    0 0 4px #eef8ff,
+    0 0 22px rgba(108, 185, 238, 0.715),
+    0 0 60px rgba(108, 185, 238, 0.325);
+}
+.rows :global(.crt-row) {
+  min-height: 42px;
+  padding: 0 16px;
+  font-size: 19px;
+  letter-spacing: 0.08em;
+}
+.rows :global(.crt-row):last-child {
+  border-bottom: 0;
+}
+/* The signal: desktop only (AboutM has none). */
+.signal {
+  display: none;
 }
 
-/* ---- Desktop: pinned, text left (four paragraphs, one by one), 2022 + principles right ---- */
+.slow {
+  transition-duration: 1.2s;
+}
+
+/* ---- Desktop: pinned; head + bio + principles left, the dossier right ---- */
 @media (min-width: 1024px) {
-  /* Pinned for six screens; About.tsx paces the reveal on it: the four
-     paragraphs, then 2022 and each principle on its own scroll, then about
-     1.3 screens of hold before Contact. */
+  /* Pinned for six screens; About.tsx paces the reveal on it. */
   .section {
     height: 700vh;
   }
@@ -182,52 +216,62 @@
     position: sticky;
     top: 0;
     height: 100vh;
-    /* Right 140: clear of the section index. */
-    padding: 52px 140px 0 56px;
     display: grid;
-    grid-template-columns: minmax(0, 740fr) minmax(0, 460fr);
-    column-gap: 44px;
-    align-items: start;
+    /* Right 140: clear of the section index. Bottom 116: above the dock. */
+    padding: 96px 140px 116px 64px;
+    grid-template-columns: minmax(0, 560fr) minmax(0, 600fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "head right"
+      "left right";
+    column-gap: 72px;
+    row-gap: 22px;
+  }
+  .word {
+    bottom: -60px;
+    font-size: 240px;
+  }
+  .head {
+    grid-area: head;
+    gap: 22px;
+  }
+  .head :global(.crt-pill) {
+    padding: 4px 12px;
+    font-size: 20px;
   }
   .title {
-    margin-top: 16px;
-    line-height: 1.05;
+    font-size: clamp(30px, 4.4vh, 40px);
+    line-height: 1.25;
   }
-  /* The left column runs from the top to above the dock; the text gets
-     whatever the title leaves. */
   .left {
-    display: flex;
+    grid-area: left;
     flex-direction: column;
-    height: calc(100vh - 52px - 116px);
+    min-height: 0;
   }
-  /* One column for all four paragraphs: one size, one width, about 62
-     characters a line at every window size. */
+  .right {
+    grid-area: right;
+    margin-top: 0;
+    align-self: start;
+  }
+  /* One column for all four paragraphs. */
   .textWindow {
     flex: 1 1 auto;
     min-height: 0;
-    margin-top: 34px;
-    max-width: 30em;
+    margin-top: 0;
     overflow: hidden;
-    /* A little smaller than before (María Sol, 9 Nov): 16.6 px at 1440 wide,
-       19.3 at 1920, up to 20 on the widest (was 18 / 21 / 22). */
-    font-size: clamp(15px, 0.55vw + 8.7px, 20px);
+    font-size: clamp(14px, 0.4vw + 9.5px, 17px);
   }
   /* Once the earlier paragraphs slide up, they fade out under the title. */
   .textWindow[data-lifted="true"] {
-    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 56px);
-    mask-image: linear-gradient(180deg, transparent 0, #000 56px);
+    -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 40px);
+    mask-image: linear-gradient(180deg, transparent 0, #000 40px);
   }
   .textStack {
     transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   .para {
-    margin: 0;
     font-size: 1em;
-    line-height: 1.65;
-    color: rgb(var(--tx));
-  }
-  .para + .para {
-    margin-top: 1em;
+    line-height: 1.6;
   }
   /* A paragraph takes room only once it is out, so the slide measures what shows. */
   .section[data-armed="true"] .para:not([data-on="true"]) {
@@ -237,83 +281,74 @@
     animation: para-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
     transition: opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
-  /* Dimmed, but still AA (4.5:1) in both themes. */
   .para[data-dim="true"] {
     opacity: 0.7;
   }
-  /* The right column comes in slower than the text. */
-  .slow {
-    transition-duration: 1.2s;
-  }
-  .since {
-    margin-top: clamp(36px, 11vh, 98px);
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-bottom: clamp(16px, 2.9vh, 26px);
-    border-bottom: 1px solid rgb(var(--tx) / 0.28);
-  }
-  .sinceLabel {
-    font-size: 14px;
-    letter-spacing: 0;
-    color: rgb(var(--tx));
-  }
-  .year {
-    margin-top: 0;
-    /* 112 px at 900 tall, smaller on short screens. */
-    font-size: clamp(72px, 12.4vh, 112px);
-  }
-  .accent {
-    display: none;
-  }
   .principles {
-    margin-top: 16px;
+    flex: none;
+    margin-top: 20px;
   }
   .principle {
+    min-height: clamp(42px, 6vh, 54px);
+    gap: 20px;
+    font-size: clamp(21px, 2.9vh, 26px);
+    letter-spacing: 0.1em;
+  }
+  .dossierHead {
+    height: 55px;
+    padding: 0 20px;
+    font-size: 30px;
+  }
+  .subject {
+    display: grid;
+    /* The portrait column shrinks on short screens so the dossier clears the dock. */
+    grid-template-columns: min(330px, calc((100vh - 96px - 116px - 330px) * 0.846 + 32px)) minmax(
+        0,
+        1fr
+      );
+  }
+  .portraitCell {
+    padding: 16px;
+    border-bottom: 0;
+    border-right: 1px solid var(--crt-line);
+  }
+  .since {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 6px;
+    padding: 24px 28px;
+  }
+  .sinceLabel {
+    max-width: none;
+    font-size: 22px;
+    letter-spacing: 0.18em;
+  }
+  .year {
+    font-size: clamp(56px, 8.9vh, 80px);
+  }
+  .rows :global(.crt-row) {
+    min-height: 44px;
+    padding: 0 20px;
+    font-size: 22px;
+    letter-spacing: 0.1em;
+  }
+  .rows :global(.crt-row):last-child {
+    border-bottom: 1px solid var(--crt-line-row);
+  }
+  .signal {
     display: block;
-    padding: clamp(12px, 2.4vh, 22px) 0;
-  }
-  .principleNum {
-    display: none;
-  }
-  .principleTitle {
-    font-size: 17px;
-  }
-  .principleText {
-    margin-top: 8px;
-    font-size: 15.5px;
-  }
-  .counter {
-    display: none;
+    padding: 16px 20px;
   }
 }
 
-/* Short desktop screens (1280 x 720): smaller type so both columns clear the dock. */
+/* Short desktop screens (1280 x 720): the signal goes so the dossier clears the dock. */
 @media (min-width: 1024px) and (max-height: 820px) {
   .stage {
-    padding-top: 40px;
+    padding-top: 64px;
   }
-  .title {
-    font-size: 52px;
-  }
-  .left {
-    height: calc(100vh - 40px - 108px);
-  }
-  .textWindow {
-    margin-top: 24px;
-    font-size: 15px;
-  }
-  .para {
-    line-height: 1.6;
-  }
-  .principleTitle {
-    font-size: 15px;
-  }
-  .principleText {
-    margin-top: 6px;
-    font-size: 14px;
-    line-height: 1.5;
+  .signal {
+    display: none;
   }
 }
 
@@ -332,8 +367,7 @@
   }
 }
 
-/* Desktop, reduced motion: no pin; the end state (all four paragraphs, 2022
-   and the principles) in normal flow, as tall as it needs. */
+/* Desktop, reduced motion: no pin; the end state in normal flow. */
 @media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
   .section {
     height: auto;
@@ -342,10 +376,6 @@
     position: relative;
     height: auto;
     min-height: 100vh;
-    padding-bottom: 116px;
-  }
-  .left {
-    height: auto;
   }
   .textWindow {
     overflow: visible;

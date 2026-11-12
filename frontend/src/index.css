@@ -174,6 +174,8 @@
     --crt-row-value: #193755;
     --crt-scan: rgba(10, 40, 90, 0.055);
     --crt-scan-media: rgba(10, 40, 90, 0.1);
+    /* Contact's perspective floor (GridField). */
+    --crt-floor: rgba(31, 95, 175, 0.22);
     /* Behind a thumbnail or clip (Hero tour tile). */
     --crt-media: radial-gradient(ellipse 70% 70% at 50% 40%, #c9d2dc, #e4eaf1);
     /* Glow in light is a soft halo, not bloom, for titles and labels alike. */
@@ -207,6 +209,7 @@
     --crt-row-value: #daf8ff;
     --crt-scan: rgba(0, 0, 0, 0.2);
     --crt-scan-media: rgba(0, 0, 0, 0.4);
+    --crt-floor: rgba(108, 185, 238, 0.286);
     --crt-media: radial-gradient(ellipse 70% 70% at 50% 40%, #093965, #00142e);
     --crt-glow-title:
       0 0 3px var(--crt-core), 0 0 18px rgba(110, 186, 239, 0.6), 0 0 50px rgba(110, 186, 239, 0.25);

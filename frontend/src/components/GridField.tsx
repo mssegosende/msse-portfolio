@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 
-// Scene 5's grid (design/source/desktop/light/scene-5-contact.dc.html): lines
+// Scene 5's grid, recoloured to the CRT phosphor (SPEC §7; laid as a
+// perspective floor by its container in Contact.module.css). Originally
+// (design/source/desktop/light/scene-5-contact.dc.html): lines
 // every 72 px (39 px on phones), ink at 20 %, faded in from the top by a mask,
 // bulging around the cursor. Each point is pushed away from the cursor by
 // d * exp(-d² / R²) * K. Touch screens and reduced motion get the still grid.
@@ -35,10 +37,11 @@ export const GridField = () => {
     const client = { x: 0, y: 0, moved: false };
 
     // A 2D canvas can't use CSS classes, so the colour is read from the root
-    // token and re-read when the theme attribute changes.
-    let ink = "0 0 0";
+    // token (the CRT floor's phosphor, --crt-floor) and re-read when the theme
+    // attribute changes.
+    let ink = "rgba(31, 95, 175, 0.22)";
     const readInk = () => {
-      const v = getComputedStyle(document.documentElement).getPropertyValue("--ink").trim();
+      const v = getComputedStyle(document.documentElement).getPropertyValue("--crt-floor").trim();
       if (v) ink = v;
       draw();
     };
@@ -54,7 +57,7 @@ export const GridField = () => {
       if (!w || !h) return;
       ctx!.clearRect(0, 0, w, h);
       ctx!.lineWidth = 1;
-      ctx!.strokeStyle = `rgb(${ink} / 0.2)`;
+      ctx!.strokeStyle = ink;
       ctx!.beginPath();
       for (let x = 0; x <= w + step; x += step) {
         for (let y = 0; y <= h + SUB; y += SUB) {

@@ -1,14 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Github, Mail } from "lucide-react";
 import { profile } from "../data/portfolioData";
 import { scrollToTop } from "../hooks/useLenis";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useSectionStep } from "../hooks/useSectionStep";
 import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { GridField } from "./GridField";
-import { Num } from "./Num";
-import { SectionBackdrop } from "./SectionBackdrop";
 import s from "./Contact.module.css";
 
 // Production: same origin (Vercel routes /api/* to the backend service).
@@ -40,6 +37,17 @@ const validate = (form: ContactForm): FieldErrors => {
   }
   return errors;
 };
+
+// The phones' live signal (ContactM.dc.html): drawn twice as wide as its box
+// and slid sideways by CSS, so it moves without a timer.
+const RX_WAVE = (() => {
+  let d = "";
+  for (let x = 0; x <= 696; x += 4) {
+    const y = 25 + 14 * Math.sin(x * 0.0903) * (0.6 + 0.4 * Math.sin(x * 0.018));
+    d += `${x === 0 ? "M" : "L"}${x} ${y.toFixed(1)} `;
+  }
+  return d;
+})();
 
 // Errors are notices, not transcript: one entry per message, kept apart from
 // the log. Resubmitting the same invalid field restarts its timer instead of
@@ -104,7 +112,7 @@ const TerminalField = ({
   return (
     <label className={s.field}>
       <span className={s.label}>
-        &gt; {label}
+        &gt; {label.toUpperCase()}
         {hint && (
           <>
             {" "}
@@ -236,205 +244,288 @@ export const Contact = () => {
       className={s.section}
     >
       <div className={s.stage}>
-        <SectionBackdrop scene="contact" />
-        <GridField />
+        {/* The perspective floor (GridField, in the grid token) under a fade,
+            then the page grid (Contact.dc.html). */}
+        <div aria-hidden="true" className={s.floor}>
+          <GridField />
+        </div>
+        <div aria-hidden="true" className={s.floorFade} />
+        <div aria-hidden="true" className="crt-grid absolute inset-0" />
+        <div aria-hidden="true" className={`crt-bg-word font-michroma ${s.word}`}>
+          TALK
+        </div>
 
-        <div className={`${s.left} ${s.reveal}`} {...rise(0)}>
-          <p className="section-pill">
-            <span className="lg:hidden">
-              <Num value="5" /> ·&nbsp;
+        <div className={`${s.head} ${s.reveal}`} {...rise(0)}>
+          <span className="crt-pill self-start font-vt">05 // CONTACT</span>
+          {/* Phones: LET'S / TALK inside crosshair corners, with two ghost copies
+              that jump sideways now and then (ContactM.dc.html). */}
+          <div className={s.titleBox}>
+            <span aria-hidden="true" className={s.rx}>
+              [signal.rx]
             </span>
-            OPEN CHANNEL
-          </p>
-          <h2 className={`section-title section-title--light ${s.title}`}>
-            Let&apos;s
-            <br className="hidden lg:inline" /> talk
-          </h2>
-          <p className={s.lede}>
-            Tell me what you&apos;re building. I answer every message — and if you share your
-            LinkedIn, I&apos;ll send you my CV.
-          </p>
-          <div className={s.where}>Remote · worldwide · GMT−3</div>
+            <span aria-hidden="true" className={`${s.ghost} ${s.ghostA}`}>
+              LET&apos;S
+              <br />
+              TALK
+            </span>
+            <span aria-hidden="true" className={`${s.ghost} ${s.ghostB}`}>
+              LET&apos;S
+              <br />
+              TALK
+            </span>
+            <h2 className={`crt-glow font-michroma ${s.title}`}>
+              Let&apos;s <br className={s.titleBreak} />
+              talk
+            </h2>
+          </div>
+          <div aria-hidden="true" className={s.wave}>
+            <div className="crt-scope h-[52px] overflow-hidden border border-[var(--crt-line-row)]">
+              <svg
+                width="200%"
+                height="50"
+                viewBox="0 0 696 50"
+                preserveAspectRatio="none"
+                className={s.waveSvg}
+              >
+                <path d={RX_WAVE} className="crt-scope__wave" fill="none" strokeWidth="1.5" />
+              </svg>
+            </div>
+            <div className="mt-1.5 flex justify-between font-mono text-[10px] tracking-[0.08em] text-crt-dim">
+              <span>SIGNAL · OPEN</span>
+              <span>RX · MSSE://CONTACT</span>
+            </div>
+          </div>
+          <div aria-hidden="true" className={s.typed}>
+            <div>
+              <span className="text-crt-dim">&gt;</span>{" "}
+              <span className={s.type1}>channel open</span>
+            </div>
+            <div>
+              <span className="text-crt-dim">&gt;</span>{" "}
+              <span className={s.type2}>waiting for your message</span>
+              <span className={s.caret} />
+            </div>
+          </div>
         </div>
 
         <div className={`${s.card} ${s.reveal}`} data-testid="contact-terminal" {...rise(1)}>
-          <div aria-hidden="true" className={s.outline} />
-          <div aria-hidden="true" className={s.bezel} />
-          <div aria-hidden="true" className={s.gap} />
-          <div aria-hidden="true" className={s.panel} />
+          <div className={s.chrome}>
+            <span className={s.chromeTitle}>
+              msse@contact: ~/new<span className={s.chromeLong}>-message</span>
+            </span>
+            <span aria-hidden="true" className="crt-term__dots">
+              <span />
+              <span />
+              <span />
+            </span>
+          </div>
 
-          <div className={s.body}>
-            <div className={s.chrome}>
-              <span aria-hidden="true" className={`${s.dot} ${s.dot1}`} />
-              <span aria-hidden="true" className={`${s.dot} ${s.dot2}`} />
-              <span aria-hidden="true" className={`${s.dot} ${s.dot3}`} />
-              <span className={s.chromeTitle}>
-                <span className="hidden lg:inline">msg@portfolio: </span>~/contact — zsh
-              </span>
-            </div>
-
-            <form onSubmit={handleSubmit} className={s.form} noValidate>
-              <div>$ contact --send --secure</div>
-
-              <div className={s.pair}>
+          <form onSubmit={handleSubmit} className={s.form} noValidate>
+            <div className={s.fields}>
+              <TerminalField
+                label="name"
+                data-testid="contact-name-input"
+                value={form.name}
+                required
+                error={fieldErrors.name}
+                name="name"
+                onChange={set("name")}
+                placeholder="your name"
+              />
+              <TerminalField
+                label="email"
+                type="email"
+                data-testid="contact-email-input"
+                value={form.email}
+                required
+                error={fieldErrors.email}
+                name="email"
+                onChange={set("email")}
+                placeholder="you@company.com"
+              />
+              <TerminalField
+                label="company"
+                hint="(optional)"
+                data-testid="contact-company-input"
+                value={form.company}
+                onChange={set("company")}
+                placeholder="organization / studio"
+              />
+              <TerminalField
+                label="linkedin"
+                hint="(optional)"
+                type="url"
+                data-testid="contact-linkedin-input"
+                value={form.linkedin}
+                onChange={set("linkedin")}
+                placeholder="linkedin.com/in/..."
+              />
+              <div className={s.full}>
                 <TerminalField
-                  label="name"
-                  data-testid="contact-name-input"
-                  value={form.name}
+                  label="message"
+                  multiline
+                  data-testid="contact-message-input"
+                  value={form.message}
                   required
-                  error={fieldErrors.name}
-                  name="name"
-                  onChange={set("name")}
-                  placeholder="your name"
-                />
-                <TerminalField
-                  label="email"
-                  type="email"
-                  data-testid="contact-email-input"
-                  value={form.email}
-                  required
-                  error={fieldErrors.email}
-                  name="email"
-                  onChange={set("email")}
-                  placeholder="you@domain.com"
-                />
-                <TerminalField
-                  label="company"
-                  hint="(optional)"
-                  data-testid="contact-company-input"
-                  value={form.company}
-                  onChange={set("company")}
-                  placeholder="organization / studio"
-                />
-                <TerminalField
-                  label="linkedin"
-                  hint="(for the CV)"
-                  type="url"
-                  data-testid="contact-linkedin-input"
-                  value={form.linkedin}
-                  onChange={set("linkedin")}
-                  placeholder="linkedin.com/in/…"
+                  error={fieldErrors.message}
+                  name="message"
+                  onChange={set("message")}
+                  placeholder="what are you building?"
                 />
               </div>
-              <TerminalField
-                label="message"
-                multiline
-                data-testid="contact-message-input"
-                value={form.message}
-                required
-                error={fieldErrors.message}
-                name="message"
-                onChange={set("message")}
-                placeholder="describe your project, timeline, scope…"
-              />
+            </div>
 
-              {/* honeypot — invisible to humans */}
-              <input
-                type="text"
-                name="website"
-                value={form.website}
-                onChange={set("website")}
-                tabIndex={-1}
-                autoComplete="off"
-                aria-hidden="true"
-                className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
-              />
+            {/* honeypot — invisible to humans */}
+            <input
+              type="text"
+              name="website"
+              value={form.website}
+              onChange={set("website")}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
+            />
 
+            <div className={s.sendRow}>
+              <span aria-hidden="true" className={s.prompt}>
+                $ send --to msse <span className={s.caret} />
+              </span>
               <button
                 data-testid="contact-submit-button"
                 type="submit"
                 disabled={sending}
                 className={s.submit}
               >
-                {sending ? "Transmitting…" : done ? "Transmit again" : "Transmit message"}
+                {sending ? "SENDING…" : done ? "SEND AGAIN >>" : "SEND >>"}
               </button>
+            </div>
 
-              {/* Hidden with :empty rather than errors.length: the array is
-                  already empty while the last line fades out, and a JS
-                  condition would unmount it mid-animation. */}
-              <div data-testid="contact-errors" className={s.notices}>
-                <AnimatePresence>
-                  {errors.map((err) => (
-                    <motion.p
-                      key={err.text}
-                      role="alert"
-                      data-testid="contact-error"
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -8 }}
-                      transition={{ duration: 0.45, ease: "easeOut" }}
-                    >
-                      {err.text}
-                    </motion.p>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </form>
-
-            {lines.length > 0 && (
-              <div data-testid="contact-status-lines" className={s.log}>
-                {lines.map((line, i) => (
+            {/* Hidden with :empty rather than errors.length: the array is
+                already empty while the last line fades out, and a JS
+                condition would unmount it mid-animation. */}
+            <div data-testid="contact-errors" className={s.notices}>
+              <AnimatePresence>
+                {errors.map((err) => (
                   <motion.p
-                    key={i}
+                    key={err.text}
+                    role="alert"
+                    data-testid="contact-error"
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className={line.ok ? s.logOk : undefined}
+                    exit={{ opacity: 0, x: -8 }}
+                    transition={{ duration: 0.45, ease: "easeOut" }}
                   >
-                    {line.text}
+                    {err.text}
                   </motion.p>
                 ))}
-                <span className="terminal-caret" />
-              </div>
-            )}
-          </div>
+              </AnimatePresence>
+            </div>
+          </form>
 
-          <div className={s.tab}>
-            <span className={s.tabInner}>
-              <span className={s.tabMark}>MSSE://</span>
-              <span aria-hidden="true" className={s.tabRule} />
-              <span className={s.tabText}>Secure channel</span>
-            </span>
-          </div>
+          {lines.length > 0 && (
+            <div data-testid="contact-status-lines" className={s.log}>
+              {lines.map((line, i) => (
+                <motion.p
+                  key={i}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={line.ok ? s.logOk : undefined}
+                >
+                  {line.text}
+                </motion.p>
+              ))}
+              <span className="terminal-caret" />
+            </div>
+          )}
         </div>
 
-        <footer data-testid="footer" className={`${s.footer} ${s.reveal}`} {...rise(2)}>
-          <div>
-            {/* To the very top: the hero is pinned, so its element would land mid-sequence. */}
-            <button
-              type="button"
-              data-testid="footer-brand"
-              onClick={scrollToTop}
-              className={s.brand}
+        {/* CHANNEL OPEN: base, time, GitHub and a small radar. */}
+        <aside className={`crt-frame ${s.channel} ${s.reveal}`} aria-label="Channel" {...rise(1)}>
+          <div className={s.channelInfo}>
+            <div className={s.channelHead}>
+              <span className="crt-glow-label">CHANNEL OPEN</span>
+              <span
+                aria-hidden="true"
+                className="h-2 w-2 rounded-full bg-status shadow-[0_0_10px_#F472B6]"
+              />
+            </div>
+            <div className={s.channelRow}>
+              <span className={s.channelKey}>BASE</span>
+              <span className={s.channelVal}>
+                BUENOS AIRES<span className={s.desktopOnly}> · GMT-3</span>
+              </span>
+            </div>
+            <div className={`${s.channelRow} ${s.phoneOnly}`}>
+              <span className={s.channelKey}>TIME</span>
+              <span className={s.channelVal}>GMT-3</span>
+            </div>
+            <a
+              className={`${s.channelRow} ${s.channelLink}`}
+              href={profile.socials.github}
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              {profile.shortMark}
-            </button>
-            <p className={s.credit}>
-              © {new Date().getFullYear()} {profile.name}
-              <br />
-              Software &amp; AI engineer
-            </p>
+              <span className={s.channelKey}>GITHUB</span>
+              <span className={s.channelVal}>MSSEGOSENDE &gt;</span>
+            </a>
           </div>
-          <div className={s.socials}>
+          <div aria-hidden="true" className={s.radar}>
+            <span className={s.radarRing} />
+            <span className={s.radarV} />
+            <span className={s.radarH} />
+            <span className={s.sweep} />
+            <span className={s.blip} />
+            <span className={s.radarTag}>[signal.open]</span>
+          </div>
+        </aside>
+
+        <footer data-testid="footer" className={`${s.footer} ${s.reveal}`} {...rise(2)}>
+          {/* To the very top: the hero is pinned, so its element would land mid-sequence. */}
+          <button
+            type="button"
+            data-testid="footer-brand"
+            onClick={scrollToTop}
+            className={s.brand}
+          >
+            {profile.shortMark}
+          </button>
+          <span className={s.socials}>
             <a
               data-testid="footer-github-link"
               href={profile.socials.github}
-              aria-label="GitHub"
               target="_blank"
               rel="noopener noreferrer"
               className={s.social}
             >
-              <Github size={18} strokeWidth={1.6} aria-hidden="true" />
+              GITHUB
             </a>
-            <a
-              data-testid="footer-email-link"
-              href={`mailto:${profile.email}`}
-              aria-label="Email"
-              className={s.social}
-            >
-              <Mail size={18} strokeWidth={1.6} aria-hidden="true" />
-            </a>
-          </div>
+            {/* The design's LINKEDIN: hidden while there is none; the email
+                takes its place. */}
+            {profile.socials.linkedin ? (
+              <a
+                href={profile.socials.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={s.social}
+              >
+                LINKEDIN
+              </a>
+            ) : (
+              <a
+                data-testid="footer-email-link"
+                href={`mailto:${profile.email}`}
+                className={s.social}
+              >
+                EMAIL
+              </a>
+            )}
+          </span>
+          <span className={s.credit}>
+            © {new Date().getFullYear()} {profile.name.toUpperCase()}
+          </span>
         </footer>
+        <div aria-hidden="true" className="crt-scanlines pointer-events-none absolute inset-0" />
       </div>
     </section>
   );

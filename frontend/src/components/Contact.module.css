@@ -1,641 +1,763 @@
-/* Scene 5 · LET'S TALK. Values from design/source/{desktop,mobile}/light/scene-5-contact.dc.html. */
+/* Scene 5 · LET'S TALK + footer, CRT look. Values from
+   design/crt/msse-crt-redesign/design-source/Contact*.dc.html. */
 
 .section {
-  --tx: 20 24 29;
   position: relative;
 }
-:global(:root[data-theme="dark"]) .section {
-  --tx: var(--ink);
-}
 
+/* ---- Phones first (ContactM.dc.html) ---- */
 .stage {
   position: relative;
   overflow: hidden;
-  background: var(--bg-contact);
-  color: rgb(var(--tx));
-  /* Bottom: room for the fixed dock under the footer. */
-  padding: 26px 18px 84px;
+  display: flex;
+  flex-direction: column;
+  background: var(--crt-bg);
+  color: var(--crt-text);
+  padding: 56px 20px 120px;
 }
 
-.left,
+/* The perspective floor: GridField's canvas laid back (a 2D canvas, not the
+   Spline one), faded out under the content. */
+.floor {
+  position: absolute;
+  left: -200px;
+  right: -200px;
+  bottom: -80px;
+  height: 300px;
+  transform: perspective(500px) rotateX(62deg);
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+.floorFade {
+  position: absolute;
+  inset: 0 0 auto;
+  height: calc(100% - 260px);
+  background: linear-gradient(180deg, var(--crt-bg) 78%, transparent);
+  pointer-events: none;
+}
+.word {
+  position: absolute;
+  right: -24px;
+  top: 40px;
+  font-size: 120px;
+  line-height: 1;
+}
+
+.head,
 .card,
+.channel,
 .footer {
   position: relative;
-  z-index: 5;
+  z-index: 2;
 }
 
-/* Rise in, one after another, once the section is reached. Shown by default:
-   the hidden state needs data-armed, written by JS. */
+/* Rise in, one after another (Contact.tsx's rise). Shown by default: the
+   hidden state needs data-armed, written by JS. */
 .reveal {
   transition:
-    opacity 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
-    transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+    opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .section[data-armed="true"] .reveal:not([data-on="true"]) {
   opacity: 0;
   transform: translateY(16px);
 }
-@media (prefers-reduced-motion: reduce) {
-  .reveal {
+
+.head {
+  display: flex;
+  flex-direction: column;
+}
+.head :global(.crt-pill) {
+  padding: 3px 10px;
+  font-size: 17px;
+  letter-spacing: 0.16em;
+}
+
+/* LET'S / TALK in crosshair corners, with two ghost copies. */
+.titleBox {
+  position: relative;
+  margin-top: 26px;
+  padding: 18px 16px 16px;
+  background:
+    linear-gradient(var(--crt-node), var(--crt-node)) top left / 22px 2px,
+    linear-gradient(var(--crt-node), var(--crt-node)) top left / 2px 22px,
+    linear-gradient(var(--crt-node), var(--crt-node)) top right / 22px 2px,
+    linear-gradient(var(--crt-node), var(--crt-node)) top right / 2px 22px,
+    linear-gradient(var(--crt-node), var(--crt-node)) bottom left / 22px 2px,
+    linear-gradient(var(--crt-node), var(--crt-node)) bottom left / 2px 22px,
+    linear-gradient(var(--crt-node), var(--crt-node)) bottom right / 22px 2px,
+    linear-gradient(var(--crt-node), var(--crt-node)) bottom right / 2px 22px;
+  background-repeat: no-repeat;
+}
+.rx {
+  position: absolute;
+  right: 8px;
+  top: -20px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--crt-node);
+}
+.title,
+.ghost {
+  margin: 0;
+  font-weight: 400;
+  font-size: 58px;
+  line-height: 1.06;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.title {
+  position: relative;
+  color: var(--crt-core);
+}
+.ghost {
+  position: absolute;
+  left: 16px;
+  top: 18px;
+  font-family: "Michroma", sans-serif;
+  opacity: 0;
+  pointer-events: none;
+}
+.ghostA {
+  color: rgba(125, 198, 246, 0.35);
+  animation: ghost-a 2.8s steps(1, end) infinite;
+}
+.ghostB {
+  color: rgba(244, 114, 182, 0.18);
+  animation: ghost-b 2.8s steps(1, end) infinite;
+}
+/* ~160 ms of the 2.8 s: the copies jump sideways, then vanish. */
+@keyframes ghost-a {
+  0%,
+  94.2% {
+    opacity: 0;
     transform: none;
-    transition: none !important;
+  }
+  94.3%,
+  99.9% {
+    opacity: 1;
+    transform: translateX(-6px);
+  }
+}
+@keyframes ghost-b {
+  0%,
+  94.2% {
+    opacity: 0;
+    transform: none;
+  }
+  94.3%,
+  99.9% {
+    opacity: 1;
+    transform: translateX(7px);
   }
 }
 
-.title {
-  margin-top: 12px;
-  line-height: 1.08;
+/* The live signal: the path is twice the box and slides. */
+.wave {
+  margin-top: 18px;
 }
-.lede {
-  margin: 18px 0 0;
-  max-width: 440px;
-  font-size: 15px;
-  line-height: 1.65;
+.waveSvg {
+  display: block;
+  animation: wave-slide 6s linear infinite;
 }
-.where {
-  margin-top: 14px;
-  font-size: 12.5px;
-  font-weight: 500;
+@keyframes wave-slide {
+  to {
+    transform: translateX(-50%);
+  }
 }
 
-/* ---- The terminal card: the black framed card (design/CARD-SPEC.md) ---- */
-.card {
-  --chamfer: polygon(
-    30px 0,
-    calc(100% - 16px) 0,
-    100% 16px,
-    100% 150px,
-    calc(100% - 8px) 158px,
-    calc(100% - 8px) calc(100% - 24px),
-    calc(100% - 30px) 100%,
-    16px 100%,
-    0 calc(100% - 16px),
-    0 calc(100% - 160px),
-    8px calc(100% - 168px),
-    8px 22px
-  );
-  /* Keeps the body's margins inside the card (the desktop grid does it on
-     its own): without it they leak out and the content rides 14px up over
-     the panel's edge. */
-  display: flow-root;
-  margin: 32px -6px 0;
-  /* Never wider than the desktop card at 1024 (its grid column there), so a
-     narrower window never gets a bigger card. Phones (≤ 450) are under it. */
-  max-width: calc((1024px - 260px) * 660 / 1180);
-  filter: drop-shadow(0 34px 40px rgba(18, 24, 34, 0.38));
-}
-.outline,
-.bezel,
-.gap,
-.panel {
-  position: absolute;
-  pointer-events: none;
-}
-.outline {
-  inset: 0;
-  background: #5b646e;
-  clip-path: var(--chamfer);
-}
-.bezel {
-  inset: 1px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 10%),
-    linear-gradient(160deg, #3a4148 0%, #252a30 45%, #1b1f24 100%);
-  clip-path: var(--chamfer);
-}
-.gap {
-  inset: 12px 20px;
-  background: #050608;
-  clip-path: polygon(
-    26px 0,
-    calc(100% - 12px) 0,
-    100% 12px,
-    100% calc(100% - 26px),
-    calc(100% - 26px) 100%,
-    12px 100%,
-    0 calc(100% - 12px),
-    0 26px
-  );
-}
-.panel {
-  inset: 14px 22px;
-  background: radial-gradient(ellipse 120% 70% at 20% 0%, #262b31 0%, #12151a 55%, #0b0d10 100%);
-  clip-path: polygon(
-    24px 0,
-    calc(100% - 10px) 0,
-    100% 10px,
-    100% calc(100% - 24px),
-    calc(100% - 24px) 100%,
-    10px 100%,
-    0 calc(100% - 10px),
-    0 24px
-  );
-}
-
-.body {
-  position: relative;
-  z-index: 2;
-  margin: 14px 22px;
-  padding: 18px 12px 56px;
-  color: #e9edf1;
+/* The log types its two lines once the head is in. */
+.typed {
+  margin-top: 16px;
   font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--crt-text-2);
+}
+.type1,
+.type2 {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+.section[data-armed="true"] .type1 {
+  width: 0;
+}
+.section[data-armed="true"] .type2 {
+  width: 0;
+}
+.section[data-armed="true"] .head[data-on="true"] .type1 {
+  animation: type-1 0.9s steps(12, end) 0.4s forwards;
+}
+.section[data-armed="true"] .head[data-on="true"] .type2 {
+  animation: type-2 1.5s steps(24, end) 1.5s forwards;
+}
+@keyframes type-1 {
+  to {
+    width: 12ch;
+  }
+}
+@keyframes type-2 {
+  to {
+    width: 24ch;
+  }
+}
+.caret {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: var(--crt-title);
+  box-shadow: var(--crt-node-glow);
+  animation: caret-blink 1.1s step-end infinite;
 }
 
+/* The form: a terminal window. */
+.card {
+  margin-top: 26px;
+  border: 1px solid var(--crt-line);
+  border-radius: 6px;
+  background: var(--crt-panel);
+  box-shadow: var(--crt-frame-shadow);
+  overflow: hidden;
+}
 .chrome {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-}
-/* The three window lights hold their size and spot: a crowded title bar (a
-   phone's larger system text) shrinks the title, never the dots. */
-.dot {
-  display: block;
-  flex: none;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-}
-.dot1 {
-  background: #e9edf1;
-}
-.dot2 {
-  background: #8f98a2;
-}
-.dot3 {
-  background: #4a525b;
+  justify-content: space-between;
+  height: 38px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--crt-line);
 }
 .chromeTitle {
-  min-width: 0;
-  margin-left: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 10.5px;
-  color: #aeb6bf;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  color: var(--crt-row-label);
 }
-
+.chromeLong {
+  display: none;
+}
 .form {
-  padding-top: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  font-size: 12px;
+  position: relative;
 }
-.pair {
+.fields {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding: 18px 16px 6px;
 }
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  font-family: "JetBrains Mono", monospace;
 }
 .label {
-  white-space: nowrap;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: #4c647c;
+}
+:global(:root[data-theme="dark"]) .label {
+  color: #87ccf9;
 }
 .hint {
-  color: #8f98a2;
+  color: #718498;
+}
+:global(:root[data-theme="dark"]) .hint {
+  color: #438cc5;
 }
 .input {
-  font: inherit;
-  padding: 12px;
+  box-sizing: border-box;
+  height: 44px;
+  padding: 0 10px;
+  border: 0;
+  border-bottom: 1px solid var(--crt-line);
   border-radius: 0;
-  background: #0e1115;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #e9edf1;
-  outline: none;
-}
-/* The global autofill rule paints the page surface; keep the terminal dark. */
-.input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px #0e1115 inset;
-  -webkit-text-fill-color: #e9edf1;
+  background: transparent;
+  color: var(--crt-title);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 15px;
 }
 .input::placeholder {
-  color: #5e6670;
+  color: var(--crt-dim);
+  opacity: 0.8;
 }
-.input:focus-visible {
-  outline: 2px solid #e9edf1;
-  outline-offset: 1px;
+.input:focus {
+  outline: 1px solid var(--crt-title);
+  outline-offset: 0;
 }
 textarea.input {
-  resize: vertical;
+  height: auto;
+  padding: 10px;
+  border: 1px solid var(--crt-line);
+  background: rgba(31, 95, 175, 0.04);
+  line-height: 1.5;
+  resize: none;
 }
-.submit {
-  margin-top: 4px;
-  padding: 16px;
-  background: #e9edf1;
-  color: #0b0d10;
-  border: 0;
-  font-family: "Inter", sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.submit:focus-visible {
-  outline: 2px solid #e9edf1;
-  outline-offset: 3px;
-}
-.submit:disabled {
-  cursor: wait;
-  opacity: 0.6;
-}
-/* Inline field error: the notices' grey, under its input. */
-.fieldError {
-  color: #aeb6bf;
-  white-space: normal;
+:global(:root[data-theme="dark"]) textarea.input {
+  background: rgba(108, 185, 238, 0.039);
 }
 .input[aria-invalid="true"] {
-  border-color: rgba(233, 237, 241, 0.6);
+  border-color: var(--crt-title);
 }
-:global(:root[data-theme="dark"]) .fieldError {
-  color: #3a414a;
+.fieldError {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--crt-title);
+  text-shadow: var(--crt-glow-label);
 }
-:global(:root[data-theme="dark"]) .input[aria-invalid="true"] {
-  border-color: rgba(11, 13, 16, 0.6);
+.sendRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px 18px;
+}
+.prompt {
+  display: none;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: #718498;
+}
+:global(:root[data-theme="dark"]) .prompt {
+  color: #60aee6;
+}
+/* SEND >>: filled, like the dock's INITIATE. */
+.submit {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 26px;
+  border: 0;
+  background: #0e2c4c;
+  color: #eaeff5;
+  font-family: "VT323", monospace;
+  font-size: 24px;
+  letter-spacing: 0.16em;
+  box-shadow: 0 0 10px rgba(40, 110, 220, 0.18);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+:global(:root[data-theme="dark"]) .submit {
+  background: #daf8ff;
+  color: #020409;
+  box-shadow: 0 0 18px rgba(108, 185, 238, 0.455);
+}
+.submit:hover {
+  box-shadow: 0 0 22px rgba(60, 130, 240, 0.35);
+}
+:global(:root[data-theme="dark"]) .submit:hover {
+  box-shadow: 0 0 26px rgba(108, 185, 238, 0.7);
+}
+.submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.submit:focus-visible {
+  outline: 2px solid var(--crt-title);
+  outline-offset: 3px;
 }
 .notices {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: #aeb6bf;
+  padding: 0 16px 14px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--crt-title);
 }
 .notices:empty {
   display: none;
 }
+.notices p {
+  margin: 0;
+}
 .log {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--crt-line-row);
+  font-family: "JetBrains Mono", monospace;
   font-size: 12px;
-  color: #aeb6bf;
+  line-height: 1.7;
+  color: var(--crt-text-2);
+}
+.log p {
+  margin: 0;
 }
 .logOk {
-  color: #e9edf1;
+  color: var(--crt-title);
+  text-shadow: var(--crt-glow-label);
 }
 
-/* Dark theme: same graphite frame and tab, satin silver panel, white fields
-   and a black button (design/source/{desktop,mobile}/dark/scene-5-contact).
-   The silver is a deeper satin than the mock's near-white (María Sol, 9 Nov);
-   the grey text is #3A414A to keep AA on it. */
-:global(:root[data-theme="dark"]) .gap {
-  background: #2a3037;
+/* CHANNEL OPEN. */
+.channel {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 118px;
 }
-:global(:root[data-theme="dark"]) .panel {
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0) 0 3px,
-      rgba(255, 255, 255, 0.22) 3px 4px
-    ),
-    radial-gradient(ellipse 120% 80% at 18% 0%, #dce1e5 0%, #c3cad0 42%, #a9b1ba 100%);
-}
-:global(:root[data-theme="dark"]) .body {
-  color: #14181d;
-}
-:global(:root[data-theme="dark"]) .chrome {
-  border-bottom-color: rgba(11, 13, 16, 0.14);
-}
-:global(:root[data-theme="dark"]) .dot1 {
-  background: #14181d;
-}
-:global(:root[data-theme="dark"]) .dot2 {
-  background: #5a626c;
-}
-:global(:root[data-theme="dark"]) .dot3 {
-  background: #4a525b;
-}
-:global(:root[data-theme="dark"]) .chromeTitle,
-:global(:root[data-theme="dark"]) .hint {
-  color: #3a414a;
-}
-:global(:root[data-theme="dark"]) .input {
-  background: #fff;
-  border-color: rgba(11, 13, 16, 0.2);
-  color: #14181d;
-}
-:global(:root[data-theme="dark"]) .input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px #fff inset;
-  -webkit-text-fill-color: #14181d;
-}
-:global(:root[data-theme="dark"]) .input:focus-visible,
-:global(:root[data-theme="dark"]) .submit:focus-visible {
-  outline-color: #0b0d10;
-}
-:global(:root[data-theme="dark"]) .submit {
-  background: #0b0d10;
-  color: #f4f5f7;
-}
-:global(:root[data-theme="dark"]) .notices,
-:global(:root[data-theme="dark"]) .log {
-  color: #3a414a;
-}
-:global(:root[data-theme="dark"]) .log {
-  border-top-color: rgba(11, 13, 16, 0.14);
-}
-:global(:root[data-theme="dark"]) .logOk {
-  color: #14181d;
-}
-
-/* Bottom tab: MSSE:// │ Secure channel. */
-.tab {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  width: min(220px, 74%);
-  height: 38px;
-  z-index: 4;
-  color: #e9edf1;
-}
-.tab::before,
-.tab::after {
-  content: "";
-  position: absolute;
-  clip-path: polygon(0 100%, 20px 0, calc(100% - 20px) 0, 100% 100%);
-}
-.tab::before {
-  inset: 0;
-  background: #5b646e;
-}
-.tab::after {
-  inset: 1px 1px 0;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 10%),
-    linear-gradient(160deg, #3a4148 0%, #252a30 45%, #1b1f24 100%);
-}
-.tabInner {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  height: 100%;
-  padding-top: 2px;
-}
-.tabMark {
-  font-family: "Michroma", sans-serif;
-  font-size: 9px;
-  letter-spacing: 0.16em;
-}
-.tabRule {
-  width: 1.5px;
-  height: 15px;
-  background: rgba(233, 237, 241, 0.6);
-}
-.tabText {
-  font-family: "Inter", sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-/* ---- Footer: MSSE:// + © left, GitHub + email right, around the dock ---- */
-.footer {
-  margin: 96px -18px 0;
-  padding: 22px 18px 0;
-  border-top: 1px solid rgb(var(--tx) / 0.14);
+.channelHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  height: 42px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--crt-line);
+  font-family: "VT323", monospace;
+  font-size: 21px;
+  letter-spacing: 0.12em;
+  color: var(--crt-core);
+}
+.channelRow {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--crt-line-row);
+  font-family: "VT323", monospace;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+}
+.channelRow:last-child {
+  border-bottom: 0;
+}
+.channelKey {
+  font-size: 15px;
+  color: var(--crt-dim);
+}
+.channelVal {
+  font-size: 19px;
+  color: var(--crt-core);
+}
+.channelLink:hover .channelVal {
+  text-shadow: var(--crt-glow-label);
+}
+.desktopOnly {
+  display: none;
+}
+.radar {
+  position: relative;
+  border-left: 1px solid var(--crt-line);
+  background-image:
+    linear-gradient(var(--crt-line-row) 1px, transparent 1px),
+    linear-gradient(90deg, var(--crt-line-row) 1px, transparent 1px);
+  background-size: 20px 20px;
+  overflow: hidden;
+}
+.radarRing {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70px;
+  height: 70px;
+  margin: -35px 0 0 -35px;
+  border: 1.5px solid var(--crt-node);
+  border-radius: 50%;
+  box-shadow: var(--crt-node-glow);
+}
+.radarV,
+.radarH {
+  position: absolute;
+  background: var(--crt-line);
+}
+.radarV {
+  left: 50%;
+  top: 14px;
+  bottom: 14px;
+  width: 1px;
+}
+.radarH {
+  top: 50%;
+  left: 14px;
+  right: 14px;
+  height: 1px;
+}
+/* Phones: a sweep that lights a pink blip as it passes (a rotating line,
+   not a canvas). */
+.sweep {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 42px;
+  height: 2px;
+  margin-top: -1px;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--crt-core), transparent);
+  box-shadow: var(--crt-node-glow);
+  animation: sweep 3s linear infinite;
+}
+@keyframes sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.blip {
+  position: absolute;
+  left: calc(50% + 14px);
+  top: calc(50% - 22px);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f472b6;
+  box-shadow: 0 0 8px #f472b6;
+  animation: blip 3s linear infinite;
+}
+/* Lit as the sweep passes (~300 deg), then fading. */
+@keyframes blip {
+  0%,
+  80% {
+    opacity: 0;
+  }
+  84% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
+.radarTag {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 10px;
+  color: var(--crt-text);
+}
+
+/* Footer: MSSE://, the links, the credit. */
+.footer {
+  margin-top: 40px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--crt-line);
+  font-family: "VT323", monospace;
+  font-size: 18px;
+  letter-spacing: 0.14em;
+  color: #486079;
+}
+:global(:root[data-theme="dark"]) .footer {
+  color: #8dd1fa;
 }
 .brand {
   font-family: "Michroma", sans-serif;
-  font-size: 12px;
-  letter-spacing: 0.18em;
-  color: rgb(var(--tx));
-}
-.credit {
-  margin: 6px 0 0;
-  font-size: 11px;
-  line-height: 1.5;
-  color: rgb(var(--tx) / 0.88);
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  color: var(--crt-title);
+  text-shadow: var(--crt-glow-label);
+  min-height: 44px;
 }
 .socials {
   display: flex;
-  gap: 8px;
+  gap: 28px;
 }
 .social {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid rgba(20, 24, 29, 0.25);
-  background: rgba(255, 255, 255, 0.6);
-  color: #14181d;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  transition: background-color 0.3s;
+  min-height: 44px;
+  color: inherit;
+  text-decoration: none;
 }
 .social:hover {
-  background: rgba(255, 255, 255, 0.9);
+  color: var(--crt-title);
+}
+.credit {
+  width: 100%;
 }
 
-/* ---- From 768 up: the desktop card, one object scaled by --u ----
-   --u is 1px at 1440 and up (the mock's card, unchanged) and follows the
-   width down so the card shrinks as a whole instead of only getting
-   narrower, floored at 0.88px (by ~1300) for legible text. Under 1024 the
-   card keeps its 1024 size (max-width above), so it never jumps at the
-   breakpoint. Hairlines stay 1px. */
-@media (min-width: 768px) {
-  .card {
-    --u: clamp(0.88px, (100vw - 260px) / 1180, 1px);
-    --chamfer: polygon(
-      calc(34 * var(--u)) 0,
-      calc(100% - 18 * var(--u)) 0,
-      100% calc(18 * var(--u)),
-      100% calc(210 * var(--u)),
-      calc(100% - 8 * var(--u)) calc(218 * var(--u)),
-      calc(100% - 8 * var(--u)) calc(100% - 26 * var(--u)),
-      calc(100% - 34 * var(--u)) 100%,
-      calc(18 * var(--u)) 100%,
-      0 calc(100% - 18 * var(--u)),
-      0 calc(100% - 230 * var(--u)),
-      calc(8 * var(--u)) calc(100% - 238 * var(--u)),
-      calc(8 * var(--u)) calc(26 * var(--u))
-    );
-    filter: drop-shadow(0 calc(34 * var(--u)) calc(40 * var(--u)) rgba(18, 24, 34, 0.38));
-  }
-  .gap {
-    inset: calc(12 * var(--u)) calc(20 * var(--u));
-    clip-path: polygon(
-      calc(26 * var(--u)) 0,
-      calc(100% - 12 * var(--u)) 0,
-      100% calc(12 * var(--u)),
-      100% calc(100% - 26 * var(--u)),
-      calc(100% - 26 * var(--u)) 100%,
-      calc(12 * var(--u)) 100%,
-      0 calc(100% - 12 * var(--u)),
-      0 calc(26 * var(--u))
-    );
-  }
-  .panel {
-    inset: calc(14 * var(--u)) calc(22 * var(--u));
-    clip-path: polygon(
-      calc(24 * var(--u)) 0,
-      calc(100% - 10 * var(--u)) 0,
-      100% calc(10 * var(--u)),
-      100% calc(100% - 24 * var(--u)),
-      calc(100% - 24 * var(--u)) 100%,
-      calc(10 * var(--u)) 100%,
-      0 calc(100% - 10 * var(--u)),
-      0 calc(24 * var(--u))
-    );
-  }
-  .body {
-    margin: calc(14 * var(--u)) calc(22 * var(--u));
-    padding: calc(26 * var(--u)) calc(30 * var(--u)) calc(70 * var(--u));
-  }
-  .chrome {
-    gap: calc(8 * var(--u));
-    padding-bottom: calc(16 * var(--u));
-  }
-  .dot {
-    width: calc(10 * var(--u));
-    height: calc(10 * var(--u));
-  }
-  .chromeTitle {
-    margin-left: calc(14 * var(--u));
-    font-size: calc(12 * var(--u));
-  }
-  .form {
-    padding-top: calc(24 * var(--u));
-    gap: calc(18 * var(--u));
-    font-size: calc(13 * var(--u));
-  }
-  .pair {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: calc(16 * var(--u));
-  }
-  .field {
-    gap: calc(8 * var(--u));
-  }
-  .input {
-    padding: calc(13 * var(--u)) calc(14 * var(--u));
-  }
-  .submit {
-    margin-top: calc(6 * var(--u));
-    padding: calc(18 * var(--u));
-    font-size: calc(15 * var(--u));
-  }
-  .notices {
-    gap: calc(6 * var(--u));
-  }
-  .log {
-    margin-top: calc(16 * var(--u));
-    padding-top: calc(14 * var(--u));
-    gap: calc(6 * var(--u));
-    font-size: calc(12 * var(--u));
-  }
-  .tab {
-    width: min(calc(280 * var(--u)), 74%);
-    height: calc(44 * var(--u));
-  }
-  .tab::before,
-  .tab::after {
-    clip-path: polygon(0 100%, calc(20 * var(--u)) 0, calc(100% - 20 * var(--u)) 0, 100% 100%);
-  }
-  .tabInner {
-    gap: calc(12 * var(--u));
-    padding-top: calc(2 * var(--u));
-  }
-  .tabMark {
-    font-size: calc(10 * var(--u));
-  }
-  .tabRule {
-    height: calc(18 * var(--u));
-  }
-  .tabText {
-    font-size: calc(13 * var(--u));
-  }
-}
-
-/* Short screens: a tighter form so the card clears the footer at 1280 x 720. */
-@media (min-width: 768px) and (max-height: 820px) {
-  .body {
-    padding: calc(20 * var(--u)) calc(26 * var(--u)) calc(60 * var(--u));
-  }
-  .form {
-    padding-top: calc(16 * var(--u));
-    gap: calc(12 * var(--u));
-  }
-  .input {
-    padding: calc(10 * var(--u)) calc(12 * var(--u));
-  }
-  .submit {
-    padding: calc(14 * var(--u));
-  }
-}
-
-/* ---- Desktop: text left, the card right, footer on both sides of the dock ---- */
+/* ---- Desktop (Contact.dc.html) ---- */
 @media (min-width: 1024px) {
   .stage {
-    min-height: 100vh;
-    /* Right 140: clear of the section index. Bottom: the footer band. */
-    padding: 52px 140px 140px 56px;
     display: grid;
-    grid-template-columns: minmax(0, 520fr) minmax(0, 660fr);
-    column-gap: 64px;
-    align-items: start;
+    grid-template-columns: minmax(0, 780fr) minmax(0, 456fr);
+    grid-template-areas:
+      "head head"
+      "card channel"
+      "footer footer";
+    column-gap: 76px;
+    min-height: 100vh;
+    padding: 80px 64px 32px;
+    align-content: start;
+  }
+  .floor {
+    bottom: -120px;
+    height: 520px;
+    transform: perspective(700px) rotateX(62deg);
+  }
+  .floorFade {
+    height: 640px;
+    background: linear-gradient(180deg, var(--crt-bg) 70%, transparent);
+  }
+  .word {
+    display: none;
+  }
+  .head {
+    grid-area: head;
+    gap: 16px;
+  }
+  .head :global(.crt-pill) {
+    padding: 4px 12px;
+    font-size: 20px;
+  }
+  .titleBox {
+    margin-top: 0;
+    padding: 0;
+    background: none;
+  }
+  .rx,
+  .ghost,
+  .titleBreak,
+  .wave,
+  .typed {
+    display: none;
   }
   .title {
-    margin-top: 16px;
-    line-height: 1.05;
-  }
-  .lede {
-    margin-top: 30px;
-    font-size: 17px;
-    line-height: 1.7;
-  }
-  .where {
-    margin-top: 22px;
-    font-size: 13px;
+    font-size: 76px;
+    line-height: 1.1;
+    letter-spacing: 0.04em;
+    color: var(--crt-title);
   }
   .card {
-    /* As in the mock: centred in the screen above the footer band (the grid
-       row fills the stage between its top and bottom padding), at any height. */
-    align-self: center;
-    margin: 0;
-    max-width: none;
+    grid-area: card;
+    margin-top: 52px;
+    align-self: start;
   }
-
-  /* The rule at 104 px from the bottom; the two ends level with the dock. */
+  .chrome {
+    height: 40px;
+    padding: 0 14px;
+  }
+  .chromeTitle {
+    font-size: 12px;
+  }
+  .chromeLong {
+    display: inline;
+  }
+  .fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 22px;
+    padding: 22px 22px 8px;
+  }
+  .full {
+    grid-column: 1 / -1;
+  }
+  .field {
+    gap: 6px;
+  }
+  .label {
+    font-size: 12px;
+  }
+  .input {
+    padding: 0 12px;
+  }
+  textarea.input {
+    padding: 10px 12px;
+    line-height: 1.6;
+  }
+  .sendRow {
+    padding: 14px 22px 22px;
+  }
+  .prompt {
+    display: inline;
+  }
+  .submit {
+    width: auto;
+  }
+  .notices {
+    padding: 0 22px 16px;
+  }
+  .log {
+    padding: 12px 22px 18px;
+  }
+  .channel {
+    grid-area: channel;
+    margin-top: 52px;
+    align-self: start;
+    display: block;
+  }
+  .channelHead {
+    height: 48px;
+    padding: 0 18px;
+    font-size: 24px;
+    color: var(--crt-title);
+  }
+  .channelRow {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    height: 46px;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--crt-line-row);
+    font-size: 22px;
+    letter-spacing: 0.1em;
+  }
+  .channelRow:last-child {
+    border-bottom: 1px solid var(--crt-line-row);
+  }
+  .channelKey {
+    font-size: 22px;
+    color: var(--crt-text);
+  }
+  .channelVal {
+    font-size: 22px;
+    color: var(--crt-title);
+  }
+  .desktopOnly {
+    display: inline;
+  }
+  .phoneOnly {
+    display: none;
+  }
+  .radar {
+    height: 150px;
+    margin: 18px;
+    border: 1px solid var(--crt-line-row);
+  }
+  /* Desktop's radar is still (Contact.dc.html). */
+  .sweep,
+  .blip {
+    display: none;
+  }
+  .radarTag {
+    right: 10px;
+    bottom: 8px;
+    font-size: 11px;
+  }
   .footer {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 104px;
-    margin: 0;
-    padding: 0 56px 30px;
-    align-items: flex-end;
-    border-top-color: rgb(var(--tx) / 0.14);
+    grid-area: footer;
+    margin-top: 56px;
+    height: 56px;
+    padding-top: 0;
+    flex-wrap: nowrap;
+    font-size: 20px;
   }
   .brand {
-    font-size: 13px;
+    font-size: 15px;
   }
   .credit {
-    margin-top: 8px;
-    font-size: 12px;
-    color: rgb(var(--tx) / 0.8);
-  }
-  .socials {
-    gap: 10px;
-    margin-bottom: 4px;
+    width: auto;
   }
 }
 
-/* Short desktop screens (1280 x 720). Bottom 120: the card and the footer
-   band fit in one screen at 720. */
-@media (min-width: 1024px) and (max-height: 820px) {
-  .stage {
-    padding-top: 40px;
-    padding-bottom: 120px;
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    transition: none;
+    transform: none;
+  }
+  .ghost,
+  .waveSvg,
+  .sweep,
+  .blip,
+  .caret {
+    animation: none;
+  }
+  .blip {
+    opacity: 1;
+  }
+  /* No typing: the full lines. */
+  .section .type1,
+  .section .type2 {
+    width: auto !important;
+    animation: none !important;
   }
 }

@@ -94,20 +94,23 @@ export const systemCheck: string[] = [
   "STATUS: OPEN TO WORK",
 ];
 
+// About's principles. CRT redesign (SPEC §6): shown as three title rows; the
+// titles are the spec's, the texts are the old principles' and aren't shown.
+// TODO(content): María Sol to confirm the new titles and drop or rewrite the texts.
 export const manifesto: ManifestoEntry[] = [
   {
     num: "01",
-    title: "Curiosity as method",
+    title: "Contracts before code",
     text: "Before I trust a system, I need to understand why it works. That discipline surfaces flawed assumptions early, when correcting them costs the least.",
   },
   {
     num: "02",
-    title: "Ownership to resolution",
+    title: "Interfaces are the product",
     text: "I stay with a problem until its root cause is understood and resolved, not merely suppressed. A complete fix also ensures the same failure cannot recur unnoticed.",
   },
   {
     num: "03",
-    title: "Creativity within constraints",
+    title: "Humans where they matter",
     text: "Every engineering problem arrives with constraints. Working within them is where I learn the most, and where the strongest solutions tend to emerge.",
   },
 ];
