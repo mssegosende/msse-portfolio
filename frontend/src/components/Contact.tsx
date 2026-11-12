@@ -510,10 +510,11 @@ export const Contact = () => {
             >
               GITHUB
             </a>
-            {/* The design's LINKEDIN: hidden while there is none; the email
-                takes its place. */}
-            {profile.socials.linkedin ? (
+            {/* LINKEDIN (María Sol, 12 Nov) once profile.socials.linkedin has
+                her URL; EMAIL stays beside it. */}
+            {profile.socials.linkedin && (
               <a
+                data-testid="footer-linkedin-link"
                 href={profile.socials.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -521,15 +522,14 @@ export const Contact = () => {
               >
                 LINKEDIN
               </a>
-            ) : (
-              <a
-                data-testid="footer-email-link"
-                href={`mailto:${profile.email}`}
-                className={s.social}
-              >
-                EMAIL
-              </a>
             )}
+            <a
+              data-testid="footer-email-link"
+              href={`mailto:${profile.email}`}
+              className={s.social}
+            >
+              EMAIL
+            </a>
           </span>
           <span className={s.credit}>
             © {new Date().getFullYear()} {profile.name.toUpperCase()}
