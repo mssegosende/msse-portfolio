@@ -45,8 +45,13 @@ const CONFIGS = {
   "phone-dark": { phone: true, dark: true },
 };
 
-// Pin progress of each scene 2 card (choreography.ts: (SCENE2.cards[i] + 0.04) / SCENE2.end).
-const CARDS = [0.516, 0.676, 0.836];
+// Each scene 2 card's point of the hero timeline (choreography.ts:
+// SCENE2.cards[i] + 0.04), and the timeline's length: SCENE2.end, plus scene
+// 2's exit into Projects on desktop (SCENE2_EXIT, R107). As pin progress, the
+// same points as the baseline's.
+const CARD_T = [1.29, 1.69, 2.09];
+const SCENE2_END = 2.5;
+const heroEnd = (phone) => SCENE2_END + (phone ? 0 : 0.36);
 
 // ---- In the page ----
 
@@ -84,7 +89,7 @@ const startTheme = (theme) => {
 };
 
 const pinY = (p) => {
-  const spacer = document.querySelector(".pin-spacer");
+  const spacer = document.querySelector(".pin-spacer:has(> #hero)");
   if (!spacer) throw new Error("the hero pin is not built");
   const start = spacer.getBoundingClientRect().top + window.scrollY;
   const end = start + spacer.offsetHeight - window.innerHeight;
@@ -219,7 +224,7 @@ const oneRun = async (browser, { phone, dark }) => {
 
   const loadT0 = Date.now();
   await page.goto(BASE);
-  await page.locator(".pin-spacer").waitFor({ state: "attached" });
+  await page.locator(".pin-spacer:has(> #hero)").waitFor({ state: "attached" });
   await page
     .locator('[data-testid="spline-canvas-wrap"][data-revealed="true"]')
     .waitFor({ state: "attached", timeout: 60_000 });
@@ -231,15 +236,20 @@ const oneRun = async (browser, { phone, dark }) => {
   const s = {};
   s["s1-idle"] = await measure(page, cdp, { ms: 10_000 });
   s["s1-to-s2-scroll"] = await measure(page, cdp, {
-    during: () => scrollPin(page, 0, 1, 8000),
+    during: () => scrollPin(page, 0, SCENE2_END / heroEnd(phone), 8000),
   });
-  for (const [i, p] of CARDS.entries()) {
-    await gotoPin(page, p);
+  for (const [i, t] of CARD_T.entries()) {
+    await gotoPin(page, t / heroEnd(phone));
     s[`s2-card${i + 1}`] = await measure(page, cdp, { ms: 6000 });
   }
-  const projectsY = await page.evaluate(
-    () => document.getElementById("projects").getBoundingClientRect().top + window.scrollY,
-  );
+  // Where Projects has arrived: its top, or with the section crossfades
+  // (desktop, R107) its pin spacer's top plus the crossfade's scroll.
+  const projectsY = await page.evaluate(() => {
+    const el = document.getElementById("projects");
+    const box = el.parentElement.classList.contains("pin-spacer") ? el.parentElement : el;
+    const xf = Number(document.documentElement.style.getPropertyValue("--xf-vh")) || 0;
+    return box.getBoundingClientRect().top + window.scrollY + (window.innerHeight * xf) / 100;
+  });
   await scrollTo(page, projectsY);
   await page.waitForTimeout(3500); // the clip loads and starts
   s["projects"] = await measure(page, cdp, { ms: 10_000 });
