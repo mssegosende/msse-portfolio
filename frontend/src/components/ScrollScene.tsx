@@ -20,15 +20,15 @@ import {
   type CapTitleWidths,
 } from "./scroll-scene/capTitle";
 import {
+  HeadCrosshair,
   HeroHeadline,
   HeroHeading,
   HeroWordmark,
-  PhoneBarcode,
   ScrollCue,
   ScrollCuePhone,
   SystemCheck,
 } from "./scroll-scene/HeroHud";
-import { IntroTile } from "./scroll-scene/IntroVideo";
+import { IntroButtonPhone, IntroTile } from "./scroll-scene/IntroVideo";
 import { useCalloutsAboveDock } from "./scroll-scene/useCalloutsAboveDock";
 import { useHeroScenes } from "./scroll-scene/useHeroScenes";
 import { useHeroElements, useHeroTimeline } from "./scroll-scene/useHeroTimeline";
@@ -380,18 +380,19 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         <HeroHeading />
         {!stacked && scene2Ground}
         {!stacked && scene2Title}
-        {/* Scene 1 ground: gradient, a soft glow behind the head, ground shade and vignette. */}
+        {/* Scene 1 ground (Hero*.dc.html): the CRT ground, its grid and a soft
+            phosphor glow behind the robot. */}
         <div ref={bg1Ref} aria-hidden="true" className="pointer-events-none absolute inset-0">
-          <div className="absolute inset-0" style={{ background: "var(--hero-bg-1)" }} />
+          <div className="absolute inset-0 bg-crt-bg" />
+          <div className="crt-grid absolute inset-0" />
           <div
-            className="subject-glow"
+            className="crt-hero-glow absolute"
             style={
               isMobile
-                ? { left: "36%", top: "39%", width: 620, height: 620 }
-                : { left: "50%", top: 350, width: 820, height: 820 }
+                ? { left: -60, top: 150, width: 510, height: 520 }
+                : { left: "calc(50% - 450px)", top: "13.3%", width: 900, height: 820 }
             }
           />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_45%_at_15%_88%,rgba(25,32,42,0.2)_0%,rgba(25,32,42,0)_70%),radial-gradient(ellipse_120%_90%_at_50%_40%,rgba(0,0,0,0)_55%,rgba(20,26,34,0.28)_100%)]" />
         </div>
 
         <HeroWordmark ref={wordmarkRef} isMobile={isMobile} />
@@ -406,11 +407,11 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
             {/* The robot fades in (opacity + blur on this wrapper) once its scene has loaded. */}
             {!failed && (
               <div
-                className={`hero-robot absolute inset-0 ${isMobile ? "hero-robot--phone" : ""}`}
+                className={`hero-robot absolute inset-0 ${isMobile ? "hero-robot--phone" : "hero-robot--crt"}`}
                 data-revealed={revealed}
                 data-testid="spline-canvas-wrap"
               >
-                <div ref={parallax1Ref} className="absolute inset-0">
+                <div ref={parallax1Ref} className="crt-robot-filter absolute inset-0">
                   <div ref={idle1Ref} className="absolute inset-0">
                     {/* Desktop: both models stay mounted (fixed keys) and a class picks the visible
                       one, so a toggle remounts nothing. Phones: one mount, the theme's. */}
@@ -486,48 +487,60 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
           </div>
         </div>
 
+        {/* The robot's CRT treatment: a blend layer over the live canvas (SPEC §2,
+            option 1), never a filter or transform on the canvas. Above the
+            robot, under every HUD element. */}
+        <div
+          aria-hidden="true"
+          data-testid="robot-tint"
+          className="crt-robot-tint absolute inset-0"
+        />
+
         {!stacked && scene2Head}
         {/* Scene 1 HUD, one window per scroll step (Ø1.1-Ø1.3), then SCROLL. Phones
           get the headline and SCROLL only. */}
         {!isMobile && <IntroTile ref={introRef} />}
         {!isMobile && <SystemCheck ref={checkRef} />}
-        <HeroHeadline ref={headlineRef} isMobile={isMobile} />
+        <HeroHeadline ref={headlineRef} isMobile={isMobile}>
+          {isMobile && <IntroButtonPhone />}
+        </HeroHeadline>
         {isMobile ? <ScrollCuePhone ref={scrollCueRef} /> : <ScrollCue ref={scrollCueRef} />}
 
-        {/* Top bar, scene 1 only: MSSE:// and STATUS (phones: the barcode under MSSE://). */}
-        <div ref={topBarRef} className="absolute inset-x-0 top-0">
-          {isMobile && <PhoneBarcode />}
+        {/* Top bar, scene 1 only: MSSE:// and STATUS, and the crosshair on the
+            head (they leave together at the crossfade). */}
+        <div ref={topBarRef} className="pointer-events-none absolute inset-0">
+          <HeadCrosshair isMobile={isMobile} />
           {/* The CSS load fade sits on this inner box; GSAP owns the outer one. */}
           <div
-            className={`hero-bar-in flex items-center justify-between ${
-              // Desktop: MSSE:// on the Ø1.1 tile's edge (112px, IntroVideo.tsx).
-              isMobile ? "px-[18px] py-[22px]" : "py-[52px] pl-[112px] pr-12"
+            className={`hero-bar-in absolute flex items-center ${
+              isMobile ? "inset-x-5 top-[22px] justify-between" : "left-16 top-14 gap-[18px]"
             }`}
           >
-            {/* Phones: a small MSSE:// (STATUS size) and STATUS in a frosted pill. */}
             <span
               data-testid="hero-brand"
-              className={`font-michroma text-[rgb(var(--hero-ink))] ${
-                isMobile ? "text-[10.5px] tracking-[0.16em]" : "text-[19px] tracking-[0.2em]"
+              className={`font-michroma tracking-[0.08em] text-crt-title crt-glow-label ${
+                isMobile ? "text-[13px]" : "text-[16px]"
               }`}
             >
               {profile.shortMark}
             </span>
             <span
-              className={`flex items-center font-display uppercase tracking-[0.08em] text-[rgb(var(--hero-ink))] ${
+              className={`flex items-center font-vt uppercase text-crt-text ${
                 isMobile
-                  ? "hero-status-pill gap-2 rounded-full px-3 py-1.5 text-[13px]"
-                  : "gap-2.5 text-[15px]"
+                  ? "gap-[7px] text-[17px] tracking-[0.12em]"
+                  : "gap-2 text-[20px] tracking-[0.14em]"
               }`}
             >
               <span
                 data-testid="hero-status-dot"
                 aria-hidden="true"
-                className={`rounded-full bg-status animate-pulse-dot motion-reduce:animate-none ${
+                className={`rounded-full bg-status shadow-[0_0_10px_#F472B6] animate-pulse-dot motion-reduce:animate-none ${
                   isMobile ? "h-1.5 w-1.5" : "h-[7px] w-[7px]"
                 }`}
               />
-              <span data-testid="hero-status">STATUS: {profile.status}</span>
+              <span data-testid="hero-status">
+                {isMobile ? profile.status : `STATUS: ${profile.status}`}
+              </span>
             </span>
           </div>
         </div>
@@ -538,22 +551,24 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
             ref={skipRef}
             data-testid="skip-intro"
             onClick={skipIntro}
-            className={`pointer-events-auto absolute left-1/2 -translate-x-1/2 whitespace-nowrap px-2.5 font-display uppercase tracking-[0.32em] text-[#F1F3F5] data-[scene="2"]:text-[rgb(var(--hero-ink))] ${
+            className={`crt-skip pointer-events-auto absolute min-h-11 whitespace-nowrap font-vt uppercase ${
               isMobile
-                ? "bottom-[calc(env(safe-area-inset-bottom,0px)+12px)] py-3 text-[13px]"
-                : "bottom-7 py-3.5 text-[14px]"
+                ? "bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] right-3 px-2 text-[17px] tracking-[0.18em]"
+                : "bottom-9 right-14 px-3 text-[20px] tracking-[0.2em]"
             } ${
               // On phones the timeline drives its opacity (it hides with the cards); a CSS
               // transition would lag behind it.
               isMobile ? "" : "transition-[opacity,color] duration-300"
             }`}
           >
-            <span className="hero-bar-in">Skip intro</span>
+            <span className="hero-bar-in">Skip intro &gt;&gt;</span>
           </button>
         )}
 
         {!stacked && scene2Cards}
-        <div aria-hidden="true" className="grain pointer-events-none absolute inset-0 z-20" />
+        {/* CRT overlays over the whole pinned hero (scenes 1 and 2). */}
+        <div aria-hidden="true" className="crt-vignette absolute inset-0 z-20" />
+        <div aria-hidden="true" className="crt-scanlines absolute inset-0 z-20" />
       </section>
       {/* Stacked (reduced motion, or no timeline): scene 2 as it ends, on its own
         screen under the hero, in normal flow. */}

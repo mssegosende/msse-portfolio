@@ -23,12 +23,13 @@ const VIEWPORTS = [
 ];
 
 describe("heroFraming", () => {
-  it("frames phones the same with or without reduced motion, left of centre, and holds", () => {
+  it("frames phones the same with or without reduced motion, centred (CRT), and holds", () => {
     const phone = { width: 390, height: 844 };
     const moving = heroFraming(true, false, phone);
     expect(heroFraming(true, true, phone)).toEqual(moving);
     expect(moving.endY).toBe(moving.startY);
-    expect(moving.heroDx).toBeLessThan(0);
+    // HeroM.dc.html: the robot centred under the wordmark (within 2% of the width).
+    expect(Math.abs(moving.heroDx)).toBeLessThan(phone.width * 0.02);
   });
 
   it("frames the desktop robot the same way with or without reduced motion, and holds", () => {

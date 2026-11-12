@@ -22,7 +22,10 @@ export const CrtFrame = ({
   /** Extra dots, e.g. `{ left: -4, top: 49 }` where a divider meets the frame. */
   nodes?: CSSProperties[];
 }) => (
-  <div className={`crt-frame ${className}`} style={style}>
+  <div
+    className={`crt-frame ${className.includes("absolute") ? "" : "relative"} ${className}`}
+    style={style}
+  >
     {[
       { left: -4, top: -4 },
       { right: -4, top: -4 },

@@ -41,7 +41,9 @@ export const vwOf =
 // ~55px from the top, the body down to the Ø1 counter. On the left (María Sol,
 // 10 Nov): the mirror of the mock's place on the right, the head just inside
 // the left edge, so the barcode and its data sit with STATUS on the right.
-const PHONE_HERO = { scale: 1.25, dx: -0.132, y: 2 };
+// CRT redesign (HeroM.dc.html): centred under the MSSE wordmark, the head
+// whole inside the crosshair (box 92,140 200x240), crown ~150px down.
+const PHONE_HERO = { scale: 0.8, dx: 0.012, y: -2.4 };
 /** The phone mocks' height, which the phone framings are measured at. */
 export const PHONE_REF_H = 844;
 
@@ -56,6 +58,8 @@ const phoneFixedPx = (scale: number, y: number, height: number) => {
   return { scale: scale * k, y: 100 * ((0.5 + y / 100) * k - 0.5) };
 };
 
+const HERO_ALT_K = 1.07;
+
 export const heroFraming = (isMobile: boolean, _reduce: boolean, { width, height }: Viewport) => {
   if (isMobile) {
     // Phones (design/source/mobile/light/scene-1-hero.dc.html): the robot lower
@@ -67,17 +71,27 @@ export const heroFraming = (isMobile: boolean, _reduce: boolean, { width, height
       startScale: f.scale,
       startY: `${f.y}%`,
       endY: `${f.y}%`,
+      altScale: f.scale,
+      altY: `${f.y}%`,
       heroDx: PHONE_HERO.dx * width,
     };
   }
-  const HERO_SCALE = 1.9;
+  // CRT redesign (Hero.dc.html): pulled back so the head shows whole, the
+  // crown ~6% from the top, the shoulders ~80% of the width.
+  const HERO_SCALE = 1.3;
   const HERO_CROWN_NATIVE = 0.0456;
-  const HERO_CROWN_TARGET = -0.008;
-  const y = (HERO_CROWN_TARGET - 0.5 - (HERO_CROWN_NATIVE - 0.5) * HERO_SCALE) * 100;
+  const HERO_CROWN_TARGET = 0.06;
+  const yAt = (scale: number) =>
+    (HERO_CROWN_TARGET - 0.5 - (HERO_CROWN_NATIVE - 0.5) * scale) * 100;
+  const y = yAt(HERO_SCALE);
   return {
     startScale: HERO_SCALE,
     startY: `${y}%`,
     endY: `${y}%`,
+    // Light's black robot (the alt mount): its head slightly bigger than the
+    // silver one's (HeroLight.dc.html), crown at the same height.
+    altScale: HERO_SCALE * HERO_ALT_K,
+    altY: `${yAt(HERO_SCALE * HERO_ALT_K)}%`,
     // The rig leaves the head left of the camera axis, an offset that scales
     // with the window height and the zoom.
     heroDx: ((0.0148 * HERO_SCALE) / 1.9) * height,

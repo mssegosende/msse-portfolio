@@ -221,7 +221,7 @@ export const useHeroTimeline = ({
       height: (isMobile ? sectionRef.current?.clientHeight : 0) || window.innerHeight || 900,
     };
     const vw = vwOf(viewport.width);
-    const { startScale, startY, heroDx } = heroFraming(isMobile, reduce, viewport);
+    const { startScale, startY, heroDx, altScale, altY } = heroFraming(isMobile, reduce, viewport);
     // Scene 2's head framing, from the window as it is now (A9): desktop scales
     // it with the title and the cards; phones put its crown just under the
     // title (its layout box: the title's rise is a transform), which takes a
@@ -284,6 +284,11 @@ export const useHeroTimeline = ({
 
     // Desktop framing lives in these proxies and the cameras apply it (applyView).
     const heroView: ViewTransform = { scale: startScale, x: vw(heroDx), y: startY };
+    const heroAltView: ViewTransform = {
+      scale: altScale,
+      x: vw((heroDx * altScale) / startScale),
+      y: altY,
+    };
     // Scene 2's framing follows the window and the title (frameGiant), so the
     // timeline tweens only the approach: desktop a zoom factor on top of the
     // framing, phones the way in from further back and to the side (0..1).
@@ -521,7 +526,7 @@ export const useHeroTimeline = ({
           applyView(app2Ref.current, scene2View, 1);
         } else {
           applyView(app1Ref.current, heroView);
-          applyView(appAltRef.current, heroView);
+          applyView(appAltRef.current, heroAltView);
           l2Desktop().forEach((e) => applyView(e.app, scene2View));
         }
       };

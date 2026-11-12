@@ -4,15 +4,24 @@ import { INTRO_VIDEO } from "../../data/introVideo";
 import { getLenis } from "../../hooks/useLenis";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 
-const INK = "text-[rgb(var(--hero-ink))]";
-const INK_2 = "text-[rgb(var(--hero-ink-2))]";
-
 /** 90 -> "1:30". */
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
 
+// How many videos the tile offers. The design's "[N] VIDEOS" points at a video
+// gallery that isn't built yet; today there is the intro alone.
+const VIDEO_COUNT = 1;
+const VIDEO_COUNT_LABEL = `${VIDEO_COUNT} VIDEO${VIDEO_COUNT === 1 ? "" : "S"}`;
+
+const PLAY = (
+  <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true" className="crt-play">
+    <path d="M14 10 L34 22 L14 34 Z" fill="none" stroke="currentColor" strokeWidth="2" />
+  </svg>
+);
+
 /**
- * Ø1.1: the intro video tile. The thumbnail is a muted looping preview (the
- * poster with reduced motion); clicking it opens the player.
+ * Ø1.1, CH.01 · README TOUR: a dossier frame with nodes (Hero.dc.html). The
+ * thumbnail is a muted looping preview in the CRT palette (the poster with
+ * reduced motion); WATCH THE TOUR opens the player.
  */
 export const IntroTile = ({ ref }: { ref?: Ref<HTMLDivElement> }) => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
@@ -32,57 +41,91 @@ export const IntroTile = ({ ref }: { ref?: Ref<HTMLDivElement> }) => {
     if (armed && !reduced) previewRef.current?.play().catch(() => {});
   }, [armed, reduced]);
 
-  // left-[112px]: the top bar's MSSE:// sits on the same edge (ScrollScene.tsx).
   return (
     <div
       ref={ref}
       data-testid="hero-intro-tile"
-      className="absolute left-[112px] top-[44.4%] w-[184px]"
+      className="crt-frame absolute left-16 top-[33.3%] w-[300px]"
+      onPointerEnter={() => setArmed(true)}
     >
+      {(
+        [
+          "left-[-4px] top-[-4px]",
+          "right-[-4px] top-[-4px]",
+          "bottom-[-4px] left-[-4px]",
+          "bottom-[-4px] right-[-4px]",
+        ] as const
+      ).map((pos) => (
+        <span key={pos} aria-hidden="true" className={`crt-node ${pos}`} />
+      ))}
+      <div className="flex h-10 items-center justify-between border-b border-crt-line px-3.5 font-vt text-[20px] tracking-[0.12em]">
+        <span className="text-[var(--crt-row-value)]">CH.01 · README TOUR</span>
+        <span aria-hidden="true" className="crt-term__dots">
+          <span />
+          <span />
+          <span />
+        </span>
+      </div>
+      <div className="relative m-3.5 h-[152px] overflow-hidden border border-crt-line [background:var(--crt-media)]">
+        <video
+          key={reduced ? "still" : "loop"}
+          ref={previewRef}
+          src={INTRO_VIDEO.src}
+          poster={INTRO_VIDEO.poster}
+          muted
+          loop
+          playsInline
+          preload={armed ? "metadata" : "none"}
+          aria-hidden="true"
+          tabIndex={-1}
+          onLoadedMetadata={(e) => {
+            const d = e.currentTarget.duration;
+            if (Number.isFinite(d) && d > 0) setLength(clock(d));
+          }}
+          className="crt-media-filter h-full w-full object-cover"
+        />
+        <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
+          {PLAY}
+        </span>
+        <span aria-hidden="true" className="crt-scanlines crt-scanlines--media absolute inset-0" />
+      </div>
+      <div className="flex items-center justify-between px-3.5 pb-3.5">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          onFocus={() => setArmed(true)}
+          aria-haspopup="dialog"
+          aria-label={`${INTRO_VIDEO.title}${length ? ` (${length})` : ""}`}
+          data-testid="hero-intro-open"
+          className="crt-button min-h-11 px-3.5 text-[21px]"
+        >
+          WATCH THE TOUR
+        </button>
+        <span className="font-mono text-[11px] text-crt-dim">[{VIDEO_COUNT_LABEL}]</span>
+      </div>
+      {open && <IntroPlayer reduced={reduced} onClose={() => setOpen(false)} />}
+    </div>
+  );
+};
+
+/** Phones: WATCH THE VIDEOS (HeroM.dc.html), opening the same player. */
+export const IntroButtonPhone = () => {
+  const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-[22px] flex justify-center">
       <button
         type="button"
         onClick={() => setOpen(true)}
-        onPointerEnter={() => setArmed(true)}
-        onFocus={() => setArmed(true)}
         aria-haspopup="dialog"
-        aria-label={`${INTRO_VIDEO.title}${length ? ` (${length})` : ""}`}
+        aria-label={INTRO_VIDEO.title}
         data-testid="hero-intro-open"
-        className="group block w-full cursor-pointer text-left"
+        className="crt-button hero-bar-in pointer-events-auto flex min-h-11 items-center gap-2.5 px-[18px] text-[21px] tracking-[0.14em]"
       >
-        <span className="relative block h-[104px] overflow-hidden bg-[#121417] shadow-[0_16px_30px_-14px_rgba(10,14,20,0.6)]">
-          <video
-            key={reduced ? "still" : "loop"}
-            ref={previewRef}
-            src={INTRO_VIDEO.src}
-            poster={INTRO_VIDEO.poster}
-            muted
-            loop
-            playsInline
-            preload={armed ? "metadata" : "none"}
-            aria-hidden="true"
-            tabIndex={-1}
-            onLoadedMetadata={(e) => {
-              const d = e.currentTarget.duration;
-              if (Number.isFinite(d) && d > 0) setLength(clock(d));
-            }}
-            className="h-full w-full object-cover"
-          />
-          <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,12,15,0)_40%,rgba(10,12,15,0.55)_100%)]" />
-          <span className="absolute left-1/2 top-1/2 -ml-[17px] -mt-[17px] flex h-[34px] w-[34px] items-center justify-center rounded-full bg-white/[0.92] transition-transform duration-200 group-hover:scale-110 motion-reduce:transition-none">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="#0B0D10" aria-hidden="true">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </span>
-          {length && (
-            <span className="absolute bottom-[5px] right-[6px] font-mono text-[9px] text-[#E9EDF1]">
-              [ {length} ]
-            </span>
-          )}
-        </span>
-        <span className={`mt-[9px] block text-[12px] leading-[1.45] ${INK}`}>
-          <span className="block font-medium">{INTRO_VIDEO.title}</span>
-          <span className={`block ${INK_2}`}>{INTRO_VIDEO.subtitle}</span>
-        </span>
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
+          <path d="M3 2 L12 7 L3 12 Z" fill="none" stroke="currentColor" strokeWidth="1.6" />
+        </svg>
+        WATCH THE VIDEOS
       </button>
       {open && <IntroPlayer reduced={reduced} onClose={() => setOpen(false)} />}
     </div>
@@ -125,14 +168,14 @@ const IntroPlayer = ({ reduced, onClose }: { reduced: boolean; onClose: () => vo
         // The dialog box fills the screen; a click on it (not on the player) is outside.
         if (e.target === e.currentTarget) dialogRef.current?.close();
       }}
-      className="intro-dialog fixed inset-0 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center bg-transparent p-6 backdrop:bg-[rgba(8,10,13,0.82)] backdrop:backdrop-blur-[6px]"
+      className="intro-dialog fixed inset-0 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center bg-transparent p-6 backdrop:bg-[rgba(2,4,9,0.86)] backdrop:backdrop-blur-[6px]"
     >
       <div className="relative w-full max-w-[1100px]">
         <button
           type="button"
           onClick={() => dialogRef.current?.close()}
           data-testid="intro-close"
-          className="absolute -top-12 right-0 flex h-10 items-center gap-2 px-1 font-display text-[14px] uppercase tracking-[0.32em] text-[#E9EDF1] hover:text-white"
+          className="absolute -top-12 right-0 flex h-10 items-center gap-2 px-1 font-vt text-[20px] uppercase tracking-[0.2em] text-[#C8ECFE] hover:text-[#EEF8FF]"
         >
           Close
           <svg
