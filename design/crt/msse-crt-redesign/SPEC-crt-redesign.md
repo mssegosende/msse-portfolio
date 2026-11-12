@@ -28,6 +28,7 @@ Section ↔ file:
 | About | `About.dc.html` | `AboutLight.dc.html` | `AboutM.dc.html` | `AboutMLight.dc.html` |
 | Contact + footer | `Contact.dc.html` | `ContactLight.dc.html` | `ContactM.dc.html` | `ContactMLight.dc.html` |
 | Tokens / type / effects sheet | `System.dc.html` | | | |
+| Menu (dock) + section index | `Menu.dc.html` (both themes, desktop + mobile) | | | |
 
 The `Full*.dc.html` / `MobileFull*.dc.html` files only stack the sections to
 show the whole page; they hold no design of their own.
@@ -111,18 +112,41 @@ Glow in light = a soft halo, not bloom:
 - Mobile (`HeroM*.dc.html`): wordmark on top, robot under it, BUILD THE FUTURE, a `WATCH THE VIDEOS` button (the gallery link from `spec-video-gallery`), SCROLL, SKIP INTRO.
 - `HeroAscii.dc.html` is an **alternative** (the robot drawn in characters). Not approved; don't build it.
 
+## 2b. Menu (dock) and section index — same structure, new look
+
+`Menu.dc.html` (dark and light, desktop and mobile). Nothing changes in
+`NavigationDock.tsx` / `SectionIndex.tsx` behavior, items, order, test ids,
+aria labels or position (dock bottom center; index on the right edge). Only
+the styling:
+
+- Dock: frame with nodes (1px `--crt-line`, corner dots), panel fill
+  `--crt-panel` + the current blur. `MSSE://` in Michroma with the label glow.
+  Links in VT323 21px, 0.14em, icon + label (icons only below `md`, as today).
+  Active link: `--crt-title` text with glow, 1px `--crt-line` border and a
+  faint fill. Divider: 1px `--crt-line`.
+- Theme toggle: dashed `--crt-line` border, VT323 label (`LIGHT` / `DARK`).
+- INITIATE: filled button like the contact SEND (dark: `#DAF8FF` with dark
+  text and glow; light: `#0E2C4C` with paper text).
+- Section index: JetBrains Mono, sub-items smaller, `--crt-dim`; the active
+  one in `--crt-title` with glow and a short glowing tick. PAUSE: VT323 in a
+  `--crt-line` box.
+- Touch targets stay ≥ 44px.
+
+Do it in phase 2 (shared files: session A).
+
 ## 3. Scene 2 (capabilities) — no robot
 
 - The robot **leaves** at the end of scene 1: fade the Spline wrapper's opacity to 0 (no transform), then **pause its render loop** with the existing "pause 3D when out of view" mechanism. This frees the GPU for the rest of the page.
 - In its place: an **ASCII object** inside crosshair corners. It's text, not WebGL: a `<pre>` (or a 2D canvas) of 76×40 characters (mobile 46×26), JetBrains Mono 12px / 12px line-height (mobile 9px), color `#B9E7FE` with glow.
-  - One shape per step: 01 HEAD → sphere with latitude/longitude lines, 02 HANDS → torus, 03 TORSO → rounded cube. Morph between them in 900 ms (smoothstep).
+  - One shape per step: 01 MIND → sphere with latitude/longitude lines, 02 INTERFACE → torus, 03 ENGINE → rounded cube. Morph between them in 900 ms (smoothstep).
   - Port the renderer from `Main.dc.html` (`sdf`, `ascii`, `wave` methods): ray-marched signed distance fields, ramp `" .\`'-:;~=+*xzXUOZ0#%@"`, light from top-left, ~14 fps tick (70 ms), a 180 ms row glitch every 3.4 s, a moving scan line.
   - `prefers-reduced-motion`: one static frame per step, no rotation, no glitch.
   - Tie the step to the existing scene 2 timeline beats (which card is active), not to a timer. The auto-advance in the design is only for the mock.
 - Title top-left (`02 // CAPABILITIES`, `WHAT THE CORE RUNS ON`), `STATUS: ONLINE` top-right, `STACK` background word.
-- **Capability card → option A "Dossier"** (replaces the graphite bezel card in `CapabilityCard.tsx`). Layout in `Main.dc.html`: header `SUBSYSTEM 01` + small icon; a row with the big Michroma number boxed with corner brackets on the left and part/title/body on the right; data rows `FUNCTION`, `SHIPPED IN`, `STACK` (chips); an oscilloscope wave at the bottom with `SIG · HEAD`, `FRAME 000123`, `LINK · MSSE://HEAD`.
+- **Capability card → option A "Dossier"** (replaces the graphite bezel card in `CapabilityCard.tsx`). Layout in `Main.dc.html`: header `SUBSYSTEM 01` + small icon; a row with the big Michroma number boxed with corner brackets on the left and part/title/body on the right; data rows `FUNCTION`, `SHIPPED IN`, `STACK` (chips); an oscilloscope wave at the bottom with `SIG · MIND`, `FRAME 000123`, `LINK · MSSE://MIND`.
+  - **No more body parts in scene 2.** The robot is gone, so the HEAD / HANDS / TORSO labels go too. Rename the part labels (rail, card subtitle, `SIG ·` / `LINK ·` tags, any `part` field in `portfolioData.ts`) to: AI Engineering → `MIND` (`THE MIND`), Frontend → `INTERFACE` (`THE INTERFACE`), Backend → `ENGINE` (`THE ENGINE`). Scene 1 keeps `[core.head]`: the robot is still there.
   - New data per capability: `function` and `shippedIn`. The values in the design are drafts: **show María Sol the three lists before committing.** Body text stays the one in `portfolioData.ts`.
-- Rail `01 HEAD · 02 HANDS · 03 TORSO` under the ASCII object, SKIP INTRO bottom center.
+- Rail `01 MIND · 02 INTERFACE · 03 ENGINE` under the ASCII object, SKIP INTRO bottom center.
 - Mobile (`Mobile*.dc.html`): one card at a time under the ASCII object, rail above the card.
 
 ## 4. Projects
@@ -184,7 +208,7 @@ For the inverted variant, put `filter: invert(1) url(#crt-dark)` (CSS filters ch
 ## 8. Phases (commit after each, report, María Sol deploys)
 
 1. **Tokens, fonts, overlays, SVG filters** (shared files: session A only). Both themes. Nothing else changes yet.
-2. **Scene 1**: robot treatment (measure), wordmark, HUD frames, mobile.
+2. **Scene 1 + menu**: robot treatment (measure), wordmark, HUD frames, the dock and section index restyle (§2b), mobile.
 3. **Scene 2**: robot leaves + render loop paused, ASCII object, dossier card, rail. Show María Sol the `function` / `shippedIn` lists first.
 4. **Projects**: cards, media filter + invert flags + glitch (measure), mobile carousel.
 5. **About + Contact + footer**.

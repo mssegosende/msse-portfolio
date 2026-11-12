@@ -193,9 +193,9 @@ class Component extends DCLogic {
     const k0 = Math.max(0, Math.min(1, (s.t - s.m0) / 900));
     const k = k0 * k0 * (3 - 2 * k0);
     const CAPS = [
-      { num: '01', short: 'HEAD', part: 'THE HEAD', title: 'AI ENGINEERING', funcShort: 'AGENTS · EVALS', shipped: 'BLAZE · LYNX', text: 'Multi-agent pipelines and LLM features that live inside real products, with evals so I know when they break.', chips: ['Python', 'LangGraph', 'Gemini API', 'Evals'] },
-      { num: '02', short: 'HANDS', part: 'THE HANDS', title: 'FRONTEND', funcShort: 'MOTION · 3D', shipped: 'BLAZE · MARVEL', text: 'Interfaces that feel physical: scroll-driven motion, 3D scenes and editors that stay fast on a phone.', chips: ['React', 'TypeScript', 'Vite', 'GSAP'] },
-      { num: '03', short: 'TORSO', part: 'THE TORSO', title: 'BACKEND', funcShort: 'APIS · DATA', shipped: 'ETHOS · THIS SITE', text: 'APIs with clear contracts: validation at the edge, rate limits, and services that stay boring in production.', chips: ['FastAPI', 'Python', 'PostgreSQL', 'MongoDB'] }
+      { num: '01', short: 'MIND', part: 'THE MIND', title: 'AI ENGINEERING', funcShort: 'AGENTS · EVALS', shipped: 'BLAZE · LYNX', text: 'Multi-agent pipelines and LLM features that live inside real products, with evals so I know when they break.', chips: ['Python', 'LangGraph', 'Gemini API', 'Evals'] },
+      { num: '02', short: 'INTERFACE', part: 'THE INTERFACE', title: 'FRONTEND', funcShort: 'MOTION · 3D', shipped: 'BLAZE · MARVEL', text: 'Interfaces that feel physical: scroll-driven motion, 3D scenes and editors that stay fast on a phone.', chips: ['React', 'TypeScript', 'Vite', 'GSAP'] },
+      { num: '03', short: 'ENGINE', part: 'THE ENGINE', title: 'BACKEND', funcShort: 'APIS · DATA', shipped: 'ETHOS · THIS SITE', text: 'APIs with clear contracts: validation at the edge, rate limits, and services that stay boring in production.', chips: ['FastAPI', 'Python', 'PostgreSQL', 'MongoDB'] }
     ];
     const steps = CAPS.map((c, i) => ({ n: c.num, label: c.short, active: i === s.step, idle: i !== s.step, pick: () => this.go(i) }));
     return {
