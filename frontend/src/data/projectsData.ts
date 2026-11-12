@@ -42,6 +42,13 @@ export interface ShowcaseProject {
   seconds: number;
   /** Static art behind the clip (poster while it loads, and the folder back panel). */
   art: string;
+  /**
+   * CRT media effect (SPEC §4): invert the clip before the palette filter so
+   * the screen glows on the ground. A recording of a light UI inverts in dark;
+   * one of a dark UI inverts in light.
+   */
+  invertDark?: boolean;
+  invertLight?: boolean;
 }
 
 const art = (from: number, hi: string, lo: string) =>
@@ -69,6 +76,7 @@ export const showcaseProjects: ShowcaseProject[] = [
     startAt: 14,
     seconds: 24.7,
     art: art(210, "24% 30%", "80% 76%"),
+    invertDark: true,
   },
   {
     id: "alphecca",
@@ -86,6 +94,7 @@ export const showcaseProjects: ShowcaseProject[] = [
     startAt: 8,
     seconds: 27,
     art: art(120, "70% 28%", "22% 80%"),
+    invertLight: true,
   },
   {
     id: "polaris",
@@ -113,6 +122,7 @@ export const showcaseProjects: ShowcaseProject[] = [
     startAt: 7,
     seconds: 18.5,
     art: art(300, "40% 70%", "78% 24%"),
+    invertDark: true,
   },
   {
     id: "lynx",
@@ -134,6 +144,7 @@ export const showcaseProjects: ShowcaseProject[] = [
     startAt: 1,
     seconds: 15,
     art: art(30, "82% 62%", "20% 30%"),
+    invertDark: true,
   },
   {
     id: "ethos",
@@ -155,6 +166,7 @@ export const showcaseProjects: ShowcaseProject[] = [
     startAt: 10,
     seconds: 21.8,
     art: art(160, "30% 64%", "74% 30%"),
+    invertLight: true,
   },
   {
     id: "marvel-characters",
@@ -173,6 +185,7 @@ export const showcaseProjects: ShowcaseProject[] = [
     startAt: 0,
     seconds: 22,
     art: art(250, "62% 70%", "26% 22%"),
+    invertLight: true,
   },
 ];
 

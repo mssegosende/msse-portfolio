@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useIsPresent } from "framer-motion";
 import type { ShowcaseProject } from "@/data/projectsData";
 import { seekToStart } from "./clip";
-import s from "./projects.module.css";
+import { ProjectMedia } from "./ProjectMedia";
 
 const PAUSE_ICON = "M6 5h4v14H6zM14 5h4v14h-4z";
 const PLAY_ICON = "M8 5v14l11-7z";
@@ -124,30 +124,31 @@ export const GifPlayer = ({
 
   return (
     <div
-      className={`${s.player} ${compact ? s.compact : ""}`}
-      style={{ background: project.art }}
+      className={`crt-player relative ${compact ? "crt-player--compact" : ""}`}
       data-testid={`project-player-${project.id}`}
     >
-      {!failed && (
-        <video
-          ref={videoRef}
-          className={s.video}
-          src={project.media}
-          poster={project.poster}
-          muted
-          playsInline
-          preload={preload}
-          // Always looping: the hand-over comes from the loop tracking above.
-          loop
-          onError={() => setFailed(true)}
-          aria-hidden="true"
-          tabIndex={-1}
-        />
-      )}
-      <div className={s.controls}>
+      <ProjectMedia project={project} corner={compact ? 16 : 26} inset={compact ? 10 : 18}>
+        {!failed && (
+          <video
+            ref={videoRef}
+            className="absolute inset-0 h-full w-full object-cover"
+            src={project.media}
+            poster={project.poster}
+            muted
+            playsInline
+            preload={preload}
+            // Always looping: the hand-over comes from the loop tracking above.
+            loop
+            onError={() => setFailed(true)}
+            aria-hidden="true"
+            tabIndex={-1}
+          />
+        )}
+      </ProjectMedia>
+      <div className="crt-player__controls">
         <button
           type="button"
-          className={s.toggle}
+          className="crt-player__toggle"
           onClick={onToggle}
           aria-label={paused ? "Play the project reel" : "Pause the project reel"}
           data-testid="project-reel-toggle"
@@ -163,10 +164,10 @@ export const GifPlayer = ({
           </svg>
           {paused ? "PLAY" : "PAUSE"}
         </button>
-        <div className={s.track} aria-hidden="true">
-          <div ref={barRef} className={s.bar} />
+        <div className="crt-player__track" aria-hidden="true">
+          <div ref={barRef} className="crt-player__bar" />
         </div>
-        <span className={s.next}>NEXT · {nextName}</span>
+        <span className="crt-player__next">NEXT · {nextName}</span>
       </div>
     </div>
   );

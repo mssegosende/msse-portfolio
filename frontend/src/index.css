@@ -1316,3 +1316,227 @@ textarea:-webkit-autofill {
   bottom: 22px;
   transform: translateX(-50%);
 }
+
+/* ---- CRT redesign phase 4: projects ---- */
+
+/* Inverted recordings: the screen glows on the ground (SPEC §4). CSS filters
+   chain left to right: invert, then the palette. */
+.crt-media-filter.crt-inv-light {
+  filter: invert(1) url(#crt-light);
+}
+:root[data-theme="dark"] .crt-media-filter.crt-inv-dark {
+  filter: invert(1) url(#crt-dark);
+}
+.crt-media {
+  background: var(--crt-media);
+}
+.crt-media__corner {
+  border-color: var(--crt-node);
+  pointer-events: none;
+}
+/* The interference glitch: ~150 ms of offset slices every 4.2 s. */
+.crt-glitch {
+  opacity: 0;
+  pointer-events: none;
+  animation: crt-glitch 4.2s steps(1, end) infinite;
+}
+@keyframes crt-glitch {
+  0%,
+  96.4% {
+    opacity: 0;
+  }
+  96.5%,
+  99.9% {
+    opacity: 1;
+  }
+}
+
+/* The reel player's controls: PAUSE in a line box, the progress line, NEXT. */
+.crt-player__controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 26px 14px 12px;
+  background: linear-gradient(180deg, rgba(2, 4, 9, 0) 0%, rgba(2, 4, 9, 0.78) 70%);
+}
+.crt-player__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(125, 198, 246, 0.5);
+  background: rgba(3, 9, 18, 0.6);
+  color: #daf8ff;
+  font-family: "VT323", monospace;
+  font-size: 19px;
+  letter-spacing: 0.14em;
+}
+.crt-player__toggle:hover {
+  border-color: #d4f2ff;
+}
+.crt-player__toggle:focus-visible {
+  outline: 2px solid #d4f2ff;
+  outline-offset: 2px;
+}
+.crt-player__track {
+  flex: 1;
+  min-width: 24px;
+  height: 2px;
+  background: rgba(125, 198, 246, 0.3);
+}
+.crt-player__bar {
+  width: 0;
+  height: 100%;
+  background: #daf8ff;
+  box-shadow: 0 0 6px #6ebaef;
+}
+.crt-player__next {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-family: "VT323", monospace;
+  font-size: 18px;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
+  text-align: right;
+  color: #c8ecfe;
+}
+.crt-player--compact .crt-player__controls {
+  gap: 10px;
+  padding: 18px 10px 8px;
+}
+.crt-player--compact .crt-player__toggle {
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: 17px;
+}
+.crt-player--compact .crt-player__next {
+  font-size: 16px;
+}
+
+/* Section pill, background word, names, status. */
+.crt-pill {
+  border: 1px solid var(--crt-line);
+  color: var(--crt-row-value);
+}
+.crt-bg-word {
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  color: rgba(31, 95, 175, 0.035);
+}
+:root[data-theme="dark"] .crt-bg-word {
+  color: rgba(108, 185, 238, 0.046);
+}
+.crt-name {
+  color: var(--crt-title);
+  text-shadow: var(--crt-glow-label);
+}
+:root[data-theme="dark"] .crt-name {
+  text-shadow:
+    0 0 3px #eef8ff,
+    0 0 16px rgba(108, 185, 238, 0.65);
+}
+:root[data-theme="dark"] .crt-name--sm {
+  text-shadow:
+    0 0 2px #eef8ff,
+    0 0 12px rgba(108, 185, 238, 0.585);
+}
+.crt-status {
+  color: #486079;
+}
+:root[data-theme="dark"] .crt-status {
+  color: #8dd1fa;
+}
+.crt-status__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--crt-title);
+  box-shadow: var(--crt-node-glow);
+}
+.crt-link {
+  color: var(--crt-text);
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+.crt-link + .crt-link {
+  border-left: 1px solid var(--crt-line);
+}
+.crt-link:hover {
+  color: var(--crt-title);
+  background: rgba(31, 95, 175, 0.06);
+}
+:root[data-theme="dark"] .crt-link:hover {
+  background: rgba(108, 185, 238, 0.08);
+}
+.crt-chip--sm {
+  padding: 3px 9px;
+  font-size: 11px;
+}
+.crt-prompt {
+  color: #718498;
+}
+:root[data-theme="dark"] .crt-prompt {
+  color: #60aee6;
+}
+.crt-cursor {
+  display: inline-block;
+  width: 9px;
+  height: 16px;
+  vertical-align: -3px;
+  background: var(--crt-title);
+  box-shadow: var(--crt-node-glow);
+  animation: caret-blink 1.1s step-end infinite;
+}
+
+/* Phone carousel. */
+.crt-carousel {
+  gap: 14px;
+  padding: 0 20px 6px;
+  scroll-padding-left: 20px;
+}
+.crt-slide {
+  flex: 0 0 min(310px, calc(100vw - 60px));
+  min-width: 0;
+  height: 640px;
+  scroll-snap-align: start;
+}
+.crt-pager {
+  width: 8px;
+  height: 3px;
+  background: var(--crt-line);
+}
+.crt-pager--on {
+  width: 18px;
+  background: var(--crt-node);
+  box-shadow: var(--crt-node-glow);
+}
+
+/* The featured card's hand-over. */
+.crt-fade-in {
+  animation: crt-fade-in 0.5s ease both;
+}
+@keyframes crt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-glitch {
+    display: none;
+  }
+  .crt-cursor {
+    animation: none;
+  }
+  .crt-fade-in {
+    animation: none;
+  }
+}
