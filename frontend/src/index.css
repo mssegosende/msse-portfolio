@@ -639,9 +639,6 @@ textarea:-webkit-autofill {
     transform: translateX(-50%);
   }
 }
-.neon-sep {
-  padding: 0 0.28em;
-}
 /* Bad tubes: each letter drops out briefly, twice in a row now and then, on
    its own duration and delay (HeroHud.tsx). */
 .neon-tube {
@@ -750,7 +747,8 @@ textarea:-webkit-autofill {
   }
 }
 
-/* Phones: the robot fades into the ground just above the Ø1 counter (and the
+/* Phones: the robot fades into the ground just above BUILD THE FUTURE (CRT:
+   the headline sits on the ground, legible in both themes), and the
    runtime's corner badge with it), 200px from the bottom on any phone height,
    so taller phones get more robot, not a grey band. Opaque down to 554px at
    844 (María Sol, 9 Nov): the bigger body covers both MSSE rows (to 552px),
@@ -759,9 +757,9 @@ textarea:-webkit-autofill {
   --fade: linear-gradient(
     180deg,
     #000 0,
-    #000 calc(100% - 290px),
-    rgba(0, 0, 0, 0.55) calc(100% - 240px),
-    rgba(0, 0, 0, 0) calc(100% - 200px)
+    #000 calc(100% - 330px),
+    rgba(0, 0, 0, 0.55) calc(100% - 290px),
+    rgba(0, 0, 0, 0) calc(100% - 252px)
   );
   -webkit-mask-image: var(--fade);
   mask-image: var(--fade);

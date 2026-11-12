@@ -86,6 +86,9 @@ for (const [name, device] of [
     test("normal motion: scrolling through reaches every scene's visible state", async ({
       page,
     }) => {
+      // ~30 scroll steps through a page that now runs more loops (the bio's
+      // typing, the ASCII object): alone ~30 s, longer beside other workers.
+      test.setTimeout(120_000);
       await blockSpline(page);
       await page.goto("/");
       await expect(page.locator(".pin-spacer")).toBeAttached();
@@ -320,6 +323,8 @@ test.describe("desktop window resize on scene 2, the pin", () => {
   test.use({ viewport: DESKTOP });
 
   test("keeps the point of the sequence at every size of a resize drag", async ({ page }) => {
+    // 150 resize steps, each re-fitting the fluid scene blocks: ~30 s alone.
+    test.setTimeout(120_000);
     await blockSpline(page);
     await openHome(page);
     await scrollToPin(page, FIRST_CARD);

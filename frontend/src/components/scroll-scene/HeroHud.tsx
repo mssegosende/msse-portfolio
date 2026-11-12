@@ -21,7 +21,7 @@ const tube = (n: number) => {
 
 const COPIES = 3;
 
-/** One run of the sign: MSSE · MSSE · MSSE ·, every letter its own tube. */
+/** One run of the sign: MSSE MSSE MSSE, every letter its own tube. */
 const NeonRun = ({ run }: { run: number }) => (
   <span className="flex shrink-0">
     {Array.from({ length: COPIES }, (_, c) => (
@@ -31,7 +31,9 @@ const NeonRun = ({ run }: { run: number }) => (
             {ch}
           </span>
         ))}
-        <span className="neon-sep">·</span>
+        {/* A plain space between copies (a real one: the flex row would drop
+            a bare whitespace). */}
+        <span className="whitespace-pre">{" "}</span>
       </span>
     ))}
   </span>

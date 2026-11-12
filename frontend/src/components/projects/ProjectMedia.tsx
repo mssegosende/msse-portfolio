@@ -44,7 +44,10 @@ export const ProjectMedia = ({
         className={`crt-media-filter ${inv} absolute inset-0`}
         style={{ background: project.art }}
       >
-        {!children && project.poster && (
+        {/* The poster always stays under the clip: swapping one for the other
+            on hover removed the element under the pointer mid-click, and the
+            browser dropped the click. */}
+        {project.poster && (
           <img
             src={project.poster}
             alt=""
