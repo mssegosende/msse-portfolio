@@ -61,6 +61,20 @@ export interface ScreenRect {
   height: number;
 }
 
+// The canvas's box on screen, re-read a few times a second: reading it every
+// frame forced a layout of the whole page each frame (perf/crt-r103.json).
+// It moves only with the slow parallax, and the crosshair eases anyway.
+const RECT_MS = 250;
+const rects = new WeakMap<object, { at: number; rect: DOMRect }>();
+const canvasRect = (canvas: HTMLCanvasElement): DOMRect => {
+  const now = performance.now();
+  const hit = rects.get(canvas);
+  if (hit && now - hit.at < RECT_MS) return hit.rect;
+  const rect = canvas.getBoundingClientRect();
+  rects.set(canvas, { at: now, rect });
+  return rect;
+};
+
 /** The head's box on screen (client px), or null when it can't be read. */
 export const headScreenRect = (app: SplineApp | null | undefined): ScreenRect | null => {
   if (!app?.canvas) return null;
@@ -69,7 +83,7 @@ export const headScreenRect = (app: SplineApp | null | undefined): ScreenRect | 
   if (!head || !cam?.matrixWorldInverse || !cam.projectionMatrix) return null;
   const box = head.mesh.geometry?.boundingBox;
   if (!box) return null;
-  const rect = app.canvas.getBoundingClientRect();
+  const rect = canvasRect(app.canvas);
   if (!rect.width || !rect.height) return null;
   let x0 = Infinity;
   let y0 = Infinity;

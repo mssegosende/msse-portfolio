@@ -85,8 +85,11 @@ export const IntroTile = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale
               const d = e.currentTarget.duration;
               if (Number.isFinite(d) && d > 0) setLength(clock(d));
             }}
-            className="crt-media-filter h-full w-full object-cover"
+            className="h-full w-full object-cover"
           />
+          {/* The palette as a small blend layer over the clip, like the robot's:
+            an SVG filter on a playing video cost scene 1 frames. */}
+          <span aria-hidden="true" className="crt-tile-tint absolute inset-0" />
           <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
             {PLAY}
           </span>

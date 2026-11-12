@@ -167,6 +167,8 @@ export const useHeroTimeline = ({
     onFailRef.current = onFail;
   });
   const applyGazeRef = useRef<(() => void) | null>(null);
+  // Whether scene 1 still shows (the crosshair tracks the head only then).
+  const scene1ShownRef = useRef<{ on: boolean } | null>(null);
   const heroEndRef = useRef(0);
   // Normalized cursor over the hero (-0.5..0.5), for the heads.
   const mouseNRef = useRef({ x: 0, y: 0 });
@@ -547,22 +549,23 @@ export const useHeroTimeline = ({
       // this same ticker; only while scene 1 shows. A transform and a size on
       // the overlay's own box, never on the canvas.
       const cross = { x: 0, y: 0, w: 0, h: 0, on: false };
+      // Set from the timeline: scene 1 is on screen until its HUD leaves.
+      const scene1Shown = { on: true };
+      scene1ShownRef.current = scene1Shown;
       const trackHead = () => {
         const box = crosshairRef.current;
-        const sec = sectionRef.current;
-        const bar = topBarRef.current;
-        if (!box || !sec || !heroVisibleRef.current) return;
-        if (bar && Number(gsap.getProperty(bar, "opacity")) < 0.01) return;
+        // Scene 1 only (the timeline's flag), on screen: no style reads here.
+        if (!box || !heroVisibleRef.current || !scene1Shown.on) return;
         const alt = !isMobile && showAltRef.current;
         const r = headScreenRect(alt ? appAltRef.current : app1Ref.current);
         if (!r) return;
-        const s = sec.getBoundingClientRect();
         // The design's box around the head (Hero.dc.html: 360 x 372 around a
         // ~270 x 330 head), centred on it.
         const w = r.width * CROSS_PAD.x;
         const h = r.height * CROSS_PAD.y;
-        const x = r.left - s.left + r.width / 2 - w / 2;
-        const y = Math.max(CROSS_TOP, r.top - s.top + r.height / 2 - h / 2);
+        // The hero is pinned at the top while scene 1 shows: its box is the viewport.
+        const x = r.left + r.width / 2 - w / 2;
+        const y = Math.max(CROSS_TOP, r.top + r.height / 2 - h / 2);
         const k = cross.on && !reduce ? CROSS_EASE : 1;
         cross.x += (x - cross.x) * k;
         cross.y += (y - cross.y) * k;
@@ -573,9 +576,13 @@ export const useHeroTimeline = ({
           box.style.left = "0px";
           box.style.top = "0px";
         }
-        box.style.transform = `translate3d(${cross.x.toFixed(1)}px, ${cross.y.toFixed(1)}px, 0)`;
-        box.style.width = `${cross.w.toFixed(1)}px`;
-        box.style.height = `${cross.h.toFixed(1)}px`;
+        // Write only what moved (a size change is a layout).
+        const t = `translate3d(${cross.x.toFixed(1)}px, ${cross.y.toFixed(1)}px, 0)`;
+        if (box.style.transform !== t) box.style.transform = t;
+        const bw = `${Math.round(cross.w)}px`;
+        const bh = `${Math.round(cross.h)}px`;
+        if (box.style.width !== bw) box.style.width = bw;
+        if (box.style.height !== bh) box.style.height = bh;
       };
       const tick = () => {
         applyGazeAndPose();
@@ -657,6 +664,7 @@ export const useHeroTimeline = ({
         onUpdate: () => {
           // SKIP INTRO turns dark over scene 2's light ground (scene 1 keeps it light).
           if (skipRef.current) skipRef.current.dataset.scene = tl.time() >= XFADE_AT ? "2" : "1";
+          if (scene1ShownRef.current) scene1ShownRef.current.on = tl.time() < XFADE_AT + 0.06;
           const idx = cardIndexAt(tl.time());
           if (idx !== cardIndexRef.current) {
             cardIndexRef.current = idx;

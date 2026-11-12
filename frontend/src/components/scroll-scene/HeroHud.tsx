@@ -43,7 +43,7 @@ const NeonRun = ({ run }: { run: number }) => (
  * MSSE behind the robot: a neon sign (María Sol, 12 Nov). A seamless,
  * endless marquee in one direction (two identical runs sliding by one run's
  * width: never a gap), each letter's tube flickering on its own timing, the
- * glow breathing; a wide halo and a slight softness make it read as distant.
+ * glow breathing; a wide halo and softer letters make it read as distant.
  * Paused while the hero is off screen. Reduced motion: one still, steady MSSE.
  */
 export const HeroWordmark = ({
@@ -57,7 +57,7 @@ export const HeroWordmark = ({
   <div
     ref={ref}
     aria-hidden="true"
-    className={`pointer-events-none absolute inset-x-0 overflow-hidden ${isMobile ? "top-[96px]" : "top-[16.67%]"}`}
+    className={`hero-wordmark--depth pointer-events-none absolute inset-x-0 overflow-hidden ${isMobile ? "top-[96px]" : "top-[16.67%]"}`}
   >
     <div className={`hero-title-in hero-wordmark ${isMobile ? "hero-wordmark--phone" : ""}`}>
       {/* The breathing on its own box: the load fade owns the outer one's animation. */}

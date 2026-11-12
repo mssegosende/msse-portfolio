@@ -140,8 +140,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
 
   // Scene 2 desktop is the 1440 x 900 design scaled to the window (A9's one
   // factor, scene2Scale). The title no longer dodges a giant head: the robot
-  // has left (CRT redesign), so the old title fit (capTitleFit) has nothing to
-  // fit around.
+  // has left (CRT redesign), so the old title fit has nothing to fit around.
   const [viewport, setViewport] = useState(() => ({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -400,8 +399,6 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         </div>
 
         <HeroWordmark ref={wordmarkRef} isMobile={isMobile} />
-        {/* Depth: a soft shade between the sign and the robot. */}
-        <div aria-hidden="true" className="crt-robot-shade absolute inset-0" />
 
         {/* Layer A: the hero scene */}
         <div ref={splineLayerRef} className="absolute inset-0">
