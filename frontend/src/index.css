@@ -1597,9 +1597,11 @@ textarea:-webkit-autofill {
 :root[data-xf="on"] .xf-overlap {
   margin-top: calc(-100vh - var(--xf-vh, 112) * 1vh);
 }
-/* Projects holds its last screen for the crossfade into About. */
+/* Projects holds its last screen for the crossfade into About, after a
+   pause with every card on screen (María Sol, 13 Nov: the last row went
+   straight into the crossfade). */
 :root[data-xf="on"] .xf-tail {
-  height: calc(var(--xf-vh, 112) * 1vh);
+  height: calc(var(--xf-vh, 112) * 1vh + 40vh);
 }
 :root[data-xf="on"] #projects {
   --xf-pin: calc(var(--xf-vh, 112) * 1vh);

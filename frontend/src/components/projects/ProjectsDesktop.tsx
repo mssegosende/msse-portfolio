@@ -20,6 +20,10 @@ import { ProjectMedia } from "./ProjectMedia";
 import { useCrossfade } from "@/hooks/useSectionDissolve";
 
 const N = PROJECTS.length;
+/** The head and the featured card at zoom 1, px (measured at 1440). */
+const FIRST_SCREEN = 800;
+/** Under the content: the dock's height and its gap. */
+const DOCK_ROOM = 96;
 
 const NODES = [
   "left-[-4px] top-[-4px]",
@@ -229,8 +233,10 @@ export const ProjectsDesktop = () => {
   useCrossfade(sectionRef, null, true, -1);
   // The section is the 1440-wide design scaled to the window's width (María
   // Sol, 12 Nov: the cards keep their share of the frame, type and all).
-  const { kw } = useFrame();
-  const zoom = clampScale(kw, 0.7, 2);
+  // Capped by the height so the head and the featured card fit the first
+  // screen, above the dock (María Sol, 13 Nov).
+  const { kw, height } = useFrame();
+  const zoom = clampScale(Math.min(kw, (height - DOCK_ROOM) / FIRST_SCREEN), 0.7, 2);
   // The content's height, for its sticky last screen.
   const holdRef = useRef<HTMLDivElement>(null);
   const [holdH, setHoldH] = useState(900);
@@ -310,7 +316,7 @@ export const ProjectsDesktop = () => {
         style={{ top: `calc(100vh - ${holdH}px - var(--xf-pin, 0px))` }}
       >
         <div
-          className="relative mx-auto flex max-w-[1440px] flex-col gap-14 px-16 pb-20 pt-24"
+          className="relative mx-auto flex max-w-[1440px] flex-col gap-10 px-16 pb-[112px] pt-11"
           style={{ zoom }}
         >
           <div data-xf="head">
