@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { keyClick } from "../lib/sound";
+import { textBlip } from "../lib/sound";
 
 // About's bio as a terminal that types itself (María Sol, 12 Nov): ~35
 // characters a second, each one flickering through 3-6 random glyphs in the
@@ -165,7 +165,7 @@ export const BioTerminal = ({
       }
       return false;
     };
-    // A key click every 2-3 characters (when sound is on).
+    // A digital text blip every 2-3 characters (when sound is on).
     let nextClick = Math.floor(progress.chars) + 2;
     const tick = (now: number) => {
       raf = 0;
@@ -173,7 +173,7 @@ export const BioTerminal = ({
       last = now;
       progress.chars += dt * CPS;
       if (progress.chars >= nextClick && progress.chars < total) {
-        keyClick();
+        textBlip();
         nextClick = Math.floor(progress.chars) + 2 + (Math.random() < 0.5 ? 1 : 0);
       }
       if (draw()) return;

@@ -3,6 +3,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SECTION_XF_VH } from "@/components/scroll-scene/choreography";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { whoosh } from "@/lib/sound";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -105,6 +106,10 @@ export const useCrossfade = (
           anticipatePin: 1,
           invalidateOnRefresh: true,
           refreshPriority: priority,
+          // A soft whoosh as the crossfade begins, either way (when sound is on).
+          onToggle: (self) => {
+            if (self.isActive) whoosh();
+          },
         },
       });
       if (out) {

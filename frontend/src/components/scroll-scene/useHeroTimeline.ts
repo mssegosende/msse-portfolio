@@ -18,6 +18,7 @@ const CROSS_EASE = 0.2;
 import { noteRenderedFrame, prepareToRun } from "../../lib/spline/quality";
 import { REDUCED_MOTION_QUERY } from "../../lib/motion";
 import { scenesIdle } from "../../lib/sceneFocus";
+import { whoosh } from "../../lib/sound";
 import type { SplineApp, ViewTransform } from "../../lib/spline/types";
 import {
   hasThemeReloadPosition,
@@ -733,6 +734,8 @@ export const useHeroTimeline = ({
         { autoAlpha: 0, duration: 0.06 },
         XFADE_AT,
       );
+      // Scene 1 -> 2's whoosh, as the playhead passes the crossfade either way.
+      tl.call(() => whoosh(), undefined, XFADE_AT);
       tl.to(bg1Ref.current, { opacity: 0, duration: XFADE_DURATION }, XFADE_AT);
       tl.to(splineLayerRef.current, { opacity: 0, duration: XFADE_DURATION }, XFADE_AT);
       tl.to(layer2Ref.current, { opacity: 1, duration: XFADE_DURATION }, XFADE_AT);
