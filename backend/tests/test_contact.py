@@ -226,3 +226,23 @@ def test_cors_default_is_the_production_domain_only(monkeypatch):
     monkeypatch.delenv("CORS_ORIGINS")
 
     assert server._cors_origins() == ["https://msse-portfolio.vercel.app"]
+
+
+def test_form_max_lengths_match_the_model():
+    """The form's MAX_LEN (frontend) and the model's max_length (here) agree."""
+    import re
+    from pathlib import Path
+
+    tsx = (Path(__file__).parents[2] / "frontend/src/lib/contactLimits.ts").read_text("utf8")
+    block = re.search(r"export const MAX_LEN = \{(.*?)\}", tsx, re.S).group(1)
+    form = {k: int(v) for k, v in re.findall(r"(\w+): (\d+)", block)}
+    model = {
+        name: next(m.max_length for m in f.metadata if hasattr(m, "max_length"))
+        for name, f in server.ContactMessage.model_fields.items()
+        if any(hasattr(m, "max_length") for m in f.metadata)
+    }
+
+    assert model and all(form[name] == limit for name, limit in model.items()), (form, model)
+    from email_validator.rfc_constants import EMAIL_MAX_LENGTH
+
+    assert form["email"] == EMAIL_MAX_LENGTH  # EmailStr's own limit

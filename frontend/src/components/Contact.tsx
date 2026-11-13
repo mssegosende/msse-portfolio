@@ -13,6 +13,7 @@ import { commandAccepted, textBlip } from "../lib/sound";
 import s from "./Contact.module.css";
 import { useCrossfade } from "@/hooks/useSectionDissolve";
 import { useOwnsCenter } from "@/hooks/useOwnsCenter";
+import { MAX_LEN } from "@/lib/contactLimits";
 
 // Production: same origin (Vercel routes /api/* to the backend service).
 // Dev: the local uvicorn. VITE_BACKEND_URL overrides both.
@@ -123,6 +124,7 @@ interface TerminalFieldProps {
   /** Inline error under the input; marks it invalid. */
   error?: string;
   name?: string;
+  maxLength?: number;
   onChange: (e: FieldChange) => void;
   "data-testid"?: string;
 }
@@ -418,6 +420,7 @@ export const Contact = () => {
                   required
                   error={fieldErrors.name}
                   name="name"
+                  maxLength={MAX_LEN.name}
                   onChange={set("name")}
                   placeholder="your name"
                 />
@@ -429,6 +432,7 @@ export const Contact = () => {
                   required
                   error={fieldErrors.email}
                   name="email"
+                  maxLength={MAX_LEN.email}
                   onChange={set("email")}
                   placeholder="you@company.com"
                 />
@@ -437,6 +441,7 @@ export const Contact = () => {
                   hint="(optional)"
                   data-testid="contact-company-input"
                   value={form.company}
+                  maxLength={MAX_LEN.company}
                   onChange={set("company")}
                   placeholder="organization / studio"
                 />
@@ -446,6 +451,7 @@ export const Contact = () => {
                   type="url"
                   data-testid="contact-linkedin-input"
                   value={form.linkedin}
+                  maxLength={MAX_LEN.linkedin}
                   onChange={set("linkedin")}
                   placeholder="linkedin.com/in/..."
                 />
@@ -458,6 +464,7 @@ export const Contact = () => {
                     required
                     error={fieldErrors.message}
                     name="message"
+                    maxLength={MAX_LEN.message}
                     onChange={set("message")}
                     placeholder="what are you building?"
                   />
@@ -470,6 +477,7 @@ export const Contact = () => {
                 name="website"
                 value={form.website}
                 onChange={set("website")}
+                maxLength={MAX_LEN.website}
                 tabIndex={-1}
                 autoComplete="off"
                 aria-hidden="true"

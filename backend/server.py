@@ -71,6 +71,8 @@ class ContactMessage(BaseModel):
     # never sends is a 422, not silently ignored.
     model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
+    # The max_length values are the form's MAX_LEN (frontend/src/lib/
+    # contactLimits.ts); tests/test_contact.py checks the two match.
     name: str = Field(min_length=2, max_length=100)
     email: EmailStr
     company: Optional[str] = Field(default=None, max_length=100)

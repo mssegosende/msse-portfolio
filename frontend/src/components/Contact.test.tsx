@@ -2,6 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setMediaQuery } from "@/test/matchMedia";
+import { MAX_LEN } from "@/lib/contactLimits";
 import { Contact } from "./Contact";
 
 const fetchMock = vi.fn<typeof fetch>();
@@ -23,6 +24,19 @@ const fillForm = async () => {
 };
 
 describe("Contact", () => {
+  it("caps every field at the backend's limit (MAX_LEN, checked against server.py)", () => {
+    render(<Contact />);
+    for (const field of ["name", "email", "company", "linkedin", "message"] as const)
+      expect(screen.getByTestId(`contact-${field}-input`)).toHaveAttribute(
+        "maxLength",
+        String(MAX_LEN[field]),
+      );
+    expect(document.querySelector('input[name="website"]')).toHaveAttribute(
+      "maxLength",
+      String(MAX_LEN.website),
+    );
+  });
+
   it("footer: GITHUB, LINKEDIN and the credit, the profiles in a new tab, no EMAIL", () => {
     render(<Contact />);
     const linkedin = screen.getByTestId("footer-linkedin-link");
