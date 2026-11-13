@@ -5,6 +5,7 @@ import { getLenis } from "../../hooks/useLenis";
 import { VIEW_CSS_SCALE, applyView } from "../../lib/spline/camera";
 import { BOT_HOME, applyPose } from "../../lib/spline/rig";
 import { headScreenRect } from "../../lib/spline/headScreen";
+import { BLACK_ROBOT, themeModel } from "../../lib/spline/scenes";
 
 // Scene 1's crosshair around the head: its box over the head's projected box
 // (Hero.dc.html: 360 x 372 around a ~270 x 330 head), and how fast it follows.
@@ -527,9 +528,11 @@ export const useHeroTimeline = ({
       const applyGazeAndPose = () => {
         syncPlayback();
         applyGaze();
-        // Phones: the hero's arms in light, layer 2's in dark.
+        // Phones: the black robot's arms (the hero's, in the theme that has
+        // it), layer 2's otherwise.
         if (isMobile) {
-          const arms = !darkModeRef.current ? heroArmsRef.current : armsRef.current;
+          const arms =
+            themeModel(darkModeRef.current) === BLACK_ROBOT ? heroArmsRef.current : armsRef.current;
           if (arms.length) applyPose(arms);
         } else {
           l2Desktop().forEach((e) => e.arms.length && applyPose(e.arms));

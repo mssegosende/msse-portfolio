@@ -460,8 +460,8 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
                             transform: `translate(-50%, -50%) scale(${1 / OVERSAMPLE_1})`,
                           }}
                         >
-                          {/* Losing this mount leaves slot1's robot: showAlt turns off and light mode
-                            shows the silver one. */}
+                          {/* Losing this mount leaves slot1's robot: showAlt turns off and the
+                            silver one shows in both themes. */}
                           <SceneBoundary key={heroAltUrl} name="hero alt" onFail={onAltFail}>
                             <Spline scene={heroAltUrl} onLoad={onAltLoad} />
                           </SceneBoundary>

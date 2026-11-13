@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from "react";
-import { SPLINE_SCENE_URL, SPLINE_SCENE_2_URL } from "../../data/portfolioData";
 import { CAM_FINAL, HERO_CAM_DESKTOP, HERO_CAM_MOBILE, pinCamera } from "../../lib/spline/camera";
 import { collectArms, findBot, placeBot } from "../../lib/spline/rig";
 import { trackRenderQuality } from "../../lib/spline/quality";
 import { canRender3D, releaseGlContext, watchContextLoss } from "../../lib/spline/runtime";
-import { L2_DESKTOP_URLS, themeModel } from "../../lib/spline/scenes";
+import { BLACK_ROBOT, L2_DESKTOP_URLS, SILVER_ROBOT, themeModel } from "../../lib/spline/scenes";
 import type { SceneNode, SplineApp, SplineObject } from "../../lib/spline/types";
 
 /** Scene 2 used to load its own Spline scene (the giant head); the CRT
@@ -50,6 +49,10 @@ export const useHeroScenes = (
   const [deadScenes, setDeadScenes] = useState<Record<string, boolean>>({});
   const markDead = (key: string) => setDeadScenes((d) => (d[key] ? d : { ...d, [key]: true }));
   const readyRef = useRef(false);
+  // Desktop: the alternate mount has drawn (the reveal waits for it when it
+  // is the one showing).
+  const [altLoaded, setAltLoaded] = useState(false);
+  const altLoadedRef = useRef(false);
   // Scenes that have drawn their first frames. Only these get paused: the
   // timeline's playback sync leaves the others alone.
   const settledRef = useRef(new WeakSet<SplineApp>());
@@ -73,8 +76,7 @@ export const useHeroScenes = (
   const heroArmsRef = useRef<SceneNode[]>([]);
   // Kept by the hero IntersectionObserver.
   const heroVisibleRef = useRef(true);
-  // One model per theme throughout: the black robot (scene 1) in light, the
-  // silver one (scene 2) in dark.
+  // One model per theme throughout (lib/spline/scenes: BLACK_ROBOT_IN_DARK).
   //
   // Desktop: layers A and 2 mount both models with fixed keys and the theme only
   // picks which shows, so a toggle never reloads or rebuilds anything.
@@ -85,7 +87,7 @@ export const useHeroScenes = (
   //
   // sceneUrl is constant: it is a timeline dependency, and the phone hero
   // remounts through its key (slot1Url) instead.
-  const sceneUrl = SPLINE_SCENE_2_URL;
+  const sceneUrl = SILVER_ROBOT;
   const mobileModel = themeModel(darkMode);
   const slot1Url = isMobile ? mobileModel : sceneUrl;
   // Phone layer 2 only; desktop layer 2 mounts L2_DESKTOP_URLS.
@@ -95,9 +97,9 @@ export const useHeroScenes = (
   const l2Preferred = themeModel(darkMode);
   const l2VisibleUrl = l2Alive.includes(l2Preferred) ? l2Preferred : l2Alive[0];
 
-  // Desktop only: layer A's black robot, shown in light.
-  const heroAltUrl = SPLINE_SCENE_URL;
-  const showAlt = !isMobile && !darkMode && !deadScenes.alt;
+  // Desktop only: layer A's black robot, shown in the theme that has it.
+  const heroAltUrl = BLACK_ROBOT;
+  const showAlt = !isMobile && themeModel(darkMode) === BLACK_ROBOT && !deadScenes.alt;
 
   // The playback sync runs on the ticker and needs what is visible right now.
   const showAltRef = useRef(showAlt);
@@ -124,6 +126,8 @@ export const useHeroScenes = (
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!readyRef.current) setFailed(true);
+      // A black robot that never arrives gives way to the silver one.
+      else if (!altLoadedRef.current) markDead("alt");
     }, 22000);
     return () => clearTimeout(timeout);
   }, []);
@@ -174,6 +178,8 @@ export const useHeroScenes = (
     trackRenderQuality(app);
     watchContextLoss(app.canvas, () => markDead("alt"));
     afterFirstFrames(() => settledRef.current.add(app));
+    altLoadedRef.current = true;
+    setAltLoaded(true);
   };
 
   // Layer 2 load. "m:" is the phone mount (the theme's model); "d:" the two
@@ -217,7 +223,8 @@ export const useHeroScenes = (
     });
   };
 
-  const revealed = loaded || failed;
+  // The robot fades in once the one on show has loaded.
+  const revealed = (loaded && (!showAlt || altLoaded)) || failed;
   // CRT redesign (SPEC §3): the robot leaves at the end of scene 1 and scene 2
   // shows a text object, so no Spline scene loads for scene 2 any more (it
   // used to mount one per model as soon as the hero loaded). Its loader,

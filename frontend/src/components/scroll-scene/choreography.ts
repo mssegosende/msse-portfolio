@@ -89,7 +89,7 @@ export const heroFraming = (isMobile: boolean, _reduce: boolean, { width, height
     startScale: HERO_SCALE,
     startY: `${y}%`,
     endY: `${y}%`,
-    // Light's black robot (the alt mount): its head slightly bigger than the
+    // The black robot (the alt mount): its head slightly bigger than the
     // silver one's (HeroLight.dc.html), crown at the same height.
     altScale: HERO_SCALE * HERO_ALT_K,
     altY: `${yAt(HERO_SCALE * HERO_ALT_K)}%`,
