@@ -378,7 +378,9 @@ try {
     configs: {},
   };
   for (const [name, cfg] of Object.entries(CONFIGS)) {
-    if (ONLY && !ONLY.includes(name)) continue;
+    // The live site is dark only (THEME_TOGGLE off, R190): the light runs only
+    // when asked for (--only desktop-light,phone-light), on the light-mode branch.
+    if (ONLY ? !ONLY.includes(name) : !cfg.dark) continue;
     const runs = [];
     for (let i = 0; i < RUNS; i++) {
       process.stdout.write(`${name} run ${i + 1}/${RUNS}… `);
