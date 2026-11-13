@@ -118,12 +118,16 @@ export const IntroTile = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale
   );
 };
 
-/** Phones: WATCH THE VIDEOS (HeroM.dc.html), opening the same player. */
+/**
+ * Phones: WATCH THE VIDEOS (HeroM.dc.html), opening the same player (the
+ * intro, until the video gallery exists). Above BUILD THE FUTURE, under the
+ * sign (María Sol, 13 Nov).
+ */
 export const IntroButtonPhone = () => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [open, setOpen] = useState(false);
   return (
-    <div className="mt-[22px] flex justify-center">
+    <div className="mb-[18px] flex justify-center">
       <button
         type="button"
         onClick={() => setOpen(true)}

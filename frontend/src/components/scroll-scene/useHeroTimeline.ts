@@ -455,11 +455,14 @@ export const useHeroTimeline = ({
         });
       };
 
-      // Phone hero head: holds its default direction and wanders around it (two sines
-      // on periods that don't divide each other, eased back).
+      // Phone hero head: no cursor to follow, so it looks around (María Sol,
+      // 13 Nov: the crosshair needs a reason to move). Every 3-5 s a new
+      // target around its default direction (mostly sideways, a little up and
+      // down), eased toward it. Still with reduced motion.
       const HEAD1_BASE = head1BaseRef.current;
       const head1 = { x: HEAD1_BASE.x, y: HEAD1_BASE.y };
-      let head1T = 0;
+      const look1 = { x: HEAD1_BASE.x, y: HEAD1_BASE.y, next: 0 };
+      let head1At = performance.now();
       // Desktop: both layer A heads follow the mouse, written by us. Spline's own
       // look-at only hears the visible canvas, so the hidden head drifted. Same range
       // as the look-at; centre pose until the cursor moves.
@@ -484,11 +487,19 @@ export const useHeroTimeline = ({
         // Phones mount a single model in layer A.
         const h = head1Ref.current;
         if (!h) return;
-        head1T += 0.004;
-        const wy = Math.sin(head1T * 1.7) * 0.075 + Math.sin(head1T * 0.61) * 0.04;
-        const wx = Math.sin(head1T * 1.13) * 0.03;
-        head1.y += (HEAD1_BASE.y + wy - head1.y) * 0.05;
-        head1.x += (HEAD1_BASE.x + wx - head1.x) * 0.05;
+        const now = performance.now();
+        // Real seconds (a hidden tab's long gap counts as one frame).
+        const dt = Math.min(0.1, (now - head1At) / 1000);
+        head1At = now;
+        if (!reduce && now >= look1.next) {
+          look1.y = HEAD1_BASE.y + (Math.random() * 2 - 1) * 0.34;
+          look1.x = HEAD1_BASE.x + (Math.random() * 2 - 1) * 0.1;
+          look1.next = now + 3000 + Math.random() * 2000;
+        }
+        // Eased: ~1.2 s to get most of the way there.
+        const k = 1 - Math.exp(-dt * 2.4);
+        head1.y += (look1.y - head1.y) * k;
+        head1.x += (look1.x - head1.x) * k;
         h.rotation.y = head1.y;
         h.rotation.x = head1.x;
       };

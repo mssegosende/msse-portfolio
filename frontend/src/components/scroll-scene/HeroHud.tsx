@@ -57,7 +57,9 @@ export const HeroWordmark = ({
   <div
     ref={ref}
     aria-hidden="true"
-    className={`hero-wordmark--depth pointer-events-none absolute inset-x-0 overflow-hidden ${isMobile ? "top-[96px]" : "top-[16.67%]"}`}
+    className={`hero-wordmark--depth pointer-events-none absolute inset-x-0 overflow-hidden ${
+      isMobile ? "hero-wordmark--depth-phone top-[186px]" : "top-[16.67%]"
+    }`}
   >
     <div className={`hero-title-in hero-wordmark ${isMobile ? "hero-wordmark--phone" : ""}`}>
       {/* The breathing on its own box: the load fade owns the outer one's animation. */}
@@ -198,6 +200,13 @@ export const SystemCheck = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; sca
   </div>
 );
 
+/**
+ * Phones: the top of WATCH THE VIDEOS and BUILD THE FUTURE (HeroM.dc.html's
+ * 590px less the button), raised on a short screen so the lines and SCROLL
+ * stay above the dock and the browser's bars (svh: the visible height).
+ */
+export const PHONE_HEADLINE_TOP = "min(528px, calc(100svh - 240px))";
+
 /** Ø1.3: BUILD THE FUTURE / ONE SYSTEM AT A TIME, top-right (phones: centred, low). */
 export const HeroHeadline = ({
   ref,
@@ -209,17 +218,21 @@ export const HeroHeadline = ({
   isMobile: boolean;
   /** Desktop: the HUD's scale with the window (22px type, ~1.5vw at 1440). */
   scale?: number;
-  /** Phones: the WATCH THE VIDEOS button under the lines. */
+  /** Phones: the WATCH THE VIDEOS button above the lines. */
   children?: ReactNode;
 }) => (
   <div
     ref={ref}
     className={`hero-headline absolute font-inter font-extralight uppercase tracking-[0.3em] ${
       isMobile
-        ? "inset-x-0 top-[590px] text-center text-[15px] leading-[1.7]"
+        ? "inset-x-0 text-center text-[15px] leading-[1.7]"
         : "right-[4.44vw] top-[6.4vh] text-right text-[22px] leading-[1.6]"
     }`}
+    style={isMobile ? { top: PHONE_HEADLINE_TOP } : undefined}
   >
+    {/* Phones: WATCH THE VIDEOS above the lines (María Sol, 13 Nov: never
+        under the dock). */}
+    {isMobile && children}
     {/* Screen readers get these lines from HeroHeading, the page's h1. */}
     <div aria-hidden="true" className="hero-bar-in" style={isMobile ? undefined : { zoom: scale }}>
       <div data-testid="hero-headline-1" className="text-crt-title crt-glow-label">
@@ -229,7 +242,7 @@ export const HeroHeadline = ({
         One system at a time
       </p>
     </div>
-    {children}
+    {!isMobile && children}
   </div>
 );
 
@@ -252,7 +265,7 @@ const Scroll = ({ ref, isMobile }: { ref?: Ref<HTMLDivElement>; isMobile: boolea
     data-testid="scroll-cue"
     className={`pointer-events-none absolute left-1/2 crt-cue flex w-20 flex-col items-center font-vt uppercase tracking-[0.2em] ${
       isMobile
-        ? "bottom-[calc(env(safe-area-inset-bottom,0px)+64px)] -ml-10 gap-1.5 text-[17px]"
+        ? "bottom-[calc(100vh-100svh+env(safe-area-inset-bottom,0px)+64px)] -ml-10 gap-1.5 text-[17px]"
         : "bottom-[30px] -ml-10 gap-2 text-[20px]"
     }`}
   >

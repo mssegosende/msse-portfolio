@@ -513,41 +513,46 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
             head (they leave together at the crossfade). */}
         <div ref={topBarRef} className="pointer-events-none absolute inset-0">
           <HeadCrosshair ref={crosshairRef} isMobile={isMobile} />
-          {/* The CSS load fade sits on this inner box; GSAP owns the outer one. */}
+          {/* The CSS load fade sits on this inner box; GSAP owns the outer one.
+              Desktop: on BUILD THE FUTURE's first line (María Sol, 13 Nov):
+              the same top, a box as tall as that line (22px at 1.6), the
+              text centred in it, at the same scale. */}
           <div
-            className={`hero-bar-in absolute flex items-center ${
-              isMobile
-                ? "inset-x-5 top-[22px] justify-between"
-                : "left-[4.44vw] top-[6.2vh] gap-[18px]"
-            }`}
-            style={isMobile ? undefined : { zoom: kHud }}
+            className={`absolute ${isMobile ? "inset-x-5 top-[22px]" : "left-[4.44vw] top-[6.4vh]"}`}
           >
-            <span
-              data-testid="hero-brand"
-              className={`font-michroma tracking-[0.08em] text-crt-title crt-glow-label ${
-                isMobile ? "text-[13px]" : "text-[16px]"
+            <div
+              className={`hero-bar-in flex items-center ${
+                isMobile ? "justify-between" : "h-[35.2px] gap-[18px]"
               }`}
-            >
-              {profile.shortMark}
-            </span>
-            <span
-              className={`flex items-center font-vt uppercase text-crt-text ${
-                isMobile
-                  ? "gap-[7px] text-[17px] tracking-[0.12em]"
-                  : "gap-2 text-[20px] tracking-[0.14em]"
-              }`}
+              style={isMobile ? undefined : { zoom: kHud }}
             >
               <span
-                data-testid="hero-status-dot"
-                aria-hidden="true"
-                className={`rounded-full bg-status shadow-[0_0_10px_#F472B6] animate-pulse-dot motion-reduce:animate-none ${
-                  isMobile ? "h-1.5 w-1.5" : "h-[7px] w-[7px]"
+                data-testid="hero-brand"
+                className={`font-michroma tracking-[0.08em] text-crt-title crt-glow-label ${
+                  isMobile ? "text-[13px]" : "text-[16px]"
                 }`}
-              />
-              <span data-testid="hero-status">
-                {isMobile ? profile.status : `STATUS: ${profile.status}`}
+              >
+                {profile.shortMark}
               </span>
-            </span>
+              <span
+                className={`flex items-center font-vt uppercase text-crt-text ${
+                  isMobile
+                    ? "gap-[7px] text-[17px] tracking-[0.12em]"
+                    : "gap-2 text-[20px] tracking-[0.14em]"
+                }`}
+              >
+                <span
+                  data-testid="hero-status-dot"
+                  aria-hidden="true"
+                  className={`rounded-full bg-status shadow-[0_0_10px_#F472B6] animate-pulse-dot motion-reduce:animate-none ${
+                    isMobile ? "h-1.5 w-1.5" : "h-[7px] w-[7px]"
+                  }`}
+                />
+                <span data-testid="hero-status">
+                  {isMobile ? profile.status : `STATUS: ${profile.status}`}
+                </span>
+              </span>
+            </div>
           </div>
         </div>
 

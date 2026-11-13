@@ -462,7 +462,7 @@ textarea:-webkit-autofill {
 .hero-wordmark {
   font-family: "Michroma", sans-serif;
   /* Small enough that the whole word, with its sway, stays on screen. */
-  font-size: 19.5vw;
+  font-size: var(--sign-fs);
   text-align: center;
   line-height: 1;
   letter-spacing: 0.02em;
@@ -480,15 +480,11 @@ textarea:-webkit-autofill {
     0 0 34px rgba(108, 185, 238, 0.8),
     0 0 110px rgba(108, 185, 238, 0.45);
 }
-/* Phones: the same share of the width, always whole on screen. */
-.hero-wordmark--phone {
-  font-size: 19.5vw;
-}
 :root[data-theme="dark"] .hero-wordmark--phone {
   text-shadow:
     0 0 3px #eef8ff,
-    0 0 18px rgba(108, 185, 238, 0.75),
-    0 0 50px rgba(71, 145, 202, 0.45);
+    0 0 22px rgba(108, 185, 238, 0.75),
+    0 0 64px rgba(71, 145, 202, 0.45);
 }
 /* The sign's marquee: one direction, endless and seamless (two identical
    runs, sliding by one run's width), at the pre-redesign marquee's speed
@@ -554,22 +550,36 @@ textarea:-webkit-autofill {
 }
 /* Depth: the sign dims right around the robot, so its outline separates
    from the letters behind it; a static mask on the sign, not a layer over
-   the canvas (a full-screen shade cost frames). */
+   the canvas (a full-screen shade cost frames). The box reaches --sign-pad
+   above and below the letters, so the halo fades out inside it: a mask (and
+   the clip) cut it off at the box's edge, a hard line under the letters
+   (María Sol, 13 Nov). Desktop: the design's 19.5vw (330px at 1440); phones
+   (María Sol, 13 Nov): much bigger, behind the head. */
 .hero-wordmark--depth {
-  -webkit-mask-image: radial-gradient(
-    ellipse 24% 120% at 50% 70%,
+  --sign-fs: 19.5vw;
+  --sign-pad: max(12vw, 72px);
+  padding-block: var(--sign-pad);
+  margin-top: calc(-1 * var(--sign-pad));
+  --sign-mask: radial-gradient(
+    ellipse 24% calc(1.2 * var(--sign-fs)) at 50% calc(var(--sign-pad) + 0.7 * var(--sign-fs)),
     rgba(0, 0, 0, 0.35) 30%,
     #000 75%
   );
-  mask-image: radial-gradient(ellipse 24% 120% at 50% 70%, rgba(0, 0, 0, 0.35) 30%, #000 75%);
+  -webkit-mask-image: var(--sign-mask);
+  mask-image: var(--sign-mask);
+}
+.hero-wordmark--depth-phone {
+  --sign-fs: 38vw;
 }
 
-/* Desktop: the robot fades out from mid-torso, as in Hero.dc.html (the
-   still's mask, 62%-96% of its box: 52%-78% of the screen). On a wrapper of
+/* Desktop: the chest goes down to the dock and fades out right above it,
+   over ~100px (María Sol, 13 Nov: it faded far above the dock; was 52%-78%
+   of the screen). The dock's top is ~74px from the bottom. On a wrapper of
    the canvas: a mask, never a transform. */
 .hero-robot--crt {
-  -webkit-mask-image: linear-gradient(180deg, #000 52%, transparent 78%);
-  mask-image: linear-gradient(180deg, #000 52%, transparent 78%);
+  --fade: linear-gradient(180deg, #000 calc(100% - 190px), transparent calc(100% - 84px));
+  -webkit-mask-image: var(--fade);
+  mask-image: var(--fade);
 }
 
 /* The robot's CRT treatment (SPEC §2), never an edit of the canvas.
@@ -616,19 +626,15 @@ textarea:-webkit-autofill {
   }
 }
 
-/* Phones: the robot fades into the ground just above BUILD THE FUTURE (CRT:
-   the headline sits on the ground, legible in both themes), and the
-   runtime's corner badge with it), 200px from the bottom on any phone height,
-   so taller phones get more robot, not a grey band. Opaque down to 554px at
-   844 (María Sol, 9 Nov): the bigger body covers both MSSE rows (to 552px),
-   so they sit behind it. */
+/* Phones: the robot fades into the ground right under WATCH THE VIDEOS,
+   above BUILD THE FUTURE (HeroHud's PHONE_HEADLINE_TOP: 528px, raised on a
+   short screen), and the runtime's corner badge with it. A short, light
+   fade (María Sol, 13 Nov: the old 78px one read as a heavy shadow). */
 .hero-robot--phone {
   --fade: linear-gradient(
     180deg,
-    #000 0,
-    #000 calc(100% - 330px),
-    rgba(0, 0, 0, 0.55) calc(100% - 290px),
-    rgba(0, 0, 0, 0) calc(100% - 252px)
+    #000 calc(min(528px, 100svh - 240px) + 22px),
+    rgba(0, 0, 0, 0) calc(min(528px, 100svh - 240px) + 60px)
   );
   -webkit-mask-image: var(--fade);
   mask-image: var(--fade);
