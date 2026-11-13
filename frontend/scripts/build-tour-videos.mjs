@@ -1,7 +1,12 @@
 // Builds the README tour's files (the video gallery, src/data/videosData.ts)
 // from María Sol's clips (ffmpeg on the PATH):
 //
-//   node scripts/build-tour-videos.mjs <folder with the clips>
+//   node scripts/build-tour-videos.mjs <folder with the clips> [--map files=id,...]
+//
+// --map names the clips and their entries outright, and then only those are
+// built. Clips joined with + become one video, in that order:
+//   --map clip_scene1.mp4+clip_scene2.mp4=01,clip_scene3_1.mp4=02
+// Without --map:
 //
 // Each clip is matched to a gallery entry by its file name: its number
 // ("05 ..."), or the entry title's first word ("ethos-health.mp4" -> 05
@@ -15,6 +20,7 @@
 // Prints the mapping, each entry's duration and the folder's total size.
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
@@ -44,7 +50,18 @@ const firstWord = (t) =>
 const videos = readdirSync(src).filter((f) => /\.(mp4|mov|m4v|webm|mkv)$/i.test(f));
 const mapping = [];
 const skipped = [];
-for (const file of videos) {
+const mapArg = process.argv.indexOf("--map");
+const explicit = mapArg > 0 ? process.argv[mapArg + 1].split(",").map((p) => p.split("=")) : null;
+for (const [file, id] of explicit ?? []) {
+  const entry = entries.find((e) => e.id === id);
+  const parts = file.split("+");
+  if (!entry || parts.some((f) => !videos.includes(f))) {
+    console.error(`--map: no file in ${file}, or no entry ${id}`);
+    process.exit(1);
+  }
+  mapping.push({ file, parts, entry });
+}
+for (const file of explicit ? [] : videos) {
   const base = norm(path.parse(file).name);
   const byNumber = entries.filter((e) => new RegExp(`^0*${Number(e.id)}\\b`).test(base));
   const byWord = entries.filter((e) => base.split(" ").includes(firstWord(e.title)));
@@ -71,8 +88,58 @@ const probe = (f) =>
 const kb = (f) => Math.round(statSync(f).size / 1024);
 
 const results = [];
-for (const { file, entry } of mapping.sort((a, b) => a.entry.id.localeCompare(b.entry.id))) {
-  const input = path.join(src, file);
+// Clips to join: one near-lossless intermediate, each part fitted to the first
+// one's frame (recordings differ by a few px), with its sound.
+const join = (parts, id) => {
+  const [w, h] = execFileSync("ffprobe", [
+    "-v",
+    "error",
+    "-select_streams",
+    "v:0",
+    "-show_entries",
+    "stream=width,height",
+    "-of",
+    "csv=p=0",
+    path.join(src, parts[0]),
+  ])
+    .toString()
+    .trim()
+    .split(",")
+    .map(Number);
+  const fit = (i) =>
+    `[${i}:v]scale=${w}:${h}:force_original_aspect_ratio=decrease,` +
+    `pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v${i}]`;
+  const graph = [
+    ...parts.map((_, i) => fit(i)),
+    `${parts.map((_, i) => `[v${i}][${i}:a]`).join("")}concat=n=${parts.length}:v=1:a=1[v][a]`,
+  ].join(";");
+  const joined = path.join(os.tmpdir(), `tour-${id}-joined.mp4`);
+  ff([
+    ...parts.flatMap((f) => ["-i", path.join(src, f)]),
+    "-filter_complex",
+    graph,
+    "-map",
+    "[v]",
+    "-map",
+    "[a]",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "veryfast",
+    "-crf",
+    "14",
+    "-c:a",
+    "aac",
+    "-b:a",
+    "192k",
+    joined,
+  ]);
+  return joined;
+};
+
+for (const { file, parts, entry } of mapping.sort((a, b) => a.entry.id.localeCompare(b.entry.id))) {
+  const input =
+    parts && parts.length > 1 ? join(parts, entry.id) : path.join(src, parts?.[0] ?? file);
   const id = entry.id;
   const duration = probe(input);
   const full = path.join(out, `${id}.mp4`);
@@ -140,7 +207,7 @@ for (const { file, entry } of mapping.sort((a, b) => a.entry.id.localeCompare(b.
     "4",
     poster,
   ]);
-  const srt = path.join(src, `${path.parse(file).name}.srt`);
+  const srt = path.join(src, `${path.parse(parts?.[0] ?? file).name}.srt`);
   const vtt = existsSync(srt) ? path.join(out, `${id}.vtt`) : null;
   if (vtt) ff(["-i", srt, vtt]);
   results.push({
