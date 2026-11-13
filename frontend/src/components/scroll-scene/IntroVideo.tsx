@@ -45,8 +45,10 @@ export const IntroTile = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale
     <div
       ref={ref}
       data-testid="hero-intro-tile"
-      // Hero.dc.html: 64,300, 300 wide (~21vw), scaled with the window.
-      className="absolute left-[4.44vw] top-[33.3%]"
+      // Hero.dc.html: 64,300, 300 wide (~21vw), scaled with the window; a
+      // little higher (31%) so SYSTEM CHECK, raised over the signature,
+      // clears it on short windows.
+      className="absolute left-[4.44vw] top-[31%]"
       onPointerEnter={() => setArmed(true)}
     >
       {/* The load fade on the whole frame: never a border alone. */}

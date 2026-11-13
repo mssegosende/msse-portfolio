@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { blockSpline, DESKTOP, openHome } from "./helpers";
 
-// Scene 4 on desktop (CRT redesign, María Sol 12 Nov): the SUBJECT MSSE-01
+// Scene 4 on desktop (CRT redesign, María Sol 12 Nov): the SUBJECT MSSE-095
 // dossier comes in first, then the bio types itself in a terminal panel
 // beside it (the full text is in the DOM for screen readers); each principle
 // comes in on its own stretch of the pinned scroll.

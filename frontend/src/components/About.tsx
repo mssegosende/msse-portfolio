@@ -129,7 +129,7 @@ const PORTRAIT_IN_MS = 1200;
 
 /**
  * Scene 4 · WHO, CRT look (design/crt/.../About*.dc.html), in the order María
- * Sol asked (12 Nov): first the SUBJECT MSSE-0195 dossier with the portrait
+ * Sol asked (12 Nov): first the SUBJECT MSSE-095 dossier with the portrait
  * (a fade and a scanline sweeping down the photo), then, as soon as it is in,
  * the bio types itself in the code panel beside it while the dossier's data
  * rows type in too. Desktop: dossier left, title, bio panel and principles
@@ -236,7 +236,7 @@ export const About = () => {
               <span key={pos} aria-hidden="true" className={`crt-node ${pos}`} />
             ))}
             <div className={s.dossierHead}>
-              <span className="crt-glow-label text-crt-title">SUBJECT MSSE-0195</span>
+              <span className="crt-glow-label text-crt-title">SUBJECT MSSE-095</span>
               <span aria-hidden="true" className="crt-dossier__icon" />
             </div>
             <div className={s.subject}>

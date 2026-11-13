@@ -176,8 +176,10 @@ const CHECKS = [
 
 /** Ø1.2: barcode + SYSTEM CHECK, bottom-left. */
 export const SystemCheck = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale?: number }) => (
-  // Hero.dc.html: 64,bottom 56, 340 wide (~24vw), scaled with the window.
-  <div ref={ref} data-testid="hero-system-check" className="absolute bottom-[6.2vh] left-[4.44vw]">
+  // Hero.dc.html: 64 from the left, 340 wide (~24vw), scaled with the window;
+  // 104px from the bottom, clear of the floating MSSE:// signature under it
+  // (María Sol, pre-launch: they collided at the design's 56).
+  <div ref={ref} data-testid="hero-system-check" className="absolute bottom-[104px] left-[4.44vw]">
     {/* The load fade on the whole window: the frame never shows alone. */}
     <div
       className="hero-bar-in w-[340px] border border-crt-line bg-[var(--crt-panel)] px-4 py-3.5"
@@ -190,7 +192,7 @@ export const SystemCheck = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; sca
       </div>
       <div className="mt-2.5 font-mono text-[11px] leading-[1.7] text-crt-text-2">
         <div>
-          <span className="text-crt-text">SYSTEM CHECK</span> · MSSE-01
+          <span className="text-crt-text">SYSTEM CHECK</span> · MSSE-095
         </div>
         {CHECKS.map(([name, dots]) => (
           <div key={name}>
