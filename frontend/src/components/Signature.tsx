@@ -8,14 +8,16 @@ import { useActiveSection } from "@/hooks/useActiveSection";
  * same fonts, sizes and colours (Contact.module.css .brand / .credit, desktop):
  * MSSE:// on its own line, then © and the role on two. Desktop only, like the
  * section index. It hides while a card, the form or the dock is under it, or
- * the footer itself is on screen. Its left edge is the sections' (64px of
+ * the footer itself is on screen, and always while Projects is. Its left edge is the sections' (64px of
  * 1440: About's dossier, the titles; María Sol, 13 Nov).
  */
 export const Signature = () => {
-  const { section } = useActiveSection();
+  const { section, id } = useActiveSection();
   const ref = useRef<HTMLDivElement>(null);
   const blocked = useBlocked(ref);
-  const shown = section >= 1 && !blocked;
+  // Never over Projects (María Sol, 13 Nov): its second row of cards reaches
+  // the bottom-left corner at 1440x900 and the overlap check missed it.
+  const shown = section >= 1 && id !== "projects" && !blocked;
 
   return (
     <div
