@@ -88,7 +88,7 @@ export const systemCheck: string[] = [
   "OPERATOR: M. S. GOSENDE",
   "CORE: PYTHON / TS",
   "AGENTS: LANGGRAPH",
-  "LOC: −34.60 −58.38",
+  "LOC: ARGENTINA", // the country only: no city, no coordinates (María Sol, 13 Nov)
   "STATUS: OPEN TO WORK",
 ];
 

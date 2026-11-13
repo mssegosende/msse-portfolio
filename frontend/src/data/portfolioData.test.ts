@@ -26,6 +26,11 @@ describe("copy rules", () => {
     expect(profile.location).toMatch(/^ARGENTINA/);
   });
 
+  it("SYSTEM CHECK's LOC is the country only: no city, no coordinates", () => {
+    expect(systemCheck.filter((l) => l.startsWith("LOC:"))).toEqual(["LOC: ARGENTINA"]);
+    expect(JSON.stringify(systemCheck)).not.toMatch(/\d+\.\d+/);
+  });
+
   it("ships no email address: the contact destination lives only in the server's env", () => {
     const text = JSON.stringify({
       profile,
