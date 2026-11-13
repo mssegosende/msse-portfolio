@@ -1570,8 +1570,9 @@ textarea:-webkit-autofill {
   white-space: pre;
   pointer-events: none;
 }
-/* Reduced motion: all of it at once, scrollable. */
-.crt-bio[data-reduced="true"] .crt-bio__view {
+/* Typed to the end (and reduced motion): the view scrolls to reread it, the
+   wheel and touch through Lenis' nested scroll, no visible scrollbar. */
+.crt-bio[data-scrollable="true"] .crt-bio__view {
   overflow-y: auto;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1581,6 +1582,14 @@ textarea:-webkit-autofill {
   .crt-bio__cursor {
     animation: none;
   }
+  scrollbar-width: none;
+}
+.crt-bio[data-scrollable="true"] .crt-bio__view::-webkit-scrollbar {
+  display: none;
+}
+.crt-bio[data-scrollable="true"]:focus-visible {
+  outline: 1px solid var(--crt-title);
+  outline-offset: 2px;
 }
 
 /* Scene 1's tour tile: the clip tinted by a blend layer (cheaper than the

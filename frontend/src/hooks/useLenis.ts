@@ -9,7 +9,9 @@ export const getLenis = (): Lenis | null => instance;
 
 export const useLenis = (): void => {
   useEffect(() => {
-    const lenis = new Lenis({ lerp: 0.09, smoothWheel: true });
+    // allowNestedScroll: a scrollable box (the About bio once typed) takes the
+    // wheel while it can still scroll that way, then the page does.
+    const lenis = new Lenis({ lerp: 0.09, smoothWheel: true, allowNestedScroll: true });
     instance = lenis;
     let raf: number;
     const loop = (time: number) => {

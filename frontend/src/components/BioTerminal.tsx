@@ -6,7 +6,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 // the text reaches the panel's bottom, it scrolls up a line at a time and the
 // read lines fade out at the top. Plays once per page load, only while the
 // panel is on screen and the tab is visible (one requestAnimationFrame loop).
-// Reduced motion: the whole text at once, the panel scrollable.
+// Once it has finished (María Sol, pre-launch), the panel scrolls with the
+// wheel, touch and the keyboard to reread it, no visible scrollbar. Reduced
+// motion: the whole text at once, scrollable the same way.
 
 const CPS = 35;
 const GLYPHS = "0123456789#$%&*+=<>/\\|[]{}@!?;:~^";
@@ -61,6 +63,8 @@ export const BioTerminal = ({
   const textRef = useRef<HTMLDivElement>(null);
   const probeRef = useRef<HTMLSpanElement>(null);
   const [cols, setCols] = useState(0);
+  // Typed to the end: the view becomes a real scroller.
+  const [done, setDone] = useState(false);
 
   // Characters per line, from the panel's width and the mono font's advance.
   useLayoutEffect(() => {
@@ -106,7 +110,8 @@ export const BioTerminal = ({
       rows.forEach((row, l) => (row.textContent = lines[l]!));
       rows[rows.length - 1]?.insertAdjacentHTML("beforeend", cursor);
       panel.dataset.done = "true";
-      return undefined;
+      const settle = requestAnimationFrame(() => setDone(true));
+      return () => cancelAnimationFrame(settle);
     }
 
     // Lines already settled are written once; only the typing lines change.
@@ -150,6 +155,11 @@ export const BioTerminal = ({
       view.dataset.scrolled = shift > 0 ? "true" : "false";
       if (typed >= total && firstLive >= total) {
         panel.dataset.done = "true";
+        // Hand the position from the transform to a real scroll, same place.
+        text.style.transition = "none";
+        text.style.transform = "";
+        view.scrollTop = shift;
+        setDone(true);
         return true;
       }
       return false;
@@ -186,15 +196,37 @@ export const BioTerminal = ({
     };
   }, [cols, paragraphs, reduced, start]);
 
+  const onKey = (e: React.KeyboardEvent) => {
+    const view = viewRef.current;
+    if (!view) return;
+    const page = view.clientHeight - 21;
+    const by: Record<string, number> = {
+      ArrowDown: 21,
+      ArrowUp: -21,
+      PageDown: page,
+      PageUp: -page,
+      " ": page,
+    };
+    if (e.key === "Home") view.scrollTo({ top: 0 });
+    else if (e.key === "End") view.scrollTo({ top: view.scrollHeight });
+    else if (e.key in by) view.scrollBy({ top: by[e.key] });
+    else return;
+    e.preventDefault();
+  };
+
   return (
     <div
       ref={panelRef}
       className={`crt-bio ${className}`}
       data-testid="about-text"
       data-reduced={reduced ? "true" : undefined}
-      // Reduced motion: the panel scrolls with the wheel (Lenis leaves it alone).
-      data-lenis-prevent={reduced ? "" : undefined}
-      tabIndex={reduced ? 0 : undefined}
+      data-scrollable={done ? "true" : undefined}
+      // Once typed: focusable, and the arrows, Page Up/Down, Home and End
+      // scroll it (the text itself is aria-hidden; the bio is in sr-only).
+      tabIndex={done ? 0 : undefined}
+      role={done ? "region" : undefined}
+      aria-label={done ? "Bio" : undefined}
+      onKeyDown={done ? onKey : undefined}
     >
       {/* The bio as real text, for screen readers and search. */}
       <div className="sr-only">
@@ -204,7 +236,19 @@ export const BioTerminal = ({
           </p>
         ))}
       </div>
-      <div ref={viewRef} aria-hidden="true" className="crt-bio__view">
+      <div
+        ref={viewRef}
+        aria-hidden="true"
+        className="crt-bio__view"
+        // Rereading: the top fade only while there is text above.
+        onScroll={
+          done
+            ? (e) => {
+                e.currentTarget.dataset.scrolled = e.currentTarget.scrollTop > 0 ? "true" : "false";
+              }
+            : undefined
+        }
+      >
         <div ref={textRef} className="crt-bio__text" />
       </div>
       <span ref={probeRef} aria-hidden="true" className="crt-bio__probe">
