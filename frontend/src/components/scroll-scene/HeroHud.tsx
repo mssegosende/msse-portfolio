@@ -1,4 +1,5 @@
-import type { ReactNode, Ref } from "react";
+import { useEffect, useState, type ReactNode, type Ref } from "react";
+import { useScrollHintSeen } from "@/hooks/useScrollHintSeen";
 
 // Scene 1's marks, CRT look (design/crt/msse-crt-redesign/design-source/Hero*.dc.html).
 // The timeline fades each HUD window in on its own scroll step; no translate
@@ -262,25 +263,44 @@ export const HeroHeading = () => (
 );
 
 /** SCROLL, bottom centre, with its line. */
-const Scroll = ({ ref, isMobile }: { ref?: Ref<HTMLDivElement>; isMobile: boolean }) => (
-  <div
-    ref={ref}
-    aria-hidden="true"
-    data-testid="scroll-cue"
-    className={`pointer-events-none absolute left-1/2 crt-cue flex w-20 flex-col items-center font-vt uppercase tracking-[0.2em] ${
-      isMobile
-        ? "bottom-[calc(100vh-100svh+env(safe-area-inset-bottom,0px)+64px)] -ml-10 gap-1.5 text-[17px]"
-        : "bottom-[30px] -ml-10 gap-2 text-[20px]"
-    }`}
-  >
-    <span className="hero-bar-in">Scroll</span>
-    <span
-      className={`hero-bar-in hero-hint block w-px bg-[linear-gradient(180deg,var(--crt-title),transparent)] ${
-        isMobile ? "h-[26px]" : "h-9"
+const Scroll = ({ ref, isMobile }: { ref?: Ref<HTMLDivElement>; isMobile: boolean }) => {
+  const seen = useScrollHintSeen();
+  // Faded, then gone from the page (the dock can never meet it).
+  const [gone, setGone] = useState(seen);
+  useEffect(() => {
+    if (!seen || gone) return undefined;
+    const t = setTimeout(() => setGone(true), 450);
+    return () => clearTimeout(t);
+  }, [seen, gone]);
+  return (
+    <div
+      ref={ref}
+      aria-hidden="true"
+      data-testid="scroll-cue"
+      className={`pointer-events-none absolute left-1/2 crt-cue flex w-20 flex-col items-center font-vt uppercase tracking-[0.2em] ${
+        isMobile
+          ? "bottom-[calc(100vh-100svh+env(safe-area-inset-bottom,0px)+64px)] -ml-10 gap-1.5 text-[17px]"
+          : "bottom-[30px] -ml-10 gap-2 text-[20px]"
       }`}
-    />
-  </div>
-);
+    >
+      {!gone && (
+        <div
+          data-testid="scroll-hint"
+          className={`flex flex-col items-center transition-opacity duration-[400ms] ${
+            isMobile ? "gap-1.5" : "gap-2"
+          } ${seen ? "opacity-0" : ""}`}
+        >
+          <span className="hero-bar-in">Scroll</span>
+          <span
+            className={`hero-bar-in hero-hint block w-px bg-[linear-gradient(180deg,var(--crt-title),transparent)] ${
+              isMobile ? "h-[26px]" : "h-9"
+            }`}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 /** Phones: SCROLL, shown from the start. */
 export const ScrollCuePhone = ({ ref }: { ref?: Ref<HTMLDivElement> }) => (
