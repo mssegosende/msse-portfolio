@@ -73,6 +73,27 @@
   color: var(--crt-title);
   background: transparent;
 }
+/* SOUND: OFF / ON, as the dock's (dashed: a control, not a destination). */
+.soundBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px dashed var(--crt-line);
+  background: transparent;
+  color: var(--crt-title);
+  font-family: "VT323", monospace;
+  font-size: 19px;
+  letter-spacing: 0.14em;
+}
+.soundBtn:hover {
+  border-color: var(--crt-node);
+}
+.soundBtn:focus-visible {
+  outline: 2px solid var(--crt-title);
+  outline-offset: 2px;
+}
 .close:hover {
   border-color: var(--crt-node);
 }
@@ -314,6 +335,13 @@
     flex: 1 1 auto;
     font-size: 18px;
     white-space: nowrap;
+  }
+  .soundBtn {
+    order: 1;
+  }
+  /* Phones: the icon alone. */
+  .soundLabel {
+    display: none;
   }
   .close {
     order: 2;

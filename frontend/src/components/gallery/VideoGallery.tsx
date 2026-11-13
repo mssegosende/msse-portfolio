@@ -14,7 +14,8 @@ import { closeGallery, pickVideo, useGallery } from "@/lib/gallery";
 import { MOBILE_LAYOUT_QUERY } from "@/lib/layout";
 import { REDUCED_MOTION_QUERY } from "@/lib/motion";
 import { setGalleryOpen } from "@/lib/sceneFocus";
-import { bootSweep, duckBackground } from "@/lib/sound";
+import { bootSweep, duckBackground, setSound, useSound } from "@/lib/sound";
+import { Volume2, VolumeX } from "lucide-react";
 import s from "./VideoGallery.module.css";
 
 /** How long "NEXT: Ø06 — Title" shows between two videos of the tour, ms. */
@@ -59,6 +60,8 @@ const Gallery = ({ initial }: { initial: number }) => {
   const [nextCard, setNextCard] = useState<number | null>(null);
   // Bumped to make the current video start (a pick, the tour).
   const [playToken, setPlayToken] = useState(0);
+  // SOUND here too (María Sol, pre-launch: the dock is behind the overlay).
+  const sound = useSound();
 
   // Open: a modal dialog over an inert, still page.
   useEffect(() => {
@@ -152,6 +155,21 @@ const Gallery = ({ initial }: { initial: number }) => {
             <path d="M3 2 L12 7 L3 12 Z" fill="currentColor" />
           </svg>
           PLAY THE TOUR
+        </button>
+        <button
+          type="button"
+          className={s.soundBtn}
+          onClick={() => setSound(!sound)}
+          aria-pressed={sound}
+          aria-label={sound ? "Sound on: turn it off" : "Sound off: turn it on"}
+          data-testid="gallery-sound"
+        >
+          {sound ? (
+            <Volume2 size={16} aria-hidden="true" />
+          ) : (
+            <VolumeX size={16} aria-hidden="true" />
+          )}
+          <span className={s.soundLabel}>SOUND: {sound ? "ON" : "OFF"}</span>
         </button>
         <button
           type="button"
