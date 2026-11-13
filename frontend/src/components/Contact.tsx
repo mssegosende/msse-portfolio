@@ -13,7 +13,7 @@ import { commandAccepted, textBlip } from "../lib/sound";
 import s from "./Contact.module.css";
 import { useCrossfade } from "@/hooks/useSectionDissolve";
 import { useOwnsCenter } from "@/hooks/useOwnsCenter";
-import { MAX_LEN } from "@/lib/contactLimits";
+import { LINKEDIN_PROFILE, MAX_LEN } from "@/lib/contactLimits";
 import { useTurnstile } from "@/lib/turnstile";
 
 // Production: same origin (Vercel routes /api/* to the backend service).
@@ -26,7 +26,11 @@ const API_URL = `${BACKEND_URL}/api/contact`;
 // as the backend (backend/server.py ContactMessage), which answers 422.
 const REQUIRED = ["name", "email", "message"] as const;
 type RequiredField = (typeof REQUIRED)[number];
-type FieldErrors = Partial<Record<RequiredField, string>>;
+// LinkedIn is optional, but when given it must be a profile URL (422 otherwise).
+type CheckedField = RequiredField | "linkedin";
+type FieldErrors = Partial<Record<CheckedField, string>>;
+const CHECKED: readonly CheckedField[] = [...REQUIRED, "linkedin"];
+const LINKEDIN_ERROR = "ERR: linkedin must be a profile URL (linkedin.com/in/...)";
 
 const fieldError = (key: RequiredField, value: string): string | undefined => {
   const v = value.trim();
@@ -37,12 +41,21 @@ const fieldError = (key: RequiredField, value: string): string | undefined => {
   return undefined;
 };
 
+// One field's error: the required ones, and LinkedIn (optional, a profile URL).
+const checkField = (key: CheckedField, value: string): string | undefined => {
+  if (key !== "linkedin") return fieldError(key, value);
+  const v = value.trim();
+  return v && !LINKEDIN_PROFILE.test(v) ? LINKEDIN_ERROR : undefined;
+};
+
 const validate = (form: ContactForm): FieldErrors => {
   const errors: FieldErrors = {};
   for (const key of REQUIRED) {
     const error = fieldError(key, form[key]);
     if (error) errors[key] = error;
   }
+  const linkedin = checkField("linkedin", form.linkedin);
+  if (linkedin) errors.linkedin = linkedin;
   return errors;
 };
 
@@ -124,6 +137,8 @@ interface TerminalFieldProps {
   required?: boolean;
   /** Inline error under the input; marks it invalid. */
   error?: string;
+  /** A short note under the input, shown while there is no error. */
+  note?: string;
   name?: string;
   maxLength?: number;
   onChange: (e: FieldChange) => void;
@@ -137,6 +152,7 @@ const TerminalField = ({
   multiline = false,
   type = "text",
   error,
+  note,
   ...field
 }: TerminalFieldProps) => {
   const errorId = `contact-${label}-error`;
@@ -164,6 +180,11 @@ const TerminalField = ({
       {error && (
         <span id={errorId} data-testid={`contact-${label}-error`} className={s.fieldError}>
           {error}
+        </span>
+      )}
+      {note && !error && (
+        <span data-testid={`contact-${label}-note`} className={s.note}>
+          {note}
         </span>
       )}
     </label>
@@ -233,9 +254,9 @@ export const Contact = () => {
     setFieldErrors((prev) => {
       if (!(key in prev)) return prev;
       const next = { ...prev };
-      const error = fieldError(key as RequiredField, value);
-      if (error) next[key as RequiredField] = error;
-      else delete next[key as RequiredField];
+      const error = checkField(key as CheckedField, value);
+      if (error) next[key as CheckedField] = error;
+      else delete next[key as CheckedField];
       return next;
     });
   };
@@ -270,7 +291,7 @@ export const Contact = () => {
 
     const invalid = validate(form);
     setFieldErrors(invalid);
-    const first = REQUIRED.find((key) => invalid[key]);
+    const first = CHECKED.find((key) => invalid[key]);
     if (first) {
       const el = e.currentTarget.elements.namedItem(first);
       if (el instanceof HTMLElement) el.focus();
@@ -462,6 +483,9 @@ export const Contact = () => {
                   type="url"
                   data-testid="contact-linkedin-input"
                   value={form.linkedin}
+                  error={fieldErrors.linkedin}
+                  name="linkedin"
+                  note="Add your LinkedIn for a faster reply."
                   maxLength={MAX_LEN.linkedin}
                   onChange={set("linkedin")}
                   placeholder="linkedin.com/in/..."

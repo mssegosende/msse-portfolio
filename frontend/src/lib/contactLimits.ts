@@ -10,3 +10,9 @@ export const MAX_LEN = {
   message: 2000,
   website: 200,
 } as const;
+
+// A LinkedIn profile URL: linkedin.com/in/<handle>, with or without https://,
+// www. or a country subdomain (ar.linkedin.com). Same rule as the backend's
+// LINKEDIN_PROFILE (backend/server.py), with the same test cases on both sides.
+export const LINKEDIN_PROFILE =
+  /^(https?:\/\/)?([a-z]{2,3}\.)?linkedin\.com\/in\/[A-Za-z0-9_%-]{3,100}\/?$/i;

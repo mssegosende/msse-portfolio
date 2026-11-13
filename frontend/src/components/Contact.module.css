@@ -257,6 +257,16 @@ textarea.input {
   color: var(--crt-title);
   text-shadow: var(--crt-glow-label);
 }
+/* The note under a field (LinkedIn's): the error's type, the hint's colour. */
+.note {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #718498;
+}
+:global(:root[data-theme="dark"]) .note {
+  color: #438cc5;
+}
 .sendRow {
   display: flex;
   align-items: center;

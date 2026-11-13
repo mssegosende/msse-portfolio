@@ -19,6 +19,7 @@ Environment (see .env.example):
 import json
 import logging
 import os
+import re
 import time
 import urllib.parse
 import urllib.request
@@ -32,7 +33,7 @@ from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 # Local development only: on Vercel the variables come from the project settings
 # and there is no .env file, so this is a no-op there.
@@ -70,6 +71,14 @@ app = FastAPI(title="MSSE portfolio contact service", **_docs_settings())
 api_router = APIRouter(prefix="/api")
 
 
+# A LinkedIn profile URL: linkedin.com/in/<handle>, with or without https://,
+# www. or a country subdomain (ar.linkedin.com). Same rule as the form's
+# LINKEDIN_PROFILE (frontend/src/lib/contactLimits.ts); the tests use the same cases.
+LINKEDIN_PROFILE = re.compile(
+    r"^(https?://)?([a-z]{2,3}\.)?linkedin\.com/in/[A-Za-z0-9_%-]{3,100}/?$", re.IGNORECASE
+)
+
+
 class ContactMessage(BaseModel):
     """The body the form in frontend/src/components/Contact.tsx sends."""
 
@@ -87,6 +96,16 @@ class ContactMessage(BaseModel):
     website: Optional[str] = Field(default=None, max_length=200)  # honeypot
     # Cloudflare Turnstile's token (at most 2048 characters, per its docs).
     turnstile_token: Optional[str] = Field(default=None, max_length=2048)
+
+    @field_validator("linkedin")
+    @classmethod
+    def linkedin_is_a_profile(cls, value: Optional[str]) -> Optional[str]:
+        """Optional; when given it has to be a profile URL, or the form gets a 422."""
+        if not value:
+            return None
+        if not LINKEDIN_PROFILE.match(value):
+            raise ValueError("not a LinkedIn profile URL")
+        return value
 
 
 @app.exception_handler(RequestValidationError)

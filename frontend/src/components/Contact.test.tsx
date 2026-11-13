@@ -230,3 +230,45 @@ describe("Contact, Turnstile", () => {
     expect(await screen.findByTestId("contact-error")).toHaveTextContent(/VERIFICATION FAILED/);
   });
 });
+
+describe("Contact, LinkedIn", () => {
+  it("is optional, with a hint under it", async () => {
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+    const { submit } = await fillForm();
+    expect(screen.getByTestId("contact-linkedin-note")).toHaveTextContent(
+      "Add your LinkedIn for a faster reply.",
+    );
+    await submit();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("refuses anything but a profile URL, with a clear message and focus on it", async () => {
+    const { user, submit } = await fillForm();
+    await user.type(screen.getByTestId("contact-linkedin-input"), "linkedin.com/company/acme");
+    await submit();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId("contact-linkedin-error")).toHaveTextContent(
+      "ERR: linkedin must be a profile URL (linkedin.com/in/...)",
+    );
+    expect(screen.getByTestId("contact-linkedin-input")).toHaveFocus();
+    expect(screen.queryByTestId("contact-linkedin-note")).not.toBeInTheDocument();
+
+    // Fixed: the error clears; emptied: optional again, no "required".
+    await user.clear(screen.getByTestId("contact-linkedin-input"));
+    expect(screen.queryByTestId("contact-linkedin-error")).not.toBeInTheDocument();
+  });
+
+  it("sends a valid profile URL", async () => {
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+    const { user, submit } = await fillForm();
+    await user.type(
+      screen.getByTestId("contact-linkedin-input"),
+      "https://www.linkedin.com/in/ada",
+    );
+    await submit();
+
+    const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string);
+    expect(body.linkedin).toBe("https://www.linkedin.com/in/ada");
+  });
+});
