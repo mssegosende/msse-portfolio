@@ -37,6 +37,9 @@ const OUT = arg("out", "perf/crt-baseline.json");
 const COMPARE = arg("compare", null);
 const LABEL = arg("label", "baseline");
 const ONLY = arg("only", null)?.split(",");
+// --load-only: just the load (first contentful paint, time to scene 1), no
+// scenarios; cheap enough for more runs.
+const LOAD_ONLY = process.argv.includes("--load-only");
 
 const CONFIGS = {
   "desktop-light": { phone: false, dark: false },
@@ -229,8 +232,18 @@ const oneRun = async (browser, { phone, dark }) => {
     .locator('[data-testid="spline-canvas-wrap"][data-revealed="true"]')
     .waitFor({ state: "attached", timeout: 60_000 });
   const revealMs = Date.now() - loadT0;
+  // The browser's own first contentful paint, from navigation start.
+  const fcpMs = Math.round(
+    await page.evaluate(
+      () => performance.getEntriesByName("first-contentful-paint")[0]?.startTime ?? 0,
+    ),
+  );
   const theme = await page.evaluate(() => document.documentElement.getAttribute("data-theme"));
   if (dark !== (theme === "dark")) throw new Error(`theme is ${theme}, expected dark=${dark}`);
+  if (LOAD_ONLY) {
+    await context.close();
+    return { revealMs, fcpMs, errors, scenarios: {} };
+  }
   await page.waitForTimeout(4000); // the reveal fade and the scene's own intro
 
   const s = {};
@@ -259,7 +272,7 @@ const oneRun = async (browser, { phone, dark }) => {
     s["projects-hover"] = await measure(page, cdp, { ms: 8000 });
   }
   await context.close();
-  return { revealMs, errors, scenarios: s };
+  return { revealMs, fcpMs, errors, scenarios: s };
 };
 
 const gpuOf = async (browser) => {
@@ -296,7 +309,11 @@ const table = (result, base) => {
   const lines = [];
   for (const [cfg, data] of Object.entries(result.configs)) {
     const was = base?.configs?.[cfg]?.revealMs;
-    lines.push(`\n${cfg}  (reveal ${was ? `${was} → ` : ""}${data.revealMs} ms)`);
+    const fcpWas = base?.configs?.[cfg]?.fcpMs;
+    lines.push(
+      `\n${cfg}  (fcp ${fcpWas ? `${fcpWas} → ` : ""}${data.fcpMs} ms,` +
+        ` reveal ${was ? `${was} → ` : ""}${data.revealMs} ms)`,
+    );
     lines.push(["scenario".padEnd(18), ...COLS.map((c) => c.padStart(width(c)))].join(""));
     for (const [name, m] of Object.entries(data.scenarios)) {
       const b = base?.configs?.[cfg]?.scenarios?.[name];
@@ -358,6 +375,7 @@ try {
     }
     result.configs[name] = {
       revealMs: Math.round(median(runs.map((r) => r.revealMs))),
+      fcpMs: Math.round(median(runs.map((r) => r.fcpMs))),
       errors: [...new Set(runs.flatMap((r) => r.errors))],
       scenarios,
     };
