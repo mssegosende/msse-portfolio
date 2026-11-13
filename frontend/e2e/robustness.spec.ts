@@ -229,6 +229,10 @@ test.describe("desktop window across the phone breakpoint, drawn", { tag: "@gpu"
       baseURL,
     }) => {
       test.setTimeout(300_000);
+      test.skip(
+        theme === "light",
+        "Dark only on the live site (THEME_TOGGLE off): back on the light-mode branch",
+      );
       const browser = await playwright.chromium.launch({
         executablePath: process.env.PW_CHROMIUM_PATH || undefined,
         args: ["--enable-unsafe-swiftshader", "--enable-gpu", "--ignore-gpu-blocklist"],

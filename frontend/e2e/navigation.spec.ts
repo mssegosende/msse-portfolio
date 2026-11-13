@@ -15,6 +15,7 @@ test.describe("desktop", () => {
   });
 
   test("the theme toggle switches in place", async ({ page }) => {
+    test.skip(true, "Dark only on the live site (THEME_TOGGLE off): back on the light-mode branch");
     await blockSpline(page);
     await openHome(page);
     let reloaded = false;
@@ -23,6 +24,25 @@ test.describe("desktop", () => {
     // Pages open in dark (CRT redesign); the toggle goes to light.
     await expect(page.locator("html")).not.toHaveAttribute("data-theme", "dark");
     expect(reloaded).toBe(false);
+  });
+
+  test("dark only: no theme toggle in the menu, a saved light preference is ignored", async ({
+    page,
+  }) => {
+    await blockSpline(page);
+    // A saved "light" from a theme reload, as an old session would have left.
+    await page.addInitScript(() =>
+      sessionStorage.setItem(
+        "theme-reload",
+        JSON.stringify({ theme: "light", t: Date.now(), journeyDone: true, y: 0 }),
+      ),
+    );
+    await openHome(page);
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await page.getByTestId("section-index").getByRole("button").nth(2).click();
+    await expect(page.getByTestId("navigation-dock")).toBeVisible();
+    await expect(page.getByTestId("theme-toggle")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /light mode|dark mode/i })).toHaveCount(0);
   });
 
   test("no window shape asks to rotate (DevTools docked, huge screens)", async ({ page }) => {
@@ -44,6 +64,7 @@ test.describe("phone", () => {
   test.use(PHONE);
 
   test("a theme change reloads into the same point of the sequence", async ({ page }) => {
+    test.skip(true, "Dark only on the live site (THEME_TOGGLE off): back on the light-mode branch");
     await blockSpline(page);
     await openHome(page);
     await scrollToPin(page, 0.6);

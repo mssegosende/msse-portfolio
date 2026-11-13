@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { User, FolderOpen, Cpu, Send, Sun, Moon, Volume2, VolumeX } from "lucide-react";
 import { profile } from "../data/portfolioData";
 import { scrollToTop } from "../hooks/useLenis";
-import { useTheme } from "../hooks/useTheme";
+import { THEME_TOGGLE, useTheme } from "../hooks/useTheme";
 import { goToSection, useActiveSection } from "../hooks/useActiveSection";
 import { SECTIONS } from "../lib/sections";
 import { setSound, useSound } from "../lib/sound";
@@ -50,7 +50,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
               data-testid="nav-brand"
               onClick={scrollToTop}
               aria-label="Back to the top"
-              // Phones: tight, so SOUND fits beside the theme (hidden under
+              // Phones: tight, so SOUND fits beside the rest (hidden under
               // 380px wide: the footer's logo goes to the top too).
               className="crt-glow-label mr-0.5 min-h-11 shrink-0 px-1 font-michroma text-[11px] tracking-[0.06em] text-crt-title max-[379px]:hidden sm:mr-2 sm:px-3 sm:text-[13px] sm:tracking-[0.08em]"
             >
@@ -75,19 +75,22 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
               aria-hidden="true"
               className="mx-1.5 hidden h-6 w-px shrink-0 bg-crt-line sm:block"
             />
-            {/* Framed (dashed) so it reads as a control, not another destination. */}
-            <button
-              data-testid="theme-toggle"
-              onClick={toggle}
-              className="crt-dock__toggle flex min-h-11 shrink-0 items-center gap-2 px-2 sm:px-3"
-              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
-              <span className="hidden font-vt text-[19px] uppercase tracking-[0.14em] lg:block">
-                {theme === "dark" ? "Light" : "Dark"}
-              </span>
-            </button>
+            {/* Framed (dashed) so it reads as a control, not another destination.
+                Off on the live site, dark only (THEME_TOGGLE, hooks/useTheme). */}
+            {THEME_TOGGLE && (
+              <button
+                data-testid="theme-toggle"
+                onClick={toggle}
+                className="crt-dock__toggle flex min-h-11 shrink-0 items-center gap-2 px-2 sm:px-3"
+                aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+                <span className="hidden font-vt text-[19px] uppercase tracking-[0.14em] lg:block">
+                  {theme === "dark" ? "Light" : "Dark"}
+                </span>
+              </button>
+            )}
             {/* SOUND: OFF / ON (María Sol, pre-launch): off by default,
                 remembered for the session. */}
             <button

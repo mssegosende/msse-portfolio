@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { DEFAULT_THEME, ThemeContext } from "@/hooks/useTheme";
+import { DEFAULT_THEME, THEME_TOGGLE, ThemeContext } from "@/hooks/useTheme";
 import {
   pendingThemeReload,
   reloadWithTheme,
@@ -12,7 +12,8 @@ import {
  * system preference; the toggle lasts for the session and is not persisted. Exception: on phones the toggle reloads the
  * page (lib/themeReload), and that reload starts in the chosen theme.
  */
-const INITIAL_THEME = pendingThemeReload?.theme || DEFAULT_THEME;
+// Dark only while THEME_TOGGLE is off: a reload's saved "light" is ignored.
+const INITIAL_THEME = (THEME_TOGGLE && pendingThemeReload?.theme) || DEFAULT_THEME;
 
 /** The attribute on <html> drives both index.css and Tailwind's `dark:`. */
 const applyTheme = (theme: Theme) => {

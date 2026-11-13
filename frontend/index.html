@@ -267,10 +267,8 @@
         var entered = null;
         var callbacks = [];
         var t0 = performance.now();
-        try {
-          var reload = JSON.parse(sessionStorage.getItem("theme-reload") || "null");
-          if (reload && reload.theme === "light") html.removeAttribute("data-theme");
-        } catch (e) {}
+        // Dark only on the live site (THEME_TOGGLE, src/hooks/useTheme.ts): a
+        // saved "light" from a theme reload is ignored here too.
         for (var i = 0; i < 30; i++) bar.appendChild(document.createElement("i"));
         var segs = bar.children;
         if (root) {
