@@ -109,3 +109,13 @@ def test_dependabot_watches_actions_npm_and_pip():
     assert ("github-actions", "/") in watched
     assert ("npm", "/frontend") in watched
     assert ("pip", "/backend") in watched
+
+
+def test_security_md_points_at_the_same_private_contact_as_security_txt():
+    policy = (ROOT / "SECURITY.md").read_text("utf8")
+    txt = (ROOT / "frontend/public/.well-known/security.txt").read_text("utf8")
+    contact = re.search(r"^Contact: (\S+)$", txt, re.M).group(1)
+
+    assert contact in policy
+    assert "## Dependency audit (" in policy
+    assert "@" not in policy.replace("@users.noreply", "")  # no email address
