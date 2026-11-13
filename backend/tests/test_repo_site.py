@@ -62,3 +62,15 @@ def test_share_titles_and_description():
         content = re.search(rf'<meta {tag} content="([^"]+)"', html).group(1)
         assert content == "María Sol Gosende · Software & AI engineer", tag
     assert re.search(r'<meta\s+name="description"\s+content="[^"]{50,}"', html)
+
+
+def test_the_share_image_is_1200x630_and_wired_for_og_and_twitter():
+    html = (ROOT / "frontend/index.html").read_text("utf8")
+    url = "https://msse-portfolio.vercel.app/og-image.png"
+
+    assert png_size(PUBLIC / "og-image.png") == (1200, 630)
+    assert f'<meta property="og:image" content="{url}" />' in html
+    assert f'<meta name="twitter:image" content="{url}" />' in html
+    assert '<meta name="twitter:card" content="summary_large_image" />' in html
+    assert '<meta property="og:image:width" content="1200" />' in html
+    assert '<meta property="og:image:height" content="630" />' in html

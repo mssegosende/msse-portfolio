@@ -95,5 +95,33 @@ await png(
   180,
   path.join(pub, "apple-touch-icon.png"),
 );
+
+// The share image (og:image, twitter:image), 1200x630: the dark ground, the
+// mark large with its crosshair, the name in Michroma and the role under it,
+// in the site's fonts (Google Fonts, as the site loads them).
+const OG = { name: "María Sol Gosende", role: "Software & AI engineer" };
+const og = await browser.newPage({ viewport: { width: 1200, height: 630 } });
+await og.setContent(`<!doctype html><html><head>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=JetBrains+Mono:wght@400&display=block" rel="stylesheet">
+<style>
+  html,body{margin:0;width:1200px;height:630px;background:${THEME.dark.bg};overflow:hidden}
+  body{display:flex;align-items:center;gap:56px;padding:0 96px;box-sizing:border-box;
+    background-image:linear-gradient(rgba(110,186,239,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(110,186,239,.06) 1px,transparent 1px);
+    background-size:48px 48px}
+  svg{width:400px;height:400px;flex:none}
+  h1{margin:0;font:400 54px/1.15 Michroma,sans-serif;letter-spacing:.04em;color:#EEF8FF;
+    text-shadow:0 0 14px rgba(110,186,239,.45)}
+  p{margin:22px 0 0;font:400 30px/1.3 "JetBrains Mono",monospace;letter-spacing:.06em;color:${THEME.dark.text}}
+  p b{font-weight:400;color:${THEME.dark.phosphor}}
+</style></head><body>
+${fullMark(THEME.dark, { bracket: 1.6, crosshair: 1 }).replace(/<rect[^>]*\/>/, "")}
+<div><h1>${OG.name}</h1><p><b>&gt;</b> ${OG.role.replace("&", "&amp;")}</p></div>
+</body></html>`);
+await og.evaluate("document.fonts.ready");
+await og.waitForTimeout(300);
+await og.screenshot({ path: path.join(pub, "og-image.png") });
+await og.close();
+console.log("public/og-image.png");
+
 await browser.close();
 console.log("public/favicon.svg, design/logo/msse-mark-{dark,light}.svg");
