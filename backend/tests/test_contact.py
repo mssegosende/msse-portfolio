@@ -182,3 +182,22 @@ def test_api_docs_turn_on_only_with_api_docs_1(monkeypatch):
         monkeypatch.setenv("API_DOCS", value)
         app = FastAPI(**server._docs_settings())
         assert TestClient(app).get("/openapi.json").status_code == expected, value
+
+
+def test_422_is_generic_and_echoes_nothing(client, sent):
+    secret_typed = "<script>tell-me-your-stack</script>"
+    res = post(client, VALID | {"name": secret_typed * 10, "email": "not-an-email"})
+
+    assert res.status_code == 422
+    assert res.json() == {"detail": "Invalid input.", "fields": ["name", "email"]}
+    for leak in (secret_typed, "not-an-email", "String should", "value_error", "pydantic", "ctx"):
+        assert leak not in res.text
+    assert sent == []
+
+
+def test_malformed_json_is_a_generic_422(client):
+    res = client.post("/api/contact", content=b"{not json", headers={"Content-Type": "application/json"})
+
+    assert res.status_code == 422
+    assert res.json() == {"detail": "Invalid input.", "fields": []}
+    assert "decode" not in res.text.lower()

@@ -23,7 +23,9 @@ from typing import Optional
 import resend
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 # Local development only: on Vercel the variables come from the project settings
@@ -71,6 +73,21 @@ class ContactMessage(BaseModel):
     linkedin: Optional[str] = Field(default=None, max_length=200)
     message: str = Field(min_length=10, max_length=2000)
     website: Optional[str] = Field(default=None, max_length=200)  # honeypot
+
+
+@app.exception_handler(RequestValidationError)
+def invalid_input(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """422 without Pydantic's own text: no echoed input, no library messages, no
+    type names. Only which of the form's fields failed, so the client can point
+    at them; a key the client made up is never repeated back."""
+    known = ContactMessage.model_fields
+    fields: list[str] = []
+    for error in exc.errors():
+        loc = error.get("loc", ())
+        name = loc[1] if len(loc) > 1 and loc[0] == "body" else None
+        if isinstance(name, str) and name in known and name not in fields:
+            fields.append(name)
+    return JSONResponse(status_code=422, content={"detail": "Invalid input.", "fields": fields})
 
 
 # Soft spam limit: per-IP sliding window, in memory. On Vercel each function
