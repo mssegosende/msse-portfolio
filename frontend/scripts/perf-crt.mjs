@@ -241,8 +241,15 @@ const oneRun = async (browser, { phone, dark }) => {
     .locator('[data-testid="spline-canvas-wrap"][data-revealed="true"]')
     .waitFor({ state: "attached", timeout: 60_000 });
   const revealMs = Date.now() - loadT0;
-  // Scene 1 on screen: the robot revealed and the loading screen gone (with
-  // no loading screen, the same moment as the reveal).
+  // Scene 1 starts to show: the loading screen's crossfade begins (with no
+  // loading screen, the reveal itself).
+  await page.waitForFunction(
+    () => !document.getElementById("boot") || document.documentElement.dataset.boot === "entered",
+    null,
+    { timeout: 60_000 },
+  );
+  const enteredMs = Date.now() - loadT0;
+  // Scene 1 alone on screen: the robot revealed and the loading screen gone.
   await page.locator("#boot").waitFor({ state: "detached", timeout: 60_000 });
   const sceneMs = Date.now() - loadT0;
   // The browser's own first contentful paint, from navigation start.
@@ -255,7 +262,7 @@ const oneRun = async (browser, { phone, dark }) => {
   if (dark !== (theme === "dark")) throw new Error(`theme is ${theme}, expected dark=${dark}`);
   if (LOAD_ONLY) {
     await context.close();
-    return { revealMs, sceneMs, fcpMs, errors, scenarios: {} };
+    return { revealMs, enteredMs, sceneMs, fcpMs, errors, scenarios: {} };
   }
   await page.waitForTimeout(4000); // the reveal fade and the scene's own intro
 
@@ -285,7 +292,7 @@ const oneRun = async (browser, { phone, dark }) => {
     s["projects-hover"] = await measure(page, cdp, { ms: 8000 });
   }
   await context.close();
-  return { revealMs, sceneMs, fcpMs, errors, scenarios: s };
+  return { revealMs, enteredMs, sceneMs, fcpMs, errors, scenarios: s };
 };
 
 const gpuOf = async (browser) => {
@@ -390,6 +397,7 @@ try {
     result.configs[name] = {
       revealMs: Math.round(median(runs.map((r) => r.revealMs))),
       fcpMs: Math.round(median(runs.map((r) => r.fcpMs))),
+      enteredMs: Math.round(median(runs.map((r) => r.enteredMs))),
       sceneMs: Math.round(median(runs.map((r) => r.sceneMs))),
       errors: [...new Set(runs.flatMap((r) => r.errors))],
       scenarios,
