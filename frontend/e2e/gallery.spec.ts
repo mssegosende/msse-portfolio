@@ -30,11 +30,11 @@ test.describe("desktop", () => {
 
   test("a link opens it on one video; Esc closes it", async ({ page }) => {
     await blockSpline(page);
-    await page.goto("/?view=videos&v=10");
+    await page.goto("/?view=videos&v=08");
     const gallery = page.getByRole("dialog", { name: "INDEX // README TOUR" });
     await expect(gallery).toBeVisible();
-    await expect(gallery.getByRole("heading", { name: "March to June" })).toBeVisible();
-    await expect(page.getByTestId("gallery-channel-10")).toHaveAttribute("aria-current", "true");
+    await expect(gallery.getByRole("heading", { name: "Blaze" })).toBeVisible();
+    await expect(page.getByTestId("gallery-channel-08")).toHaveAttribute("aria-current", "true");
     await page.keyboard.press("Escape");
     await expect(gallery).toBeHidden();
     await expect(page).not.toHaveURL(/view=videos/);
@@ -50,7 +50,7 @@ test.describe("phone", () => {
     await page.getByTestId("hero-intro-open").click();
     const gallery = page.getByRole("dialog", { name: "INDEX // README TOUR" });
     await expect(gallery).toBeVisible();
-    await expect(page.getByTestId("gallery-reel").locator("li")).toHaveCount(13);
+    await expect(page.getByTestId("gallery-reel").locator("li")).toHaveCount(9);
     // Posters only on phones: no preview loops.
     await expect(gallery.locator("video")).toHaveCount(0);
     await page.getByTestId("gallery-close").click();

@@ -20,10 +20,6 @@ describe("the README tour", () => {
       "07 Marvel Characters",
       "08 Blaze",
       "09 Built, not deployed yet",
-      "10 March to June",
-      "11 July to November",
-      "12 The series, on the shelf",
-      "13 Thank you",
     ]);
     expect(tourVideos.map((v) => v.group)).toEqual([
       "INTRO",
@@ -35,12 +31,13 @@ describe("the README tour", () => {
       "SHIPPED",
       "SHIPPED",
       "SHIPPED",
-      "FROM MARCH TO NOW",
-      "FROM MARCH TO NOW",
-      "THE SERIES",
-      "THE SERIES",
     ]);
     expect(new Set(tourVideos.map((v) => v.group))).toEqual(new Set(VIDEO_GROUPS));
+  });
+
+  it("shows only recorded videos, never the intro placeholder", () => {
+    for (const v of tourVideos) expect(v.src, v.title).toMatch(/^\/videos\//);
+    expect(VIDEO_GROUPS).toEqual(["INTRO", "SHIPPED"]);
   });
 
   it("shows a project only with its narrated video, never as a placeholder", () => {
