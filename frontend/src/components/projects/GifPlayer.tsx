@@ -18,8 +18,10 @@ interface GifPlayerProps {
   /** Called when the clip ends; without it the clip loops (reduced motion). */
   onEnded?: () => void;
   compact?: boolean;
-  /** How much to load before it plays: "none" for a slide that isn't showing yet. */
+  /** How much to load before it plays: "none" for a slide that is not showing yet. */
   preload?: "auto" | "none";
+  /** Phones: the clip and poster with the palette baked in (bakedMedia). */
+  baked?: { media: string; poster: string };
 }
 
 /**
@@ -37,6 +39,7 @@ export const GifPlayer = ({
   compact = false,
   preload = "auto",
   playing: wanted,
+  baked,
 }: GifPlayerProps) => {
   // A featured card on its way out (AnimatePresence) stops at once, so only
   // the incoming clip decodes during the hand-over.
@@ -127,13 +130,20 @@ export const GifPlayer = ({
       className={`crt-player relative ${compact ? "crt-player--compact" : ""}`}
       data-testid={`project-player-${project.id}`}
     >
-      <ProjectMedia project={project} corner={compact ? 16 : 26} inset={compact ? 10 : 18}>
+      <ProjectMedia
+        project={project}
+        corner={compact ? 16 : 26}
+        inset={compact ? 10 : 18}
+        baked={baked}
+      >
         {!failed && (
           <video
+            // A theme change swaps the baked clip: a new element, from the start.
+            key={baked?.media}
             ref={videoRef}
             className="absolute inset-0 h-full w-full object-cover"
-            src={project.media}
-            poster={project.poster}
+            src={baked?.media ?? project.media}
+            poster={baked?.poster ?? project.poster}
             muted
             playsInline
             preload={preload}

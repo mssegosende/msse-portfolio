@@ -21,8 +21,11 @@ export const ProjectMedia = ({
   inset = 12,
   children,
   className = "",
+  baked,
 }: {
   project: ShowcaseProject;
+  /** Phones: a poster with the palette baked in; nothing filters it again. */
+  baked?: { poster: string };
   /** Crosshair corner size and distance from the edges, px. */
   corner?: number;
   inset?: number;
@@ -34,6 +37,7 @@ export const ProjectMedia = ({
     project.invertDark ? "crt-inv-dark" : "",
     project.invertLight ? "crt-inv-light" : "",
   ].join(" ");
+  const poster = baked ? baked.poster : project.poster;
   // Each project glitches on its own beat.
   const beat = { animationDelay: `${(Number(project.num.split(".")[1] ?? 1) * 1.37) % 4}s` };
   return (
@@ -41,25 +45,21 @@ export const ProjectMedia = ({
       {/* The filtered layer: what is drawn here is recoloured; the HUD marks
           above it keep their own ink. */}
       <div
-        className={`crt-media-filter ${inv} absolute inset-0`}
+        className={`${baked ? "" : `crt-media-filter ${inv}`} absolute inset-0`}
         style={{ background: project.art }}
       >
         {/* The poster always stays under the clip: swapping one for the other
             on hover removed the element under the pointer mid-click, and the
             browser dropped the click. */}
-        {project.poster && (
-          <img
-            src={project.poster}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+        {poster && (
+          <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
         )}
         {children}
-        {project.poster && (
+        {poster && (
           <span aria-hidden="true" className="crt-glitch absolute inset-0" style={beat}>
             {GLITCH_SLICES.map((slice) => (
               <span key={slice.band} className="absolute inset-0" style={slice.style}>
-                <img src={project.poster} alt="" className="h-full w-full object-cover" />
+                <img src={poster} alt="" className="h-full w-full object-cover" />
               </span>
             ))}
           </span>

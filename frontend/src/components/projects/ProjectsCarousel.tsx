@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { showcaseProjects as PROJECTS } from "@/data/projectsData";
+import { bakedMedia, showcaseProjects as PROJECTS } from "@/data/projectsData";
+import { useTheme } from "@/hooks/useTheme";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useNearView } from "@/hooks/useNearView";
 import { useProjectsInView } from "@/hooks/useProjectsInView";
@@ -26,6 +27,7 @@ const NODES = [
  */
 export const ProjectsCarousel = () => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const dark = useTheme().theme === "dark";
   const sectionRef = useRef<HTMLElement>(null);
   useProjectsInView(sectionRef);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -125,6 +127,9 @@ export const ProjectsCarousel = () => {
                   paused={paused}
                   onToggle={() => setUserPaused(!paused)}
                   onEnded={reduced ? undefined : advance}
+                  // The phosphor / ink look baked in (María Sol, 13 Nov:
+                  // the live filter left the clips in full colour on phones).
+                  baked={bakedMedia(p, dark)}
                 />
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-1.5 px-3.5 pt-4">
