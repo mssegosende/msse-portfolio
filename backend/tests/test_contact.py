@@ -100,7 +100,7 @@ def test_honeypot_pretends_success_and_sends_nothing(client, sent):
         ConnectionError("network down"),
     ],
 )
-def test_resend_failure_is_502_without_leaking_the_key(client, monkeypatch, caplog, error):
+def test_resend_failure_is_503_generic_without_leaking_the_key(client, monkeypatch, caplog, error):
     def failing_send(params):
         raise error
 
@@ -108,7 +108,10 @@ def test_resend_failure_is_502_without_leaking_the_key(client, monkeypatch, capl
 
     res = post(client, VALID)
 
-    assert res.status_code == 502
+    assert res.status_code == 503
+    assert res.json() == {"detail": "Could not deliver the message. Try again later."}
+    for leak in ("boom", "bad key", "network down", "application_error"):
+        assert leak not in res.text
     assert "re_test_secret_key" not in res.text
     assert "re_test_secret_key" not in caplog.text
 

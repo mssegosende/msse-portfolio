@@ -168,11 +168,11 @@ def submit_contact(payload: ContactMessage, request: Request):
     }
     try:
         resend.Emails.send(params)
-    except Exception as exc:  # noqa: BLE001 - any failure to deliver is a 502
+    except Exception as exc:  # noqa: BLE001 - the provider failed: 503, our own bugs are 500
         # Log the error type and Resend's code only: never the key, never the message body.
         code = getattr(exc, "code", None)
         logger.error("Resend send failed: %s (code=%s)", type(exc).__name__, code)
-        raise HTTPException(status_code=502, detail="Could not deliver the message. Try again later.")
+        raise HTTPException(status_code=503, detail="Could not deliver the message. Try again later.")
 
     return {"status": "ok"}
 
