@@ -14,7 +14,7 @@ import { closeGallery, pickVideo, useGallery } from "@/lib/gallery";
 import { MOBILE_LAYOUT_QUERY } from "@/lib/layout";
 import { REDUCED_MOTION_QUERY } from "@/lib/motion";
 import { setGalleryOpen } from "@/lib/sceneFocus";
-import { bootSweep } from "@/lib/sound";
+import { bootSweep, duckBackground } from "@/lib/sound";
 import s from "./VideoGallery.module.css";
 
 /** How long "NEXT: Ø06 — Title" shows between two videos of the tour, ms. */
@@ -47,8 +47,13 @@ const Gallery = ({ initial }: { initial: number }) => {
   const phone = useMediaQuery(MOBILE_LAYOUT_QUERY);
   const reduced = useMediaQuery(REDUCED_MOTION_QUERY);
   const [current, setCurrent] = useState(initial);
-  // Main video playing (the previews rest), and the tour running.
+  // Main video playing (the previews rest, the sound's background steps
+  // back), and the tour running.
   const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    duckBackground(playing);
+    return () => duckBackground(false);
+  }, [playing]);
   const [tour, setTour] = useState(false);
   // "NEXT: Ø06 — Title" between two videos of the tour.
   const [nextCard, setNextCard] = useState<number | null>(null);
