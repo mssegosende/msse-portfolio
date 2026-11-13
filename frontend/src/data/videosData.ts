@@ -71,11 +71,10 @@ const entry = (
       };
 
 export const tourVideos: TourVideo[] = [
-  // README scenes 1 and 2; 02 is scene 3, parts 1-3. Both at 1.25x, the sound
-  // cleaned and evened out, the parts cross-faded (scripts/build-tour-videos.mjs
-  // --map clip_scene1.mp4+clip_scene2.mp4=01,clip_scene3_1.mp4+clip_scene3_2.mp4+
-  // clip_scene3_3.mp4=02 --speed 1.25 --clean).
-  entry("01", "INTRO", "Hello", "Who I am and what this tour covers.", { duration: 36 }),
+  // README scenes 1 and 2 at 1.10x; 02 is scene 3, parts 1-3, at 1.25x. The
+  // sound cleaned and evened out, the parts cross-faded
+  // (scripts/build-tour-videos.mjs --map <clips>=<id> --speed <x> --clean).
+  entry("01", "INTRO", "Hello", "Who I am and what this tour covers.", { duration: 41 }),
   entry("02", "INTRO", "Tech stack", "The tools I build with, and why.", { duration: 125 }),
   entry("03", "SHIPPED", "Built, not deployed yet", "Work that runs, but is not live."),
   entry("04", "FROM MARCH TO NOW", "March to June", "What I built in those months."),
