@@ -76,6 +76,9 @@ for (const [name, device] of [
       await blockSpline(page);
       await page.goto("/");
       await expect(page.locator('[data-testid="capabilities-stacked"]')).toBeAttached();
+      // The hero's load fade waits for the robot (here, its static fallback):
+      // on a busy machine that took longer than a fixed wait.
+      await expect(page.locator('#hero[data-hero-in="true"]')).toBeAttached();
       await page.waitForTimeout(800);
       expect(await page.locator(".pin-spacer").count()).toBe(0);
       for (const [sel, o] of Object.entries(await opacities(page))) {
