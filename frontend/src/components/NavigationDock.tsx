@@ -52,7 +52,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
               aria-label="Back to the top"
               // Phones: tight, so SOUND fits beside the rest (hidden under
               // 380px wide: the footer's logo goes to the top too).
-              className="crt-glow-label mr-0.5 min-h-11 shrink-0 px-1 font-michroma text-[11px] tracking-[0.06em] text-crt-title max-[379px]:hidden sm:mr-2 sm:px-3 sm:text-[13px] sm:tracking-[0.08em]"
+              className="msse-mark mr-0.5 min-h-11 shrink-0 px-1 text-[11px] text-crt-title max-[379px]:hidden sm:mr-2 sm:px-3 sm:text-[13px]"
             >
               {profile.shortMark}
             </button>

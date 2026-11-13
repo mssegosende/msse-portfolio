@@ -646,7 +646,7 @@ export const Contact = () => {
             type="button"
             data-testid="footer-brand"
             onClick={scrollToTop}
-            className={s.brand}
+            className={`msse-mark ${s.brand}`}
           >
             {profile.shortMark}
           </button>

@@ -30,7 +30,7 @@ export const Signature = () => {
         shown ? "opacity-100" : "opacity-0"
       }`}
     >
-      <p className="m-0 font-michroma text-[13px] leading-[1.5] tracking-[0.18em] text-[#14181D] dark:text-white">
+      <p className="msse-mark m-0 text-[13px] leading-[1.5] text-[#14181D] dark:text-white">
         {profile.shortMark}
       </p>
       {/* 10px: the footer's 8px margin plus its brand button's line box,

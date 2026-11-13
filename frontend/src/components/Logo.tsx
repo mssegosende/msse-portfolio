@@ -89,7 +89,7 @@ export const Logo = ({
       {variant === "lockup" && (
         <span
           aria-hidden="true"
-          className="font-michroma leading-none tracking-[0.08em] text-crt-title"
+          className="msse-mark leading-none text-crt-title"
           style={{ fontSize: textSize }}
         >
           {name}

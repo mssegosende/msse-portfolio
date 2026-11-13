@@ -536,7 +536,6 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
                 data-testid="hero-brand"
                 size={isMobile ? 38 : 48}
                 textSize={isMobile ? 13 : 16}
-                className="crt-glow-label"
               />
               <span
                 className={`crt-status-label flex items-center font-vt uppercase ${

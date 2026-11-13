@@ -450,12 +450,10 @@ textarea.input {
 :global(:root[data-theme="dark"]) .footer {
   color: #8dd1fa;
 }
+/* MSSE:// in the shared .msse-mark style (index.css): only its size here. */
 .brand {
-  font-family: "Michroma", sans-serif;
   font-size: 14px;
-  letter-spacing: 0.04em;
   color: var(--crt-title);
-  text-shadow: var(--crt-glow-label);
   min-height: 44px;
 }
 /* Phones: GITHUB · LINKEDIN, the credit under them, right-aligned. */

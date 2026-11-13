@@ -1415,6 +1415,18 @@ textarea:-webkit-autofill {
     0 0 2px #eef8ff,
     0 0 12px rgba(108, 185, 238, 0.585);
 }
+/* MSSE://, one style wherever it is written (María Sol, 13 Nov): Michroma at
+   its one weight, never a synthesized bold, and the signature's tracking. The
+   menu dock's and the footer's were tighter (0.06-0.08em, 0.04em) under a blue
+   glow, which crowded Michroma's wide S and thickened it. Each place keeps its
+   own size. */
+.msse-mark {
+  font-family: "Michroma", sans-serif;
+  font-weight: 400;
+  font-synthesis: none;
+  letter-spacing: 0.18em;
+}
+
 /* Every status indicator on the site, one style (María Sol, 13 Nov: no pink):
    the label in --crt-title, the dot in --crt-phosphor with its own glow. Used
    by scene 1's and scene 2's STATUS, Contact's CHANNEL OPEN and the projects'
