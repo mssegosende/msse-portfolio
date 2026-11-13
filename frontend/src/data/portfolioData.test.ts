@@ -11,6 +11,19 @@ describe("hero content", () => {
 });
 
 describe("copy rules", () => {
+  it("ships no email address: the contact destination lives only in the server's env", () => {
+    const text = JSON.stringify({
+      profile,
+      systemCheck,
+      manifesto,
+      capabilityCards,
+      projectBacklog,
+      showcaseProjects,
+    });
+    expect(text).not.toMatch(/[\w.+-]+@[\w-]+\.[\w.]+/);
+    expect(profile).not.toHaveProperty("email");
+  });
+
   it("says since 2022, never a year count", () => {
     const text = JSON.stringify({ profile, capabilityCards });
     expect(text).not.toMatch(/\d\+\s*years/i);

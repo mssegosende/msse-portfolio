@@ -11,7 +11,6 @@ export interface Profile {
   tagline: string;
   status: string;
   location: string;
-  email: string;
   /** A null linkedin hides its footer icon. */
   socials: { github: string; linkedin: string | null };
   /** Scene 4: Ø4.1 `bio` and Ø4.2 `story`, a list of paragraphs each. */
@@ -67,7 +66,6 @@ export const profile: Profile = {
     "I build the backend systems businesses run on — APIs, microservices, and the AI layers on top of them.",
   status: "ONLINE",
   location: "BUENOS AIRES — GLOBAL",
-  email: "10021msse@gmail.com",
   socials: {
     github: "https://github.com/mssegosende",
     linkedin: "https://www.linkedin.com/in/mssegosende",
