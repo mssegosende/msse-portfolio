@@ -65,18 +65,19 @@ export const profile: Profile = {
   tagline:
     "I build the backend systems businesses run on — APIs, microservices, and the AI layers on top of them.",
   status: "ONLINE",
-  location: "BUENOS AIRES — GLOBAL",
+  location: "ARGENTINA — GLOBAL",
   socials: {
     github: "https://github.com/mssegosende",
     linkedin: "https://www.linkedin.com/in/mssegosende",
   },
+  // About's bio (María Sol, 13 Nov), four paragraphs typed in order: bio, then story.
   bio: [
-    "I am María Sol, a full stack developer and AI engineer based in Buenos Aires. Since 2022 I have built products end to end, from the interface users interact with to the services behind it, and more recently the AI layer on top. I am most motivated by systems with dense business rules and no tolerance for silent errors, such as bookings, payments and data that must remain consistent wherever it lives. Each one presents a challenge with something new to learn.",
-    "I work primarily in Python and TypeScript and take ownership of features from the data layer to the interface. I am currently directing my career toward systems where integrity is non-negotiable: where every operation must reconcile exactly, and where security is designed in from the first line.",
+    "Full stack developer and AI engineer based in Argentina. Since 2022 I have built projects end to end: the interface people use, the services behind it and, more recently, the AI layer on top. I work mainly in Python and TypeScript, with Node.js on the back end and React and Next.js on the front end.",
+    "Drawn to systems that cannot afford silent errors, such as bookings, payments and data that has to stay consistent wherever it lives, I keep steering my career toward systems where every operation reconciles exactly and security is part of the design from the first line.",
   ],
   story: [
-    "The people who knew me saw it before I did. They recognized that the way I questioned how things worked, and refused to let a problem go unsolved, was already the mindset of an engineer. Teaching myself, in my own way, showed me how far I could go once I set my mind to something. That is when I stopped being just a user of technology and started building it for the people on the other side of the screen.",
-    "Studying has been my engine ever since, and I pick things up quickly. Learning the piano taught me that every system runs on patterns, and once you see them, one logic leads you into the next, whether it is written in notes, in code or in another language. At the end of the day, that is what I bring to a team: the habit of turning what I do not know yet into what I can build next.",
+    "The people around me saw an engineer in me before I did. You rarely see coming what will end up surprising you, which is the opposite of how I build software: there, every possible outcome has to be anticipated and handled. Engineering was that surprise, and since then I have been building technology for the people who need it.",
+    "I see patterns across very different fields, and they let me connect one logic to another. When something is new to me, I do not stop at not knowing: I work out how it functions and build my own way of understanding it. A system is not only an engineering idea; it is anything that runs on rules that must hold for it to work, in music, in a language or in code. That is what I bring to a team: the habit of turning what I do not know yet into what I can build next.",
   ],
   // A year, never a count ("since 2022", not "N+ years").
   stats: [{ value: "2022", label: "Shipping code since" }],

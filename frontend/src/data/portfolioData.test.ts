@@ -11,6 +11,21 @@ describe("hero content", () => {
 });
 
 describe("copy rules", () => {
+  it("About's bio is María Sol's four paragraphs (13 Nov), in order", () => {
+    const bio = [...profile.bio, ...profile.story];
+    expect(bio).toHaveLength(4);
+    expect(bio[0]).toMatch(/^Full stack developer and AI engineer based in Argentina\. Since 2022/);
+    expect(bio[1]).toMatch(/^Drawn to systems that cannot afford silent errors/);
+    expect(bio[2]).toMatch(/^The people around me saw an engineer in me before I did\./);
+    expect(bio[3]).toMatch(/into what I can build next\.$/);
+  });
+
+  it("says Argentina, never Buenos Aires", () => {
+    const text = JSON.stringify({ profile, systemCheck, manifesto, capabilityCards });
+    expect(text).not.toMatch(/buenos aires/i);
+    expect(profile.location).toMatch(/^ARGENTINA/);
+  });
+
   it("ships no email address: the contact destination lives only in the server's env", () => {
     const text = JSON.stringify({
       profile,

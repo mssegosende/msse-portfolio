@@ -50,7 +50,9 @@ test("the dossier first, the bio as text, then each principle", async ({ page })
   // The bio: its four paragraphs as real text, unchanged.
   const paragraphs = page.locator('[data-testid^="about-paragraph-"]');
   await expect(paragraphs).toHaveCount(4);
-  await expect(paragraphs.first()).toContainText("I am María Sol");
+  await expect(paragraphs.first()).toContainText(
+    "Full stack developer and AI engineer based in Argentina.",
+  );
   // The typing panel ends above the dock.
   const panel = (await page.getByTestId("about-text").boundingBox())!;
   const dock = (await page.getByTestId("navigation-dock").boundingBox())!;

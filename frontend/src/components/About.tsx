@@ -29,7 +29,7 @@ const BIO = [...profile.bio, ...profile.story];
 const ROWS: [string, string][] = [
   ["NAME", "MARÍA SOL GOSENDE"],
   ["FUNCTION", "FULL STACK · AI ENGINEER"],
-  ["BASE", "BUENOS AIRES"],
+  ["BASE", "ARGENTINA"],
 ];
 
 // SIGNAL · VITALS (María Sol, pre-launch): a hospital monitor, the ECG

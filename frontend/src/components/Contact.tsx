@@ -62,7 +62,8 @@ const validate = (form: ContactForm): FieldErrors => {
 // Contact's desktop screen at its design size (Contact.dc.html), px tall.
 const CONTACT_H = 960;
 
-// BASE · BUENOS AIRES: the local time there (GMT-3, no daylight saving).
+// BASE · ARGENTINA: the local time there (GMT-3, no daylight saving; the
+// IANA zone is still named after Buenos Aires).
 const BA_TIME = (withSeconds: boolean) =>
   new Intl.DateTimeFormat("en-GB", {
     timeZone: "America/Argentina/Buenos_Aires",
@@ -73,7 +74,7 @@ const BA_TIME = (withSeconds: boolean) =>
   });
 
 /**
- * The live clock in Buenos Aires, ticking seconds while on screen (María Sol,
+ * The live clock in Argentina, ticking seconds while on screen (María Sol,
  * 13 Nov). Reduced motion: hours and minutes, updated each minute.
  */
 const BaseClock = ({ still, live }: { still: boolean; live: boolean }) => {
@@ -561,7 +562,7 @@ export const Contact = () => {
         </div>
 
         {/* The right column, one block (María Sol, pre-launch): CHANNEL OPEN
-            with its typing log; BASE with the Buenos Aires clock and GitHub;
+            with its typing log; BASE with the Argentina clock and GitHub;
             SIGNAL, a live trace (desktop only). Desktop: the form window's
             height, top to top and bottom to bottom. */}
         <aside
@@ -592,7 +593,7 @@ export const Contact = () => {
           </div>
           <div className={s.sideBlock}>
             <div className={s.channelHead}>
-              <span className="crt-glow-label">BASE · BUENOS AIRES</span>
+              <span className="crt-glow-label">BASE · ARGENTINA</span>
             </div>
             <div className={s.channelRow}>
               <span className={s.channelKey}>GMT-3</span>
