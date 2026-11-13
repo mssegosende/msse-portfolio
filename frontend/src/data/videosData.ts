@@ -85,11 +85,12 @@ export const tourVideos: TourVideo[] = [
   }),
   entry("04", "SHIPPED", "Alphecca", "An LLM selection and cost calculator.", { duration: 47 }),
   entry("05", "SHIPPED", "Ethos", "A clinic booking app, full stack.", { duration: 55 }),
-  entry("06", "SHIPPED", "Built, not deployed yet", "Work that runs, but is not live."),
-  entry("07", "FROM MARCH TO NOW", "March to June", "What I built in those months."),
-  entry("08", "FROM MARCH TO NOW", "July to November", "What I built in those months."),
-  entry("09", "THE SERIES", "The series, on the shelf", "The cheat-sheet series."),
-  entry("10", "THE SERIES", "Thank you", "Thanks for watching."),
+  entry("06", "SHIPPED", "Lynx", "Fraud and elder-exploitation detection.", { duration: 46 }),
+  entry("07", "SHIPPED", "Built, not deployed yet", "Work that runs, but is not live."),
+  entry("08", "FROM MARCH TO NOW", "March to June", "What I built in those months."),
+  entry("09", "FROM MARCH TO NOW", "July to November", "What I built in those months."),
+  entry("10", "THE SERIES", "The series, on the shelf", "The cheat-sheet series."),
+  entry("11", "THE SERIES", "Thank you", "Thanks for watching."),
 ];
 
 /** "Ø05"-style number (the slashed zero, as the rest of the site). */
