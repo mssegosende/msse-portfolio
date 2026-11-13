@@ -74,3 +74,20 @@ def test_the_csp_allows_index_html_inline_script_by_its_exact_hash():
     for body in inline:
         digest = base64.b64encode(hashlib.sha256(body.encode("utf8")).digest()).decode()
         assert f"'sha256-{digest}'" in directive(csp, "script-src")
+
+
+def test_security_txt_has_a_private_contact_and_a_future_expiry():
+    """RFC 9116: Contact and Expires are required; Expires less than a year out."""
+    from datetime import datetime, timedelta, timezone
+
+    text = (ROOT / "frontend/public/.well-known/security.txt").read_text("utf8")
+    fields = dict(
+        line.split(": ", 1) for line in text.splitlines() if line and not line.startswith("#")
+    )
+
+    assert fields["Contact"] == "https://github.com/mssegosende/msse-portfolio/security/advisories/new"
+    expires = datetime.fromisoformat(fields["Expires"].replace("Z", "+00:00"))
+    now = datetime.now(timezone.utc)
+    assert now < expires <= now + timedelta(days=366)
+    assert fields["Canonical"] == "https://msse-portfolio.vercel.app/.well-known/security.txt"
+    assert "@" not in text  # no email address: reports go through GitHub

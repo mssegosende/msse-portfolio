@@ -1,0 +1,7 @@
+# Security contact for https://msse-portfolio.vercel.app (RFC 9116).
+# Please report privately through GitHub's private vulnerability reporting,
+# not in a public issue.
+Contact: https://github.com/mssegosende/msse-portfolio/security/advisories/new
+Expires: 2027-11-12T23:59:59.000Z
+Preferred-Languages: en, es
+Canonical: https://msse-portfolio.vercel.app/.well-known/security.txt
