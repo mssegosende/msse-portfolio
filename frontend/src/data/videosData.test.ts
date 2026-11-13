@@ -9,19 +9,21 @@ const PUBLIC = new Set(
 );
 
 describe("the README tour", () => {
-  it("has the README's sections, in order, in María Sol's groups, and no projects", () => {
+  it("has the README's sections, in order, in María Sol's groups", () => {
     expect(tourVideos.map((v) => `${v.id} ${v.title}`)).toEqual([
       "01 Hello",
       "02 Tech stack",
-      "03 Built, not deployed yet",
-      "04 March to June",
-      "05 July to November",
-      "06 The series, on the shelf",
-      "07 Thank you",
+      "03 Polaris",
+      "04 Built, not deployed yet",
+      "05 March to June",
+      "06 July to November",
+      "07 The series, on the shelf",
+      "08 Thank you",
     ]);
     expect(tourVideos.map((v) => v.group)).toEqual([
       "INTRO",
       "INTRO",
+      "SHIPPED",
       "SHIPPED",
       "FROM MARCH TO NOW",
       "FROM MARCH TO NOW",
@@ -29,10 +31,13 @@ describe("the README tour", () => {
       "THE SERIES",
     ]);
     expect(new Set(tourVideos.map((v) => v.group))).toEqual(new Set(VIDEO_GROUPS));
-    // The projects have their own cards in Projects, never a channel here.
-    const titles = tourVideos.map((v) => v.title.toLowerCase()).join(" ");
-    for (const name of ["polaris", "alphecca", "ethos", "lynx", "marvel", "blaze"])
-      expect(titles).not.toContain(name);
+  });
+
+  it("shows a project only with its narrated video, never as a placeholder", () => {
+    const projects = ["polaris", "alphecca", "ethos", "lynx", "marvel", "blaze"];
+    for (const v of tourVideos)
+      if (projects.some((p) => v.title.toLowerCase().includes(p)))
+        expect(v.src, v.title).toMatch(/^\/videos\//);
   });
 
   it("points every entry at files that exist", () => {
