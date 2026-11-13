@@ -9,16 +9,30 @@ const PUBLIC = new Set(
 );
 
 describe("the README tour", () => {
-  it("has the 13 entries, in order, in María Sol's groups", () => {
-    expect(tourVideos.map((v) => v.id)).toEqual(
-      Array.from({ length: 13 }, (_, i) => String(i + 1).padStart(2, "0")),
-    );
-    const groupOf = (id: string) => tourVideos.find((v) => v.id === id)?.group;
-    expect(["01", "02"].map(groupOf)).toEqual(["INTRO", "INTRO"]);
-    expect(["03", "09"].map(groupOf)).toEqual(["SHIPPED", "SHIPPED"]);
-    expect(["10", "11"].map(groupOf)).toEqual(["FROM MARCH TO NOW", "FROM MARCH TO NOW"]);
-    expect(["12", "13"].map(groupOf)).toEqual(["THE SERIES", "THE SERIES"]);
+  it("has the README's sections, in order, in María Sol's groups, and no projects", () => {
+    expect(tourVideos.map((v) => `${v.id} ${v.title}`)).toEqual([
+      "01 Hello",
+      "02 Tech stack",
+      "03 Built, not deployed yet",
+      "04 March to June",
+      "05 July to November",
+      "06 The series, on the shelf",
+      "07 Thank you",
+    ]);
+    expect(tourVideos.map((v) => v.group)).toEqual([
+      "INTRO",
+      "INTRO",
+      "SHIPPED",
+      "FROM MARCH TO NOW",
+      "FROM MARCH TO NOW",
+      "THE SERIES",
+      "THE SERIES",
+    ]);
     expect(new Set(tourVideos.map((v) => v.group))).toEqual(new Set(VIDEO_GROUPS));
+    // The projects have their own cards in Projects, never a channel here.
+    const titles = tourVideos.map((v) => v.title.toLowerCase()).join(" ");
+    for (const name of ["polaris", "alphecca", "ethos", "lynx", "marvel", "blaze"])
+      expect(titles).not.toContain(name);
   });
 
   it("points every entry at files that exist", () => {

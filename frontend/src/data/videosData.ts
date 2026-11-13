@@ -6,8 +6,9 @@ import { INTRO_VIDEO } from "./introVideo";
  * An entry with a recording points at its files in public/videos/ (built by
  * scripts/build-tour-videos.mjs: <id>.mp4, <id>-preview.mp4, <id>.jpg and
  * <id>.vtt when there are captions), with its real length.
- * TODO(content): 03-13 still show the intro placeholder until María Sol's
- * clips for them exist (the projects keep their own videos in Projects).
+ * No projects here (María Sol): they have their own cards and videos in
+ * Projects. TODO(content): 03-07 still show the intro placeholder until her
+ * clips for them exist.
  * 02 gets clip_scene3_3 joined after clip_scene3_1 and clip_scene3_2.
  */
 export type VideoGroup = "INTRO" | "SHIPPED" | "FROM MARCH TO NOW" | "THE SERIES";
@@ -75,17 +76,11 @@ export const tourVideos: TourVideo[] = [
   entry("01", "INTRO", "Hello", "Who I am and what this tour covers.", { duration: 46 }),
   // README scene 3, parts 1 and 2 joined; part 3 joins them once recorded.
   entry("02", "INTRO", "Tech stack", "The tools I build with, and why.", { duration: 106 }),
-  entry("03", "SHIPPED", "Polaris", "A RAG assistant for BCRA banking regulations."),
-  entry("04", "SHIPPED", "Alphecca", "An LLM selection and cost calculator."),
-  entry("05", "SHIPPED", "Ethos", "A clinic booking app, full stack."),
-  entry("06", "SHIPPED", "Lynx", "Fraud and elder-exploitation detection."),
-  entry("07", "SHIPPED", "Marvel Characters", "My first React and TypeScript app."),
-  entry("08", "SHIPPED", "Blaze", "An AI co-authoring Markdown editor."),
-  entry("09", "SHIPPED", "Built, not deployed yet", "Work that runs, but is not live."),
-  entry("10", "FROM MARCH TO NOW", "March to June", "What I built in those months."),
-  entry("11", "FROM MARCH TO NOW", "July to November", "What I built in those months."),
-  entry("12", "THE SERIES", "The series, on the shelf", "The cheat-sheet series."),
-  entry("13", "THE SERIES", "Thank you", "Thanks for watching."),
+  entry("03", "SHIPPED", "Built, not deployed yet", "Work that runs, but is not live."),
+  entry("04", "FROM MARCH TO NOW", "March to June", "What I built in those months."),
+  entry("05", "FROM MARCH TO NOW", "July to November", "What I built in those months."),
+  entry("06", "THE SERIES", "The series, on the shelf", "The cheat-sheet series."),
+  entry("07", "THE SERIES", "Thank you", "Thanks for watching."),
 ];
 
 /** "Ø05"-style number (the slashed zero, as the rest of the site). */
