@@ -44,6 +44,10 @@ export const vwOf =
 // CRT redesign (HeroM.dc.html): centred under the MSSE wordmark, the head
 // whole inside the crosshair (box 92,140 200x240), crown ~150px down.
 const PHONE_HERO = { scale: 0.8, dx: 0.012, y: -2.4 };
+/** Phones: where PHONE_HERO puts the crown, px from the top (at any height). */
+const PHONE_CROWN_PX = 183;
+/** ...and where it goes: this share of the screen's height. */
+const PHONE_CROWN_AT = 0.2;
 /** The phone mocks' height, which the phone framings are measured at. */
 export const PHONE_REF_H = 844;
 
@@ -66,13 +70,18 @@ export const heroFraming = (isMobile: boolean, _reduce: boolean, { width, height
     // and to the right, one arm in frame, the head whole ~50px from the top, at
     // the mock's size on any phone height (María Sol's review: it read small).
     // A camera framing (applyView at css scale 1), the same with reduced motion.
+    // María Sol, 13 Nov (pre-launch): the crown at ~20% of the screen's
+    // height, so a shorter phone shows more chest above WATCH THE VIDEOS (the
+    // robot keeps its size in px). A lower y pans the picture up by that
+    // share of the height.
     const f = phoneFixedPx(PHONE_HERO.scale, PHONE_HERO.y, height);
+    const y = f.y - ((PHONE_CROWN_PX - PHONE_CROWN_AT * height) / height) * 100;
     return {
       startScale: f.scale,
-      startY: `${f.y}%`,
-      endY: `${f.y}%`,
+      startY: `${y}%`,
+      endY: `${y}%`,
       altScale: f.scale,
-      altY: `${f.y}%`,
+      altY: `${y}%`,
       heroDx: PHONE_HERO.dx * width,
     };
   }

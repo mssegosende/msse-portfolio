@@ -58,7 +58,9 @@ export const HeroWordmark = ({
     ref={ref}
     aria-hidden="true"
     className={`hero-wordmark--depth pointer-events-none absolute inset-x-0 overflow-hidden ${
-      isMobile ? "hero-wordmark--depth-phone top-[186px]" : "top-[16.67%]"
+      // Phones: behind the head, which sits at 20% of the height
+      // (choreography's PHONE_CROWN_AT): 186px at the old 183px crown.
+      isMobile ? "hero-wordmark--depth-phone top-[calc(20vh+3px)]" : "top-[16.67%]"
     }`}
   >
     <div className={`hero-title-in hero-wordmark ${isMobile ? "hero-wordmark--phone" : ""}`}>
