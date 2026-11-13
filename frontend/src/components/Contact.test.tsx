@@ -179,3 +179,54 @@ describe("Contact endpoint without VITE_BACKEND_URL", () => {
     expect(fetchMock).toHaveBeenCalledWith(url, expect.objectContaining({ method: "POST" }));
   });
 });
+
+describe("Contact, Turnstile", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    delete window.turnstile;
+  });
+
+  it("is off without a site key: no widget, no Cloudflare script, no token sent", async () => {
+    vi.stubEnv("VITE_TURNSTILE_SITE_KEY", "");
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+    const { submit } = await fillForm();
+    await submit();
+
+    expect(screen.queryByTestId("contact-turnstile")).not.toBeInTheDocument();
+    expect(document.querySelector('script[src*="challenges.cloudflare.com"]')).toBeNull();
+    const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string);
+    expect(body).not.toHaveProperty("turnstile_token");
+  });
+
+  it("with a site key renders the widget, sends its token, then asks for a new one", async () => {
+    vi.stubEnv("VITE_TURNSTILE_SITE_KEY", "1x00000000000000000000AA");
+    const reset = vi.fn();
+    const render = vi.fn((_el: HTMLElement, options: { callback: (t: string) => void }) => {
+      options.callback("tok-1");
+      return "widget-1";
+    });
+    window.turnstile = { render, reset, remove: vi.fn() };
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+    const { submit } = await fillForm();
+    await waitFor(() => expect(render).toHaveBeenCalledTimes(1));
+    expect(render.mock.calls[0]?.[1]).toMatchObject({
+      sitekey: "1x00000000000000000000AA",
+      appearance: "interaction-only",
+    });
+    await submit();
+
+    const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string);
+    expect(body.turnstile_token).toBe("tok-1");
+    await waitFor(() => expect(reset).toHaveBeenCalledWith("widget-1"));
+  });
+
+  it("reports a refused verification (403) clearly", async () => {
+    vi.stubEnv("VITE_TURNSTILE_SITE_KEY", "1x00000000000000000000AA");
+    window.turnstile = { render: vi.fn(() => "w"), reset: vi.fn(), remove: vi.fn() };
+    fetchMock.mockResolvedValue(new Response("{}", { status: 403 }));
+    const { submit } = await fillForm();
+    await submit();
+
+    expect(await screen.findByTestId("contact-error")).toHaveTextContent(/VERIFICATION FAILED/);
+  });
+});

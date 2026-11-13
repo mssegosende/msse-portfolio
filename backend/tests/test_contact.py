@@ -239,10 +239,75 @@ def test_form_max_lengths_match_the_model():
     model = {
         name: next(m.max_length for m in f.metadata if hasattr(m, "max_length"))
         for name, f in server.ContactMessage.model_fields.items()
-        if any(hasattr(m, "max_length") for m in f.metadata)
+        # The Turnstile token is not typed by anyone: Cloudflare's 2048 limit.
+        if name != "turnstile_token" and any(hasattr(m, "max_length") for m in f.metadata)
     }
 
     assert model and all(form[name] == limit for name, limit in model.items()), (form, model)
     from email_validator.rfc_constants import EMAIL_MAX_LENGTH
 
     assert form["email"] == EMAIL_MAX_LENGTH  # EmailStr's own limit
+
+
+# Turnstile: off until TURNSTILE_SECRET_KEY is set; with it set, never optional.
+
+
+@pytest.fixture
+def turnstile(monkeypatch):
+    """Turns Turnstile on and replaces Cloudflare: the token "pass" passes."""
+    monkeypatch.setenv("TURNSTILE_SECRET_KEY", "ts_test_secret")
+    seen: list[tuple] = []
+
+    def fake_siteverify(secret, token, ip):
+        seen.append((secret, token, ip))
+        return {"success": token == "pass", "error-codes": [] if token == "pass" else ["invalid-input-response"]}
+
+    monkeypatch.setattr(server, "_siteverify", fake_siteverify)
+    return seen
+
+
+def test_without_the_secret_turnstile_is_off_and_the_message_is_review(client, sent, monkeypatch):
+    called = []
+    monkeypatch.setattr(server, "_siteverify", lambda *a: called.append(a) or {"success": True})
+
+    for body in (VALID, VALID | {"turnstile_token": "anything"}):
+        assert post(client, body).status_code == 200
+
+    assert called == []
+    assert all(email["subject"].startswith("[REVIEW] ") for email in sent)
+
+
+@pytest.mark.parametrize("token", [None, "", "fail"])
+def test_with_the_secret_a_missing_or_failed_token_is_refused(client, sent, turnstile, token):
+    body = VALID if token is None else VALID | {"turnstile_token": token}
+
+    res = post(client, body)
+
+    assert res.status_code == 403
+    assert res.json() == {"detail": "Verification failed. Reload the page and try again."}
+    assert "ts_test_secret" not in res.text
+    assert sent == []
+
+
+def test_with_the_secret_a_passing_token_is_verified(client, sent, turnstile):
+    res = post(client, VALID | {"turnstile_token": "pass"}, **{"x-real-ip": "203.0.113.5"})
+
+    assert res.status_code == 200
+    assert turnstile == [("ts_test_secret", "pass", "203.0.113.5")]
+    assert sent[0]["subject"].startswith("[VERIFIED] ")
+    assert "pass" not in sent[0]["text"]
+
+
+def test_cloudflare_unreachable_refuses_and_sends_nothing(client, sent, monkeypatch, caplog):
+    monkeypatch.setenv("TURNSTILE_SECRET_KEY", "ts_test_secret")
+
+    def down(*args):
+        raise OSError("timed out")
+
+    monkeypatch.setattr(server, "_siteverify", down)
+
+    res = post(client, VALID | {"turnstile_token": "pass"})
+
+    assert res.status_code == 503
+    assert sent == []
+    assert "ts_test_secret" not in res.text and "ts_test_secret" not in caplog.text

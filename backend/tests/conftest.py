@@ -6,6 +6,8 @@ import os
 os.environ["RESEND_API_KEY"] = "re_test_secret_key"
 os.environ["CONTACT_TO_EMAIL"] = "inbox@example.com"
 os.environ["CORS_ORIGINS"] = "https://msse-portfolio.vercel.app, http://localhost:3000/"
+# Off unless a test turns it on (an empty value also keeps a local .env's out).
+os.environ["TURNSTILE_SECRET_KEY"] = ""
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402

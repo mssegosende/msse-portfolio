@@ -14,6 +14,7 @@ import s from "./Contact.module.css";
 import { useCrossfade } from "@/hooks/useSectionDissolve";
 import { useOwnsCenter } from "@/hooks/useOwnsCenter";
 import { MAX_LEN } from "@/lib/contactLimits";
+import { useTurnstile } from "@/lib/turnstile";
 
 // Production: same origin (Vercel routes /api/* to the backend service).
 // Dev: the local uvicorn. VITE_BACKEND_URL overrides both.
@@ -259,6 +260,10 @@ export const Contact = () => {
     );
   };
 
+  // Turnstile: off (nothing rendered, nothing sent) until its site key is set.
+  const [turnstileEl, setTurnstileEl] = useState<HTMLDivElement | null>(null);
+  const turnstile = useTurnstile(turnstileEl);
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (sending) return;
@@ -279,13 +284,17 @@ export const Contact = () => {
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(
+          turnstile.enabled ? { ...form, turnstile_token: turnstile.token ?? "" } : form,
+        ),
       });
       if (res.ok) {
         pushLine("[OK] MESSAGE TRANSMITTED — I will get back to you within 24h.", true);
         commandAccepted();
         setDone(true);
         setForm(EMPTY_FORM);
+      } else if (res.status === 403) {
+        showError("[ERR] VERIFICATION FAILED — reload the page and try again.");
       } else if (res.status === 429) {
         showError("[ERR] RATE LIMIT — too many transmissions. Try again later.");
       } else {
@@ -295,6 +304,8 @@ export const Contact = () => {
       showError("[ERR] NETWORK OFFLINE — message not sent. Try again.");
     } finally {
       setSending(false);
+      // Each Turnstile token is single-use: ask for a new one.
+      turnstile.reset();
     }
   };
 
@@ -483,6 +494,8 @@ export const Contact = () => {
                 aria-hidden="true"
                 className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
               />
+
+              {turnstile.enabled && <div ref={setTurnstileEl} data-testid="contact-turnstile" />}
 
               <div className={s.sendRow}>
                 <span aria-hidden="true" className={s.prompt}>

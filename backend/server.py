@@ -11,11 +11,17 @@ Environment (see .env.example):
                     the form is same-origin and needs none; this is for local dev
                     and for a frontend hosted elsewhere.
 - API_DOCS          "1" turns on /docs, /redoc and /openapi.json (local only).
+- TURNSTILE_SECRET_KEY  Cloudflare Turnstile's secret. Unset: Turnstile is off and
+                    every message arrives as [REVIEW]. Set: a missing or failed
+                    token is refused (403), and nothing is sent.
 """
 
+import json
 import logging
 import os
 import time
+import urllib.parse
+import urllib.request
 from collections import defaultdict
 from pathlib import Path
 from typing import Optional
@@ -79,6 +85,8 @@ class ContactMessage(BaseModel):
     linkedin: Optional[str] = Field(default=None, max_length=200)
     message: str = Field(min_length=10, max_length=2000)
     website: Optional[str] = Field(default=None, max_length=200)  # honeypot
+    # Cloudflare Turnstile's token (at most 2048 characters, per its docs).
+    turnstile_token: Optional[str] = Field(default=None, max_length=2048)
 
 
 @app.exception_handler(RequestValidationError)
@@ -128,6 +136,38 @@ def _over_rate_limit(ip: str) -> bool:
     return False
 
 
+TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+VERIFY_FAILED = "Verification failed. Reload the page and try again."
+
+
+def _siteverify(secret: str, token: str, ip: str) -> dict:
+    """Cloudflare's server-side check of a Turnstile token (10 s at most)."""
+    data = urllib.parse.urlencode({"secret": secret, "response": token, "remoteip": ip}).encode()
+    request = urllib.request.Request(TURNSTILE_VERIFY_URL, data=data, method="POST")
+    with urllib.request.urlopen(request, timeout=10) as response:  # noqa: S310 - fixed https URL
+        return json.loads(response.read())
+
+
+def _turnstile_passed(token: Optional[str], ip: str) -> bool:
+    """False when Turnstile is off (no secret set). With the secret set it never
+    lets a message through unverified: a missing or rejected token is a 403, and
+    Cloudflare unreachable is a 503."""
+    secret = os.environ.get("TURNSTILE_SECRET_KEY")
+    if not secret:
+        return False
+    if not token:
+        raise HTTPException(status_code=403, detail=VERIFY_FAILED)
+    try:
+        result = _siteverify(secret, token, ip)
+    except Exception as exc:  # noqa: BLE001 - Cloudflare unreachable: refuse, never wave through
+        logger.error("Turnstile siteverify failed: %s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="Could not verify the message. Try again later.")
+    if result.get("success") is not True:
+        logger.info("Turnstile rejected a token: %s", result.get("error-codes"))
+        raise HTTPException(status_code=403, detail=VERIFY_FAILED)
+    return True
+
+
 def _email_text(payload: ContactMessage) -> str:
     return (
         f"Name: {payload.name}\n"
@@ -152,8 +192,11 @@ def submit_contact(payload: ContactMessage, request: Request):
     if payload.website:
         return {"status": "ok"}
 
-    if _over_rate_limit(_client_ip(request)):
+    ip = _client_ip(request)
+    if _over_rate_limit(ip):
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
+
+    verified = _turnstile_passed(payload.turnstile_token, ip)
 
     api_key = os.environ.get("RESEND_API_KEY")
     to_email = os.environ.get("CONTACT_TO_EMAIL")
@@ -168,7 +211,8 @@ def submit_contact(payload: ContactMessage, request: Request):
         "from": FROM_ADDRESS,
         "to": [to_email],
         "reply_to": str(payload.email),
-        "subject": f"Portfolio contact: {subject_name}",
+        # [REVIEW] unless Turnstile passed (it is off until its keys are set).
+        "subject": f"{'[VERIFIED]' if verified else '[REVIEW]'} Portfolio contact: {subject_name}",
         "text": _email_text(payload),
     }
     try:
