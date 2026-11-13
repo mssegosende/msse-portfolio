@@ -20,6 +20,8 @@ const style = (page: Page, testid: string) =>
       // Tracking in em, whatever the size.
       tracking: Math.round((parseFloat(cs.letterSpacing) / parseFloat(cs.fontSize)) * 100) / 100,
       glow: cs.textShadow,
+      size: cs.fontSize,
+      color: cs.color,
     };
   }, testid);
 
@@ -45,8 +47,9 @@ test("MSSE:// renders the same in the dock, the footer, the signature and scene 
     expect(s.synthesis, where).toBe("none");
     expect(s.tracking, where).toBe(0.18);
   }
-  // No blue glow thickening the letters (the signature keeps its dark halo,
-  // for reading over the robot; it doesn't change the letters).
-  for (const where of ["hero", "dock", "footer"] as const)
-    expect(marks[where].glow, where).toBe("none");
+  // The menu's is exactly the signature's (María Sol, 13 Nov: the signature is
+  // the reference): same size, white, the same dark halo.
+  expect(marks.dock).toEqual(marks.signature);
+  // No blue glow thickening the letters anywhere.
+  for (const where of ["hero", "footer"] as const) expect(marks[where].glow, where).toBe("none");
 });

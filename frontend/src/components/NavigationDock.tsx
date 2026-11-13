@@ -50,9 +50,11 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
               data-testid="nav-brand"
               onClick={scrollToTop}
               aria-label="Back to the top"
-              // Phones: tight, so SOUND fits beside the rest (hidden under
-              // 380px wide: the footer's logo goes to the top too).
-              className="msse-mark mr-0.5 min-h-11 shrink-0 px-1 text-[11px] text-crt-title max-[379px]:hidden sm:mr-2 sm:px-3 sm:text-[13px]"
+              // Exactly the floating signature's MSSE:// (María Sol, 13 Nov:
+              // the reference): 13px, .msse-mark, white, its dark halo; on
+              // phones too (hidden under 380px wide: the footer's logo goes
+              // to the top too).
+              className="msse-mark signature-halo mr-0.5 min-h-11 shrink-0 px-1 text-[13px] leading-[1.5] text-[#14181D] max-[379px]:hidden dark:text-white sm:mr-2 sm:px-3"
             >
               {profile.shortMark}
             </button>
