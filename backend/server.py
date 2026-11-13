@@ -136,9 +136,10 @@ def _email_text(payload: ContactMessage) -> str:
     )
 
 
-@api_router.get("/")
-def root():
-    return {"message": "MSG portfolio API online"}
+@api_router.get("/health")
+def health():
+    """Liveness only: says nothing about the service or its configuration."""
+    return {"status": "ok"}
 
 
 # A plain `def`: the Resend SDK makes a blocking HTTP call, and FastAPI runs sync

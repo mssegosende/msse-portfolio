@@ -18,7 +18,14 @@ def post(client, body, **headers):
 
 
 def test_health(client):
-    assert client.get("/api/").status_code == 200
+    res = client.get("/api/health")
+
+    assert res.status_code == 200
+    assert res.json() == {"status": "ok"}
+
+
+def test_the_old_root_greeting_is_gone(client):
+    assert client.get("/api/").status_code == 404
 
 
 def test_valid_message_is_emailed(client, sent):
