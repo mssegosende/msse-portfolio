@@ -715,8 +715,12 @@ export const useHeroTimeline = ({
             const p = self.progress;
             if (isTouchDevice && !isMobile) touchParallax(p);
             setAtEnd(p > 0.985);
-            // Latches once: the dock stays even if the visitor scrolls back up.
-            if (p > 0.985 && !journeyRef.current) {
+            // The dock comes with scene 2, once the crossfade from scene 1 is
+            // over, and SKIP INTRO (scene 1's) goes (María Sol, pre-launch:
+            // it used to wait for the pin's end). Latches once: the dock stays
+            // even if the visitor scrolls back up.
+            const shown = p * (self.animation?.duration() ?? 1);
+            if (shown >= XFADE_AT + XFADE_DURATION && !journeyRef.current) {
               journeyRef.current = true;
               setJourneyDone(true);
               onJourneyEndRef.current?.();
