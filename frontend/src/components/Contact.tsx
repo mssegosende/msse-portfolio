@@ -7,6 +7,7 @@ import { useSectionStep } from "../hooks/useSectionStep";
 import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { clampScale, useFrame } from "../hooks/useFrame";
 import { GridField } from "./GridField";
+import { LiveWave } from "./crt/LiveWave";
 import s from "./Contact.module.css";
 import { useCrossfade } from "@/hooks/useSectionDissolve";
 import { useOwnsCenter } from "@/hooks/useOwnsCenter";
@@ -40,17 +41,6 @@ const validate = (form: ContactForm): FieldErrors => {
   }
   return errors;
 };
-
-// The phones' live signal (ContactM.dc.html): drawn twice as wide as its box
-// and slid sideways by CSS, so it moves without a timer.
-const RX_WAVE = (() => {
-  let d = "";
-  for (let x = 0; x <= 696; x += 4) {
-    const y = 25 + 14 * Math.sin(x * 0.0903) * (0.6 + 0.4 * Math.sin(x * 0.018));
-    d += `${x === 0 ? "M" : "L"}${x} ${y.toFixed(1)} `;
-  }
-  return d;
-})();
 
 // Contact's desktop screen at its design size (Contact.dc.html), px tall.
 const CONTACT_H = 960;
@@ -207,7 +197,7 @@ export const Contact = () => {
   // The confirmation takes the form's place at the form's height (María Sol,
   // 13 Nov: the window never grows, so the footer never slides under the dock).
   const [formH, setFormH] = useState<number | null>(null);
-  // The section's loops (the ghosts, the wave, the radar, the clock) run only on screen.
+  // The section's loops (the ghosts, the waves, the clock) run only on screen.
   const [live, setLive] = useState(false);
   useEffect(() => {
     const el = ref.current;
@@ -354,15 +344,7 @@ export const Contact = () => {
           </div>
           <div aria-hidden="true" className={s.wave}>
             <div className="crt-scope h-[52px] overflow-hidden border border-[var(--crt-line-row)]">
-              <svg
-                width="200%"
-                height="50"
-                viewBox="0 0 696 50"
-                preserveAspectRatio="none"
-                className={s.waveSvg}
-              >
-                <path d={RX_WAVE} className="crt-scope__wave" fill="none" strokeWidth="1.5" />
-              </svg>
+              <LiveWave width={696} height={50} live={live} still={still} />
             </div>
             <div className="mt-1.5 flex justify-between font-mono text-[10px] tracking-[0.08em] text-crt-dim">
               <span>SIGNAL · OPEN</span>
@@ -519,11 +501,17 @@ export const Contact = () => {
           )}
         </div>
 
-        {/* Three small live boxes (María Sol, 13 Nov): CHANNEL OPEN with its
-            typing log; BASE with the Buenos Aires clock and GitHub; SIGNAL,
-            a radar sweep (desktop only). */}
-        <div className={`${s.side} ${s.reveal}`} {...rise(1)} data-xf="cards">
-          <aside className={`crt-frame ${s.box}`} aria-label="Channel">
+        {/* The right column, one block (María Sol, pre-launch): CHANNEL OPEN
+            with its typing log; BASE with the Buenos Aires clock and GitHub;
+            SIGNAL, a live trace (desktop only). Desktop: the form window's
+            height, top to top and bottom to bottom. */}
+        <aside
+          className={`crt-frame ${s.side} ${s.reveal}`}
+          aria-label="Channel"
+          {...rise(1)}
+          data-xf="cards"
+        >
+          <div className={s.sideBlock}>
             <div className={s.channelHead}>
               <span className="crt-glow-label">CHANNEL OPEN</span>
               <span
@@ -542,8 +530,8 @@ export const Contact = () => {
                 <span className={s.caret} />
               </div>
             </div>
-          </aside>
-          <aside className={`crt-frame ${s.box}`} aria-label="Base">
+          </div>
+          <div className={s.sideBlock}>
             <div className={s.channelHead}>
               <span className="crt-glow-label">BASE · BUENOS AIRES</span>
             </div>
@@ -562,23 +550,19 @@ export const Contact = () => {
               <span className={s.channelKey}>GITHUB</span>
               <span className={s.channelVal}>MSSEGOSENDE &gt;</span>
             </a>
-          </aside>
-          <aside aria-hidden="true" className={`crt-frame ${s.box} ${s.signalBox}`}>
+          </div>
+          <div aria-hidden="true" className={`${s.sideBlock} ${s.signalBox}`}>
             <div className={s.channelHead}>
               <span className="crt-glow-label">SIGNAL</span>
-              <span className={s.radarTag}>[signal.open]</span>
+              <span className={s.signalTag}>[signal.open]</span>
             </div>
-            <div className={s.radar}>
-              <span className={s.radarRing} />
-              <span className={`${s.radarRing} ${s.radarRingIn}`} />
-              <span className={s.radarV} />
-              <span className={s.radarH} />
-              <span className={s.sweep} />
-              <span className={s.blip} />
-              <span className={`${s.blip} ${s.blip2}`} />
+            <div className={s.signalScope}>
+              <div className="crt-scope h-full border border-[var(--crt-line-row)]">
+                <LiveWave width={420} height={120} seed={1.7} live={live} still={still} />
+              </div>
             </div>
-          </aside>
-        </div>
+          </div>
+        </aside>
 
         <footer
           data-testid="footer"
@@ -595,6 +579,8 @@ export const Contact = () => {
           >
             {profile.shortMark}
           </button>
+          {/* GITHUB · LINKEDIN · © together on the right, nothing in the middle
+              (María Sol, pre-launch: no EMAIL). */}
           <span className={s.socials}>
             <a
               data-testid="footer-github-link"
@@ -605,7 +591,6 @@ export const Contact = () => {
             >
               GITHUB
             </a>
-            {/* LINKEDIN (María Sol, 12 Nov); EMAIL stays beside it. */}
             {profile.socials.linkedin && (
               <a
                 data-testid="footer-linkedin-link"
@@ -617,16 +602,9 @@ export const Contact = () => {
                 LINKEDIN
               </a>
             )}
-            <a
-              data-testid="footer-email-link"
-              href={`mailto:${profile.email}`}
-              className={s.social}
-            >
-              EMAIL
-            </a>
-          </span>
-          <span className={s.credit}>
-            © {new Date().getFullYear()} {profile.name.toUpperCase()}
+            <span className={s.credit}>
+              © {new Date().getFullYear()} {profile.name.toUpperCase()}
+            </span>
           </span>
         </footer>
       </div>

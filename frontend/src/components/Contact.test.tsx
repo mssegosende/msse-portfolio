@@ -23,7 +23,7 @@ const fillForm = async () => {
 };
 
 describe("Contact", () => {
-  it("footer: GITHUB, LINKEDIN and EMAIL, the profiles in a new tab", () => {
+  it("footer: GITHUB, LINKEDIN and the credit, the profiles in a new tab, no EMAIL", () => {
     render(<Contact />);
     const linkedin = screen.getByTestId("footer-linkedin-link");
     expect(linkedin).toHaveTextContent("LINKEDIN");
@@ -31,11 +31,9 @@ describe("Contact", () => {
     expect(linkedin).toHaveAttribute("target", "_blank");
     expect(linkedin).toHaveAttribute("rel", "noopener noreferrer");
     const footer = screen.getByTestId("footer");
-    expect(footer).toHaveTextContent(/GITHUB.*LINKEDIN.*EMAIL/);
-    expect(screen.getByTestId("footer-email-link")).toHaveAttribute(
-      "href",
-      expect.stringMatching(/^mailto:/),
-    );
+    expect(footer).toHaveTextContent(/MSSE:\/\/.*GITHUB.*LINKEDIN.*©/);
+    expect(footer).not.toHaveTextContent("EMAIL");
+    expect(screen.queryByTestId("footer-email-link")).not.toBeInTheDocument();
   });
 
   it("sends nothing with the required fields empty: an error under each, focus on the first", async () => {

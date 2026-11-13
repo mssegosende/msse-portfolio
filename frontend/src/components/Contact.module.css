@@ -153,18 +153,9 @@
   }
 }
 
-/* The live signal: the path is twice the box and slides. */
+/* The live signal (LiveWave). */
 .wave {
   margin-top: 18px;
-}
-.waveSvg {
-  display: block;
-  animation: wave-slide 6s linear infinite;
-}
-@keyframes wave-slide {
-  to {
-    transform: translateX(-50%);
-  }
 }
 
 /* CHANNEL OPEN's log types its two lines once the box is in. */
@@ -412,18 +403,23 @@ textarea.input {
   text-shadow: var(--crt-glow-label);
 }
 
-/* The side column: three small live boxes, stacked (phones: the first two). */
+/* The right column: one block, its parts stacked (phones: the first two). */
 .side {
   margin-top: 22px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
 }
-.box {
-  position: relative;
+.sideBlock + .sideBlock {
+  border-top: 1px solid var(--crt-line);
 }
 .signalBox {
   display: none;
+}
+.signalTag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0;
+  color: var(--crt-text);
 }
 .channelHead {
   display: flex;
@@ -463,112 +459,8 @@ textarea.input {
 .channelLink:hover .channelVal {
   text-shadow: var(--crt-glow-label);
 }
-.radar {
-  position: relative;
-  height: 150px;
-  margin: 14px;
-  border: 1px solid var(--crt-line-row);
-  background-image:
-    linear-gradient(var(--crt-line-row) 1px, transparent 1px),
-    linear-gradient(90deg, var(--crt-line-row) 1px, transparent 1px);
-  background-size: 20px 20px;
-  overflow: hidden;
-}
-.radarRing {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 110px;
-  height: 110px;
-  margin: -55px 0 0 -55px;
-  border: 1.5px solid var(--crt-node);
-  border-radius: 50%;
-  box-shadow: var(--crt-node-glow);
-}
-.radarRingIn {
-  width: 56px;
-  height: 56px;
-  margin: -28px 0 0 -28px;
-  border-width: 1px;
-  border-color: var(--crt-line);
-  box-shadow: none;
-}
-.radarV,
-.radarH {
-  position: absolute;
-  background: var(--crt-line);
-}
-.radarV {
-  left: 50%;
-  top: 14px;
-  bottom: 14px;
-  width: 1px;
-}
-.radarH {
-  top: 50%;
-  left: 14px;
-  right: 14px;
-  height: 1px;
-}
-/* A sweep that lights the pink blips as it passes (a rotating line, not a
-   canvas). */
-.sweep {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 55px;
-  height: 2px;
-  margin-top: -1px;
-  transform-origin: 0 50%;
-  background: linear-gradient(90deg, var(--crt-core), transparent);
-  box-shadow: var(--crt-node-glow);
-  animation: sweep 3s linear infinite;
-}
-@keyframes sweep {
-  to {
-    transform: rotate(360deg);
-  }
-}
-.blip {
-  position: absolute;
-  left: calc(50% + 14px);
-  top: calc(50% - 22px);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #f472b6;
-  box-shadow: 0 0 8px #f472b6;
-  animation: blip 3s linear infinite;
-}
-/* Lit as the sweep passes (~300 deg), then fading. */
-@keyframes blip {
-  0%,
-  80% {
-    opacity: 0;
-  }
-  84% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.1;
-  }
-}
-.blip.blip2 {
-  left: calc(50% - 34px);
-  top: calc(50% + 18px);
-  animation-delay: -1.6s;
-}
-.radarTag {
-  font-family: "JetBrains Mono", monospace;
-  font-size: 11px;
-  letter-spacing: 0;
-  color: var(--crt-text);
-}
 /* Every loop here rests while the section is off screen (Contact.tsx). */
 .section[data-live="false"] .ghost,
-.section[data-live="false"] .waveSvg,
-.section[data-live="false"] .sweep,
-.section[data-live="false"] .blip,
 .section[data-live="false"] .caret {
   animation-play-state: paused;
 }
@@ -577,8 +469,7 @@ textarea.input {
 .footer {
   margin-top: 40px;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px 20px;
   padding-top: 16px;
@@ -599,9 +490,13 @@ textarea.input {
   text-shadow: var(--crt-glow-label);
   min-height: 44px;
 }
+/* Phones: GITHUB · LINKEDIN, the credit under them, right-aligned. */
 .socials {
   display: flex;
-  gap: 28px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0 24px;
 }
 .social {
   display: inline-flex;
@@ -614,7 +509,9 @@ textarea.input {
   color: var(--crt-title);
 }
 .credit {
-  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 /* ---- Desktop (Contact.dc.html; María Sol, 13 Nov: higher, a narrower and
@@ -624,7 +521,7 @@ textarea.input {
     display: grid;
     grid-template-columns: minmax(0, 640fr) minmax(0, 440fr);
     grid-template-areas:
-      "head side"
+      "head ."
       "card side"
       "footer footer";
     column-gap: 192px;
@@ -729,11 +626,13 @@ textarea.input {
   .log {
     padding: 26px 22px 22px;
   }
+  /* The form window's height: the row is sized by the form alone (size
+     containment), and the block stretches to it; SIGNAL takes what is left. */
   .side {
     grid-area: side;
-    margin-top: 0;
-    align-self: start;
-    gap: 18px;
+    margin-top: 28px;
+    align-self: stretch;
+    contain: size;
   }
   .channelHead {
     height: 46px;
@@ -759,11 +658,15 @@ textarea.input {
     color: var(--crt-title);
   }
   .signalBox {
-    display: block;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
   }
-  .radar {
-    height: 160px;
-    margin: 16px 18px 18px;
+  .signalScope {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 14px 18px 18px;
   }
   .footer {
     grid-area: footer;
@@ -776,8 +679,11 @@ textarea.input {
   .brand {
     font-size: 15px;
   }
-  .credit {
-    width: auto;
+  .footer {
+    align-items: center;
+  }
+  .socials {
+    gap: 32px;
   }
 }
 
@@ -787,14 +693,8 @@ textarea.input {
     transform: none;
   }
   .ghost,
-  .waveSvg,
-  .sweep,
-  .blip,
   .caret {
     animation: none;
-  }
-  .blip {
-    opacity: 1;
   }
   /* No typing: the full lines. */
   .section .type1,
