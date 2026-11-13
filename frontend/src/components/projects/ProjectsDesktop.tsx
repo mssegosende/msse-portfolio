@@ -200,6 +200,13 @@ const TerminalTile = () => (
       </div>
       <div>blaze/ alphecca/ polaris/</div>
       <div>lynx/ ethos/ marvel-characters/</div>
+      {/* Built, not deployed yet (María Sol's README). */}
+      <div className="mt-3">
+        <span className="crt-prompt">$</span>{" "}
+        <span className="text-[var(--crt-row-value)]">ls ~/projects/not-deployed</span>
+      </div>
+      <div>larawag/ helvetios/ arcturus/</div>
+      <div>titanium-tx/ apsis/</div>
       <div className="mt-3">
         <span className="crt-prompt">$</span>{" "}
         <span className="text-[var(--crt-row-value)]">open github</span>
