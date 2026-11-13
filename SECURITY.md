@@ -80,7 +80,22 @@ FastAPI endpoint for the contact form, both on Vercel); it stores no user data.
 
 - **An enforced Content Security Policy.** The policy runs in report-only mode
   first; it will be enforced once its console warnings have been reviewed on
-  every page and theme, so it can't break the 3D scenes or the videos.
+  every page and theme, so it can't break the 3D scenes or the videos. The
+  review so far (2026-11-13, production, desktop and phone) found two:
+  - `script-src` "eval": every report comes from one place, the Spline
+    runtime's bundled msgpackr (`runtime-chunk-K3UQCG3P`), which decodes the
+    `.splinecode` scene and compiles a faster reader with `Function()` inside a
+    `try`; when that throws it turns the optimisation off for good and reads
+    the slow way. Spline exposes no option or build without it, and the
+    runtime's other `Function()` users (physics, Gaussian splats) never load
+    here. Enforced locally without `'unsafe-eval'`: one blocked attempt, the
+    robot loads, no errors, no measurable delay. Proposal: leave
+    `'unsafe-eval'` out.
+  - `media-src` `data:`: the robot's eyes are a video texture stored inside
+    the scene file; the runtime (`runtime-video`) plays it from a
+    `data:video/mp4` URL. Blocked, the eyes go dark. Proposal: add `data:` to
+    `media-src` only (media can't run script; the alternative is a scene with
+    no video eyes).
 - **An edge rate limit.** A Vercel Firewall rule on `POST /api/contact` is the
   real limit (the in-memory one is a second layer). It is set in the Vercel
   dashboard, not in this repository, and is pending.
