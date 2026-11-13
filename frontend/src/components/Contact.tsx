@@ -573,10 +573,13 @@ export const Contact = () => {
         >
           <div className={s.sideBlock}>
             <div className={s.channelHead}>
-              <span className="crt-glow-label">CHANNEL OPEN</span>
+              <span className="crt-glow-label crt-status-label" data-testid="channel-status">
+                CHANNEL OPEN
+              </span>
               <span
                 aria-hidden="true"
-                className="h-2 w-2 animate-pulse-dot rounded-full bg-status shadow-[0_0_10px_#F472B6] motion-reduce:animate-none"
+                data-testid="channel-status-dot"
+                className="crt-status-dot h-2 w-2 animate-pulse-dot motion-reduce:animate-none"
               />
             </div>
             <div aria-hidden="true" className={s.typed}>

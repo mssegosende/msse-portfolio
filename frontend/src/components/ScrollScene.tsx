@@ -297,14 +297,10 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         </>,
       )}
       {isMobile ? (
-        <span
-          role="img"
-          aria-label="Status online"
-          className="mt-1.5 h-2 w-2 rounded-full bg-status shadow-[0_0_10px_#F472B6]"
-        />
+        <span role="img" aria-label="Status online" className="crt-status-dot mt-1.5 h-2 w-2" />
       ) : (
         <div
-          className="crt-glow-label absolute flex items-center gap-2.5 font-vt text-[22px] tracking-[0.14em] text-crt-text"
+          className="crt-glow-label crt-status-label absolute flex items-center gap-2.5 font-vt text-[22px] tracking-[0.14em]"
           style={{
             right: `${(64 / FRAME.width) * 100}%`,
             // On the 02 // CAPABILITIES line (María Sol, 13 Nov).
@@ -312,10 +308,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
             zoom: kTitle,
           }}
         >
-          <span
-            aria-hidden="true"
-            className="h-2 w-2 rounded-full bg-status shadow-[0_0_10px_#F472B6]"
-          />
+          <span aria-hidden="true" className="crt-status-dot h-2 w-2" />
           <span>STATUS: ONLINE</span>
         </div>
       )}
@@ -546,7 +539,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
                 className="crt-glow-label"
               />
               <span
-                className={`flex items-center font-vt uppercase text-crt-text ${
+                className={`crt-status-label flex items-center font-vt uppercase ${
                   isMobile
                     ? "gap-[7px] text-[17px] tracking-[0.12em]"
                     : "gap-2 text-[20px] tracking-[0.14em]"
@@ -555,7 +548,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
                 <span
                   data-testid="hero-status-dot"
                   aria-hidden="true"
-                  className={`rounded-full bg-status shadow-[0_0_10px_#F472B6] animate-pulse-dot motion-reduce:animate-none ${
+                  className={`crt-status-dot animate-pulse-dot motion-reduce:animate-none ${
                     isMobile ? "h-1.5 w-1.5" : "h-[7px] w-[7px]"
                   }`}
                 />

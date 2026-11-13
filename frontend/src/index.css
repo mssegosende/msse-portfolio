@@ -1415,18 +1415,23 @@ textarea:-webkit-autofill {
     0 0 2px #eef8ff,
     0 0 12px rgba(108, 185, 238, 0.585);
 }
-.crt-status {
-  color: #486079;
+/* Every status indicator on the site, one style (María Sol, 13 Nov: no pink):
+   the label in --crt-title, the dot in --crt-phosphor with its own glow. Used
+   by scene 1's and scene 2's STATUS, Contact's CHANNEL OPEN and the projects'
+   IN PROGRESS / FEATURED. */
+.crt-status,
+.crt-status-label {
+  color: var(--crt-title);
 }
-:root[data-theme="dark"] .crt-status {
-  color: #8dd1fa;
+.crt-status__dot,
+.crt-status-dot {
+  border-radius: 50%;
+  background: var(--crt-phosphor);
+  box-shadow: 0 0 8px var(--crt-phosphor);
 }
 .crt-status__dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background: var(--crt-title);
-  box-shadow: var(--crt-node-glow);
 }
 .crt-link {
   color: var(--crt-text);

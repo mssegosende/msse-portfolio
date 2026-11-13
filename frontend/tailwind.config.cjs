@@ -19,8 +19,9 @@ module.exports = {
       colors: {
         ink: "rgb(var(--ink) / <alpha-value>)",
         surface: "rgb(var(--surface) / <alpha-value>)",
-        // The site's only colour: the STATUS dot (María Sol, 9 Nov: pink, was blue #2E6FF2).
-        status: "#F472B6",
+        // The STATUS dots: the phosphor, like the rest (María Sol, 13 Nov: no pink;
+        // the dots themselves use .crt-status-dot, index.css).
+        status: "var(--crt-phosphor)",
         // CRT redesign tokens (index.css); hex values, so no /alpha modifiers.
         crt: {
           bg: "var(--crt-bg)",
