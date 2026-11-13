@@ -17,7 +17,7 @@ const CROSS_TOP = 24;
 const CROSS_EASE = 0.2;
 import { noteRenderedFrame, prepareToRun } from "../../lib/spline/quality";
 import { REDUCED_MOTION_QUERY } from "../../lib/motion";
-import { isProjectsInView } from "../../lib/sceneFocus";
+import { scenesIdle } from "../../lib/sceneFocus";
 import type { SplineApp, ViewTransform } from "../../lib/spline/types";
 import {
   hasThemeReloadPosition,
@@ -659,7 +659,7 @@ export const useHeroTimeline = ({
           reached.disconnect();
         };
         syncPlayback = () => {
-          const idle = isProjectsInView();
+          const idle = scenesIdle();
           const hero = heroVisibleRef.current && !idle;
           const layer2 = scene2Near && !idle;
           setRunning(app1Ref.current, hero && !showAltRef.current);
@@ -792,8 +792,9 @@ export const useHeroTimeline = ({
       syncPlayback = () => {
         const shown = tl.time();
         const scrolled = (tl.scrollTrigger?.progress ?? 0) * tl.duration();
-        // Scene 3 in view: its clips get the frames, every scene idles.
-        const visible = heroVisibleRef.current && !isProjectsInView();
+        // Scene 3 in view (its clips get the frames) or the video gallery
+        // open: every scene idles.
+        const visible = heroVisibleRef.current && !scenesIdle();
         const hero = visible && Math.min(shown, scrolled) < XFADE_AT + XFADE_DURATION;
         const layer2 = visible && Math.max(shown, scrolled) > XFADE_AT * 0.9;
         setRunning(app1Ref.current, hero && !showAltRef.current);

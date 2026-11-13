@@ -673,19 +673,6 @@ textarea:-webkit-autofill {
   }
 }
 
-/* Intro video player: a short fade in (none with reduced motion). */
-.intro-dialog[open] {
-  animation: intro-in 0.25s ease both;
-}
-.intro-dialog[open]::backdrop {
-  animation: intro-in 0.25s ease both;
-}
-@keyframes intro-in {
-  from {
-    opacity: 0;
-  }
-}
-
 /* Scene 2 cards: the new one rises over the previous, which fades. */
 .cap-rise {
   opacity: 0;
@@ -746,10 +733,6 @@ textarea:-webkit-autofill {
   }
   .hero-robot {
     transition-duration: 0.01s;
-  }
-  .intro-dialog[open],
-  .intro-dialog[open]::backdrop {
-    animation: none;
   }
 }
 

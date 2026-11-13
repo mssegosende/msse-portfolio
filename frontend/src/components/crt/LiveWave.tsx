@@ -19,7 +19,7 @@ const vnoise = (x: number) => {
 };
 
 /** The signal at u (0..1 across) and t (ms), about -1..1. `seed` sets it apart. */
-export const contactSignal = (u: number, t: number, seed = 0): number => {
+const contactSignal = (u: number, t: number, seed = 0): number => {
   const tau = Math.PI * 2;
   const fr = 3.2 + 0.5 * Math.sin(t * 0.00041 + seed);
   // A swell that travels across and breathes.

@@ -13,6 +13,7 @@ import { RotateLock } from "@/components/RotateLock";
 import { SectionIndex } from "@/components/SectionIndex";
 import { Signature } from "@/components/Signature";
 import { CrtFilters } from "@/components/crt/CrtFilters";
+import { VideoGallery } from "@/components/gallery/VideoGallery";
 
 function App() {
   useLenis();
@@ -39,6 +40,8 @@ function App() {
         <Contact />
       </main>
       <RotateLock />
+      {/* The README tour, over everything (?view=videos). */}
+      <VideoGallery />
     </div>
   );
 }

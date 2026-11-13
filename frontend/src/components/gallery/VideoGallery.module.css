@@ -1,0 +1,323 @@
+/* The README tour overlay (VideoGallery.tsx), CRT look: the page's ground,
+   grid and scanlines, VT323 labels, frames with the line colour. */
+
+.dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--crt-bg);
+  color: var(--crt-text-2);
+}
+.dialog::backdrop {
+  background: var(--crt-bg);
+}
+.dialog[open] {
+  animation: gallery-in 0.3s ease both;
+}
+@keyframes gallery-in {
+  from {
+    opacity: 0;
+  }
+}
+.grid,
+.scan {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.scan {
+  z-index: 3;
+}
+
+.head {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: max(14px, env(safe-area-inset-top, 0px)) 16px 12px;
+  border-bottom: 1px solid var(--crt-line);
+}
+.label {
+  margin: 0 auto 0 0;
+  font-family: "VT323", monospace;
+  font-weight: 400;
+  font-size: 20px;
+  letter-spacing: 0.14em;
+}
+.tourBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 20px;
+  letter-spacing: 0.14em;
+}
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--crt-line);
+  color: var(--crt-title);
+  background: transparent;
+}
+.close:hover {
+  border-color: var(--crt-node);
+}
+.close:focus-visible,
+.tourBtn:focus-visible,
+.channel:focus-visible,
+.poster:focus-visible {
+  outline: 2px solid var(--crt-title);
+  outline-offset: 2px;
+}
+
+/* Desktop: the main player left, the wall of channels right, scrolling. */
+.body {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 28px;
+  padding: 24px 32px 0;
+}
+.main {
+  min-width: 0;
+}
+.screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border: 1px solid var(--crt-line);
+  background: #000;
+  box-shadow: var(--crt-frame-shadow);
+  overflow: hidden;
+}
+.video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+.mainInfo {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-top: 14px;
+  font-family: "VT323", monospace;
+  letter-spacing: 0.1em;
+}
+.num {
+  color: var(--crt-row-value);
+  font-family: "VT323", monospace;
+  font-size: 20px;
+  letter-spacing: 0.1em;
+}
+.mainTitle {
+  margin: 0;
+  font-family: "Michroma", sans-serif;
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--crt-title);
+  text-shadow: var(--crt-glow-label);
+}
+.dur {
+  margin-left: auto;
+  color: var(--crt-dim);
+  font-family: "VT323", monospace;
+  font-size: 18px;
+}
+.desc {
+  margin: 8px 0 0;
+  max-width: 60ch;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.wall {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 4px 32px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--crt-line) transparent;
+}
+.group + .group {
+  margin-top: 22px;
+}
+.groupLabel {
+  margin: 0 0 10px;
+  font-family: "VT323", monospace;
+  font-weight: 400;
+  font-size: 18px;
+  letter-spacing: 0.16em;
+  color: var(--crt-dim);
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.channel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--crt-line-row);
+  background: var(--crt-panel);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.channel:hover,
+.channel[data-active="true"] {
+  border-color: var(--crt-node);
+  box-shadow: var(--crt-frame-shadow);
+}
+.thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--crt-line-row);
+}
+.thumbInner {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.fill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.channelInfo {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  column-gap: 8px;
+}
+.channelInfo .num {
+  font-size: 17px;
+}
+.channelTitle {
+  grid-column: 1 / -1;
+  order: 3;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--crt-row-value);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.channelInfo .dur {
+  font-size: 16px;
+  text-align: right;
+}
+
+/* The tour's hand-over card. */
+.next {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  z-index: 4;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  border: 1px solid var(--crt-node);
+  background: var(--crt-panel);
+  color: var(--crt-title);
+  font-family: "VT323", monospace;
+  font-size: 24px;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  box-shadow: var(--crt-frame-shadow);
+}
+
+/* Phones: one video per swipe. */
+.reel {
+  position: relative;
+  z-index: 2;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  overscroll-behavior: contain;
+}
+.slide {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100%;
+  padding: 16px max(16px, env(safe-area-inset-right, 0px)) 24px
+    max(16px, env(safe-area-inset-left, 0px));
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+.slideGroup {
+  margin-bottom: 10px;
+  font-family: "VT323", monospace;
+  font-size: 17px;
+  letter-spacing: 0.16em;
+  color: var(--crt-dim);
+}
+.poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: #000;
+  cursor: pointer;
+}
+.playMark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--crt-title);
+  filter: drop-shadow(0 0 6px rgba(108, 185, 238, 0.7));
+}
+
+@media (max-width: 767px) {
+  .label {
+    font-size: 17px;
+  }
+  .tourBtn {
+    font-size: 17px;
+    padding: 0 10px;
+  }
+  .next {
+    font-size: 19px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog[open] {
+    animation: none;
+  }
+}

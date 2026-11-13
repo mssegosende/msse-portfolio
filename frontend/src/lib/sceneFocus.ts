@@ -8,4 +8,12 @@ export const setProjectsInView = (on: boolean) => {
   projectsInView = on;
 };
 
-export const isProjectsInView = () => projectsInView;
+// The video gallery covers the page: every scene idles while it is open.
+let galleryOpen = false;
+
+export const setGalleryOpen = (on: boolean) => {
+  galleryOpen = on;
+};
+
+/** Whether the Spline scenes should idle: scene 3's clips or the gallery own the frames. */
+export const scenesIdle = () => projectsInView || galleryOpen;
