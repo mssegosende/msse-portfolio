@@ -42,15 +42,28 @@ def test_every_service_sends_the_security_headers(service):
 
 
 @pytest.mark.parametrize("service", ["frontend", "backend"])
-def test_the_csp_is_report_only_never_enforced(service):
+def test_the_csp_is_enforced(service):
+    """Enforced since R200 (María Sol, 13 Nov), after its Report-Only review."""
     h = headers_of(service)
 
-    assert h.get("Content-Security-Policy-Report-Only")
-    assert "Content-Security-Policy" not in h
+    assert h.get("Content-Security-Policy")
+    assert "Content-Security-Policy-Report-Only" not in h
+
+
+def test_the_csp_allows_no_eval_and_data_only_for_media():
+    csp = headers_of("frontend")["Content-Security-Policy"]
+
+    # Spline's msgpackr falls back safely without it (SECURITY.md).
+    assert "'unsafe-eval'" not in csp
+    # data: for the robot's eyes, a video inside the scene file; nowhere else
+    # that could run code.
+    assert directive(csp, "media-src") == "media-src 'self' blob: data:"
+    for name in ("script-src", "worker-src", "frame-src", "default-src"):
+        assert "data:" not in directive(csp, name), name
 
 
 def test_the_csp_allows_what_the_site_loads():
-    csp = headers_of("frontend")["Content-Security-Policy-Report-Only"]
+    csp = headers_of("frontend")["Content-Security-Policy"]
 
     assert "https://fonts.googleapis.com" in directive(csp, "style-src")
     assert "https://fonts.gstatic.com" in directive(csp, "font-src")
@@ -66,7 +79,7 @@ def test_the_csp_allows_what_the_site_loads():
 
 def test_the_csp_allows_index_html_inline_script_by_its_exact_hash():
     """A change to the inline script must update its hash in the CSP."""
-    csp = headers_of("frontend")["Content-Security-Policy-Report-Only"]
+    csp = headers_of("frontend")["Content-Security-Policy"]
     html = (ROOT / "frontend/index.html").read_text("utf8")
     inline = re.findall(r"<script>(.*?)</script>", html, re.S)
 

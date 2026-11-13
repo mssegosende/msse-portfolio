@@ -25,8 +25,8 @@
               "value": "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), hid=(), magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=()"
             },
             {
-              "key": "Content-Security-Policy-Report-Only",
-              "value": "default-src 'self'; script-src 'self' 'sha256-Yw7OKEeYMJMEwIbfg2+Q3nMxjx12B5ihBi1jCrVZY5c=' 'sha256-cK0UEg9NyDTPBuq2z434O2vT3kkq3zx1IU7/o++H2m4=' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.spline.design; media-src 'self' blob:; connect-src 'self' data: blob: https://*.spline.design https://www.gstatic.com https://fonts.gstatic.com; worker-src 'self' blob:; frame-src https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; manifest-src 'self'"
+              "key": "Content-Security-Policy",
+              "value": "default-src 'self'; script-src 'self' 'sha256-Yw7OKEeYMJMEwIbfg2+Q3nMxjx12B5ihBi1jCrVZY5c=' 'sha256-cK0UEg9NyDTPBuq2z434O2vT3kkq3zx1IU7/o++H2m4=' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.spline.design; media-src 'self' blob: data:; connect-src 'self' data: blob: https://*.spline.design https://www.gstatic.com https://fonts.gstatic.com; worker-src 'self' blob:; frame-src https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; manifest-src 'self'"
             }
           ]
         }
@@ -57,8 +57,8 @@
               "value": "accelerometer=(), browsing-topics=(), camera=(), display-capture=(), geolocation=(), gyroscope=(), hid=(), magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=()"
             },
             {
-              "key": "Content-Security-Policy-Report-Only",
-              "value": "default-src 'self'; script-src 'self' 'sha256-Yw7OKEeYMJMEwIbfg2+Q3nMxjx12B5ihBi1jCrVZY5c=' 'sha256-cK0UEg9NyDTPBuq2z434O2vT3kkq3zx1IU7/o++H2m4=' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.spline.design; media-src 'self' blob:; connect-src 'self' data: blob: https://*.spline.design https://www.gstatic.com https://fonts.gstatic.com; worker-src 'self' blob:; frame-src https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; manifest-src 'self'"
+              "key": "Content-Security-Policy",
+              "value": "default-src 'self'; script-src 'self' 'sha256-Yw7OKEeYMJMEwIbfg2+Q3nMxjx12B5ihBi1jCrVZY5c=' 'sha256-cK0UEg9NyDTPBuq2z434O2vT3kkq3zx1IU7/o++H2m4=' 'wasm-unsafe-eval' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://*.spline.design; media-src 'self' blob: data:; connect-src 'self' data: blob: https://*.spline.design https://www.gstatic.com https://fonts.gstatic.com; worker-src 'self' blob:; frame-src https://challenges.cloudflare.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; manifest-src 'self'"
             }
           ]
         }
