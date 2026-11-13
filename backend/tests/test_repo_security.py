@@ -91,3 +91,12 @@ def test_security_txt_has_a_private_contact_and_a_future_expiry():
     assert now < expires <= now + timedelta(days=366)
     assert fields["Canonical"] == "https://msse-portfolio.vercel.app/.well-known/security.txt"
     assert "@" not in text  # no email address: reports go through GitHub
+
+
+def test_ci_token_is_read_only_by_default():
+    ci = (ROOT / ".github/workflows/ci.yml").read_text("utf8")
+    top_level = ci.split("\njobs:", 1)[0]
+
+    assert re.search(r"^permissions:\n  contents: read\n", top_level, re.M)
+    # The one job that needs more asks for it itself.
+    assert "id-token: write" in ci.split("\njobs:", 1)[1]

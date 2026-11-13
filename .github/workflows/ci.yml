@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
 
+# The token gets read access by default; a job that needs more asks for it
+# (deploy: id-token for AWS OIDC).
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   # On main a newer push queues instead: cancelling would cut a deploy mid-upload.
