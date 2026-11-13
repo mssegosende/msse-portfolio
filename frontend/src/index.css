@@ -1280,6 +1280,14 @@ textarea:-webkit-autofill {
 :root[data-theme="dark"] .crt-scope__wave {
   filter: drop-shadow(0 0 4px #6ebaef);
 }
+/* The vitals monitor's writing head (About). */
+.crt-scope__head {
+  fill: var(--crt-core);
+  filter: drop-shadow(0 0 4px rgba(40, 110, 220, 0.6));
+}
+:root[data-theme="dark"] .crt-scope__head {
+  filter: drop-shadow(0 0 5px #6ebaef);
+}
 
 /* SKIP INTRO moves to the bottom centre in scene 2 (Main.dc.html); the
    timeline marks the button's scene. */
@@ -1574,14 +1582,6 @@ textarea:-webkit-autofill {
    wheel and touch through Lenis' nested scroll, no visible scrollbar. */
 .crt-bio[data-scrollable="true"] .crt-bio__view {
   overflow-y: auto;
-}
-@media (prefers-reduced-motion: reduce) {
-  .crt-bio__text {
-    transition: none;
-  }
-  .crt-bio__cursor {
-    animation: none;
-  }
   scrollbar-width: none;
 }
 .crt-bio[data-scrollable="true"] .crt-bio__view::-webkit-scrollbar {
@@ -1590,6 +1590,14 @@ textarea:-webkit-autofill {
 .crt-bio[data-scrollable="true"]:focus-visible {
   outline: 1px solid var(--crt-title);
   outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .crt-bio__text {
+    transition: none;
+  }
+  .crt-bio__cursor {
+    animation: none;
+  }
 }
 
 /* Scene 1's tour tile: the clip tinted by a blend layer (cheaper than the

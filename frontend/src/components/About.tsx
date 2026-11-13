@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { TICK_MS } from "./scroll-scene/ascii";
+import { ecg } from "../lib/ecg";
 import { BioTerminal, TypeLine } from "./BioTerminal";
 import { profile, manifesto } from "../data/portfolioData";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -30,43 +30,93 @@ const ROWS: [string, string][] = [
   ["BASE", "BUENOS AIRES"],
 ];
 
-// SIGNAL · PIANO: the design's decaying wave (struck notes), running right
-// to left like scene 2's oscilloscope (María Sol, 13 Nov), t in ms.
-const signalPath = (t: number) => {
-  const shift = t * 0.06;
-  let d = "";
-  for (let x = 0; x <= 614; x += 3) {
-    const u = x + shift;
-    const env = Math.exp(-((u % 154) / 60));
-    const y = 42 + 30 * env * Math.sin(u * 0.22) + 6 * Math.sin(u * 0.05 + t * 0.0007);
-    d += `${x === 0 ? "M" : "L"}${x} ${y.toFixed(1)} `;
+// SIGNAL · VITALS (María Sol, pre-launch): a hospital monitor. The ECG
+// (lib/ecg) is written left to right by a sweeping head, the older trace
+// fading behind it, a short gap ahead of the head where the last sweep is
+// wiped. A frame per animation frame while on screen; still with reduced
+// motion.
+const MON_W = 614;
+const MON_H = 84;
+/** One sweep across the screen, ms. */
+const SWEEP_MS = 2800;
+/** The trail's fade: these shares of a sweep, from newest to oldest. */
+const TRAIL = [1, 0.78, 0.58, 0.42, 0.28, 0.16];
+const GAP = 14;
+
+const traceY = (v: number) => MON_H * 0.64 - v * MON_H * 0.52;
+
+/** The monitor's paths (newest first) and the head, at elapsed ms. */
+const vitals = (elapsed: number) => {
+  const speed = MON_W / SWEEP_MS;
+  const head = (elapsed * speed) % MON_W;
+  const paths = TRAIL.map(() => "");
+  let prev: { b: number; x: number; y: number } | null = null;
+  for (let x = 0; x <= MON_W; x += 2) {
+    const age = (head - x + MON_W) % MON_W;
+    if (age > MON_W - GAP) {
+      prev = null;
+      continue;
+    }
+    const y = traceY(ecg(elapsed - age / speed));
+    const b = Math.min(TRAIL.length - 1, Math.floor((age / MON_W) * TRAIL.length));
+    if (!prev || prev.b !== b || Math.abs(prev.x - x) > 2) {
+      // A new piece: from the last point, so the buckets join.
+      paths[b] += prev
+        ? `M${prev.x} ${prev.y.toFixed(1)} L${x} ${y.toFixed(1)} `
+        : `M${x} ${y.toFixed(1)} `;
+    } else paths[b] += `L${x} ${y.toFixed(1)} `;
+    prev = { b, x, y };
   }
-  return d;
+  return { paths, head, headY: traceY(ecg(elapsed)) };
 };
 
-/** The piano scope, ticking like scene 2's (TICK_MS) while on screen; still with reduced motion. */
-const PianoScope = ({ reduced }: { reduced: boolean }) => {
-  const pathRef = useRef<SVGPathElement>(null);
+/** The vitals monitor; reduced motion: one still sweep, no head. */
+const VitalsScope = ({ reduced }: { reduced: boolean }) => {
+  const pathRefs = useRef<(SVGPathElement | null)[]>([]);
+  const headRef = useRef<SVGCircleElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    pathRef.current?.setAttribute("d", signalPath(0));
-    if (reduced) return undefined;
+    const draw = (elapsed: number) => {
+      const v = vitals(elapsed);
+      v.paths.forEach((d, i) => pathRefs.current[i]?.setAttribute("d", d));
+      headRef.current?.setAttribute("cx", v.head.toFixed(1));
+      headRef.current?.setAttribute("cy", v.headY.toFixed(1));
+    };
+    if (reduced) {
+      // A whole sweep, at full ink.
+      const d = Array.from({ length: MON_W / 2 + 1 }, (_, i) => {
+        const x = i * 2;
+        return `${i ? "L" : "M"}${x} ${traceY(ecg(1200 + (x / MON_W) * SWEEP_MS)).toFixed(1)}`;
+      }).join(" ");
+      pathRefs.current.forEach((p, i) => p?.setAttribute("d", i === 0 ? d : ""));
+      return undefined;
+    }
+    draw(0);
     let onScreen = false;
+    let raf = 0;
+    const t0 = performance.now();
+    const loop = () => {
+      raf = 0;
+      if (!onScreen || document.hidden) return;
+      draw(performance.now() - t0);
+      raf = requestAnimationFrame(loop);
+    };
+    const wake = () => {
+      if (!raf && onScreen && !document.hidden) raf = requestAnimationFrame(loop);
+    };
     const io =
       typeof IntersectionObserver === "undefined"
         ? null
         : new IntersectionObserver(([e]) => {
             onScreen = !!e?.isIntersecting;
+            wake();
           });
     if (boxRef.current) io?.observe(boxRef.current);
-    const t0 = performance.now();
-    const id = setInterval(() => {
-      if (onScreen && !document.hidden)
-        pathRef.current?.setAttribute("d", signalPath(performance.now() - t0));
-    }, TICK_MS);
+    document.addEventListener("visibilitychange", wake);
     return () => {
-      clearInterval(id);
+      cancelAnimationFrame(raf);
       io?.disconnect();
+      document.removeEventListener("visibilitychange", wake);
     };
   }, [reduced]);
   return (
@@ -75,11 +125,23 @@ const PianoScope = ({ reduced }: { reduced: boolean }) => {
         aria-hidden="true"
         width="100%"
         height="82"
-        viewBox="0 0 614 84"
+        viewBox={`0 0 ${MON_W} ${MON_H}`}
         preserveAspectRatio="none"
         className="block"
       >
-        <path ref={pathRef} className="crt-scope__wave" fill="none" strokeWidth="1.6" />
+        {TRAIL.map((o, i) => (
+          <path
+            key={o}
+            ref={(el) => {
+              pathRefs.current[i] = el;
+            }}
+            className="crt-scope__wave"
+            fill="none"
+            strokeWidth="1.6"
+            style={{ opacity: reduced && i === 0 ? 1 : o }}
+          />
+        ))}
+        {!reduced && <circle ref={headRef} r="2.4" className="crt-scope__head" />}
       </svg>
     </div>
   );
@@ -304,9 +366,9 @@ export const About = () => {
               ))}
             </div>
             <div className={s.signal}>
-              <PianoScope reduced={still} />
+              <VitalsScope reduced={still} />
               <div className="mt-2 flex justify-between font-mono text-[11px] tracking-[0.08em] text-crt-dim">
-                <span>SIGNAL · PIANO</span>
+                <span>SIGNAL · VITALS</span>
                 <span>LOGICS SHARE PATTERNS</span>
               </div>
             </div>
