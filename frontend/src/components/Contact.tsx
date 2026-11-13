@@ -631,16 +631,24 @@ export const Contact = () => {
             </div>
             <div className={s.signalScope}>
               <div className="crt-scope relative h-full border border-[var(--crt-line-row)]">
+                {/* The wave steps back while a constellation is drawn, so it
+                    never crosses it, and returns between two stars. */}
+                <div
+                  className="h-full transition-opacity duration-500"
+                  data-testid="signal-wave"
+                  style={{ opacity: signal.stars > 0 ? 0.15 : 1 }}
+                >
+                  <MonitorTrace
+                    signal={breath}
+                    width={420}
+                    height={120}
+                    sweepMs={9000}
+                    baseline={0.84}
+                    scale={0.68}
+                    reduced={still}
+                  />
+                </div>
                 <ConstellationSky frame={signal} />
-                <MonitorTrace
-                  signal={breath}
-                  width={420}
-                  height={120}
-                  sweepMs={9000}
-                  baseline={0.84}
-                  scale={0.68}
-                  reduced={still}
-                />
               </div>
             </div>
           </div>

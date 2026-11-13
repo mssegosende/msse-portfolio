@@ -77,3 +77,36 @@ test.describe("reduced motion", () => {
     expect(await state(page)).toEqual(first);
   });
 });
+
+test("draws above the wave, which steps back while a constellation is on and returns between", async ({
+  page,
+}) => {
+  test.setTimeout(60_000);
+  await blockSpline(page);
+  await openHome(page);
+  await toContact(page);
+  // Above: the sky comes after the wave in the scope, so it paints over it.
+  expect(
+    await page.evaluate(() => {
+      const wave = document.querySelector('[data-testid="signal-wave"]')!;
+      const sky = document.querySelector('[data-testid="signal-sky"]')!;
+      return !!(wave.compareDocumentPosition(sky) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }),
+  ).toBe(true);
+  const waveOpacity = () =>
+    page.evaluate(() =>
+      Number(getComputedStyle(document.querySelector('[data-testid="signal-wave"]')!).opacity),
+    );
+  // While stars are drawn: dimmed; then back between two stars.
+  await expect.poll(async () => (await state(page)).stars, { timeout: 15_000 }).toBeGreaterThan(2);
+  await expect.poll(waveOpacity).toBeLessThan(0.3);
+  await expect.poll(async () => (await state(page)).stars, { timeout: 20_000 }).toBe(0);
+  await expect.poll(waveOpacity).toBeGreaterThan(0.9);
+  // Full brightness: the sky itself isn't faded while a figure holds.
+  await expect.poll(async () => (await state(page)).lines, { timeout: 20_000 }).toBeGreaterThan(3);
+  expect(
+    await page.evaluate(
+      () => getComputedStyle(document.querySelector('[data-testid="signal-sky"]')!).opacity,
+    ),
+  ).toBe("1");
+});

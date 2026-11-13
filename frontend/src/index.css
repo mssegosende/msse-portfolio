@@ -1263,6 +1263,42 @@ textarea:-webkit-autofill {
 :root[data-theme="dark"] .crt-scope__wave {
   filter: drop-shadow(0 0 4px #6ebaef);
 }
+/* SIGNAL's constellations (Contact, ConstellationSky): the wave's own line and
+   glow, at full brightness; each star lights up as it appears. */
+.crt-sky__line {
+  stroke: var(--crt-row-label);
+  filter: drop-shadow(0 0 3px rgba(40, 110, 220, 0.35));
+}
+:root[data-theme="dark"] .crt-sky__line {
+  filter: drop-shadow(0 0 4px #6ebaef);
+}
+.crt-sky__star {
+  fill: var(--crt-core);
+  filter: drop-shadow(0 0 4px rgba(40, 110, 220, 0.6));
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: crt-sky-star-in 0.45s ease-out both;
+}
+:root[data-theme="dark"] .crt-sky__star {
+  filter: drop-shadow(0 0 5px #6ebaef);
+}
+@keyframes crt-sky-star-in {
+  from {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+  50% {
+    opacity: 1;
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .crt-sky__star {
+    animation: none;
+  }
+}
 /* The vitals monitor's writing head (About). */
 .crt-scope__head {
   fill: var(--crt-core);

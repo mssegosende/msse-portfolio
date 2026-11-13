@@ -9,10 +9,11 @@ const H = 120;
 const PAD = 8;
 
 /**
- * SIGNAL's constellation, drawn behind its trace (María Sol, 13 Nov): the
- * frame's stars appear one by one as small dots, then dotted lines join them
- * in the stick figure's order; the named star a little larger and brighter.
- * In --crt-phosphor at a low opacity: a background, never over the reading.
+ * SIGNAL's constellation, drawn above its trace (María Sol, 13 Nov), in the
+ * trace's own line and glow at full brightness (.crt-sky__*, index.css): the
+ * frame's stars light up one by one, then dotted lines join them in the stick
+ * figure's order; the named star a little larger. It fades out with the
+ * frame's opacity as the name is erased.
  */
 export const ConstellationSky = ({ frame }: { frame: SignalFrame }) => {
   const c = CONSTELLATIONS[frame.index]!;
@@ -28,7 +29,9 @@ export const ConstellationSky = ({ frame }: { frame: SignalFrame }) => {
       data-testid="signal-sky"
       data-constellation={c.con}
       className="pointer-events-none absolute inset-0 h-full w-full"
-      style={{ opacity: 0.75 * frame.opacity }}
+      // Its own compositing layer: the trace under it redraws every frame,
+      // and the stars' glow filters shouldn't be repainted with it.
+      style={{ opacity: frame.opacity, willChange: "transform" }}
     >
       {segments.slice(0, frame.segments).map(([a, b]) => {
         const p = at.get(a)!;
@@ -40,10 +43,9 @@ export const ConstellationSky = ({ frame }: { frame: SignalFrame }) => {
             y1={p.y}
             x2={q.x}
             y2={q.y}
-            stroke="var(--crt-phosphor)"
-            strokeWidth={1}
-            strokeDasharray="2.5 3"
-            opacity={0.6}
+            className="crt-sky__line"
+            strokeWidth={1.6}
+            strokeDasharray="3 3.5"
           />
         );
       })}
@@ -55,9 +57,8 @@ export const ConstellationSky = ({ frame }: { frame: SignalFrame }) => {
             data-named={s.named || undefined}
             cx={s.x}
             cy={s.y}
-            r={(s.named ? s.r * 1.5 : s.r) + 0.4}
-            fill="var(--crt-phosphor)"
-            opacity={s.named ? 1 : 0.75}
+            r={(s.named ? s.r * 1.5 : s.r) + 0.5}
+            className="crt-sky__star"
           />
         ))}
     </svg>
