@@ -10,7 +10,7 @@ const typeALine = () => {
 /**
  * ?view=sounds (María Sol, pre-launch; not linked anywhere): one button per
  * HUD sound, to judge them one by one. It plays them whatever the SOUND
- * toggle says, at the site's level (-24 dB), through the same space.
+ * toggle says, at the site's level (the loudest peaks ~-24 dBFS), in the same space.
  */
 export const SoundLab = () => (
   <main
@@ -26,9 +26,9 @@ export const SoundLab = () => (
           HUD sounds
         </h1>
         <p className="mt-3 text-[15px] leading-[1.6] text-crt-text-2">
-          Each button plays one sound as the site does, very quiet (-24 dB) and in the same space.
-          Turn your volume up to judge them. On the site they stay off until the visitor turns SOUND
-          on in the dock.
+          Each button plays one sound as the site does, very quiet (the loudest peak around -24
+          dBFS) and in the same space. Turn your volume up to judge them. On the site they stay off
+          until the visitor turns SOUND on in the dock.
           {!GLITCH_SOUND && " The glitch burst is switched off (GLITCH_SOUND)."}
         </p>
       </div>
