@@ -52,4 +52,22 @@ describe("ascii renderer", () => {
     expect(d.startsWith("M0 ")).toBe(true);
     expect(d).toContain("L536 ");
   });
+
+  it("gives the oscilloscope a live shape per object: it changes with time, not just slides", () => {
+    // The same point of the screen differs between moments, and the three
+    // shapes differ at the same moment.
+    const at = (s: Shape, t: number) => wavePath(t, s, 536, 84);
+    expect(at(0, 0)).not.toBe(at(0, 2000));
+    expect(new Set([at(0, 500), at(1, 500), at(2, 500)]).size).toBe(3);
+    // ENGINE is stepped: neighbouring samples often share a level.
+    const ys = at(2, 800)
+      .trim()
+      .split(/[ML]/)
+      .filter(Boolean)
+      .map((p) => Number(p.trim().split(" ")[1]));
+    const flat = ys.slice(1).filter((y, i) => y === ys[i]).length;
+    expect(flat / ys.length).toBeGreaterThan(0.3);
+    // The morph lands on the target shape.
+    expect(wavePath(500, 2, 536, 84, 0, 1)).toBe(at(2, 500));
+  });
 });

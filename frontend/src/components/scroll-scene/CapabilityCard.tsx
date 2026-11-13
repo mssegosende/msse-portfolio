@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { CapabilityCard as Card } from "../../data/portfolioData";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { DataRow } from "../crt/CrtPieces";
-import { TICK_MS, wavePath, type Shape } from "./ascii";
+import { MORPH_MS, smoothstep, TICK_MS, wavePath, type Shape } from "./ascii";
 import { AsciiObject } from "./AsciiObject";
 
 // Option A "Dossier" (design/crt/msse-crt-redesign/design-source/Main.dc.html
@@ -25,15 +25,26 @@ const NODES_PHONE = NODES_DESKTOP.slice(0, 4);
 const WAVE_W = 536;
 const WAVE_H = 84;
 
-/** The oscilloscope: a moving wave and the frame counter (still with reduced motion). */
+// The shape the scope last showed (the card before), for the morph.
+let lastScopeShape: Shape = 0;
+
+/**
+ * The oscilloscope: a live signal that follows the card's shape, morphing from
+ * the last card's, and the frame counter (still with reduced motion).
+ */
 const Scope = ({ step, part }: { step: Shape; part: string }) => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
   const pathRef = useRef<SVGPathElement>(null);
   const frameRef = useRef<HTMLSpanElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    // The signal morphs from the last card's shape into this one's.
+    const from = lastScopeShape;
+    lastScopeShape = step;
+    const born = performance.now();
     const draw = (t: number) => {
-      pathRef.current?.setAttribute("d", wavePath(t, step, WAVE_W, WAVE_H));
+      const k = smoothstep((performance.now() - born) / MORPH_MS);
+      pathRef.current?.setAttribute("d", wavePath(t, step, WAVE_W, WAVE_H, from, k));
       if (frameRef.current)
         frameRef.current.textContent = String(Math.floor(t / TICK_MS)).padStart(6, "0");
     };

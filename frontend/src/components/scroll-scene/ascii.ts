@@ -154,18 +154,81 @@ export const renderAscii = ({ cols, rows, t, prev, step, k, glitch }: AsciiFrame
   return lines.join("\n");
 };
 
-/** The oscilloscope under the card: an SVG path, w x h. */
-export const wavePath = (t: number, step: Shape, w: number, h: number): string => {
-  const fr = [1, 1.7, 0.6][step] ?? 1;
+// ---- The oscilloscope under the card: a live signal (María Sol, pre-launch:
+// not a fixed wave panning by). Its own shape changes over time (amplitude
+// and frequency drift, a little noise, now and then a burst) and follows the
+// card's object: MIND (sphere) a smooth breathing sine, INTERFACE (torus) two
+// interleaved frequencies, ENGINE (cube) a stepped digital wave. t in ms.
+
+/** Smooth value noise in [-1, 1]. */
+const vnoise = (x: number) => {
+  const i = Math.floor(x);
+  const f = x - i;
+  const h = (n: number) => {
+    const v = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+    return (v - Math.floor(v)) * 2 - 1;
+  };
+  const u = f * f * (3 - 2 * f);
+  return h(i) * (1 - u) + h(i + 1) * u;
+};
+
+/** One shape's signal at x (0..1 across the screen), in [-1, 1]-ish. */
+export const scopeSignal = (shape: Shape, x: number, t: number): number => {
+  // ENGINE holds every value for a step (noise and bursts too): a digital trace.
+  const u = shape === 2 ? Math.floor(x * 64) / 64 : x;
+  // Drifts shared by every shape: amplitude and frequency wander slowly.
+  const amp = 0.62 + 0.2 * Math.sin(t * 0.00071) + 0.1 * Math.sin(t * 0.00193 + 1.3);
+  const fr = 1 + 0.16 * Math.sin(t * 0.00047) + 0.06 * Math.sin(t * 0.0013 + 0.7);
+  // A burst every ~4.2 s: a fast ripple that flares at one spot and dies out.
+  const cycle = t / 4200;
+  const since = (cycle - Math.floor(cycle)) * 4200;
+  const at = (Math.floor(cycle) * 0.618 + 0.2) % 1;
+  const burst =
+    Math.exp(-since / 260) * Math.exp(-(((u - at) / 0.07) ** 2)) * Math.sin(u * 190 + t * 0.03);
+  const noise = 0.05 * vnoise(u * 60 + t * 0.012);
+  const tau = Math.PI * 2;
+  let v: number;
+  if (shape === 0) {
+    // MIND: one smooth sine, breathing.
+    const breath = 0.72 + 0.28 * Math.sin(t * 0.0011);
+    v = amp * breath * Math.sin(tau * u * 2.6 * fr - t * 0.0021);
+  } else if (shape === 1) {
+    // INTERFACE: two frequencies interleaved, beating against each other.
+    v =
+      amp *
+      (0.58 * Math.sin(tau * u * 3.4 * fr - t * 0.0026) +
+        0.42 * Math.sin(tau * u * 8.7 * fr + t * 0.0041));
+  } else {
+    // ENGINE: a stepped digital wave: a square carrier, quantized, held.
+    const raw =
+      Math.sign(Math.sin(tau * u * 5 * fr - t * 0.0024)) * 0.7 +
+      0.3 * Math.sin(tau * u * 1.3 - t * 0.0013);
+    v = amp * (Math.round(raw * 3) / 3);
+  }
+  return v + 0.35 * burst + noise;
+};
+
+/**
+ * The oscilloscope's path, w x h: the shape `step`, morphing from `from` by
+ * k (0..1, eased by the caller).
+ */
+export const wavePath = (
+  t: number,
+  step: Shape,
+  w: number,
+  h: number,
+  from: Shape = step,
+  k = 1,
+): string => {
   let d = "";
-  for (let x = 0; x <= w; x += 4) {
-    const y =
-      h / 2 +
-      h *
-        0.32 *
-        Math.sin(x * 0.05 * fr + t * 0.004) *
-        (0.55 + 0.45 * Math.sin(x * 0.012 + t * 0.0011));
+  for (let x = 0; x <= w; x += 3) {
+    const u = x / w;
+    const a = scopeSignal(step, u, t);
+    const v = k >= 1 ? a : scopeSignal(from, u, t) * (1 - k) + a * k;
+    const y = h / 2 - h * 0.4 * Math.max(-1.15, Math.min(1.15, v));
     d += `${x === 0 ? "M" : "L"}${x} ${y.toFixed(1)} `;
   }
+  // The last sample on the right edge, whatever the step.
+  if (w % 3) d += `L${w} ${(h / 2 - h * 0.4 * scopeSignal(step, 1, t)).toFixed(1)} `;
   return d;
 };
