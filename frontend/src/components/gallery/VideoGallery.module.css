@@ -304,13 +304,25 @@
   filter: drop-shadow(0 0 6px rgba(108, 185, 238, 0.7));
 }
 
+/* Phones: the label and X on top, PLAY THE TOUR full width under them. */
 @media (max-width: 767px) {
+  .head {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
   .label {
-    font-size: 17px;
+    flex: 1 1 auto;
+    font-size: 18px;
+    white-space: nowrap;
+  }
+  .close {
+    order: 2;
   }
   .tourBtn {
-    font-size: 17px;
-    padding: 0 10px;
+    order: 3;
+    flex: 1 1 100%;
+    justify-content: center;
+    font-size: 19px;
   }
   .next {
     font-size: 19px;
