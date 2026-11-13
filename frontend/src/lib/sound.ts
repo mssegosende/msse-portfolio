@@ -10,6 +10,11 @@ import { useSyncExternalStore } from "react";
 
 /** The glitch bursts (portrait and project glitch slices): drop them here. */
 export const GLITCH_SOUND = true;
+/**
+ * The typing blips (About's bio, the contact log): off (María Sol: the bio's
+ * typing sounded hollow and was not needed). true brings them back.
+ */
+export const TYPING_SOUND = false;
 
 const KEY = "msse-sound";
 /** The master: the files peak at ~-3 dBFS, so the loudest land near -24 dBFS. */
@@ -204,6 +209,7 @@ const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 
 /** 1. Typing (the bio, the contact log): one of two blips, its pitch a little different each time. */
 export const textBlip = (force = false) =>
+  (TYPING_SOUND || force) &&
   play(Math.random() < 0.5 ? "blipA" : "blipB", {
     gain: 0.35,
     rate: rnd(0.9, 1.35),
@@ -215,7 +221,15 @@ export const textBlip = (force = false) =>
 export const bootSweep = (force = false) => play("boot", { gain: 1.9, force });
 
 /** 3. Section transition (every crossfade): the air. */
-export const whoosh = (force = false) => play("whoosh", { gain: 0.6, force });
+// One whoosh per change: overlapping copies of it (the change into Projects
+// fired it three times in 0.3 s) phase into a hollow sound.
+let lastWhoosh = -Infinity;
+export const whoosh = (force = false) => {
+  const now = performance.now();
+  if (!force && now - lastWhoosh < 1200) return;
+  lastWhoosh = now;
+  play("whoosh", { gain: 0.6, force });
+};
 
 /** 4a. Interface hover: the two-tone select. */
 export const selectBleep = (force = false) => play("select", { gain: 0.45, force });
