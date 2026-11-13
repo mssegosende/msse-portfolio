@@ -1,7 +1,7 @@
 // Builds the README tour's files (the video gallery, src/data/videosData.ts)
 // from María Sol's clips (ffmpeg on the PATH):
 //
-//   node scripts/build-tour-videos.mjs <folder with the clips> [--map files=id,...]
+//   node scripts/build-tour-videos.mjs <folder with the clips> [--map files=id,...] [--speed 1.25] [--clean]
 //
 // --map names the clips and their entries outright, and then only those are
 // built. Clips joined with + become one video, in that order:
@@ -88,40 +88,80 @@ const probe = (f) =>
 const kb = (f) => Math.round(statSync(f).size / 1024);
 
 const results = [];
-// Clips to join: one near-lossless intermediate, each part fitted to the first
-// one's frame (recordings differ by a few px), with its sound.
-const join = (parts, id) => {
-  const [w, h] = execFileSync("ffprobe", [
+// Options for --map entries (María Sol, pre-launch):
+//   --speed 1.25  play faster than recorded (the voice keeps its pitch)
+//   --clean       even out the sound: less background noise (FFT denoise,
+//                 high-pass 80 Hz, low-pass 12 kHz) and every part at the
+//                 same loudness (-16 LUFS), so the joins don't jump
+// Joined parts cross-fade (picture and sound) over XFADE s, not a hard cut.
+const flag = (name) => process.argv.includes(`--${name}`);
+const SPEED = Number(process.argv[process.argv.indexOf("--speed") + 1]) || 1;
+const CLEAN = flag("clean");
+const XFADE = 0.35;
+
+const streamProbe = (f, entries) =>
+  execFileSync("ffprobe", [
     "-v",
     "error",
     "-select_streams",
     "v:0",
     "-show_entries",
-    "stream=width,height",
+    `stream=${entries}`,
     "-of",
     "csv=p=0",
-    path.join(src, parts[0]),
+    f,
   ])
     .toString()
     .trim()
-    .split(",")
-    .map(Number);
-  const fit = (i) =>
+    .split(",");
+
+// One near-lossless intermediate from the parts: each fitted to the first
+// one's frame (recordings differ by a few px), sped up and cleaned as asked,
+// then cross-faded into the next.
+const prepare = (parts, id) => {
+  const files = parts.map((f) => path.join(src, f));
+  const [w, h] = streamProbe(files[0], "width,height").map(Number);
+  const durations = files.map((f) => probe(f) / SPEED);
+  const audio = [
+    "aresample=48000",
+    ...(CLEAN
+      ? [
+          "highpass=f=80",
+          "lowpass=f=12000",
+          "afftdn=nr=14:nf=-42:tn=1",
+          "loudnorm=I=-16:TP=-1.5:LRA=11",
+          "aresample=48000",
+        ]
+      : []),
+    ...(SPEED !== 1 ? [`atempo=${SPEED}`] : []),
+  ].join(",");
+  const graph = files.flatMap((_, i) => [
     `[${i}:v]scale=${w}:${h}:force_original_aspect_ratio=decrease,` +
-    `pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30[v${i}]`;
-  const graph = [
-    ...parts.map((_, i) => fit(i)),
-    `${parts.map((_, i) => `[v${i}][${i}:a]`).join("")}concat=n=${parts.length}:v=1:a=1[v][a]`,
-  ].join(";");
-  const joined = path.join(os.tmpdir(), `tour-${id}-joined.mp4`);
+      `pad=${w}:${h}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30,` +
+      `setpts=(PTS-STARTPTS)/${SPEED},settb=AVTB,format=yuv420p[v${i}]`,
+    `[${i}:a]${audio},asetpts=PTS-STARTPTS[a${i}]`,
+  ]);
+  let v = "v0";
+  let a = "a0";
+  let at = 0;
+  for (let k = 1; k < files.length; k++) {
+    at += durations[k - 1] - XFADE;
+    graph.push(
+      `[${v}][v${k}]xfade=transition=fade:duration=${XFADE}:offset=${at.toFixed(3)}[vx${k}]`,
+    );
+    graph.push(`[${a}][a${k}]acrossfade=d=${XFADE}:c1=tri:c2=tri[ax${k}]`);
+    v = `vx${k}`;
+    a = `ax${k}`;
+  }
+  const outFile = path.join(os.tmpdir(), `tour-${id}-prepared.mp4`);
   ff([
-    ...parts.flatMap((f) => ["-i", path.join(src, f)]),
+    ...files.flatMap((f) => ["-i", f]),
     "-filter_complex",
-    graph,
+    graph.join(";"),
     "-map",
-    "[v]",
+    `[${v}]`,
     "-map",
-    "[a]",
+    `[${a}]`,
     "-c:v",
     "libx264",
     "-preset",
@@ -132,14 +172,14 @@ const join = (parts, id) => {
     "aac",
     "-b:a",
     "192k",
-    joined,
+    outFile,
   ]);
-  return joined;
+  return outFile;
 };
 
 for (const { file, parts, entry } of mapping.sort((a, b) => a.entry.id.localeCompare(b.entry.id))) {
-  const input =
-    parts && parts.length > 1 ? join(parts, entry.id) : path.join(src, parts?.[0] ?? file);
+  const needsPrep = parts && (parts.length > 1 || SPEED !== 1 || CLEAN);
+  const input = needsPrep ? prepare(parts, entry.id) : path.join(src, parts?.[0] ?? file);
   const id = entry.id;
   const duration = probe(input);
   const full = path.join(out, `${id}.mp4`);
