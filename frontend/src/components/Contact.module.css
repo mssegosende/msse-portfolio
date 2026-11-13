@@ -197,6 +197,7 @@
   padding: 18px 16px 6px;
 }
 .field {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -257,8 +258,15 @@ textarea.input {
   color: var(--crt-title);
   text-shadow: var(--crt-glow-label);
 }
-/* The note under a field (LinkedIn's): the error's type, the hint's colour. */
+/* The note under a field (LinkedIn's): the error's type, the hint's colour.
+   In the gap below the field, so it adds no height: the form keeps the
+   design's size (at 1280x720 an extra line pushed the footer under the dock). */
 .note {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  white-space: nowrap;
+  line-height: 1.2;
   font-family: "JetBrains Mono", monospace;
   font-size: 11px;
   letter-spacing: 0.04em;
