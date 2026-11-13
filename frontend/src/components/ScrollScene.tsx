@@ -10,6 +10,7 @@ import { OVERSAMPLE_1 } from "../lib/spline/camera";
 import { patchSplineRuntime } from "../lib/spline/runtime";
 import { bootSweep } from "../lib/sound";
 import { SceneBoundary } from "./spline/SceneBoundary";
+import { Logo } from "./Logo";
 import { CapabilityCards } from "./scroll-scene/CapabilityCards";
 import { scene2Scale } from "./scroll-scene/choreography";
 import { at, clampScale, FRAME } from "../hooks/useFrame";
@@ -531,14 +532,14 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
               }`}
               style={isMobile ? undefined : { zoom: kHud }}
             >
-              <span
+              {/* The logo lockup (María Sol, 13 Nov): static, it only fades in
+                  once with the bar (hero-bar-in) and then stays still. */}
+              <Logo
                 data-testid="hero-brand"
-                className={`font-michroma tracking-[0.08em] text-crt-title crt-glow-label ${
-                  isMobile ? "text-[13px]" : "text-[16px]"
-                }`}
-              >
-                {profile.shortMark}
-              </span>
+                size={isMobile ? 38 : 48}
+                textSize={isMobile ? 13 : 16}
+                className="crt-glow-label"
+              />
               <span
                 className={`flex items-center font-vt uppercase text-crt-text ${
                   isMobile
