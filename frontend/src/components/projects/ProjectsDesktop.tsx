@@ -278,7 +278,11 @@ export const ProjectsDesktop = () => {
   const project = PROJECTS[f]!;
   const next = PROJECTS[(f + 1) % N]!;
   const advance = useCallback(() => setF((i) => (i + 1) % N), []);
-  const playing = onScreen && !paused && !hovered;
+  // One project clip at a time: while a grid card plays its clip (hover or
+  // keyboard focus), the reel rests. Two decoding together held projects at
+  // 30 fps once the featured card stayed in view under the grid (R116).
+  const gridClip = !reduced && (hoverId !== null || focusId !== null);
+  const playing = onScreen && !paused && !hovered && !gridClip;
   // The grid: the other five, in reel order from the one after the featured.
   const grid = Array.from({ length: N - 1 }, (_, k) => (f + 1 + k) % N);
 

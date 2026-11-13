@@ -35,8 +35,27 @@ export const IntroTile = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale
     window.addEventListener("scroll", arm, { once: true, passive: true });
     return () => window.removeEventListener("scroll", arm);
   }, [armed]);
+  // The preview runs only while the tile can be seen: the timeline hides it
+  // at the crossfade (autoAlpha, inline style) and the hero marks itself off
+  // screen; hidden, it kept decoding behind Projects.
   useEffect(() => {
-    if (armed && !reduced) previewRef.current?.play().catch(() => {});
+    const video = previewRef.current;
+    if (!armed || reduced || !video) return undefined;
+    const tile = video.closest<HTMLElement>('[data-testid="hero-intro-tile"]');
+    const hero = video.closest<HTMLElement>("#hero");
+    const sync = () => {
+      const shown =
+        hero?.dataset.offscreen !== "true" &&
+        tile?.style.visibility !== "hidden" &&
+        parseFloat(tile?.style.opacity || "1") > 0.01;
+      if (shown && video.paused) video.play().catch(() => {});
+      else if (!shown && !video.paused) video.pause();
+    };
+    sync();
+    const mo = new MutationObserver(sync);
+    if (tile) mo.observe(tile, { attributes: true, attributeFilter: ["style"] });
+    if (hero) mo.observe(hero, { attributes: true, attributeFilter: ["data-offscreen"] });
+    return () => mo.disconnect();
   }, [armed, reduced]);
 
   return (
