@@ -9,5 +9,5 @@ export const INTRO_VIDEO = {
   src: "/intro/intro.mp4",
   poster: "/intro/poster.jpg",
   title: "Watch the intro",
-  subtitle: "What I'm building right now",
+  subtitle: "What I am building right now",
 };

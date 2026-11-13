@@ -220,7 +220,7 @@ export const Contact = () => {
         body: JSON.stringify(form),
       });
       if (res.ok) {
-        pushLine("[OK] MESSAGE TRANSMITTED — I'll get back to you within 24h.", true);
+        pushLine("[OK] MESSAGE TRANSMITTED — I will get back to you within 24h.", true);
         setDone(true);
         setForm(EMPTY_FORM);
       } else if (res.status === 429) {

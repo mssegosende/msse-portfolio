@@ -56,9 +56,6 @@ const art = (from: number, hi: string, lo: string) =>
   `radial-gradient(ellipse 70% 60% at ${lo}, rgba(110,120,132,0.55), rgba(0,0,0,0) 66%), ` +
   `conic-gradient(from ${from}deg at 58% 46%, #0C0E11, #3A424C 18%, #0C0E11 38%, #6B7580 58%, #15191E 78%, #0C0E11)`;
 
-export const PROJECTS_INTRO =
-  "Six projects, one habit: find the mistake that would cost the most, and design so it can't happen.";
-
 export const showcaseProjects: ShowcaseProject[] = [
   {
     id: "blaze",
@@ -112,7 +109,7 @@ export const showcaseProjects: ShowcaseProject[] = [
       "Hexagonal Architecture",
     ],
     paragraphs: [
-      "Compliance teams at banks and fintechs often need to confirm a rule before they approve something. Today that means searching long PDFs from the BCRA, Argentina's central bank, with Ctrl+F. Polaris answers their questions in plain language and cites the exact source: the section number (e.g. \"3.5\"), its version and the communication it comes from. That way the answer can go straight into a file or an email. If the answer isn't in the loaded regulations, Polaris says so instead of guessing, because a wrong citation is worse than no answer.",
+      'Compliance teams at banks and fintechs often need to confirm a rule before they approve something. Today that means searching long PDFs from the BCRA, Argentina\'s central bank, with Ctrl+F. Polaris answers their questions in plain language and cites the exact source: the section number (e.g. "3.5"), its version and the communication it comes from. That way the answer can go straight into a file or an email. If the answer is not in the loaded regulations, Polaris says so instead of guessing, because a wrong citation is worse than no answer.',
       "It covers three BCRA ordered texts on the life cycle of a financial institution: authorities, authorization and expansion. They were chosen because they overlap, so retrieval has to pick the right source instead of getting it right by elimination. The regulations are chunked by their own numbered sections instead of by fixed size, so every chunk is a unit you can cite. Embeddings run locally, Claude only writes the final answer, and a hexagonal design keeps both the vector store and the model swappable.",
     ],
     codeUrl: "",
@@ -175,8 +172,8 @@ export const showcaseProjects: ShowcaseProject[] = [
     subtitle: "Full Stack — Character Browser",
     tags: ["Next.js", "React", "TypeScript", "Zod", "Tailwind CSS", "Vitest"],
     paragraphs: [
-      "My first React and TypeScript app. You can browse and filter 304 Marvel characters. The source dataset is old and messy, so Zod validates every record, caps out-of-range stats at 100 and skips anything that doesn't parse. 35 real Marvel characters were missing because their publisher field held an alias, and I brought them back with an allowlist. All data is fetched and cached on the server, from three sources, so no key ever reaches the browser. Search and filters live in the URL and ignore accents. Each picture comes from the best source available: a local file, the Marvel Database wiki, Comic Vine, then the dataset. It works on phones, opens with an original intro animation and has tests in Vitest.",
-      "Next up: an AI-assisted review to flag the minor and filler characters the current filters can't catch, cross-checked against a second data source.",
+      "My first React and TypeScript app. You can browse and filter 304 Marvel characters. The source dataset is old and messy, so Zod validates every record, caps out-of-range stats at 100 and skips anything that does not parse. 35 real Marvel characters were missing because their publisher field held an alias, and I brought them back with an allowlist. All data is fetched and cached on the server, from three sources, so no key ever reaches the browser. Search and filters live in the URL and ignore accents. Each picture comes from the best source available: a local file, the Marvel Database wiki, Comic Vine, then the dataset. It works on phones, opens with an original intro animation and has tests in Vitest.",
+      "Next up: an AI-assisted review to flag the minor and filler characters the current filters cannot catch, cross-checked against a second data source.",
     ],
     codeUrl: "https://github.com/mssegosende/17.1-marvel-characters",
     liveUrl: "https://marvel-characters-coral.vercel.app",
@@ -188,6 +185,36 @@ export const showcaseProjects: ShowcaseProject[] = [
     invertLight: true,
   },
 ];
+
+const NUMBER_WORDS = [
+  "Zero",
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nine",
+  "Ten",
+  "Eleven",
+  "Twelve",
+];
+const numberWord = (n: number) => NUMBER_WORDS[n] ?? String(n);
+
+/**
+ * Phones: the clip and poster with the CRT palette baked in, for the theme
+ * (scripts/bake-phone-media.mjs; iOS Safari doesn't run the live SVG filter
+ * over a playing video). Re-run the script when a clip or poster changes.
+ */
+export const bakedMedia = (project: ShowcaseProject, dark: boolean) => {
+  const base = `/projects/phone/${project.id}-${dark ? "dark" : "light"}`;
+  return { media: `${base}.mp4`, poster: `${base}.jpg` };
+};
+
+/** Scene 3's intro, counting the projects above (María Sol, 13 Nov). */
+export const PROJECTS_INTRO = `${numberWord(showcaseProjects.length)} projects. One protocol: locate the failure that would cost the most, then design the system so it cannot happen.`;
 
 /**
  * The links a card shows: only Live, when there is a URL (María Sol's review:

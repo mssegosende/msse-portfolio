@@ -78,7 +78,7 @@ export const profile: Profile = {
   ],
   story: [
     "The people who knew me saw it before I did. They recognized that the way I questioned how things worked, and refused to let a problem go unsolved, was already the mindset of an engineer. Teaching myself, in my own way, showed me how far I could go once I set my mind to something. That is when I stopped being just a user of technology and started building it for the people on the other side of the screen.",
-    "Studying has been my engine ever since, and I pick things up quickly. Learning the piano taught me that every system runs on patterns, and once you see them, one logic leads you into the next, whether it is written in notes, in code or in another language. At the end of the day, that is what I bring to a team: the habit of turning what I don't know yet into what I can build next.",
+    "Studying has been my engine ever since, and I pick things up quickly. Learning the piano taught me that every system runs on patterns, and once you see them, one logic leads you into the next, whether it is written in notes, in code or in another language. At the end of the day, that is what I bring to a team: the habit of turning what I do not know yet into what I can build next.",
   ],
   // A year, never a count ("since 2022", not "N+ years").
   stats: [{ value: "2022", label: "Shipping code since" }],
@@ -134,7 +134,7 @@ export const capabilityCards: CapabilityCard[] = [
     part: "INTERFACE",
     small: "THE INTERFACE",
     title: "FRONTEND",
-    text: "On the frontend I focus on the data layer: what the interface needs from the server, and what happens when the answer doesn't arrive as expected. I build with React and TypeScript on Next.js, loading data in Server Components whenever the page allows it, so less code and no secrets reach the browser. Types disappear at runtime, so I validate server responses with Zod before they reach a component, and a broken contract shows up as a clear error instead of a blank screen.",
+    text: "On the frontend I focus on the data layer: what the interface needs from the server, and what happens when the answer does not arrive as expected. I build with React and TypeScript on Next.js, loading data in Server Components whenever the page allows it, so less code and no secrets reach the browser. Types disappear at runtime, so I validate server responses with Zod before they reach a component, and a broken contract shows up as a clear error instead of a blank screen.",
     chips: ["React", "TypeScript", "Next.js", "Zod", "GSAP"],
     function: "MOTION · 3D · EDITORS",
     shippedIn: "BLAZE · MARVEL · ETHOS",
