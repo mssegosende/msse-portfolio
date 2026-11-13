@@ -27,6 +27,18 @@ export default defineConfig({
       args: ["--enable-unsafe-swiftshader"],
     },
     trace: "retain-on-failure",
+    // A returning visitor who entered silent: the loading screen enters by
+    // itself at 100%, so the specs meet scene 1 as before. The loading
+    // screen's own spec (boot.spec.ts) starts from an empty store, a first visit.
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: `http://localhost:${PORT}`,
+          localStorage: [{ name: "msse-entry", value: "silent" }],
+        },
+      ],
+    },
   },
   webServer: {
     command: `npx vite preview --port ${PORT} --strictPort`,

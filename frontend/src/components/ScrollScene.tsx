@@ -8,7 +8,7 @@ import { LAYOUT_RELOADS, LOADED_AS_PHONE } from "../lib/layoutReload";
 import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { OVERSAMPLE_1 } from "../lib/spline/camera";
 import { patchSplineRuntime } from "../lib/spline/runtime";
-import { bootSweep } from "../lib/sound";
+import { bootDone, useEntered } from "../lib/boot";
 import { SceneBoundary } from "./spline/SceneBoundary";
 import { Logo } from "./Logo";
 import { CapabilityCards } from "./scroll-scene/CapabilityCards";
@@ -110,11 +110,16 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     const t = setTimeout(() => setCapped(true), HERO_IN_CAP);
     return () => clearTimeout(t);
   }, []);
-  const heroIn = revealed || capped;
-  // The HUD lands: the boot sweep (when sound is on).
+  // The loading screen waits for the robot (shown, given up on, or the cap);
+  // scene 1 fades in once the visitor has entered, as the screen fades out. The
+  // power-up sound plays from the loading screen's ENTER WITH SOUND (lib/boot),
+  // once: not here.
+  const robotSettled = revealed || failed || capped;
   useEffect(() => {
-    if (heroIn) bootSweep();
-  }, [heroIn]);
+    if (robotSettled) bootDone("robot");
+  }, [robotSettled]);
+  const entered = useEntered();
+  const heroIn = (revealed || capped) && entered;
 
   // Hidden desktop mounts also get visibility:hidden, which takes them out of
   // compositing and hit-testing: one live robot per layer.

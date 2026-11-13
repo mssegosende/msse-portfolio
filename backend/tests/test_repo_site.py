@@ -74,3 +74,31 @@ def test_the_share_image_is_1200x630_and_wired_for_og_and_twitter():
     assert '<meta name="twitter:card" content="summary_large_image" />' in html
     assert '<meta property="og:image:width" content="1200" />' in html
     assert '<meta property="og:image:height" content="630" />' in html
+
+
+def test_the_loading_screen_is_inline_in_the_sites_tokens_and_accessible():
+    """index.html's #boot: no bundle or web font needed for its first paint."""
+    html = (ROOT / "frontend/index.html").read_text("utf8")
+    css = (ROOT / "frontend/src/index.css").read_text("utf8")
+    boot_css = html[html.index("#boot {") : html.index("</style>", html.index("#boot {"))]
+
+    def token(block_start: str, name: str) -> str:
+        block = css[css.index(block_start) :]
+        return re.search(rf"--crt-{name}:\s*(#[0-9a-fA-F]{{6}})", block).group(1).lower()
+
+    # Its colours are the site's tokens: dark by default, light without data-theme.
+    dark = re.search(r"#boot \{\s*--boot-bg: (#\w+);\s*--boot-ph: (#\w+);\s*--boot-tx: (#\w+);", boot_css)
+    light = re.search(
+        r'html:not\(\[data-theme="dark"\]\) #boot \{\s*--boot-bg: (#\w+);\s*--boot-ph: (#\w+);\s*--boot-tx: (#\w+);',
+        boot_css,
+    )
+    for theme, start in ((dark, "/* Dark: phosphor blue"), (light, "/* Light: blue ink")):
+        expected = tuple(token(start, n) for n in ("bg", "phosphor", "text"))
+        assert theme.groups() == expected, start
+
+    # The logo's own S and brackets, inline; the progress bar is accessible.
+    assert S_PATH in html
+    assert 'role="progressbar"' in html and 'aria-valuenow="0"' in html
+    assert 'setAttribute("aria-busy", "true")' in html
+    assert "prefers-reduced-motion: reduce" in boot_css
+    assert "[ ENTER WITH SOUND ]" in html and "[ ENTER SILENT ]" in html

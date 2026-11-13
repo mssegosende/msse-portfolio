@@ -4,6 +4,7 @@ import { useLenis, pinScrollToTopOnReload } from "@/hooks/useLenis";
 import { pendingJourneyDone } from "@/lib/themeReload";
 import { useLayoutReload } from "@/lib/layoutReload";
 import { useInterfaceSounds } from "@/hooks/useInterfaceSounds";
+import { bootDone } from "@/lib/boot";
 import { ScrollScene } from "@/components/ScrollScene";
 import { NavigationDock } from "@/components/NavigationDock";
 import { About } from "@/components/About";
@@ -19,6 +20,10 @@ function App() {
   useLenis();
   useInterfaceSounds();
   useEffect(pinScrollToTopOnReload, []);
+  // The loading screen: the faces scene 1 renders have loaded.
+  useEffect(() => {
+    void document.fonts?.ready.then(() => bootDone("fonts"));
+  }, []);
   // The dock appears once the hero sequence has been seen and then stays. A
   // theme reload on phones (lib/themeReload) comes back with it shown.
   const [journeyDone, setJourneyDone] = useState(pendingJourneyDone);

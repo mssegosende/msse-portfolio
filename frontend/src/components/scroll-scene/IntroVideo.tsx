@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type Ref } from "react";
 import { tourVideos } from "../../data/videosData";
 import { openGallery } from "../../lib/gallery";
+import { bootDone } from "../../lib/boot";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 
 // How many videos the README tour holds (the gallery's channels).
@@ -21,6 +22,12 @@ const PLAY = (
  * reduced motion); WATCH THE TOUR opens the README tour (the video gallery).
  */
 export const IntroTile = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale?: number }) => {
+  // The loading screen's "intro" stage: the tile's poster has loaded (or failed).
+  useEffect(() => {
+    const img = new Image();
+    img.onload = img.onerror = () => bootDone("intro");
+    img.src = THUMB.poster;
+  }, []);
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
   // The tile comes in with the first scroll step, so its clip waits for the
   // first scroll (or a hover/focus on it): nothing downloads at load.
@@ -137,6 +144,8 @@ export const IntroTile = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale
  * video gallery). Above BUILD THE FUTURE, under the sign (María Sol, 13 Nov).
  */
 export const IntroButtonPhone = () => {
+  // The loading screen's "intro" stage: no image on phones, the button is it.
+  useEffect(() => bootDone("intro"), []);
   return (
     <div className="mb-[18px] flex justify-center">
       <button
