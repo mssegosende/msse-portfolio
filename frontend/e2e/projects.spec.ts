@@ -62,3 +62,45 @@ test("cards link only to Live, never to the code", async ({ page }) => {
     "https://lynx-site-chi.vercel.app",
   );
 });
+
+// María Sol, 13 Nov: the LIVE links of the grid's lower cards took no clicks.
+// About, pulled up over Projects for its crossfade at opacity 0, sat on them.
+test("every LIVE link takes the click where it is drawn", async ({ page }) => {
+  await blockSpline(page);
+  await openHome(page);
+  await page.getByTestId("section-index").getByRole("button").nth(2).click();
+  await expect(page.getByTestId("project-reel-toggle")).toBeInViewport();
+  await page.getByTestId("project-reel-toggle").click();
+  await expect(page.getByTestId("project-live-link-alphecca")).toHaveAttribute(
+    "href",
+    "https://alphecca-eight.vercel.app",
+  );
+  // Scroll on, as a visitor would, until the lower row's links clear the dock
+  // (Projects holds that last screen before the crossfade into About).
+  const row = page.getByTestId("projects-row");
+  const clear = () =>
+    page.evaluate(() => {
+      const dock = document.querySelector('[data-testid="navigation-dock"]');
+      const limit = dock ? dock.getBoundingClientRect().top : innerHeight;
+      return [...document.querySelectorAll('[data-testid^="project-live-link-"]')]
+        .filter((l) => l.closest('[data-testid="projects-row"]'))
+        .every((l) => l.getBoundingClientRect().bottom <= limit);
+    });
+  for (let k = 0; k < 30 && !(await clear()); k++) {
+    await page.mouse.wheel(0, 120);
+    await page.waitForTimeout(150);
+  }
+  await page.waitForTimeout(1200);
+  expect(await clear()).toBe(true);
+  const links = row.locator('[data-testid^="project-live-link-"]');
+  expect(await links.count()).toBeGreaterThanOrEqual(4);
+  for (const link of await links.all()) {
+    const id = await link.getAttribute("data-testid");
+    const hit = await link.evaluate((el) => {
+      const r = el.getBoundingClientRect();
+      const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return !!top && el.contains(top);
+    });
+    expect(hit, `${id} is on screen and on top`).toBe(true);
+  }
+});

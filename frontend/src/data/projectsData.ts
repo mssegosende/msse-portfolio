@@ -87,7 +87,7 @@ export const showcaseProjects: ShowcaseProject[] = [
       'A Python app that helps choose an LLM for a specific workload. You enter the volume and token sizes. It checks which Google, OpenAI and Anthropic models fit the context, output and rate limits. It tells you whether the workload stays inside a free tier and estimates the real monthly cost. The math is plain Python, not an LLM, because models are bad at arithmetic. Prices and limits come from each provider\'s official docs, with the date they were checked. Next step: semantic search over those docs, to answer questions like "which models break if I send temperature?"',
     ],
     codeUrl: "",
-    liveUrl: "",
+    liveUrl: "https://alphecca-eight.vercel.app",
     media: "/projects/alphecca.mp4",
     poster: "/projects/alphecca.jpg",
     startAt: 8,

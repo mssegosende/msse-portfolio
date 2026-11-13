@@ -93,6 +93,16 @@ export const useCrossfade = (
     if (!on || !into) return undefined;
     claim();
     const out = from ? document.getElementById(from) : null;
+    // Written only when it flips: onUpdate runs every scroll frame and
+    // onRefresh on every refresh (a resize drag refreshes ~150 times), and a
+    // style write each time slowed the resize enough to fail its e2e.
+    let through: boolean | null = null;
+    const clickThrough = (progress: number) => {
+      const next = progress < XF.in / 2;
+      if (next === through) return;
+      through = next;
+      into.style.pointerEvents = next ? "none" : "";
+    };
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
         defaults: { ease: "none" },
@@ -110,6 +120,12 @@ export const useCrossfade = (
           onToggle: (self) => {
             if (self.isActive) whoosh();
           },
+          // Clicks go to the section on screen: pulled up over the leaving
+          // one, this section ignores the pointer until it is half in (as
+          // the section index counts it). Invisible, About took the clicks
+          // meant for the LIVE links of Projects' second row.
+          onRefresh: (self) => clickThrough(self.progress),
+          onUpdate: (self) => clickThrough(self.progress),
         },
       });
       if (out) {
@@ -153,6 +169,7 @@ export const useCrossfade = (
     refreshSoon();
     return () => {
       ctx.revert();
+      into.style.pointerEvents = "";
       release();
       refreshSoon();
     };
