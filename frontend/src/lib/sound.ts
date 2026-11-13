@@ -17,6 +17,8 @@ export const GLITCH_SOUND = true;
 export const TYPING_SOUND = false;
 
 const KEY = "msse-sound";
+/** The loading screen's saved entry choice (index.html): "sound" or "silent". */
+const ENTRY_KEY = "msse-entry";
 /** The master: the files peak at ~-3 dBFS, so the loudest land near -24 dBFS. */
 const MASTER_DB = -21;
 /** The background loop's level under the master, and its fade, s. */
@@ -67,9 +69,25 @@ const load = (c: AudioContext) =>
     if (on) startBackground();
   }));
 
+// Browsers start audio only after the visitor's first gesture. Until then no
+// context is made and nothing is scheduled (a sound scheduled on a suspended
+// context would play late, on that first gesture): sound "on" from a saved
+// choice stays silent until then, and then works normally.
+let gestured = false;
+if (typeof window !== "undefined") {
+  const first = () => {
+    gestured = true;
+    for (const type of GESTURES) window.removeEventListener(type, first, true);
+    if (on && audio()) startBackground();
+  };
+  const GESTURES = ["pointerdown", "keydown", "touchend"] as const;
+  for (const type of GESTURES) window.addEventListener(type, first, true);
+}
+
 /** The context, if sound is on (or `force`: the test page), and the tab visible. */
 const audio = (force = false): AudioContext | null => {
   if ((!on && !force) || typeof window === "undefined" || document.hidden) return null;
+  if (!gestured && !force) return null;
   if (!ctx) {
     const AC =
       window.AudioContext ??
@@ -150,6 +168,9 @@ export const setSound = (next: boolean) => {
   on = next;
   try {
     sessionStorage.setItem(KEY, next ? "on" : "off");
+    // The loading screen's saved choice follows the last setting, so the next
+    // visit enters the way this one ended (index.html, msse-entry).
+    localStorage.setItem(ENTRY_KEY, next ? "sound" : "silent");
   } catch {
     /* private mode: for this page only */
   }
