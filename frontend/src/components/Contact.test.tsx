@@ -23,6 +23,21 @@ const fillForm = async () => {
 };
 
 describe("Contact", () => {
+  it("footer: GITHUB, LINKEDIN and EMAIL, the profiles in a new tab", () => {
+    render(<Contact />);
+    const linkedin = screen.getByTestId("footer-linkedin-link");
+    expect(linkedin).toHaveTextContent("LINKEDIN");
+    expect(linkedin).toHaveAttribute("href", "https://www.linkedin.com/in/mssegosende");
+    expect(linkedin).toHaveAttribute("target", "_blank");
+    expect(linkedin).toHaveAttribute("rel", "noopener noreferrer");
+    const footer = screen.getByTestId("footer");
+    expect(footer).toHaveTextContent(/GITHUB.*LINKEDIN.*EMAIL/);
+    expect(screen.getByTestId("footer-email-link")).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^mailto:/),
+    );
+  });
+
   it("sends nothing with the required fields empty: an error under each, focus on the first", async () => {
     const user = userEvent.setup();
     render(<Contact />);

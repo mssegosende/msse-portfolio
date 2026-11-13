@@ -524,8 +524,7 @@ export const Contact = () => {
             >
               GITHUB
             </a>
-            {/* LINKEDIN (María Sol, 12 Nov) once profile.socials.linkedin has
-                her URL; EMAIL stays beside it. */}
+            {/* LINKEDIN (María Sol, 12 Nov); EMAIL stays beside it. */}
             {profile.socials.linkedin && (
               <a
                 data-testid="footer-linkedin-link"

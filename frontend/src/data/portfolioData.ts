@@ -70,8 +70,7 @@ export const profile: Profile = {
   email: "10021msse@gmail.com",
   socials: {
     github: "https://github.com/mssegosende",
-    // TODO: the real URL. null hides the footer icon.
-    linkedin: null,
+    linkedin: "https://www.linkedin.com/in/mssegosende",
   },
   bio: [
     "I am María Sol, a full stack developer and AI engineer based in Buenos Aires. Since 2022 I have built products end to end, from the interface users interact with to the services behind it, and more recently the AI layer on top. I am most motivated by systems with dense business rules and no tolerance for silent errors, such as bookings, payments and data that must remain consistent wherever it lives. Each one presents a challenge with something new to learn.",
