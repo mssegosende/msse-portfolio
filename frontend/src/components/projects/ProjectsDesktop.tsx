@@ -159,12 +159,13 @@ const Folder = ({
   );
 };
 
-/** The section head: pill, PROJECTS, intro (Projects.dc.html). */
+/** The section head: label, PROJECTS, intro (Projects.dc.html). */
 export const ProjectsHead = ({ isMobile }: { isMobile: boolean }) => (
   <div className={`relative flex flex-col ${isMobile ? "gap-3" : "max-w-[760px] gap-4"}`}>
+    {/* Plain VT323, no box, as scene 2's label (María Sol, 13 Nov). */}
     <span
-      className={`crt-pill self-start font-vt tracking-[0.16em] ${
-        isMobile ? "px-2.5 py-[3px] text-[17px]" : "px-3 py-1 text-[20px]"
+      className={`crt-section-label self-start font-vt tracking-[0.14em] ${
+        isMobile ? "text-[18px]" : "text-[22px]"
       }`}
     >
       03 // SELECTED WORK

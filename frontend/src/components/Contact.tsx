@@ -270,7 +270,7 @@ export const Contact = () => {
       </div>
       <div className={s.stage} style={stageStyle}>
         <div className={`${s.head} ${s.reveal}`} {...rise(0)} data-xf="head">
-          <span className="crt-pill self-start font-vt">05 // CONTACT</span>
+          <span className="crt-section-label self-start font-vt">05 // CONTACT</span>
           {/* Phones: LET'S / TALK inside crosshair corners, with two ghost copies
               that jump sideways now and then (ContactM.dc.html). */}
           <div className={s.titleBox}>

@@ -68,10 +68,10 @@
   display: flex;
   flex-direction: column;
 }
-.head :global(.crt-pill) {
-  padding: 3px 10px;
-  font-size: 17px;
-  letter-spacing: 0.16em;
+/* The section label: plain VT323, no box, as scene 2's (María Sol, 13 Nov). */
+.head :global(.crt-section-label) {
+  font-size: 18px;
+  letter-spacing: 0.14em;
 }
 
 /* LET'S / TALK in crosshair corners, with two ghost copies. */
@@ -597,9 +597,8 @@ textarea.input {
     grid-area: head;
     gap: 16px;
   }
-  .head :global(.crt-pill) {
-    padding: 4px 12px;
-    font-size: 20px;
+  .head :global(.crt-section-label) {
+    font-size: 22px;
   }
   .titleBox {
     margin-top: 0;

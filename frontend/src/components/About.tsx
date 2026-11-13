@@ -118,7 +118,7 @@ export const About = () => {
 
         <div className={s.leftCol} style={leftBox}>
           <div className={`${s.reveal} ${s.head}`} data-on={reached} data-xf="head">
-            <span className="crt-pill self-start font-vt">04 // WHO</span>
+            <span className="crt-section-label self-start font-vt">04 // WHO</span>
             <h2
               className={`crt-glow m-0 font-michroma font-normal uppercase text-crt-title ${s.title}`}
             >

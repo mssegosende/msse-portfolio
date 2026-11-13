@@ -1397,11 +1397,7 @@ textarea:-webkit-autofill {
   font-size: 16px;
 }
 
-/* Section pill, background word, names, status. */
-.crt-pill {
-  border: 1px solid var(--crt-line);
-  color: var(--crt-row-value);
-}
+/* Background word, names, status. */
 .crt-bg-word {
   pointer-events: none;
   user-select: none;
