@@ -7,7 +7,8 @@ import { useSectionStep } from "../hooks/useSectionStep";
 import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { clampScale, useFrame } from "../hooks/useFrame";
 import { GridField } from "./GridField";
-import { LiveWave } from "./crt/LiveWave";
+import { MonitorTrace } from "./crt/MonitorTrace";
+import { breath, pleth } from "../lib/ecg";
 import { commandAccepted, textBlip } from "../lib/sound";
 import s from "./Contact.module.css";
 import { useCrossfade } from "@/hooks/useSectionDissolve";
@@ -212,7 +213,7 @@ export const Contact = () => {
   // The confirmation takes the form's place at the form's height (María Sol,
   // 13 Nov: the window never grows, so the footer never slides under the dock).
   const [formH, setFormH] = useState<number | null>(null);
-  // The section's loops (the ghosts, the waves, the clock) run only on screen.
+  // The section's loops (the waves, the clock) run only on screen.
   const [live, setLive] = useState(false);
   useEffect(() => {
     const el = ref.current;
@@ -336,22 +337,11 @@ export const Contact = () => {
       <div className={s.stage} style={stageStyle}>
         <div className={`${s.head} ${s.reveal}`} {...rise(0)} data-xf="head">
           <span className="crt-section-label self-start font-vt">05 // CONTACT</span>
-          {/* LET'S / TALK (phones: inside crosshair corners), with two ghost
-              copies that jump sideways now and then, and the live signal
-              under it (ContactM.dc.html; desktop too since María Sol, 13 Nov). */}
+          {/* LET'S / TALK (phones: inside crosshair corners), single, no ghost
+              copies (María Sol, pre-launch), and the live signal under it. */}
           <div className={s.titleBox}>
             <span aria-hidden="true" className={s.rx}>
               [signal.rx]
-            </span>
-            <span aria-hidden="true" className={`${s.ghost} ${s.ghostA}`}>
-              LET&apos;S
-              <br />
-              TALK
-            </span>
-            <span aria-hidden="true" className={`${s.ghost} ${s.ghostB}`}>
-              LET&apos;S
-              <br />
-              TALK
             </span>
             <h2 className={`crt-glow font-michroma ${s.title}`}>
               Let&apos;s <br className={s.titleBreak} />
@@ -360,7 +350,15 @@ export const Contact = () => {
           </div>
           <div aria-hidden="true" className={s.wave}>
             <div className="crt-scope h-[52px] overflow-hidden border border-[var(--crt-line-row)]">
-              <LiveWave width={696} height={50} live={live} still={still} />
+              <MonitorTrace
+                signal={pleth}
+                width={696}
+                height={50}
+                sweepMs={3600}
+                baseline={0.86}
+                scale={0.7}
+                reduced={still}
+              />
             </div>
             <div className="mt-1.5 flex justify-between font-mono text-[10px] tracking-[0.08em] text-crt-dim">
               <span>SIGNAL · OPEN</span>
@@ -574,7 +572,15 @@ export const Contact = () => {
             </div>
             <div className={s.signalScope}>
               <div className="crt-scope h-full border border-[var(--crt-line-row)]">
-                <LiveWave width={420} height={120} seed={1.7} live={live} still={still} />
+                <MonitorTrace
+                  signal={breath}
+                  width={420}
+                  height={120}
+                  sweepMs={9000}
+                  baseline={0.84}
+                  scale={0.68}
+                  reduced={still}
+                />
               </div>
             </div>
           </div>

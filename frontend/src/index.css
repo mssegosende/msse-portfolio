@@ -1263,15 +1263,6 @@ textarea:-webkit-autofill {
 :root[data-theme="dark"] .crt-scope__wave {
   filter: drop-shadow(0 0 4px #6ebaef);
 }
-/* Contact's live waves: a faint pink ghost of the signal, a moment late and
-   a few units over, like LET'S TALK's ghost copies (LiveWave). */
-.crt-wave-ghost {
-  stroke: rgba(244, 114, 182, 0.32);
-}
-:root[data-theme="dark"] .crt-wave-ghost {
-  stroke: rgba(244, 114, 182, 0.26);
-  filter: drop-shadow(0 0 3px rgba(244, 114, 182, 0.35));
-}
 /* The vitals monitor's writing head (About). */
 .crt-scope__head {
   fill: var(--crt-core);

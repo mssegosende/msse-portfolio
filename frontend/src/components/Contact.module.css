@@ -74,7 +74,7 @@
   letter-spacing: 0.14em;
 }
 
-/* LET'S / TALK in crosshair corners, with two ghost copies. */
+/* LET'S / TALK in crosshair corners. */
 .titleBox {
   position: relative;
   margin-top: 26px;
@@ -98,62 +98,18 @@
   font-size: 11px;
   color: var(--crt-node);
 }
-.title,
-.ghost {
+.title {
+  position: relative;
   margin: 0;
   font-weight: 400;
   font-size: 58px;
   line-height: 1.06;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-}
-.title {
-  position: relative;
   color: var(--crt-core);
 }
-.ghost {
-  position: absolute;
-  left: 16px;
-  top: 18px;
-  font-family: "Michroma", sans-serif;
-  opacity: 0;
-  pointer-events: none;
-}
-.ghostA {
-  color: rgba(125, 198, 246, 0.35);
-  animation: ghost-a 2.8s steps(1, end) infinite;
-}
-.ghostB {
-  color: rgba(244, 114, 182, 0.18);
-  animation: ghost-b 2.8s steps(1, end) infinite;
-}
-/* ~160 ms of the 2.8 s: the copies jump sideways, then vanish. */
-@keyframes ghost-a {
-  0%,
-  94.2% {
-    opacity: 0;
-    transform: none;
-  }
-  94.3%,
-  99.9% {
-    opacity: 1;
-    transform: translateX(-6px);
-  }
-}
-@keyframes ghost-b {
-  0%,
-  94.2% {
-    opacity: 0;
-    transform: none;
-  }
-  94.3%,
-  99.9% {
-    opacity: 1;
-    transform: translateX(7px);
-  }
-}
 
-/* The live signal (LiveWave). */
+/* The live signal (MonitorTrace). */
 .wave {
   margin-top: 18px;
 }
@@ -460,7 +416,6 @@ textarea.input {
   text-shadow: var(--crt-glow-label);
 }
 /* Every loop here rests while the section is off screen (Contact.tsx). */
-.section[data-live="false"] .ghost,
 .section[data-live="false"] .caret {
   animation-play-state: paused;
 }
@@ -558,18 +513,13 @@ textarea.input {
   .titleBreak {
     display: none;
   }
-  .title,
-  .ghost {
+  .title {
     font-size: 76px;
     line-height: 1.1;
     letter-spacing: 0.04em;
   }
   .title {
     color: var(--crt-title);
-  }
-  .ghost {
-    left: 0;
-    top: 0;
   }
   .wave {
     margin-top: 6px;
@@ -692,7 +642,6 @@ textarea.input {
     transition: none;
     transform: none;
   }
-  .ghost,
   .caret {
     animation: none;
   }

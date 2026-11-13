@@ -62,3 +62,44 @@ export const peaksBetween = (from: number, to: number): number[] => {
   }
   return out;
 };
+
+// ---- Contact's monitors (María Sol, pre-launch: natural waves, as About's).
+
+/** One pulse wave, `u` ms after the beat's onset: a fast rise, a dicrotic notch, the decay. */
+const pulseShape = (u: number) => {
+  if (u <= 0) return 0;
+  // From zero, eased in, so a beat never starts with a step.
+  const r = Math.min(1, u / 150);
+  const ease = r * r * (3 - 2 * r);
+  return (
+    ease *
+    (Math.exp(-(((u - 160) / 95) ** 2)) +
+      0.36 * Math.exp(-(((u - 400) / 100) ** 2)) +
+      0.12 * Math.exp(-u / 500))
+  );
+};
+
+/**
+ * A finger pulse (plethysmograph), on the same beats as the ECG, each a
+ * little later (the pulse travels): smooth, about 0..1.
+ */
+export const pleth = (t: number): number => {
+  const { k } = beatAt(t);
+  // The last three beats, each with its own height: a wave still decaying
+  // carries on under the next one, so nothing jumps.
+  let v = 0;
+  for (let j = Math.max(0, k - 2); j <= k; j++)
+    v += (0.85 + 0.15 * hash(j + 0.5)) * pulseShape(t - (BEATS[j]! + 260));
+  return v;
+};
+
+/**
+ * Breathing: about 14 breaths a minute, the in-breath quicker than the out,
+ * the rate and depth wandering a little. About 0..1.
+ */
+export const breath = (t: number): number => {
+  const phase = 2 * Math.PI * (t / 4300 + 0.06 * Math.sin(t / 9000));
+  const v = (1 - Math.cos(phase)) / 2;
+  const depth = 0.8 + 0.2 * Math.sin(t / 13000 + 1.1);
+  return depth * v ** 1.35;
+};
