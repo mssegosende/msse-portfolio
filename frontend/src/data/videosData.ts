@@ -79,15 +79,17 @@ export const tourVideos: TourVideo[] = [
   entry("02", "INTRO", "Tech stack", "The tools I build with, and why.", { duration: 125 }),
   // Scene 4, the projects: one narrated video each (clip_scene4_<n>_<project>),
   // added as they are recorded; then the one about what is not shipped.
-  // clip_scene4_1_polaris at 1.10x, the sound cleaned.
+  // clip_scene4_<n>_<project> at 1.10x, the sound cleaned.
   entry("03", "SHIPPED", "Polaris", "A RAG assistant for BCRA banking regulations.", {
     duration: 45,
   }),
-  entry("04", "SHIPPED", "Built, not deployed yet", "Work that runs, but is not live."),
-  entry("05", "FROM MARCH TO NOW", "March to June", "What I built in those months."),
-  entry("06", "FROM MARCH TO NOW", "July to November", "What I built in those months."),
-  entry("07", "THE SERIES", "The series, on the shelf", "The cheat-sheet series."),
-  entry("08", "THE SERIES", "Thank you", "Thanks for watching."),
+  entry("04", "SHIPPED", "Alphecca", "An LLM selection and cost calculator.", { duration: 47 }),
+  entry("05", "SHIPPED", "Ethos", "A clinic booking app, full stack.", { duration: 55 }),
+  entry("06", "SHIPPED", "Built, not deployed yet", "Work that runs, but is not live."),
+  entry("07", "FROM MARCH TO NOW", "March to June", "What I built in those months."),
+  entry("08", "FROM MARCH TO NOW", "July to November", "What I built in those months."),
+  entry("09", "THE SERIES", "The series, on the shelf", "The cheat-sheet series."),
+  entry("10", "THE SERIES", "Thank you", "Thanks for watching."),
 ];
 
 /** "Ø05"-style number (the slashed zero, as the rest of the site). */
