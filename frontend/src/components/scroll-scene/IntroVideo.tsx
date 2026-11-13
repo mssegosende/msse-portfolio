@@ -1,15 +1,13 @@
 import { useEffect, useRef, useState, type Ref } from "react";
-import { INTRO_VIDEO } from "../../data/introVideo";
 import { tourVideos } from "../../data/videosData";
 import { openGallery } from "../../lib/gallery";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 
-/** 90 -> "1:30". */
-const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
-
 // How many videos the README tour holds (the gallery's channels).
 const VIDEO_COUNT = tourVideos.length;
 const VIDEO_COUNT_LABEL = `${VIDEO_COUNT} VIDEO${VIDEO_COUNT === 1 ? "" : "S"}`;
+/** The tile's thumbnail: the tour's first video (María Sol, pre-launch: it still showed the old intro). */
+const THUMB = tourVideos[0]!;
 
 const PLAY = (
   <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true" className="crt-play">
@@ -24,7 +22,6 @@ const PLAY = (
  */
 export const IntroTile = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale?: number }) => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
-  const [length, setLength] = useState<string | null>(null);
   // The tile comes in with the first scroll step, so its clip waits for the
   // first scroll (or a hover/focus on it): nothing downloads at load.
   const [armed, setArmed] = useState(() => window.scrollY > 0);
@@ -92,25 +89,24 @@ export const IntroTile = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale
           <video
             key={reduced ? "still" : "loop"}
             ref={previewRef}
-            src={INTRO_VIDEO.src}
-            poster={INTRO_VIDEO.poster}
+            src={THUMB.preview}
+            poster={THUMB.poster}
             muted
             loop
             playsInline
             preload={armed ? "metadata" : "none"}
             aria-hidden="true"
             tabIndex={-1}
-            onLoadedMetadata={(e) => {
-              const d = e.currentTarget.duration;
-              if (Number.isFinite(d) && d > 0) setLength(clock(d));
-            }}
             className="h-full w-full object-cover"
           />
           {/* The palette as a small blend layer over the clip, like the robot's:
             an SVG filter on a playing video cost scene 1 frames. */}
           <span aria-hidden="true" className="crt-tile-tint absolute inset-0" />
           <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center">
-            {PLAY}
+            {/* On a dark disc: the tour's frames are a white README page. */}
+            <span className="flex h-16 w-16 items-center justify-center rounded-full border border-crt-line bg-[rgba(2,4,9,0.62)] pl-1">
+              {PLAY}
+            </span>
           </span>
           <span
             aria-hidden="true"
@@ -123,7 +119,7 @@ export const IntroTile = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale
             onClick={() => openGallery()}
             onFocus={() => setArmed(true)}
             aria-haspopup="dialog"
-            aria-label={`Watch the README tour, ${VIDEO_COUNT_LABEL.toLowerCase()}${length ? ` (intro ${length})` : ""}`}
+            aria-label={`Watch the README tour, ${VIDEO_COUNT_LABEL.toLowerCase()}`}
             data-testid="hero-intro-open"
             className="crt-button min-h-11 px-3.5 text-[21px]"
           >

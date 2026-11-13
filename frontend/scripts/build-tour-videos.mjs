@@ -1,7 +1,7 @@
 // Builds the README tour's files (the video gallery, src/data/videosData.ts)
 // from María Sol's clips (ffmpeg on the PATH):
 //
-//   node scripts/build-tour-videos.mjs <folder with the clips> [--map files=id,...] [--speed 1.25] [--clean]
+//   node scripts/build-tour-videos.mjs <folder with the clips> [--map files=id,...] [--speed 1.25] [--clean] [--still <s>]
 //
 // --map names the clips and their entries outright, and then only those are
 // built. Clips joined with + become one video, in that order:
@@ -98,6 +98,8 @@ const flag = (name) => process.argv.includes(`--${name}`);
 const SPEED = Number(process.argv[process.argv.indexOf("--speed") + 1]) || 1;
 const CLEAN = flag("clean");
 const XFADE = 0.35;
+const STILL_ARG = process.argv.indexOf("--still");
+const STILL = STILL_ARG > 0 ? Number(process.argv[STILL_ARG + 1]) : null;
 
 const streamProbe = (f, entries) =>
   execFileSync("ffprobe", [
@@ -206,7 +208,9 @@ for (const { file, parts, entry } of mapping.sort((a, b) => a.entry.id.localeCom
   ]);
   // The preview: 6 s from a third of the way in, muted, 480 wide; a higher
   // CRF if it comes out over ~400 KB.
-  const at = Math.max(0, Math.min(duration - 6, duration / 3));
+  // --still <s>: where the preview and the poster come from (in the built
+  // video's time); by default a third of the way in.
+  const at = Math.max(0, Math.min(duration - 6, STILL ?? duration / 3));
   const preview = path.join(out, `${id}-preview.mp4`);
   for (const crf of [30, 34, 38]) {
     ff([
