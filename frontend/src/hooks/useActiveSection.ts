@@ -1,3 +1,4 @@
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useEffect, useState } from "react";
 import { activeAt, measureSections, SECTIONS, type SectionId } from "@/lib/sections";
 import { scrollToY } from "./useLenis";
@@ -19,10 +20,15 @@ export const useActiveSection = () => {
     update();
     window.addEventListener("scroll", schedule, { passive: true });
     window.addEventListener("resize", schedule);
+    // The first measure runs before the pins exist (the sections sit at their
+    // unpinned tops, so at y = 0 Projects read as reached and the rail lit
+    // 03). Every ScrollTrigger refresh rebuilds the pins: measure again then.
+    ScrollTrigger.addEventListener("refresh", schedule);
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);
+      ScrollTrigger.removeEventListener("refresh", schedule);
     };
   }, []);
 
