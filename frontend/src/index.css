@@ -121,11 +121,9 @@
     /* Glow in light is a soft halo, not bloom, for titles and labels alike. */
     --crt-glow-title: 0 0 0.6px rgba(20, 70, 150, 0.5), 0 0 14px rgba(60, 130, 240, 0.22);
     --crt-glow-label: 0 0 0.6px rgba(20, 70, 150, 0.5), 0 0 14px rgba(60, 130, 240, 0.22);
-    --crt-vignette: radial-gradient(
-      ellipse 75% 70% at 50% 45%,
-      rgba(10, 40, 90, 0) 55%,
-      rgba(10, 40, 90, 0.175) 100%
-    );
+    /* None in light (María Sol, pre-launch): its darker edges left a
+       whitish band across the middle, behind the sign and scene 2. */
+    --crt-vignette: none;
   }
 
   :root[data-theme="dark"] {
@@ -571,6 +569,12 @@ textarea:-webkit-autofill {
 .hero-wordmark--depth-phone {
   --sign-fs: 38vw;
 }
+/* Light: the letters whole behind the robot (María Sol, pre-launch: dimmed
+   around it, two of the S's read as cut off and floating). */
+:root:not([data-theme="dark"]) .hero-wordmark--depth {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
 
 /* Desktop: the chest goes down to the dock and fades out right above it,
    over ~100px (María Sol, 13 Nov: it faded far above the dock; was 52%-78%
@@ -598,32 +602,18 @@ textarea:-webkit-autofill {
   background: #6ebaef;
   mix-blend-mode: color;
 }
-/* The robot in front of the sign (María Sol, 12 Nov). A filter on the
-   robot's wrapper (raised highlights, a rim) cost scene 1 frames
-   (perf/crt-r103.json), so, as SPEC §2 says, the treatment keeps option 1:
-   dark is the blend layer alone; light desktop keeps the palette filter that
-   measured fine in phase 2. Separation comes from the sign instead (its mask
-   darkens it around the robot, .hero-wordmark--depth). */
+/* Light: the robot in blue ink (HeroLight.dc.html; María Sol, pre-launch:
+   the silver robot read plain grey, and phones had no treatment at all):
+   its own pixels toned to navy with lighter highlights, a thin blue rim and
+   a soft blue halo. CSS filter functions on the robot's wrapper (never the
+   canvas): they run on the GPU, unlike the SVG palette filter that cost the
+   phones frames (perf/crt-phase2.json). Dark keeps the blend layer alone. */
 .crt-robot-filter {
-  filter: url(#crt-light);
+  filter: grayscale(1) brightness(0.55) contrast(1.3) sepia(0.85) hue-rotate(178deg) saturate(2.2)
+    drop-shadow(0 0 1px rgba(40, 110, 220, 0.7)) drop-shadow(0 0 22px rgba(40, 110, 220, 0.28));
 }
 :root[data-theme="dark"] .crt-robot-filter {
   filter: none;
-}
-/* Phones in light: the palette filter cost frames on the phone stand-in
-   (scene 1 at 47 fps against 56 before, perf/crt-phase2.json), so phones keep
-   option 1, a lighten layer in blue ink (SPEC §2: if it drops frames, keep
-   option 1). Same test as lib/layout.ts. */
-@media (max-width: 767px),
-  (hover: none) and (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
-  :root:not([data-theme="dark"]) .crt-robot-filter {
-    filter: none;
-  }
-  :root:not([data-theme="dark"]) .crt-robot-tint {
-    display: block;
-    background: #0e2c4c;
-    mix-blend-mode: lighten;
-  }
 }
 
 /* Phones: the robot fades into the ground right under WATCH THE VIDEOS,
@@ -989,12 +979,17 @@ textarea:-webkit-autofill {
 :root[data-theme="dark"] .crt-hero-glow {
   background: radial-gradient(closest-side, rgba(108, 185, 238, 0.13), rgba(108, 185, 238, 0));
 }
-/* SCROLL and SKIP INTRO. */
+/* SCROLL and SKIP INTRO. Light: the ink (12.9:1 on the paper; María Sol,
+   pre-launch: it read grey), with a paper halo where it crosses the robot. */
 .crt-cue {
-  color: var(--crt-text-2);
+  color: var(--crt-title);
+  text-shadow:
+    0 0 3px var(--crt-bg),
+    0 0 8px var(--crt-bg);
 }
 :root[data-theme="dark"] .crt-cue {
   color: var(--crt-text);
+  text-shadow: none;
 }
 .crt-skip {
   color: #486079;

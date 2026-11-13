@@ -135,6 +135,9 @@ export const IntroButtonPhone = () => {
         aria-label={INTRO_VIDEO.title}
         data-testid="hero-intro-open"
         className="crt-button hero-bar-in pointer-events-auto flex min-h-11 items-center gap-2.5 px-[18px] text-[21px] tracking-[0.14em]"
+        // On a panel: it sits over the robot's chest (dark ink in light). Inline:
+        // .crt-button's own background would win over a utility.
+        style={{ background: "var(--crt-panel)" }}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
           <path d="M3 2 L12 7 L3 12 Z" fill="none" stroke="currentColor" strokeWidth="1.6" />
