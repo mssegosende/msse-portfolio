@@ -65,7 +65,9 @@ api_router = APIRouter(prefix="/api")
 class ContactMessage(BaseModel):
     """The body the form in frontend/src/components/Contact.tsx sends."""
 
-    model_config = ConfigDict(str_strip_whitespace=True)
+    # Stripped before the length checks (a blank name is empty). A field the form
+    # never sends is a 422, not silently ignored.
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
     name: str = Field(min_length=2, max_length=100)
     email: EmailStr

@@ -201,3 +201,12 @@ def test_malformed_json_is_a_generic_422(client):
     assert res.status_code == 422
     assert res.json() == {"detail": "Invalid input.", "fields": []}
     assert "decode" not in res.text.lower()
+
+
+def test_unknown_fields_are_422_and_not_echoed(client, sent):
+    res = post(client, VALID | {"is_admin": True})
+
+    assert res.status_code == 422
+    assert res.json() == {"detail": "Invalid input.", "fields": []}
+    assert "is_admin" not in res.text
+    assert sent == []
