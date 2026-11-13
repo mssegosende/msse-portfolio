@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
+import { TICK_MS } from "./scroll-scene/ascii";
 import { BioTerminal, TypeLine } from "./BioTerminal";
 import { profile, manifesto } from "../data/portfolioData";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -28,16 +29,80 @@ const ROWS: [string, string][] = [
   ["BASE", "BUENOS AIRES"],
 ];
 
-// SIGNAL · PIANO: the design's decaying wave, drawn once (it doesn't move).
-const SIGNAL = (() => {
+// SIGNAL · PIANO: the design's decaying wave (struck notes), running right
+// to left like scene 2's oscilloscope (María Sol, 13 Nov), t in ms.
+const signalPath = (t: number) => {
+  const shift = t * 0.06;
   let d = "";
   for (let x = 0; x <= 614; x += 3) {
-    const env = Math.exp(-((x % 154) / 60));
-    const y = 42 + 30 * env * Math.sin(x * 0.22) + 6 * Math.sin(x * 0.05);
+    const u = x + shift;
+    const env = Math.exp(-((u % 154) / 60));
+    const y = 42 + 30 * env * Math.sin(u * 0.22) + 6 * Math.sin(u * 0.05 + t * 0.0007);
     d += `${x === 0 ? "M" : "L"}${x} ${y.toFixed(1)} `;
   }
   return d;
-})();
+};
+
+/** The piano scope, ticking like scene 2's (TICK_MS) while on screen; still with reduced motion. */
+const PianoScope = ({ reduced }: { reduced: boolean }) => {
+  const pathRef = useRef<SVGPathElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    pathRef.current?.setAttribute("d", signalPath(0));
+    if (reduced) return undefined;
+    let onScreen = false;
+    const io =
+      typeof IntersectionObserver === "undefined"
+        ? null
+        : new IntersectionObserver(([e]) => {
+            onScreen = !!e?.isIntersecting;
+          });
+    if (boxRef.current) io?.observe(boxRef.current);
+    const t0 = performance.now();
+    const id = setInterval(() => {
+      if (onScreen && !document.hidden)
+        pathRef.current?.setAttribute("d", signalPath(performance.now() - t0));
+    }, TICK_MS);
+    return () => {
+      clearInterval(id);
+      io?.disconnect();
+    };
+  }, [reduced]);
+  return (
+    <div ref={boxRef} className="crt-scope h-[84px] border border-[var(--crt-line-row)]">
+      <svg
+        aria-hidden="true"
+        width="100%"
+        height="82"
+        viewBox="0 0 614 84"
+        preserveAspectRatio="none"
+        className="block"
+      >
+        <path ref={pathRef} className="crt-scope__wave" fill="none" strokeWidth="1.6" />
+      </svg>
+    </div>
+  );
+};
+
+/** Three thin bands of the portrait, offset sideways during a glitch. */
+const GLITCH_SLICES = [
+  { clipPath: "inset(22% 0 74% 0)", transform: "translateX(9px)" },
+  { clipPath: "inset(47% 0 50% 0)", transform: "translateX(-11px)" },
+  { clipPath: "inset(69% 0 27% 0)", transform: "translateX(6px)" },
+];
+
+/** True while the element is on screen (its loops pause off screen). */
+const useOnScreen = (ref: RefObject<HTMLElement | null>) => {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return undefined;
+    const io = new IntersectionObserver(([e]) => setOn(!!e?.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref]);
+  return on;
+};
 
 // The dossier at its design size (About.dc.html), px, and the room kept
 // above the dock.
@@ -45,7 +110,10 @@ const DOSSIER_W = 656;
 /** The text column (title, bio panel, principles) beside it, px. */
 const TEXT_W = 616;
 const DOSSIER_H = 712;
-const DOCK_ROOM = 110;
+const DOCK_ROOM = 120;
+/** Desktop: the dossier's and the title's top in the 1440 x 900 frame (María
+ * Sol, 13 Nov: up from 96, fitted to the screen). */
+const TOP = 44;
 
 const NODES = [
   "left-[-4px] top-[-4px]",
@@ -60,7 +128,7 @@ const PORTRAIT_IN_MS = 1200;
 
 /**
  * Scene 4 · WHO, CRT look (design/crt/.../About*.dc.html), in the order María
- * Sol asked (12 Nov): first the SUBJECT MSSE-01 dossier with the portrait
+ * Sol asked (12 Nov): first the SUBJECT MSSE-0195 dossier with the portrait
  * (a fade and a scanline sweeping down the photo), then, as soon as it is in,
  * the bio types itself in the code panel beside it while the dossier's data
  * rows type in too. Desktop: dossier left, title, bio panel and principles
@@ -94,11 +162,14 @@ export const About = () => {
   // to the dossier at every size.
   const { width, height, kw, kh } = useFrame();
   const k = clampScale(
-    Math.min(kw, (height - 96 * kh - DOCK_ROOM) / DOSSIER_H, (width - 60 - 760 * kw) / TEXT_W),
+    Math.min(kw, (height - TOP * kh - DOCK_ROOM) / DOSSIER_H, (width - 60 - 760 * kw) / TEXT_W),
   );
   // Dossier left (64), the text column right of it (760), side by side.
-  const leftBox = desktop ? { ...at(760, 96), zoom: k, width: TEXT_W } : undefined;
-  const rightBox = desktop ? { ...at(64, 96), zoom: k, width: DOSSIER_W } : undefined;
+  const leftBox = desktop ? { ...at(760, TOP), zoom: k, width: TEXT_W } : undefined;
+  const rightBox = desktop ? { ...at(64, TOP), zoom: k, width: DOSSIER_W } : undefined;
+  // The portrait's interference loops run only while it is on screen.
+  const screenRef = useRef<HTMLDivElement>(null);
+  const screenOn = useOnScreen(screenRef);
 
   return (
     <section
@@ -131,7 +202,8 @@ export const About = () => {
                 terminal panel; today's text, unchanged. */}
             <BioTerminal paragraphs={BIO} reduced={still} start={portraitIn} className={s.bio} />
 
-            {/* Principles as three VT323 rows (SPEC §6). */}
+            {/* Principles: three VT323 title rows (SPEC §6), each with its
+                description under it again (María Sol, 13 Nov). */}
             <div className={s.principles}>
               {manifesto.map((p, i) => (
                 <article
@@ -140,8 +212,11 @@ export const About = () => {
                   className={`${s.reveal} ${s.slow} ${s.principle}`}
                   data-on={paced ? progress >= (PRINCIPLE_AT[i] ?? 1) : reached}
                 >
-                  <span className="crt-section-label">{p.num}</span>
-                  <h3 className={s.principleTitle}>{p.title}</h3>
+                  <div className={s.principleHead}>
+                    <span className="crt-section-label">{p.num}</span>
+                    <h3 className={s.principleTitle}>{p.title}</h3>
+                  </div>
+                  <p className={s.principleText}>{p.text}</p>
                 </article>
               ))}
             </div>
@@ -155,13 +230,22 @@ export const About = () => {
               <span key={pos} aria-hidden="true" className={`crt-node ${pos}`} />
             ))}
             <div className={s.dossierHead}>
-              <span className="crt-glow-label text-crt-title">SUBJECT MSSE-01</span>
+              <span className="crt-glow-label text-crt-title">SUBJECT MSSE-0195</span>
               <span aria-hidden="true" className="crt-dossier__icon" />
             </div>
             <div className={s.subject}>
               <div className={s.portraitCell}>
                 {/* A dark screen in both themes: the portrait is the same image. */}
-                <div className={s.screen} data-sweep={rightOn && !still ? "true" : undefined}>
+                {/* Interference (María Sol, 13 Nov), so the face never looks
+                    perfectly clean: scanlines, a soft bright bar sweeping up
+                    and down, and short glitch slices every few seconds;
+                    paused off screen. Reduced motion: the scanlines alone. */}
+                <div
+                  ref={screenRef}
+                  className={s.screen}
+                  data-sweep={rightOn && !still ? "true" : undefined}
+                  data-live={screenOn && !still ? "true" : "false"}
+                >
                   <img
                     src="/about/maria-sol-portrait.jpg"
                     alt="María Sol Gosende, portrait built from glowing digits"
@@ -169,6 +253,22 @@ export const About = () => {
                     loading="lazy"
                     decoding="async"
                   />
+                  {!still && (
+                    <>
+                      <span aria-hidden="true" className={s.glitch}>
+                        {GLITCH_SLICES.map((style) => (
+                          <span key={style.clipPath} className="absolute inset-0" style={style}>
+                            <img
+                              src="/about/maria-sol-portrait.jpg"
+                              alt=""
+                              className={s.portrait}
+                            />
+                          </span>
+                        ))}
+                      </span>
+                      <span aria-hidden="true" className={s.bar} />
+                    </>
+                  )}
                   <span
                     aria-hidden="true"
                     className={`${s.bracket} left-2.5 top-2.5 border-l-2 border-t-2`}
@@ -198,18 +298,7 @@ export const About = () => {
               ))}
             </div>
             <div className={s.signal}>
-              <div className="crt-scope h-[84px] border border-[var(--crt-line-row)]">
-                <svg
-                  aria-hidden="true"
-                  width="100%"
-                  height="82"
-                  viewBox="0 0 614 84"
-                  preserveAspectRatio="none"
-                  className="block"
-                >
-                  <path d={SIGNAL} className="crt-scope__wave" fill="none" strokeWidth="1.6" />
-                </svg>
-              </div>
+              <PianoScope reduced={still} />
               <div className="mt-2 flex justify-between font-mono text-[11px] tracking-[0.08em] text-crt-dim">
                 <span>SIGNAL · PIANO</span>
                 <span>LOGICS SHARE PATTERNS</span>

@@ -93,9 +93,8 @@ export const systemCheck: string[] = [
   "STATUS: OPEN TO WORK",
 ];
 
-// About's principles. CRT redesign (SPEC §6): shown as three title rows; the
-// titles are the spec's, the texts are the old principles' and aren't shown.
-// TODO(content): María Sol to confirm the new titles and drop or rewrite the texts.
+// About's principles. CRT redesign (SPEC §6): three title rows, each with its
+// text under it (María Sol, 13 Nov: the descriptions back).
 export const manifesto: ManifestoEntry[] = [
   {
     num: "01",

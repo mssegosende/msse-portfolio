@@ -13,7 +13,7 @@
   flex-direction: column;
   background: var(--crt-bg);
   color: var(--crt-text-2);
-  padding: 56px 20px 130px;
+  padding: 28px 20px 130px;
 }
 
 .word {
@@ -95,11 +95,12 @@
   margin-top: 1em;
 }
 
-/* The bio terminal (BioTerminal): a fixed height, the column's width. */
+/* The bio terminal (BioTerminal): a fixed height, the column's width; half
+   its first height (María Sol, 13 Nov: the typing scrolls it). */
 .bio {
   margin-top: 22px;
   width: 100%;
-  height: 300px;
+  height: 160px;
 }
 
 /* Principles: three VT323 rows. */
@@ -108,14 +109,24 @@
   border-top: 1px solid var(--crt-line);
 }
 .principle {
+  padding: 12px 0 14px;
+  border-bottom: 1px solid var(--crt-line);
+}
+.principleHead {
   display: flex;
   align-items: center;
   gap: 16px;
-  min-height: 50px;
-  border-bottom: 1px solid var(--crt-line);
   font-family: "VT323", monospace;
   font-size: 21px;
   letter-spacing: 0.08em;
+}
+/* The description under each title, Inter like the bio. */
+.principleText {
+  margin: 6px 0 0;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--crt-text-2);
 }
 .principleTitle {
   margin: 0;
@@ -180,6 +191,56 @@
   to {
     top: 100%;
   }
+}
+/* Interference: a soft bright bar drifting up and down the whole time, and
+   now and then (~every 3.7 s) a 150 ms glitch, thin bands of the portrait
+   offset sideways. Paused off screen (data-live). */
+.bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 14%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    rgba(200, 236, 254, 0.1) 40%,
+    rgba(222, 251, 255, 0.16) 50%,
+    rgba(200, 236, 254, 0.1) 60%,
+    transparent
+  );
+  mix-blend-mode: screen;
+  pointer-events: none;
+  animation: portrait-bar 7s ease-in-out infinite alternate;
+}
+@keyframes portrait-bar {
+  from {
+    transform: translateY(-20%);
+  }
+  to {
+    transform: translateY(640%);
+  }
+}
+.glitch {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  animation: portrait-glitch 3.7s steps(1, end) infinite;
+}
+@keyframes portrait-glitch {
+  0%,
+  95.9% {
+    opacity: 0;
+  }
+  96%,
+  99.9% {
+    opacity: 1;
+  }
+}
+.screen[data-live="false"] .bar,
+.screen[data-live="false"] .glitch {
+  animation-play-state: paused;
 }
 .portrait {
   position: absolute;
@@ -284,10 +345,10 @@
     margin-top: 22px;
   }
   /* About.dc.html: the bio panel between the title and the principles, in
-     design px (the column is scaled). */
+     design px (the column is scaled); half its first 330px (María Sol, 13 Nov). */
   .bio {
     margin-top: 0;
-    height: 330px;
+    height: 165px;
   }
   .right {
     position: absolute;
@@ -329,10 +390,15 @@
     margin-top: 20px;
   }
   .principle {
-    min-height: 54px;
+    padding: 12px 0 14px;
+  }
+  .principleHead {
     gap: 20px;
     font-size: 26px;
     letter-spacing: 0.1em;
+  }
+  .principleText {
+    font-size: 15px;
   }
   .dossierHead {
     height: 55px;
