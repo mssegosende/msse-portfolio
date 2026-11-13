@@ -10,10 +10,10 @@ importers:
     dependencies:
       '@splinetool/react-spline':
         specifier: 4.1.0
-        version: 4.1.0(@splinetool/runtime@2.0.54)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        version: 4.1.0(@splinetool/runtime@2.0.170)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@splinetool/runtime':
-        specifier: 2.0.54
-        version: 2.0.54
+        specifier: 2.0.170
+        version: 2.0.170
       framer-motion:
         specifier: 11.18.0
         version: 11.18.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -329,6 +329,10 @@ packages:
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
     engines: {node: '>=6.0.0'}
 
+  '@jridgewell/resolve-uri@3.1.3':
+    resolution: {integrity: sha512-lhTtjtoEArWBjismtfS761S9Hlyn+nIZqOZVYoZ1Xn82PMNMVnk+jj/NhC4fAXGTs7ydONcJiR5vyQBTMDu27g==}
+    engines: {node: '>=6.0.0'}
+
   '@jridgewell/source-map@0.3.11':
     resolution: {integrity: sha512-ZMp1V8ZFcPG5dIWnQLr3NSI1MiCU7UETdS/A0G8V/XWHvJv3ZsFqutJn1Y5RPmAPX6F3BiE397OqveU/9NCuIA==}
 
@@ -474,8 +478,8 @@ packages:
       next:
         optional: true
 
-  '@splinetool/runtime@2.0.54':
-    resolution: {integrity: sha512-1Edj6sPjw51qTL5JriV4pqbdRgBaM7C3AQdlq9Dfby7+juL2PnozCGf89X7UJS4silsqh+9q7vduwJeyRejjXA==}
+  '@splinetool/runtime@2.0.170':
+    resolution: {integrity: sha512-fHDfIgf3O7t4U/01DPxsIxRSAudB6Rd4+F1v4kpFTuoGQrkSPoc8GLuIoA2fPu2WLl6+lXF/fYlVunEbp+fRlg==}
 
   '@testing-library/dom@10.4.2':
     resolution: {integrity: sha512-yzr2S9HyAIdhz2/6qHgbs665Q7PKVcDF05vsOlHPxG1mo36gKVesdYVeDLnXgfjJ03CrKRk08knc6+E/9m8v2Q==}
@@ -512,8 +516,8 @@ packages:
     peerDependencies:
       '@testing-library/dom': '>=7.21.4'
 
-  '@tsconfig/node10@1.0.13':
-    resolution: {integrity: sha512-gcLdvR9HO1ZJBypsOGqaP6TFEzb6vIta0KSTLt9NAQ6pXQO3cRgSVyCN6pzYqI9DlJgY71XKO0dpDhCf08b3pg==}
+  '@tsconfig/node10@1.0.14':
+    resolution: {integrity: sha512-UzoEnKAHteIy/qT3dM0eyyviwfJzEDnrLKALKCvu0ToklMLgiDW5waEu/0Pl+6w4nBxGIaUskiFg7NzvQpPs0g==}
 
   '@tsconfig/node12@1.0.11':
     resolution: {integrity: sha512-cqefuRsh12pWyGsIoBKJA9luFu3mRxCA+ORZvA4ktLSzIuCUtWVxGIuXigEwO5/ywWFMZ2QEGKWvkZG1zDMTag==}
@@ -1577,6 +1581,7 @@ packages:
 
   tldts-core@7.4.20:
     resolution: {integrity: sha512-C630TWXZCZmLq0F2bW4QqwnaaxCQ/svpAqvJwnC4JvgEM5ohhBnGsEzTLSOXcN+xjz+kEaHS5uoWIw2klnqd0A==}
+    deprecated: Partial release, see https://github.com/remusao/tldts/issues/2735. Use >=7.4.22.
 
   tldts@7.4.19:
     resolution: {integrity: sha512-48dH6aSpQnpbzDUc4vIQZ1VjB8tkK+e8c1yx05/SZK+rkssgjEOlxDd/yU8/a4vGYQ9vRgJr9dwMq9TJ0b3X2Q==}
@@ -2038,6 +2043,9 @@ snapshots:
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
+  '@jridgewell/resolve-uri@3.1.3':
+    optional: true
+
   '@jridgewell/source-map@0.3.11':
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
@@ -2053,7 +2061,7 @@ snapshots:
 
   '@jridgewell/trace-mapping@0.3.9':
     dependencies:
-      '@jridgewell/resolve-uri': 3.1.2
+      '@jridgewell/resolve-uri': 3.1.3
       '@jridgewell/sourcemap-codec': 1.6.0
     optional: true
 
@@ -2130,9 +2138,9 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
-  '@splinetool/react-spline@4.1.0(@splinetool/runtime@2.0.54)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+  '@splinetool/react-spline@4.1.0(@splinetool/runtime@2.0.170)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:
-      '@splinetool/runtime': 2.0.54
+      '@splinetool/runtime': 2.0.170
       blurhash: 2.0.5
       lodash.debounce: 4.0.8
       react: 19.0.0
@@ -2140,7 +2148,7 @@ snapshots:
       react-merge-refs: 2.1.1
       thumbhash: 0.1.1
 
-  '@splinetool/runtime@2.0.54':
+  '@splinetool/runtime@2.0.170':
     dependencies:
       on-change: 4.0.0
       semver-compare: 1.0.0
@@ -2182,7 +2190,7 @@ snapshots:
     dependencies:
       '@testing-library/dom': 10.4.2
 
-  '@tsconfig/node10@1.0.13':
+  '@tsconfig/node10@1.0.14':
     optional: true
 
   '@tsconfig/node12@1.0.11':
@@ -3220,7 +3228,7 @@ snapshots:
   ts-node@10.9.2(@types/node@22.20.5)(typescript@6.0.3):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
-      '@tsconfig/node10': 1.0.13
+      '@tsconfig/node10': 1.0.14
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
