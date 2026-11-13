@@ -8,6 +8,9 @@ import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { clampScale, useFrame } from "../hooks/useFrame";
 import { GridField } from "./GridField";
 import { MonitorTrace } from "./crt/MonitorTrace";
+import { ConstellationSky } from "./crt/ConstellationSky";
+import { useSignalFrame } from "@/hooks/useSignalFrame";
+import { CONSTELLATIONS } from "@/data/constellations";
 import { breath, pleth } from "../lib/ecg";
 import { commandAccepted, textBlip } from "../lib/sound";
 import s from "./Contact.module.css";
@@ -240,6 +243,11 @@ export const Contact = () => {
   const [formH, setFormH] = useState<number | null>(null);
   // The section's loops (the waves, the clock) run only on screen.
   const [live, setLive] = useState(false);
+  // SIGNAL: a star's name typed, its constellation drawn (on screen only).
+  // Desktop only: phones have no SIGNAL box (Contact.module.css), so no loop.
+  const signalShown = useMediaQuery("(min-width: 1024px)");
+  const signal = useSignalFrame(live && signalShown, still);
+  const signalName = CONSTELLATIONS[signal.index]!.signal.slice(0, signal.typed);
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof IntersectionObserver === "undefined") return undefined;
@@ -616,11 +624,14 @@ export const Contact = () => {
           </div>
           <div aria-hidden="true" className={`${s.sideBlock} ${s.signalBox}`}>
             <div className={s.channelHead}>
-              <span className="crt-glow-label">SIGNAL</span>
+              <span className="crt-glow-label" data-testid="signal-label">
+                SIGNAL:{signalName && ` ${signalName}`}
+              </span>
               <span className={s.signalTag}>[signal.open]</span>
             </div>
             <div className={s.signalScope}>
-              <div className="crt-scope h-full border border-[var(--crt-line-row)]">
+              <div className="crt-scope relative h-full border border-[var(--crt-line-row)]">
+                <ConstellationSky frame={signal} />
                 <MonitorTrace
                   signal={breath}
                   width={420}
