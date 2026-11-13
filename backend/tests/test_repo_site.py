@@ -44,3 +44,21 @@ def test_index_html_and_the_manifest_link_every_icon():
         "favicon-32.png",
         "apple-touch-icon.png",
     }
+
+
+def test_the_tab_title_is_msse_and_nothing_changes_it():
+    html = (ROOT / "frontend/index.html").read_text("utf8")
+
+    assert re.findall(r"<title>(.*?)</title>", html) == ["MSSE://"]
+    # No code writes the title (it used to scroll like a departure board).
+    for f in (ROOT / "frontend/src").rglob("*.ts*"):
+        if ".test." not in f.name:
+            assert "document.title" not in f.read_text("utf8"), f
+
+
+def test_share_titles_and_description():
+    html = (ROOT / "frontend/index.html").read_text("utf8")
+    for tag in ('property="og:title"', 'name="twitter:title"'):
+        content = re.search(rf'<meta {tag} content="([^"]+)"', html).group(1)
+        assert content == "María Sol Gosende · Software & AI engineer", tag
+    assert re.search(r'<meta\s+name="description"\s+content="[^"]{50,}"', html)

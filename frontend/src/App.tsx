@@ -3,7 +3,6 @@ import "@/App.css";
 import { useLenis, pinScrollToTopOnReload } from "@/hooks/useLenis";
 import { pendingJourneyDone } from "@/lib/themeReload";
 import { useLayoutReload } from "@/lib/layoutReload";
-import { useTitleTicker } from "@/hooks/useTitleTicker";
 import { useInterfaceSounds } from "@/hooks/useInterfaceSounds";
 import { ScrollScene } from "@/components/ScrollScene";
 import { NavigationDock } from "@/components/NavigationDock";
@@ -18,7 +17,6 @@ import { VideoGallery } from "@/components/gallery/VideoGallery";
 
 function App() {
   useLenis();
-  useTitleTicker();
   useInterfaceSounds();
   useEffect(pinScrollToTopOnReload, []);
   // The dock appears once the hero sequence has been seen and then stays. A
