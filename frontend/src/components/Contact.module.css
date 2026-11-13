@@ -46,7 +46,7 @@
 
 .head,
 .card,
-.channel,
+.side,
 .footer {
   position: relative;
   z-index: 2;
@@ -167,9 +167,9 @@
   }
 }
 
-/* The log types its two lines once the head is in. */
+/* CHANNEL OPEN's log types its two lines once the box is in. */
 .typed {
-  margin-top: 16px;
+  padding: 10px 14px 12px;
   font-family: "JetBrains Mono", monospace;
   font-size: 13px;
   line-height: 1.7;
@@ -188,11 +188,11 @@
 .section[data-armed="true"] .type2 {
   width: 0;
 }
-.section[data-armed="true"] .head[data-on="true"] .type1 {
-  animation: type-1 0.9s steps(12, end) 0.4s forwards;
+.section[data-armed="true"] .side[data-on="true"] .type1 {
+  animation: type-1 0.9s steps(12, end) 0.6s forwards;
 }
-.section[data-armed="true"] .head[data-on="true"] .type2 {
-  animation: type-2 1.5s steps(24, end) 1.5s forwards;
+.section[data-armed="true"] .side[data-on="true"] .type2 {
+  animation: type-2 1.5s steps(24, end) 1.7s forwards;
 }
 @keyframes type-1 {
   to {
@@ -373,13 +373,36 @@ textarea.input {
 .notices p {
   margin: 0;
 }
+/* The confirmation: in the form's place, at the form's height (Contact.tsx). */
 .log {
-  padding: 12px 16px 16px;
-  border-top: 1px solid var(--crt-line-row);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 16px 18px;
   font-family: "JetBrains Mono", monospace;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.7;
   color: var(--crt-text-2);
+}
+.again {
+  align-self: flex-start;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--crt-node);
+  background: transparent;
+  color: var(--crt-title);
+  font-family: "VT323", monospace;
+  font-size: 22px;
+  letter-spacing: 0.16em;
+  cursor: pointer;
+}
+.again:hover {
+  box-shadow: var(--crt-node-glow);
+}
+.again:focus-visible {
+  outline: 2px solid var(--crt-title);
+  outline-offset: 3px;
 }
 .log p {
   margin: 0;
@@ -389,11 +412,18 @@ textarea.input {
   text-shadow: var(--crt-glow-label);
 }
 
-/* CHANNEL OPEN. */
-.channel {
+/* The side column: three small live boxes, stacked (phones: the first two). */
+.side {
   margin-top: 22px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 118px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.box {
+  position: relative;
+}
+.signalBox {
+  display: none;
 }
 .channelHead {
   display: flex;
@@ -409,8 +439,10 @@ textarea.input {
 }
 .channelRow {
   display: flex;
-  flex-direction: column;
-  padding: 8px 14px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  padding: 0 14px;
   border-bottom: 1px solid var(--crt-line-row);
   font-family: "VT323", monospace;
   letter-spacing: 0.08em;
@@ -420,22 +452,22 @@ textarea.input {
   border-bottom: 0;
 }
 .channelKey {
-  font-size: 15px;
-  color: var(--crt-dim);
+  font-size: 18px;
+  color: var(--crt-text);
 }
 .channelVal {
-  font-size: 19px;
+  font-size: 20px;
   color: var(--crt-core);
+  font-variant-numeric: tabular-nums;
 }
 .channelLink:hover .channelVal {
   text-shadow: var(--crt-glow-label);
 }
-.desktopOnly {
-  display: none;
-}
 .radar {
   position: relative;
-  border-left: 1px solid var(--crt-line);
+  height: 150px;
+  margin: 14px;
+  border: 1px solid var(--crt-line-row);
   background-image:
     linear-gradient(var(--crt-line-row) 1px, transparent 1px),
     linear-gradient(90deg, var(--crt-line-row) 1px, transparent 1px);
@@ -446,12 +478,20 @@ textarea.input {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 70px;
-  height: 70px;
-  margin: -35px 0 0 -35px;
+  width: 110px;
+  height: 110px;
+  margin: -55px 0 0 -55px;
   border: 1.5px solid var(--crt-node);
   border-radius: 50%;
   box-shadow: var(--crt-node-glow);
+}
+.radarRingIn {
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border-width: 1px;
+  border-color: var(--crt-line);
+  box-shadow: none;
 }
 .radarV,
 .radarH {
@@ -470,13 +510,13 @@ textarea.input {
   right: 14px;
   height: 1px;
 }
-/* Phones: a sweep that lights a pink blip as it passes (a rotating line,
-   not a canvas). */
+/* A sweep that lights the pink blips as it passes (a rotating line, not a
+   canvas). */
 .sweep {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 42px;
+  width: 55px;
   height: 2px;
   margin-top: -1px;
   transform-origin: 0 50%;
@@ -513,13 +553,24 @@ textarea.input {
     opacity: 0.1;
   }
 }
+.blip.blip2 {
+  left: calc(50% - 34px);
+  top: calc(50% + 18px);
+  animation-delay: -1.6s;
+}
 .radarTag {
-  position: absolute;
-  right: 8px;
-  bottom: 6px;
   font-family: "JetBrains Mono", monospace;
-  font-size: 10px;
+  font-size: 11px;
+  letter-spacing: 0;
   color: var(--crt-text);
+}
+/* Every loop here rests while the section is off screen (Contact.tsx). */
+.section[data-live="false"] .ghost,
+.section[data-live="false"] .waveSvg,
+.section[data-live="false"] .sweep,
+.section[data-live="false"] .blip,
+.section[data-live="false"] .caret {
+  animation-play-state: paused;
 }
 
 /* Footer: MSSE://, the links, the credit. */
@@ -566,19 +617,20 @@ textarea.input {
   width: 100%;
 }
 
-/* ---- Desktop (Contact.dc.html) ---- */
+/* ---- Desktop (Contact.dc.html; María Sol, 13 Nov: higher, a narrower and
+   squarer form, the phone header's motion, three live boxes) ---- */
 @media (min-width: 1024px) {
   .stage {
     display: grid;
-    grid-template-columns: minmax(0, 780fr) minmax(0, 456fr);
+    grid-template-columns: minmax(0, 640fr) minmax(0, 440fr);
     grid-template-areas:
-      "head head"
-      "card channel"
+      "head side"
+      "card side"
       "footer footer";
-    column-gap: 76px;
+    column-gap: 192px;
     /* Contact.tsx scales this block (zoom) and sets its min-height. The
-       bottom keeps the footer clear of the dock. */
-    padding: 80px 64px 104px;
+       bottom keeps the footer clear of the dock, the right the section index. */
+    padding: 44px 104px 104px 64px;
     align-content: start;
   }
   .floor {
@@ -595,7 +647,7 @@ textarea.input {
   }
   .head {
     grid-area: head;
-    gap: 16px;
+    gap: 14px;
   }
   .head :global(.crt-section-label) {
     font-size: 22px;
@@ -606,21 +658,28 @@ textarea.input {
     background: none;
   }
   .rx,
-  .ghost,
-  .titleBreak,
-  .wave,
-  .typed {
+  .titleBreak {
     display: none;
   }
-  .title {
+  .title,
+  .ghost {
     font-size: 76px;
     line-height: 1.1;
     letter-spacing: 0.04em;
+  }
+  .title {
     color: var(--crt-title);
+  }
+  .ghost {
+    left: 0;
+    top: 0;
+  }
+  .wave {
+    margin-top: 6px;
   }
   .card {
     grid-area: card;
-    margin-top: 52px;
+    margin-top: 28px;
     align-self: start;
   }
   .chrome {
@@ -668,65 +727,47 @@ textarea.input {
     padding: 0 22px 16px;
   }
   .log {
-    padding: 12px 22px 18px;
+    padding: 26px 22px 22px;
   }
-  .channel {
-    grid-area: channel;
-    margin-top: 52px;
+  .side {
+    grid-area: side;
+    margin-top: 0;
     align-self: start;
-    display: block;
+    gap: 18px;
   }
   .channelHead {
-    height: 48px;
-    padding: 0 18px;
-    font-size: 24px;
-    color: var(--crt-title);
-  }
-  .channelRow {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
     height: 46px;
     padding: 0 18px;
-    border-bottom: 1px solid var(--crt-line-row);
+    font-size: 23px;
+    color: var(--crt-title);
+  }
+  .typed {
+    padding: 12px 18px 14px;
+    font-size: 14px;
+  }
+  .channelRow {
+    height: 46px;
+    padding: 0 18px;
     font-size: 22px;
     letter-spacing: 0.1em;
   }
-  .channelRow:last-child {
-    border-bottom: 1px solid var(--crt-line-row);
-  }
-  .channelKey {
-    font-size: 22px;
-    color: var(--crt-text);
-  }
+  .channelKey,
   .channelVal {
     font-size: 22px;
+  }
+  .channelVal {
     color: var(--crt-title);
   }
-  .desktopOnly {
-    display: inline;
-  }
-  .phoneOnly {
-    display: none;
+  .signalBox {
+    display: block;
   }
   .radar {
-    height: 150px;
-    margin: 18px;
-    border: 1px solid var(--crt-line-row);
-  }
-  /* Desktop's radar is still (Contact.dc.html). */
-  .sweep,
-  .blip {
-    display: none;
-  }
-  .radarTag {
-    right: 10px;
-    bottom: 8px;
-    font-size: 11px;
+    height: 160px;
+    margin: 16px 18px 18px;
   }
   .footer {
     grid-area: footer;
-    margin-top: 56px;
+    margin-top: 44px;
     height: 56px;
     padding-top: 0;
     flex-wrap: nowrap;

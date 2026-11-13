@@ -52,7 +52,41 @@ const RX_WAVE = (() => {
 })();
 
 // Contact's desktop screen at its design size (Contact.dc.html), px tall.
-const CONTACT_H = 930;
+const CONTACT_H = 960;
+
+// BASE · BUENOS AIRES: the local time there (GMT-3, no daylight saving).
+const BA_TIME = (withSeconds: boolean) =>
+  new Intl.DateTimeFormat("en-GB", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: withSeconds ? "2-digit" : undefined,
+    hour12: false,
+  });
+
+/**
+ * The live clock in Buenos Aires, ticking seconds while on screen (María Sol,
+ * 13 Nov). Reduced motion: hours and minutes, updated each minute.
+ */
+const BaseClock = ({ still, live }: { still: boolean; live: boolean }) => {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    if (!live) return undefined;
+    const tick = () => setNow(new Date());
+    // Right away when it comes on screen, then on the beat.
+    const first = setTimeout(tick, 0);
+    const id = setInterval(tick, still ? 30000 : 1000);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
+  }, [still, live]);
+  return (
+    <time data-testid="contact-clock" dateTime={now.toISOString()}>
+      {BA_TIME(!still).format(now)}
+    </time>
+  );
+};
 
 // Errors are notices, not transcript: one entry per message, kept apart from
 // the log. Resubmitting the same invalid field restarts its timer instead of
@@ -168,6 +202,18 @@ export const Contact = () => {
   }, []);
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  // The confirmation takes the form's place at the form's height (María Sol,
+  // 13 Nov: the window never grows, so the footer never slides under the dock).
+  const [formH, setFormH] = useState<number | null>(null);
+  // The section's loops (the ghosts, the wave, the radar, the clock) run only on screen.
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") return undefined;
+    const io = new IntersectionObserver(([e]) => setLive(!!e?.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const set = (key: keyof ContactForm) => (e: FieldChange) => {
     const value = e.target.value;
@@ -184,6 +230,11 @@ export const Contact = () => {
   };
 
   const pushLine = (text: string, ok = false) => setLines((prev) => [...prev, { text, ok }]);
+  // NEW MESSAGE: the form comes back, empty.
+  const again = () => {
+    setDone(false);
+    setLines([]);
+  };
 
   const showError = (text: string) => {
     setErrors((prev) => (prev.some((x) => x.text === text) ? prev : [...prev, { text }]));
@@ -212,7 +263,8 @@ export const Contact = () => {
     }
 
     setSending(true);
-    pushLine("$ transmit --channel=secure …");
+    setFormH(e.currentTarget.offsetHeight);
+    setLines([{ text: "$ transmit --channel=secure …", ok: false }]);
     try {
       const res = await fetch(API_URL, {
         method: "POST",
@@ -257,6 +309,7 @@ export const Contact = () => {
       data-armed={!still}
       // xf-overlap: the section crossfades (useSectionDissolve).
       className={`xf-overlap ${s.section}`}
+      data-live={live}
     >
       {/* The perspective floor (GridField, in the grid token) under a fade,
           then the page grid (Contact.dc.html): the section's, unscaled. */}
@@ -271,8 +324,9 @@ export const Contact = () => {
       <div className={s.stage} style={stageStyle}>
         <div className={`${s.head} ${s.reveal}`} {...rise(0)} data-xf="head">
           <span className="crt-section-label self-start font-vt">05 // CONTACT</span>
-          {/* Phones: LET'S / TALK inside crosshair corners, with two ghost copies
-              that jump sideways now and then (ContactM.dc.html). */}
+          {/* LET'S / TALK (phones: inside crosshair corners), with two ghost
+              copies that jump sideways now and then, and the live signal
+              under it (ContactM.dc.html; desktop too since María Sol, 13 Nov). */}
           <div className={s.titleBox}>
             <span aria-hidden="true" className={s.rx}>
               [signal.rx]
@@ -309,17 +363,6 @@ export const Contact = () => {
               <span>RX · MSSE://CONTACT</span>
             </div>
           </div>
-          <div aria-hidden="true" className={s.typed}>
-            <div>
-              <span className="text-crt-dim">&gt;</span>{" "}
-              <span className={s.type1}>channel open</span>
-            </div>
-            <div>
-              <span className="text-crt-dim">&gt;</span>{" "}
-              <span className={s.type2}>waiting for your message</span>
-              <span className={s.caret} />
-            </div>
-          </div>
         </div>
 
         <div className={`${s.card} ${s.reveal}`} data-testid="contact-terminal" {...rise(1)}>
@@ -334,150 +377,175 @@ export const Contact = () => {
             </span>
           </div>
 
-          <form onSubmit={handleSubmit} className={s.form} noValidate>
-            <div className={s.fields}>
-              <TerminalField
-                label="name"
-                data-testid="contact-name-input"
-                value={form.name}
-                required
-                error={fieldErrors.name}
-                name="name"
-                onChange={set("name")}
-                placeholder="your name"
-              />
-              <TerminalField
-                label="email"
-                type="email"
-                data-testid="contact-email-input"
-                value={form.email}
-                required
-                error={fieldErrors.email}
-                name="email"
-                onChange={set("email")}
-                placeholder="you@company.com"
-              />
-              <TerminalField
-                label="company"
-                hint="(optional)"
-                data-testid="contact-company-input"
-                value={form.company}
-                onChange={set("company")}
-                placeholder="organization / studio"
-              />
-              <TerminalField
-                label="linkedin"
-                hint="(optional)"
-                type="url"
-                data-testid="contact-linkedin-input"
-                value={form.linkedin}
-                onChange={set("linkedin")}
-                placeholder="linkedin.com/in/..."
-              />
-              <div className={s.full}>
-                <TerminalField
-                  label="message"
-                  multiline
-                  data-testid="contact-message-input"
-                  value={form.message}
-                  required
-                  error={fieldErrors.message}
-                  name="message"
-                  onChange={set("message")}
-                  placeholder="what are you building?"
-                />
-              </div>
-            </div>
-
-            {/* honeypot — invisible to humans */}
-            <input
-              type="text"
-              name="website"
-              value={form.website}
-              onChange={set("website")}
-              tabIndex={-1}
-              autoComplete="off"
-              aria-hidden="true"
-              className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
-            />
-
-            <div className={s.sendRow}>
-              <span aria-hidden="true" className={s.prompt}>
-                $ send --to msse <span className={s.caret} />
-              </span>
-              <button
-                data-testid="contact-submit-button"
-                type="submit"
-                disabled={sending}
-                className={s.submit}
-              >
-                {sending ? "SENDING…" : done ? "SEND AGAIN >>" : "SEND >>"}
-              </button>
-            </div>
-
-            {/* Hidden with :empty rather than errors.length: the array is
-                already empty while the last line fades out, and a JS
-                condition would unmount it mid-animation. */}
-            <div data-testid="contact-errors" className={s.notices}>
-              <AnimatePresence>
-                {errors.map((err) => (
+          {done ? (
+            // The confirmation in the form's place, at its height.
+            <div
+              data-testid="contact-status-lines"
+              className={s.log}
+              style={formH ? { height: formH } : undefined}
+            >
+              <div>
+                {lines.map((line, i) => (
                   <motion.p
-                    key={err.text}
-                    role="alert"
-                    data-testid="contact-error"
+                    key={i}
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -8 }}
-                    transition={{ duration: 0.45, ease: "easeOut" }}
+                    className={line.ok ? s.logOk : undefined}
                   >
-                    {err.text}
+                    {line.text}
                   </motion.p>
                 ))}
-              </AnimatePresence>
+                <span className="terminal-caret" />
+              </div>
+              <button
+                type="button"
+                data-testid="contact-new-message"
+                onClick={again}
+                className={s.again}
+              >
+                NEW MESSAGE &gt;&gt;
+              </button>
             </div>
-          </form>
+          ) : (
+            <form onSubmit={handleSubmit} className={s.form} noValidate>
+              <div className={s.fields}>
+                <TerminalField
+                  label="name"
+                  data-testid="contact-name-input"
+                  value={form.name}
+                  required
+                  error={fieldErrors.name}
+                  name="name"
+                  onChange={set("name")}
+                  placeholder="your name"
+                />
+                <TerminalField
+                  label="email"
+                  type="email"
+                  data-testid="contact-email-input"
+                  value={form.email}
+                  required
+                  error={fieldErrors.email}
+                  name="email"
+                  onChange={set("email")}
+                  placeholder="you@company.com"
+                />
+                <TerminalField
+                  label="company"
+                  hint="(optional)"
+                  data-testid="contact-company-input"
+                  value={form.company}
+                  onChange={set("company")}
+                  placeholder="organization / studio"
+                />
+                <TerminalField
+                  label="linkedin"
+                  hint="(optional)"
+                  type="url"
+                  data-testid="contact-linkedin-input"
+                  value={form.linkedin}
+                  onChange={set("linkedin")}
+                  placeholder="linkedin.com/in/..."
+                />
+                <div className={s.full}>
+                  <TerminalField
+                    label="message"
+                    multiline
+                    data-testid="contact-message-input"
+                    value={form.message}
+                    required
+                    error={fieldErrors.message}
+                    name="message"
+                    onChange={set("message")}
+                    placeholder="what are you building?"
+                  />
+                </div>
+              </div>
 
-          {lines.length > 0 && (
-            <div data-testid="contact-status-lines" className={s.log}>
-              {lines.map((line, i) => (
-                <motion.p
-                  key={i}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className={line.ok ? s.logOk : undefined}
+              {/* honeypot — invisible to humans */}
+              <input
+                type="text"
+                name="website"
+                value={form.website}
+                onChange={set("website")}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="pointer-events-none absolute left-[-9999px] h-0 w-0 opacity-0"
+              />
+
+              <div className={s.sendRow}>
+                <span aria-hidden="true" className={s.prompt}>
+                  {sending ? "$ transmit --channel=secure …" : "$ send --to msse"}{" "}
+                  <span className={s.caret} />
+                </span>
+                <button
+                  data-testid="contact-submit-button"
+                  type="submit"
+                  disabled={sending}
+                  className={s.submit}
                 >
-                  {line.text}
-                </motion.p>
-              ))}
-              <span className="terminal-caret" />
-            </div>
+                  {sending ? "SENDING…" : "SEND >>"}
+                </button>
+              </div>
+
+              {/* Hidden with :empty rather than errors.length: the array is
+                already empty while the last line fades out, and a JS
+                condition would unmount it mid-animation. */}
+              <div data-testid="contact-errors" className={s.notices}>
+                <AnimatePresence>
+                  {errors.map((err) => (
+                    <motion.p
+                      key={err.text}
+                      role="alert"
+                      data-testid="contact-error"
+                      initial={{ opacity: 0, x: -8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -8 }}
+                      transition={{ duration: 0.45, ease: "easeOut" }}
+                    >
+                      {err.text}
+                    </motion.p>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </form>
           )}
         </div>
 
-        {/* CHANNEL OPEN: base, time, GitHub and a small radar. */}
-        <aside
-          className={`crt-frame ${s.channel} ${s.reveal}`}
-          aria-label="Channel"
-          {...rise(1)}
-          data-xf="cards"
-        >
-          <div className={s.channelInfo}>
+        {/* Three small live boxes (María Sol, 13 Nov): CHANNEL OPEN with its
+            typing log; BASE with the Buenos Aires clock and GitHub; SIGNAL,
+            a radar sweep (desktop only). */}
+        <div className={`${s.side} ${s.reveal}`} {...rise(1)} data-xf="cards">
+          <aside className={`crt-frame ${s.box}`} aria-label="Channel">
             <div className={s.channelHead}>
               <span className="crt-glow-label">CHANNEL OPEN</span>
               <span
                 aria-hidden="true"
-                className="h-2 w-2 rounded-full bg-status shadow-[0_0_10px_#F472B6]"
+                className="h-2 w-2 animate-pulse-dot rounded-full bg-status shadow-[0_0_10px_#F472B6] motion-reduce:animate-none"
               />
             </div>
-            <div className={s.channelRow}>
-              <span className={s.channelKey}>BASE</span>
-              <span className={s.channelVal}>
-                BUENOS AIRES<span className={s.desktopOnly}> · GMT-3</span>
-              </span>
+            <div aria-hidden="true" className={s.typed}>
+              <div>
+                <span className="text-crt-dim">&gt;</span>{" "}
+                <span className={s.type1}>channel open</span>
+              </div>
+              <div>
+                <span className="text-crt-dim">&gt;</span>{" "}
+                <span className={s.type2}>waiting for your message</span>
+                <span className={s.caret} />
+              </div>
             </div>
-            <div className={`${s.channelRow} ${s.phoneOnly}`}>
-              <span className={s.channelKey}>TIME</span>
-              <span className={s.channelVal}>GMT-3</span>
+          </aside>
+          <aside className={`crt-frame ${s.box}`} aria-label="Base">
+            <div className={s.channelHead}>
+              <span className="crt-glow-label">BASE · BUENOS AIRES</span>
+            </div>
+            <div className={s.channelRow}>
+              <span className={s.channelKey}>GMT-3</span>
+              <span className={s.channelVal}>
+                <BaseClock still={still} live={live} />
+              </span>
             </div>
             <a
               className={`${s.channelRow} ${s.channelLink}`}
@@ -488,16 +556,23 @@ export const Contact = () => {
               <span className={s.channelKey}>GITHUB</span>
               <span className={s.channelVal}>MSSEGOSENDE &gt;</span>
             </a>
-          </div>
-          <div aria-hidden="true" className={s.radar}>
-            <span className={s.radarRing} />
-            <span className={s.radarV} />
-            <span className={s.radarH} />
-            <span className={s.sweep} />
-            <span className={s.blip} />
-            <span className={s.radarTag}>[signal.open]</span>
-          </div>
-        </aside>
+          </aside>
+          <aside aria-hidden="true" className={`crt-frame ${s.box} ${s.signalBox}`}>
+            <div className={s.channelHead}>
+              <span className="crt-glow-label">SIGNAL</span>
+              <span className={s.radarTag}>[signal.open]</span>
+            </div>
+            <div className={s.radar}>
+              <span className={s.radarRing} />
+              <span className={`${s.radarRing} ${s.radarRingIn}`} />
+              <span className={s.radarV} />
+              <span className={s.radarH} />
+              <span className={s.sweep} />
+              <span className={s.blip} />
+              <span className={`${s.blip} ${s.blip2}`} />
+            </div>
+          </aside>
+        </div>
 
         <footer
           data-testid="footer"

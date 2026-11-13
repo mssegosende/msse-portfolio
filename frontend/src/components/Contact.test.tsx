@@ -88,7 +88,7 @@ describe("Contact", () => {
 
   it("posts the form, honeypot included, and clears it on success", async () => {
     fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
-    const { submit } = await fillForm();
+    const { user, submit } = await fillForm();
     await submit();
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -105,7 +105,12 @@ describe("Contact", () => {
       website: "",
     });
     expect(await screen.findByText(/MESSAGE TRANSMITTED/)).toBeInTheDocument();
+    // The confirmation takes the form's place (the window keeps its height);
+    // NEW MESSAGE brings the form back, empty.
+    expect(screen.queryByTestId("contact-name-input")).not.toBeInTheDocument();
+    await user.click(screen.getByTestId("contact-new-message"));
     expect(screen.getByTestId("contact-name-input")).toHaveValue("");
+    expect(screen.queryByTestId("contact-status-lines")).not.toBeInTheDocument();
   });
 
   it.each([
