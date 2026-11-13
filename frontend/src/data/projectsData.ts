@@ -1,8 +1,10 @@
 // Scene 3 projects. Copy: design/projects-copy.md (used exactly as written).
 // `media`: the looping clip in the GIF player. Every project uses its real
 // recording (Ethos and Marvel ~22 s, Marvel its search and filters stretch;
-// Polaris 18.5 s, the whole recording; Alphecca 27 s, the whole recording,
-// cropped 1.25x into the page column so its text reads, with the
+// Polaris 43.3 s, the whole new recording (13 Nov: a dark UI, so it
+// inverts in light), its top 16:10 (the page ends above the fold); Alphecca
+// 27 s, the whole recording, cropped 1.25x into the page column so its text
+// reads, with the
 // recommendation and every monthly cost bar in frame at `startAt`; Lynx
 // 15 s, its live page recorded at 1440x900: 2 s on the hero, then How it
 // works, Cases and Same rule. Different life., joined by 0.5 s crossfades; Blaze
@@ -33,7 +35,7 @@ export interface ShowcaseProject {
   /**
    * Seconds into the clip where it starts (the poster is that frame), so
    * clips playing side by side are never in sync: every project its own
-   * offset (Marvel Characters 0, Lynx 1, on its hero, Polaris 7, Alphecca
+   * offset (Marvel Characters 0, Lynx 1, on its hero, Polaris 20, on its cited answer, Alphecca
    * 8, Ethos 10, Blaze 14; a new one takes a free value). Wrapped into the
    * clip's length; keep the poster at the same frame.
    */
@@ -116,10 +118,10 @@ export const showcaseProjects: ShowcaseProject[] = [
     liveUrl: "https://polaris-fawn-two.vercel.app",
     media: "/projects/polaris.mp4",
     poster: "/projects/polaris.jpg",
-    startAt: 7,
-    seconds: 18.5,
+    startAt: 20,
+    seconds: 43.3,
     art: art(300, "40% 70%", "78% 24%"),
-    invertDark: true,
+    invertLight: true,
   },
   {
     id: "lynx",
