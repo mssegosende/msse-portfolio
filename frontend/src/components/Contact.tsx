@@ -8,6 +8,7 @@ import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { clampScale, useFrame } from "../hooks/useFrame";
 import { GridField } from "./GridField";
 import { LiveWave } from "./crt/LiveWave";
+import { chirp, keyClick } from "../lib/sound";
 import s from "./Contact.module.css";
 import { useCrossfade } from "@/hooks/useSectionDissolve";
 import { useOwnsCenter } from "@/hooks/useOwnsCenter";
@@ -177,6 +178,20 @@ export const Contact = () => {
   const still = useMediaQuery(REDUCED_MOTION_QUERY);
   const reached = useSectionStep(ref, 3) >= 0 || still;
   const wordShown = useOwnsCenter(ref);
+  // CHANNEL OPEN's log types itself in CSS (type-1, type-2, once the column is
+  // in): a key click every 2-3 of its characters, on the same beat.
+  useEffect(() => {
+    if (!reached || still) return undefined;
+    const timers: number[] = [];
+    const line = (delay: number, ms: number, chars: number) => {
+      for (let c = 2; c <= chars; c += 2 + (c % 3 === 0 ? 1 : 0))
+        timers.push(window.setTimeout(keyClick, (delay + (ms * c) / chars) * 1000 + 350));
+    };
+    // The column comes in 0.35 s after the head (rise(1)); then the CSS delays.
+    line(0.6, 0.9, 12);
+    line(1.7, 1.5, 24);
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [reached, still]);
   const [form, setForm] = useState(EMPTY_FORM);
   const [lines, setLines] = useState<LogLine[]>([]);
   const [errors, setErrors] = useState<{ text: string }[]>([]);
@@ -265,6 +280,7 @@ export const Contact = () => {
       });
       if (res.ok) {
         pushLine("[OK] MESSAGE TRANSMITTED — I will get back to you within 24h.", true);
+        chirp();
         setDone(true);
         setForm(EMPTY_FORM);
       } else if (res.status === 429) {

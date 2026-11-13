@@ -8,6 +8,7 @@ import { LAYOUT_RELOADS, LOADED_AS_PHONE } from "../lib/layoutReload";
 import { REDUCED_MOTION_QUERY } from "../lib/motion";
 import { OVERSAMPLE_1 } from "../lib/spline/camera";
 import { patchSplineRuntime } from "../lib/spline/runtime";
+import { bootBlip } from "../lib/sound";
 import { SceneBoundary } from "./spline/SceneBoundary";
 import { CapabilityCards } from "./scroll-scene/CapabilityCards";
 import { scene2Scale } from "./scroll-scene/choreography";
@@ -109,6 +110,10 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     return () => clearTimeout(t);
   }, []);
   const heroIn = revealed || capped;
+  // The HUD lands: a boot blip (when sound is on).
+  useEffect(() => {
+    if (heroIn) bootBlip();
+  }, [heroIn]);
 
   // Hidden desktop mounts also get visibility:hidden, which takes them out of
   // compositing and hit-testing: one live robot per layer.

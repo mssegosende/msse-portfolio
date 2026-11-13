@@ -14,6 +14,7 @@ import { closeGallery, pickVideo, useGallery } from "@/lib/gallery";
 import { MOBILE_LAYOUT_QUERY } from "@/lib/layout";
 import { REDUCED_MOTION_QUERY } from "@/lib/motion";
 import { setGalleryOpen } from "@/lib/sceneFocus";
+import { bootBlip } from "@/lib/sound";
 import s from "./VideoGallery.module.css";
 
 /** How long "NEXT: Ø06 — Title" shows between two videos of the tour, ms. */
@@ -67,6 +68,7 @@ const Gallery = ({ initial }: { initial: number }) => {
     html.dataset.gallery = "open";
     setGalleryOpen(true);
     gsap.globalTimeline.pause();
+    bootBlip();
     // The page behind stops painting once the overlay covers it.
     const hide = window.setTimeout(() => {
       if (root) root.style.visibility = "hidden";

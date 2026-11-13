@@ -1,10 +1,11 @@
 import { motion } from "framer-motion";
-import { User, FolderOpen, Cpu, Send, Sun, Moon } from "lucide-react";
+import { User, FolderOpen, Cpu, Send, Sun, Moon, Volume2, VolumeX } from "lucide-react";
 import { profile } from "../data/portfolioData";
 import { scrollToTop } from "../hooks/useLenis";
 import { useTheme } from "../hooks/useTheme";
 import { goToSection, useActiveSection } from "../hooks/useActiveSection";
 import { SECTIONS } from "../lib/sections";
+import { setSound, useSound } from "../lib/sound";
 
 const links = [
   { id: "about", label: "About", icon: User, testid: "nav-about-link" },
@@ -15,6 +16,7 @@ const links = [
 export const NavigationDock = ({ visible }: { visible: boolean }) => {
   const { theme, toggle } = useTheme();
   const { id: current } = useActiveSection();
+  const sound = useSound();
 
   return (
     // data-dock-slot: the dock's resting place, measured even while the nav
@@ -43,12 +45,14 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
           ).map((pos) => (
             <span key={pos} aria-hidden="true" className={`crt-node ${pos}`} />
           ))}
-          <div className="flex w-full max-w-[calc(100vw-1.5rem)] items-center justify-between gap-0.5 overflow-x-auto p-1.5 [scrollbar-width:none] sm:w-auto sm:justify-start sm:gap-1 sm:px-2.5">
+          <div className="flex w-full max-w-[calc(100vw-1.5rem)] items-center justify-between gap-0 overflow-x-auto p-1.5 [scrollbar-width:none] sm:w-auto sm:justify-start sm:gap-1 sm:px-2.5">
             <button
               data-testid="nav-brand"
               onClick={scrollToTop}
               aria-label="Back to the top"
-              className="crt-glow-label mr-1 min-h-11 shrink-0 px-2 font-michroma text-[11px] tracking-[0.14em] text-crt-title sm:mr-2 sm:px-3 sm:text-[13px] sm:tracking-[0.08em]"
+              // Phones: tight, so SOUND fits beside the theme (hidden under
+              // 380px wide: the footer's logo goes to the top too).
+              className="crt-glow-label mr-0.5 min-h-11 shrink-0 px-1 font-michroma text-[11px] tracking-[0.06em] text-crt-title max-[379px]:hidden sm:mr-2 sm:px-3 sm:text-[13px] sm:tracking-[0.08em]"
             >
               {profile.shortMark}
             </button>
@@ -58,7 +62,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
                 data-testid={testid}
                 onClick={() => goToSection(SECTIONS.findIndex((s) => s.id === id))}
                 aria-current={current === id ? "true" : undefined}
-                className="crt-dock__link group flex min-h-11 shrink-0 items-center gap-2 px-2.5 sm:px-3"
+                className="crt-dock__link group flex min-h-11 shrink-0 items-center gap-2 px-2 sm:px-3"
                 aria-label={label}
               >
                 <Icon size={15} />
@@ -75,7 +79,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
             <button
               data-testid="theme-toggle"
               onClick={toggle}
-              className="crt-dock__toggle flex min-h-11 shrink-0 items-center gap-2 px-2.5 sm:px-3"
+              className="crt-dock__toggle flex min-h-11 shrink-0 items-center gap-2 px-2 sm:px-3"
               aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
               title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             >
@@ -84,10 +88,25 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
                 {theme === "dark" ? "Light" : "Dark"}
               </span>
             </button>
+            {/* SOUND: OFF / ON (María Sol, pre-launch): off by default,
+                remembered for the session. */}
+            <button
+              data-testid="sound-toggle"
+              onClick={() => setSound(!sound)}
+              aria-pressed={sound}
+              className="crt-dock__toggle ml-1 flex min-h-11 shrink-0 items-center gap-2 px-2 sm:px-3"
+              aria-label={sound ? "Sound on: turn it off" : "Sound off: turn it on"}
+              title={sound ? "Sound on" : "Sound off"}
+            >
+              {sound ? <Volume2 size={14} /> : <VolumeX size={14} />}
+              <span className="hidden font-vt text-[19px] uppercase tracking-[0.14em] lg:block">
+                Sound: {sound ? "On" : "Off"}
+              </span>
+            </button>
             <button
               data-testid="nav-cta-button"
               onClick={() => goToSection(SECTIONS.findIndex((s) => s.id === "contact"))}
-              className="crt-dock__cta ml-1 flex min-h-11 shrink-0 items-center gap-1.5 px-2.5 font-vt text-[17px] uppercase tracking-[0.1em] sm:gap-2 sm:px-4 sm:text-[21px] sm:tracking-[0.14em]"
+              className="crt-dock__cta ml-1 flex min-h-11 shrink-0 items-center gap-1.5 px-2 font-vt text-[16px] uppercase tracking-[0.06em] sm:gap-2 sm:px-4 sm:text-[21px] sm:tracking-[0.14em]"
             >
               <Send size={12} />
               <span>Initiate</span>

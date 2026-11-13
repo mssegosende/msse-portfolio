@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { ecg } from "../lib/ecg";
+import { ecg, peaksBetween } from "../lib/ecg";
+import { heartbeat } from "../lib/sound";
 import { BioTerminal, TypeLine } from "./BioTerminal";
 import { profile, manifesto } from "../data/portfolioData";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -95,10 +96,15 @@ const VitalsScope = ({ reduced }: { reduced: boolean }) => {
     let onScreen = false;
     let raf = 0;
     const t0 = performance.now();
+    let lastElapsed = 0;
     const loop = () => {
       raf = 0;
       if (!onScreen || document.hidden) return;
-      draw(performance.now() - t0);
+      const elapsed = performance.now() - t0;
+      draw(elapsed);
+      // A faint tick on each R peak the head writes (when sound is on).
+      if (peaksBetween(lastElapsed, elapsed).length && elapsed - lastElapsed < 200) heartbeat();
+      lastElapsed = elapsed;
       raf = requestAnimationFrame(loop);
     };
     const wake = () => {
