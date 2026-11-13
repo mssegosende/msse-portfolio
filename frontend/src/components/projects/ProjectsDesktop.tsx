@@ -18,6 +18,7 @@ import { GifPlayer } from "./GifPlayer";
 import { FitName, ScrollText } from "./ProjectCard";
 import { ProjectMedia } from "./ProjectMedia";
 import { useCrossfade } from "@/hooks/useSectionDissolve";
+import { useOwnsCenter } from "@/hooks/useOwnsCenter";
 
 const N = PROJECTS.length;
 /** The head and the featured card at zoom 1, px (measured at 1440). */
@@ -228,6 +229,7 @@ const TerminalTile = () => (
 export const ProjectsDesktop = () => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
   const sectionRef = useRef<HTMLElement>(null);
+  const wordShown = useOwnsCenter(sectionRef);
   useProjectsInView(sectionRef);
   // Scene 2 -> 3: Projects comes in over scene 2's exit, pinned at the top.
   useCrossfade(sectionRef, null, true, -1);
@@ -299,6 +301,7 @@ export const ProjectsDesktop = () => {
       <div aria-hidden="true" className="crt-grid absolute inset-0" />
       <div
         aria-hidden="true"
+        data-shown={wordShown}
         className="crt-bg-word absolute -right-5 top-10 font-michroma leading-none"
         style={{ fontSize: 260 * zoom }}
       >

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { bakedMedia, showcaseProjects as PROJECTS } from "@/data/projectsData";
 import { useTheme } from "@/hooks/useTheme";
+import { useOwnsCenter } from "@/hooks/useOwnsCenter";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useNearView } from "@/hooks/useNearView";
 import { useProjectsInView } from "@/hooks/useProjectsInView";
@@ -29,6 +30,7 @@ export const ProjectsCarousel = () => {
   const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
   const dark = useTheme().theme === "dark";
   const sectionRef = useRef<HTMLElement>(null);
+  const wordShown = useOwnsCenter(sectionRef);
   useProjectsInView(sectionRef);
   const trackRef = useRef<HTMLDivElement>(null);
   const [idx, setIdx] = useState(0);
@@ -78,6 +80,7 @@ export const ProjectsCarousel = () => {
       <div aria-hidden="true" className="crt-grid absolute inset-0" />
       <div
         aria-hidden="true"
+        data-shown={wordShown}
         className="crt-bg-word absolute -right-[30px] top-10 font-michroma text-[110px] leading-none"
       >
         WORK

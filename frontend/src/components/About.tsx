@@ -9,6 +9,7 @@ import { at, clampScale, useFrame } from "../hooks/useFrame";
 import { DataRow } from "./crt/CrtPieces";
 import s from "./About.module.css";
 import { useCrossfade } from "@/hooks/useSectionDissolve";
+import { useOwnsCenter } from "@/hooks/useOwnsCenter";
 
 const STEPS = 3;
 
@@ -141,6 +142,7 @@ export const About = () => {
   useCrossfade(ref, "projects", false, -2);
   const step = useSectionStep(ref, STEPS);
   const progress = useSectionProgress(ref, true);
+  const wordShown = useOwnsCenter(ref);
   const desktop = useMediaQuery("(min-width: 1024px)");
   // Reduced motion: no pin, everything shown (the hidden states are never armed).
   const still = useMediaQuery(REDUCED_MOTION_QUERY);
@@ -183,7 +185,11 @@ export const About = () => {
     >
       <div className={s.stage}>
         <div aria-hidden="true" className="crt-grid absolute inset-0" />
-        <div aria-hidden="true" className={`crt-bg-word font-michroma ${s.word}`}>
+        <div
+          aria-hidden="true"
+          data-shown={wordShown}
+          className={`crt-bg-word font-michroma ${s.word}`}
+        >
           HUMAN
         </div>
 

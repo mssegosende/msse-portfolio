@@ -1403,6 +1403,14 @@ textarea:-webkit-autofill {
   user-select: none;
   white-space: nowrap;
   color: rgba(31, 95, 175, 0.035);
+  /* Shown only while its section has the screen (useOwnsCenter): the
+     leaving word fades out first, then the next one fades in, so two never
+     share the screen. */
+  transition: opacity 0.3s ease 0.3s;
+}
+.crt-bg-word[data-shown="false"] {
+  opacity: 0;
+  transition-delay: 0s;
 }
 :root[data-theme="dark"] .crt-bg-word {
   color: rgba(108, 185, 238, 0.046);

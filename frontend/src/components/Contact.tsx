@@ -9,6 +9,7 @@ import { clampScale, useFrame } from "../hooks/useFrame";
 import { GridField } from "./GridField";
 import s from "./Contact.module.css";
 import { useCrossfade } from "@/hooks/useSectionDissolve";
+import { useOwnsCenter } from "@/hooks/useOwnsCenter";
 
 // Production: same origin (Vercel routes /api/* to the backend service).
 // Dev: the local uvicorn. VITE_BACKEND_URL overrides both.
@@ -185,6 +186,7 @@ export const Contact = () => {
   // Reduced motion: shown whole (the hidden states are never armed).
   const still = useMediaQuery(REDUCED_MOTION_QUERY);
   const reached = useSectionStep(ref, 3) >= 0 || still;
+  const wordShown = useOwnsCenter(ref);
   const [form, setForm] = useState(EMPTY_FORM);
   const [lines, setLines] = useState<LogLine[]>([]);
   const [errors, setErrors] = useState<{ text: string }[]>([]);
@@ -318,7 +320,11 @@ export const Contact = () => {
       </div>
       <div aria-hidden="true" className={s.floorFade} />
       <div aria-hidden="true" className="crt-grid absolute inset-0" />
-      <div aria-hidden="true" className={`crt-bg-word font-michroma ${s.word}`}>
+      <div
+        aria-hidden="true"
+        data-shown={wordShown}
+        className={`crt-bg-word font-michroma ${s.word}`}
+      >
         TALK
       </div>
       <div className={s.stage} style={stageStyle}>
