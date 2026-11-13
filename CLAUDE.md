@@ -58,8 +58,6 @@ and read exact values from `design/source/**/*.dc.html`.
   committing; don't commit CRLF changes to files you didn't touch.
 - Old notes live in `.notes/` (gitignored). `design/` replaces them where they
   disagree.
-- `design_guidelines.json` (repo root) is an obsolete Emergent file (cyan,
-  Orbitron). Ignore it; `design/` is the reference.
 
 ## Parallel sessions (git worktrees)
 Three sessions may run at once: **A** in `msse-portfolio` (branch `main`),
