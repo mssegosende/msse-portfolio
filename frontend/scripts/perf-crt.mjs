@@ -206,16 +206,19 @@ const gotoPin = async (page, p, settleMs = 3000) => {
 };
 
 const oneRun = async (browser, { phone, dark }) => {
-  const context = await browser.newContext(
-    phone
+  // bypassCSP: its own in-page helpers build functions from strings (scrollPin);
+  // it measures rendering, not the policy (the e2e run under it).
+  const context = await browser.newContext({
+    bypassCSP: true,
+    ...(phone
       ? {
           viewport: { width: 390, height: 844 },
           deviceScaleFactor: 3,
           isMobile: true,
           hasTouch: true,
         }
-      : { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 },
-  );
+      : { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 }),
+  });
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
