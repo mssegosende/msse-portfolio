@@ -254,13 +254,14 @@ def test_form_max_lengths_match_the_model():
 
 @pytest.fixture
 def turnstile(monkeypatch):
-    """Turns Turnstile on and replaces Cloudflare: the token "pass" passes."""
+    """Turns Turnstile on and replaces Cloudflare: tokens starting "pass" pass."""
     monkeypatch.setenv("TURNSTILE_SECRET_KEY", "ts_test_secret")
     seen: list[tuple] = []
 
     def fake_siteverify(secret, token, ip):
         seen.append((secret, token, ip))
-        return {"success": token == "pass", "error-codes": [] if token == "pass" else ["invalid-input-response"]}
+        ok = token.startswith("pass")
+        return {"success": ok, "error-codes": [] if ok else ["invalid-input-response"]}
 
     monkeypatch.setattr(server, "_siteverify", fake_siteverify)
     return seen
@@ -290,12 +291,12 @@ def test_with_the_secret_a_missing_or_failed_token_is_refused(client, sent, turn
 
 
 def test_with_the_secret_a_passing_token_is_verified(client, sent, turnstile):
-    res = post(client, VALID | {"turnstile_token": "pass"}, **{"x-real-ip": "203.0.113.5"})
+    res = post(client, VALID | {"turnstile_token": "pass-7f3a9c"}, **{"x-real-ip": "203.0.113.5"})
 
     assert res.status_code == 200
-    assert turnstile == [("ts_test_secret", "pass", "203.0.113.5")]
+    assert turnstile == [("ts_test_secret", "pass-7f3a9c", "203.0.113.5")]
     assert sent[0]["subject"].startswith("[VERIFIED] ")
-    assert "pass" not in sent[0]["text"]
+    assert "pass-7f3a9c" not in sent[0]["text"]  # the token never reaches the email
 
 
 def test_cloudflare_unreachable_refuses_and_sends_nothing(client, sent, monkeypatch, caplog):

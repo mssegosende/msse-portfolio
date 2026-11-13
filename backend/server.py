@@ -187,12 +187,47 @@ def _turnstile_passed(token: Optional[str], ip: str) -> bool:
     return True
 
 
-def _email_text(payload: ContactMessage) -> str:
+# Content filters: they flag a message for a human look, they never reject one.
+URL = re.compile(r"https?://|www\.", re.IGNORECASE)
+SPAM_WORDS = re.compile(
+    r"\b(seo|backlinks?|guest posts?|casino|crypto|bitcoin|forex|viagra|cialis|loans?"
+    r"|rank (?:your|my) (?:site|website)|first page of google|whatsapp|telegram"
+    r"|investment opportunity|make money)\b",
+    re.IGNORECASE,
+)
+MAX_LINKS = 2
+
+
+def _flags(payload: ContactMessage) -> list[str]:
+    """Why a message needs a human look: too many links, spam words, all caps,
+    a link where a name goes. An empty list is a clean message."""
+    flags = []
+    if len(URL.findall(payload.message)) > MAX_LINKS:
+        flags.append("too many links")
+    if SPAM_WORDS.search(" ".join(filter(None, [payload.name, payload.company, payload.message]))):
+        flags.append("spam words")
+    letters = [c for c in payload.message if c.isalpha()]
+    if len(letters) >= 20 and sum(c.isupper() for c in letters) / len(letters) > 0.7:
+        flags.append("all caps")
+    if URL.search(payload.name) or (payload.company and URL.search(payload.company)):
+        flags.append("link in name or company")
+    return flags
+
+
+def _subject_tag(turnstile_passed: bool, payload: ContactMessage, flags: list[str]) -> str:
+    """[VERIFIED] only when Turnstile passed, a valid LinkedIn came with the
+    message and no filter flagged it; anything else is [REVIEW]."""
+    return "[VERIFIED]" if turnstile_passed and payload.linkedin and not flags else "[REVIEW]"
+
+
+def _email_text(payload: ContactMessage, turnstile_passed: bool, flags: list[str]) -> str:
     return (
         f"Name: {payload.name}\n"
         f"Email: {payload.email}\n"
         f"Company: {payload.company or '-'}\n"
         f"LinkedIn: {payload.linkedin or '-'}\n"
+        f"Turnstile: {'passed' if turnstile_passed else 'off'}\n"
+        f"Flags: {', '.join(flags) or 'none'}\n"
         f"\n{payload.message}\n"
     )
 
@@ -215,7 +250,8 @@ def submit_contact(payload: ContactMessage, request: Request):
     if _over_rate_limit(ip):
         raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
 
-    verified = _turnstile_passed(payload.turnstile_token, ip)
+    turnstile_passed = _turnstile_passed(payload.turnstile_token, ip)
+    flags = _flags(payload)
 
     api_key = os.environ.get("RESEND_API_KEY")
     to_email = os.environ.get("CONTACT_TO_EMAIL")
@@ -230,9 +266,8 @@ def submit_contact(payload: ContactMessage, request: Request):
         "from": FROM_ADDRESS,
         "to": [to_email],
         "reply_to": str(payload.email),
-        # [REVIEW] unless Turnstile passed (it is off until its keys are set).
-        "subject": f"{'[VERIFIED]' if verified else '[REVIEW]'} Portfolio contact: {subject_name}",
-        "text": _email_text(payload),
+        "subject": f"{_subject_tag(turnstile_passed, payload, flags)} Portfolio contact: {subject_name}",
+        "text": _email_text(payload, turnstile_passed, flags),
     }
     try:
         resend.Emails.send(params)
