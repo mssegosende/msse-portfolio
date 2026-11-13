@@ -3,6 +3,7 @@ import type { CapabilityCard as Card } from "../../data/portfolioData";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { DataRow } from "../crt/CrtPieces";
 import { TICK_MS, wavePath, type Shape } from "./ascii";
+import { AsciiObject } from "./AsciiObject";
 
 // Option A "Dossier" (design/crt/msse-crt-redesign/design-source/Main.dc.html
 // and Mobile.dc.html): a frame with nodes, SUBSYSTEM header, the boxed
@@ -98,12 +99,13 @@ const Chips = ({ chips }: { chips: string[] }) => (
 
 /**
  * One scene 2 card, the Dossier. Desktop: 576 wide in the 1440 x 900 stage.
- * Phones: full width, one at a time under the ASCII object.
+ * Phones: full width, one at a time, the ASCII object behind the body.
  */
 export const CapabilityCard = ({ card, isMobile }: { card: Card; isMobile: boolean }) => {
   const step = (Number(card.num) - 1) as Shape;
   const num = card.num.padStart(2, "0");
   const nodes = isMobile ? NODES_PHONE : NODES_DESKTOP;
+  const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
   return (
     <article
       data-testid={`capability-card-${card.num}`}
@@ -124,9 +126,12 @@ export const CapabilityCard = ({ card, isMobile }: { card: Card; isMobile: boole
             </div>
             <span className="crt-dossier__num font-michroma text-[44px] leading-none">{num}</span>
           </div>
-          <div className="border-b border-[var(--crt-line-row)] px-4 py-3">
+          <div className="relative overflow-hidden border-b border-[var(--crt-line-row)] px-4 py-3">
+            {/* The ASCII object behind the body, faint (María Sol, 13 Nov:
+                beside the title it took the rail's room). */}
+            <AsciiObject step={step} isMobile reduced={reduced} backdrop />
             {/* The whole body, always (María Sol, 12 Nov): never clipped. */}
-            <p className="m-0 text-[14px] leading-[1.5] text-crt-text-2">{card.text}</p>
+            <p className="relative m-0 text-[14px] leading-[1.5] text-crt-text-2">{card.text}</p>
           </div>
           <div className="crt-dossier__rows--phone">
             <DataRow label="FUNCTION">{card.function}</DataRow>

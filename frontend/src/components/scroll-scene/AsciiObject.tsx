@@ -3,8 +3,8 @@ import { capabilityCards } from "../../data/portfolioData";
 import { MORPH_MS, renderAscii, smoothstep, TICK_MS, type Shape } from "./ascii";
 import { Crosshair } from "../crt/CrtPieces";
 
-// The object's size in characters (SPEC §3): desktop 76 x 40 at 12px, phones
-// 46 x 26 at 9px.
+// The object's size in characters (SPEC §3): desktop 76 x 40 at 12px; phones
+// 46 x 26, behind the card's description.
 const GRID = { desktop: { cols: 76, rows: 40 }, phone: { cols: 46, rows: 26 } };
 // Reduced motion: one still frame per step, at this point of the rotation.
 const STILL_T = 1600;
@@ -57,10 +57,13 @@ export const AsciiObject = ({
   step,
   isMobile,
   reduced,
+  backdrop = false,
 }: {
   step: Shape;
   isMobile: boolean;
   reduced: boolean;
+  /** Phones: behind the card's description, large and faint (María Sol, 13 Nov). */
+  backdrop?: boolean;
 }) => {
   const boxRef = useRef<HTMLDivElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
@@ -107,7 +110,7 @@ export const AsciiObject = ({
       draw(STILL_T, 1);
       return () => clearInterval(id);
     }
-    const height = isMobile ? pre.offsetHeight || rows * 9 : rows * 12;
+    const height = rows * 12;
     const tick = () => {
       if (!showing.current) return;
       // Hidden by an ancestor (the stacked or pinned scene 2 before it shows).
@@ -129,14 +132,26 @@ export const AsciiObject = ({
   const num = card?.num.padStart(2, "0") ?? "01";
   const tag = "absolute whitespace-nowrap font-mono text-crt-node crt-glow-label";
 
+  if (backdrop)
+    return (
+      <div
+        ref={boxRef}
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden"
+      >
+        <pre
+          ref={preRef}
+          className="crt-ascii--backdrop m-0 whitespace-pre font-mono tracking-normal"
+        />
+      </div>
+    );
+
   return (
-    <div ref={boxRef} className={isMobile ? "relative" : "absolute h-[480px] w-[548px]"}>
+    <div ref={boxRef} className="absolute h-[480px] w-[548px]">
       <pre
         ref={preRef}
         aria-label={`ASCII render of subsystem ${num}, ${card?.part ?? ""}: a ${card?.shape.toLowerCase() ?? ""}`}
-        className={`crt-ascii m-0 whitespace-pre font-mono tracking-normal ${
-          isMobile ? "crt-ascii--phone" : "text-[12px] leading-[12px]"
-        }`}
+        className="crt-ascii m-0 whitespace-pre font-mono text-[12px] leading-[12px] tracking-normal"
       />
       {!reduced && (
         <div
@@ -145,30 +160,20 @@ export const AsciiObject = ({
           className="crt-ascii-scan absolute inset-x-0 top-0 h-0.5 will-change-transform"
         />
       )}
-      {isMobile ? (
-        <>
-          <Crosshair size={30} thickness={3} offset={-18} />
-          {/* Above the box on phones: below it is the rail. */}
-          <span className={`${tag} -top-6 right-0 text-[11px]`}>[msse.{num}]</span>
-        </>
-      ) : (
-        <>
-          <Crosshair size={56} thickness={4} offset={-28} />
-          <span className={`${tag} -top-[58px] left-[30px] text-[14px]`}>[core.sys]</span>
-          <span className={`${tag} -bottom-[58px] right-[30px] text-[14px]`}>
-            [msse.{num} · {card?.shape}]
-          </span>
-          <span aria-hidden="true" className="absolute -right-1.5 -top-16 flex gap-2.5">
-            <span className="crt-ascii-dot" />
-            <span className="crt-ascii-dot" />
-          </span>
-          <span aria-hidden="true" className="absolute -bottom-[62px] -left-1.5 flex gap-2">
-            <span className="crt-ascii-ring" />
-            <span className="crt-ascii-ring" />
-            <span className="crt-ascii-ring" />
-          </span>
-        </>
-      )}
+      <Crosshair size={56} thickness={4} offset={-28} />
+      <span className={`${tag} -top-[58px] left-[30px] text-[14px]`}>[core.sys]</span>
+      <span className={`${tag} -bottom-[58px] right-[30px] text-[14px]`}>
+        [msse.{num} · {card?.shape}]
+      </span>
+      <span aria-hidden="true" className="absolute -right-1.5 -top-16 flex gap-2.5">
+        <span className="crt-ascii-dot" />
+        <span className="crt-ascii-dot" />
+      </span>
+      <span aria-hidden="true" className="absolute -bottom-[62px] -left-1.5 flex gap-2">
+        <span className="crt-ascii-ring" />
+        <span className="crt-ascii-ring" />
+        <span className="crt-ascii-ring" />
+      </span>
     </div>
   );
 };

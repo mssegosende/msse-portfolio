@@ -16,7 +16,7 @@ interface CapabilityCardsProps {
    */
   stacked?: boolean;
   /** Desktop: the rail's and the card's scale (ScrollScene's fluid frame). */
-  scale?: { rail: number; card: number };
+  scale?: { rail: number; card: number; cardTop?: number };
   /** Desktop: the card's height at scale 1, px, as it changes (the body grows it). */
   onCardHeight?: (h: number) => void;
 }
@@ -107,10 +107,8 @@ export const CapabilityCards = ({
   onCardHeight,
 }: CapabilityCardsProps) => {
   // Desktop: the card's natural height (its body is never clipped), so the
-  // parent can scale it to fit above the dock. Phones: where the rail block
-  // starts, so the ASCII object above it can size itself (--cap-top).
+  // parent can scale it to fit between the title and the rail's bottom.
   const cardBox = useRef<HTMLDivElement>(null);
-  const phoneBox = useRef<HTMLDivElement>(null);
   const cardScale = scale.card;
   useEffect(() => {
     const el = cardBox.current;
@@ -124,22 +122,6 @@ export const CapabilityCards = ({
     ro?.observe(el);
     return () => ro?.disconnect();
   }, [onCardHeight, cardScale]);
-  useEffect(() => {
-    const el = phoneBox.current;
-    const hero = el?.closest<HTMLElement>("#hero");
-    if (!el || !hero) return undefined;
-    // The rail and card block's top in the hero (the marker fills the block).
-    const report = () =>
-      hero.style.setProperty("--cap-top", `${el.parentElement?.offsetTop ?? 600}px`);
-    report();
-    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(report);
-    ro?.observe(el);
-    window.addEventListener("resize", report);
-    return () => {
-      ro?.disconnect();
-      window.removeEventListener("resize", report);
-    };
-  }, [isMobile, stacked]);
   const step = Math.max(0, Math.min(capabilityCards.length - 1, active));
   if (isMobile && stacked) {
     return (
@@ -147,7 +129,7 @@ export const CapabilityCards = ({
         ref={ref}
         data-testid="capability-cards"
         data-layout="phone-stacked"
-        className="pointer-events-auto relative flex flex-col gap-4 px-4 pb-24 pt-[440px]"
+        className="pointer-events-auto relative flex flex-col gap-4 px-4 pb-24 pt-[120px]"
       >
         {capabilityCards.map((card) => (
           <CapabilityCard key={card.num} card={card} isMobile />
@@ -164,7 +146,6 @@ export const CapabilityCards = ({
         data-active={step}
         className="callout-mobile pointer-events-auto absolute left-4 right-4 flex flex-col gap-[18px]"
       >
-        <span ref={phoneBox} aria-hidden="true" className="absolute inset-0 -z-10" />
         <Rail active={step} onPick={onPick} isMobile />
         <OneCard active={step} isMobile />
       </div>
@@ -184,7 +165,13 @@ export const CapabilityCards = ({
           <Rail active={step} onPick={onPick} isMobile={false} />
         </div>
       </div>
-      <div className="pointer-events-auto absolute" style={at(800, DOSSIER_TOP)}>
+      <div
+        className="pointer-events-auto absolute"
+        style={{
+          ...at(800, DOSSIER_TOP),
+          ...(scale.cardTop === undefined ? {} : { top: scale.cardTop }),
+        }}
+      >
         <div ref={cardBox} style={{ zoom: scale.card }}>
           <OneCard active={step} isMobile={false} />
         </div>

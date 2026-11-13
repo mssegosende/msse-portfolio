@@ -12,7 +12,7 @@ import { SceneBoundary } from "./spline/SceneBoundary";
 import { CapabilityCards } from "./scroll-scene/CapabilityCards";
 import { scene2Scale } from "./scroll-scene/choreography";
 import { at, clampScale, FRAME } from "../hooks/useFrame";
-import { DOSSIER_H, DOSSIER_TOP, DOSSIER_W } from "./scroll-scene/CapabilityCards";
+import { DOSSIER_H, DOSSIER_W } from "./scroll-scene/CapabilityCards";
 
 // Room kept under scene 2's card for the dock, px.
 const DOCK_ROOM = 100;
@@ -176,14 +176,17 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
   // grow on big screens and shrink on small ones without reaching the head
   // or the dock (María Sol, 12 Nov).
   const kHud = clampScale(Math.min(kw, 1.15 * kh), 0.75, 1.9);
-  // The card's height follows its body (never clipped): measured, then fitted.
+  // The card's height follows its body (never clipped): measured, then fitted
+  // (María Sol, 13 Nov) between WHAT THE CORE RUNS ON (its block at y 52:
+  // the label and the title, ~72px at scale 1, then a gap) and the bottom of
+  // the 01/02/03 rail (at y 776, 46px tall at the object's scale), the frame
+  // and type scaled together.
   const [dossierH, setDossierH] = useState(DOSSIER_H);
+  const cardTop = 52 * kh + 94 * kTitle;
+  const cardBottom = Math.min(776 * kh + 46 * kObject, viewport.height - DOCK_ROOM * 0.75);
   const kCard = clampScale(
-    Math.min(
-      kw,
-      (viewport.height - DOSSIER_TOP * kh - DOCK_ROOM) / dossierH,
-      (viewport.width - 64 - 800 * kw) / DOSSIER_W,
-    ),
+    Math.min(kw, (cardBottom - cardTop) / dossierH, (viewport.width - 64 - 800 * kw) / DOSSIER_W),
+    0.5,
   );
   /** A block of the frame at (x, y), scaled by k from its top-left corner. */
   const block = (x: number, y: number, k: number, children: ReactNode, className = "") => (
@@ -293,7 +296,8 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
           className="crt-glow-label absolute flex items-center gap-2.5 font-vt text-[22px] tracking-[0.14em] text-crt-text"
           style={{
             right: `${(64 / FRAME.width) * 100}%`,
-            top: `${(62 / FRAME.height) * 100}%`,
+            // On the 02 // CAPABILITIES line (María Sol, 13 Nov).
+            top: `${(52 / FRAME.height) * 100}%`,
             zoom: kTitle,
           }}
         >
@@ -324,18 +328,14 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
             <div ref={idle2Ref} className="absolute inset-0" />
           </div>
         </div>
-        {isMobile ? (
-          <div className="absolute left-1/2 top-[110px] -translate-x-1/2">
-            <AsciiObject step={step} isMobile reduced={reduceMotion} />
-          </div>
-        ) : (
+        {/* Phones: the object sits behind each card's description (CapabilityCard). */}
+        {!isMobile &&
           block(
             150,
             210,
             kObject,
             <AsciiObject step={step} isMobile={false} reduced={reduceMotion} />,
-          )
-        )}
+          )}
       </div>
     </>
   );
@@ -346,7 +346,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       onPick={pickStep}
       isMobile={isMobile}
       stacked={stacked}
-      scale={{ rail: kObject, card: kCard }}
+      scale={{ rail: kObject, card: kCard, cardTop }}
       onCardHeight={setDossierH}
     />
   );

@@ -1128,13 +1128,13 @@ textarea:-webkit-autofill {
     0 0 4px rgba(108, 185, 238, 0.878),
     0 0 12px rgba(108, 185, 238, 0.293);
 }
-/* Phones: 9px as designed, smaller on shorter screens so the object keeps
-   clear of the rail and the card above the dock. */
-.crt-ascii--phone {
-  /* The room above the rail and card block (CapabilityCards writes --cap-top):
-     the card shows its whole body, the object takes what is left, 9px at most. */
-  font-size: clamp(3px, calc((var(--cap-top, 600px) - 140px) / 26), 9px);
-  line-height: clamp(3px, calc((var(--cap-top, 600px) - 140px) / 26), 9px);
+/* Phones: behind the card's description, larger and faint, no glow, so it
+   never gets in the way of the text (María Sol, 13 Nov). */
+.crt-ascii--backdrop {
+  font-size: 11px;
+  line-height: 11px;
+  color: var(--crt-phosphor);
+  opacity: 0.18;
 }
 .crt-ascii-scan {
   background: rgba(31, 95, 175, 0.28);
