@@ -259,14 +259,9 @@ textarea.input {
   text-shadow: var(--crt-glow-label);
 }
 /* The note under a field (LinkedIn's): the error's type, the hint's colour.
-   In the gap below the field, so it adds no height: the form keeps the
-   design's size (at 1280x720 an extra line pushed the footer under the dock). */
+   A line of its own on phones (the page scrolls); on desktop it sits in the
+   gap below the field (see the min-width: 1024px block). */
 .note {
-  position: absolute;
-  top: calc(100% + 2px);
-  left: 0;
-  white-space: nowrap;
-  line-height: 1.2;
   font-family: "JetBrains Mono", monospace;
   font-size: 11px;
   letter-spacing: 0.04em;
@@ -490,6 +485,16 @@ textarea.input {
 /* ---- Desktop (Contact.dc.html; María Sol, 13 Nov: higher, a narrower and
    squarer form, the phone header's motion, three live boxes) ---- */
 @media (min-width: 1024px) {
+  /* In the gap below the field, so it adds no height: the desktop form keeps
+     the design's size (at 1280x720 an extra line pushed the footer under the
+     dock). */
+  .note {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
   .stage {
     display: grid;
     grid-template-columns: minmax(0, 640fr) minmax(0, 440fr);
