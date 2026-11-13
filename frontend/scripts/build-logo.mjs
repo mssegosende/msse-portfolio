@@ -43,33 +43,48 @@ const fullMark = (c, { bracket = BRACKET_STROKE, crosshair = CROSSHAIR_STROKE } 
   `<path d="${BRACKETS}" fill="none" stroke="${c.text}" stroke-width="${bracket}"/>` +
   `<path d="${S_PATH}" fill="${c.core}"/></svg>\n`;
 
-// The favicon: cropped to the brackets (24..96), no crosshair, strokes that
-// still read at 16px (5 units = ~1.1px at 16, ~2.2px at 32).
+// The favicon follows the BROWSER's colour scheme, not the site's theme
+// (María Sol, 13 Nov): no ground (transparent), the mark pure white on a dark
+// browser and --crt-core (#0E2C4C) on a light one; cropped to the brackets
+// (24..96), no crosshair, strokes heavy enough for 16px (7 units = ~1.6px at
+// 16). The S is drawn 1.3x larger with a thin stroke of its own colour: wider
+// than that and its openings close into an 8.
 const FAV_BOX = "24 24 72 72";
-const FAV_STROKE = 5;
-// At 16px the S gets a few pixels: drawn 1.3x larger inside the same
-// brackets its openings stay open (a stroke to thicken it closes them into
-// an 8).
+const FAV_STROKE = 7;
+const FAV_S_STROKE = 1.2;
 const FAV_S = `transform="translate(60 60) scale(1.3) translate(-60 -60)"`;
-const faviconBody = (g, b, sAttrs) =>
-  `<rect ${g} x="24" y="24" width="72" height="72" rx="6"/>` +
-  `<path ${b} d="${BRACKETS}"/>` +
-  `<path ${sAttrs} ${FAV_S} d="${S_PATH}"/></svg>\n`;
-// favicon.svg: light or dark with the browser's colour scheme.
+const FAV = { dark: "#FFFFFF", light: "#0E2C4C" };
+const markBody = (b, s) => `<path ${b} d="${BRACKETS}"/>` + `<path ${s} ${FAV_S} d="${S_PATH}"/>`;
 const faviconSvg =
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${FAV_BOX}"><style>` +
-  `.g{fill:${THEME.light.bg}}.b{fill:none;stroke:${THEME.light.text};stroke-width:${FAV_STROKE}}.s{fill:${THEME.light.core}}` +
-  `@media (prefers-color-scheme:dark){.g{fill:${THEME.dark.bg}}.b{stroke:${THEME.dark.text}}.s{fill:${THEME.dark.core}}}` +
+  `.b{fill:none;stroke:${FAV.light};stroke-width:${FAV_STROKE}}` +
+  `.s{fill:${FAV.light};stroke:${FAV.light};stroke-width:${FAV_S_STROKE};stroke-linejoin:round}` +
+  `@media (prefers-color-scheme:dark){.b{stroke:${FAV.dark}}.s{fill:${FAV.dark};stroke:${FAV.dark}}}` +
   `</style>` +
-  faviconBody('class="g"', 'class="b"', 'class="s"');
-// The fixed-colour one a PNG is drawn from.
-const faviconFor = (c) =>
+  markBody('class="b"', 'class="s"') +
+  `</svg>
+`;
+// The PNG fallbacks (browsers that ignore SVG favicons or their media
+// queries, Safari): the white mark on a small dark rounded tile (--crt-bg),
+// readable on a tab bar of any colour.
+const tile = (rx) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${FAV_BOX}">` +
-  faviconBody(
-    `fill="${c.bg}"`,
-    `fill="none" stroke="${c.text}" stroke-width="${FAV_STROKE}"`,
-    `fill="${c.core}"`,
-  );
+  `<rect x="24" y="24" width="72" height="72" rx="${rx}" fill="${THEME.dark.bg}"/>` +
+  markBody(
+    `fill="none" stroke="${FAV.dark}" stroke-width="${FAV_STROKE}"`,
+    `fill="${FAV.dark}" stroke="${FAV.dark}" stroke-width="${FAV_S_STROKE}" stroke-linejoin="round"`,
+  ) +
+  `</svg>
+`;
+// The touch icon: the same white mark with its crosshair (60px on screen
+// reads it), on the dark ground edge to edge (iOS rounds the corners itself).
+const touchIcon =
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">` +
+  `<rect width="120" height="120" fill="${THEME.dark.bg}"/>` +
+  `<path d="${CROSSHAIR}" fill="none" stroke="${FAV.dark}" stroke-opacity="${CROSSHAIR_OPACITY}" stroke-width="1.6"/>` +
+  `<path d="${BRACKETS}" fill="none" stroke="${FAV.dark}" stroke-width="2.6"/>` +
+  `<path d="${S_PATH}" fill="${FAV.dark}"/></svg>
+`;
 
 const pub = path.join(root, "public");
 const design = path.join(root, "../design/logo");
@@ -87,14 +102,8 @@ const png = async (svg, size, file) => {
   await page.close();
   console.log(path.relative(root, file));
 };
-// The PNG fallback: dark, as the site itself opens.
-await png(faviconFor(THEME.dark), 32, path.join(pub, "favicon-32.png"));
-// Touch icons are ~60px on screen: the whole mark, strokes a little heavier.
-await png(
-  fullMark(THEME.dark, { bracket: 2.4, crosshair: 1.4 }),
-  180,
-  path.join(pub, "apple-touch-icon.png"),
-);
+await png(tile(10), 32, path.join(pub, "favicon-32.png"));
+await png(touchIcon, 180, path.join(pub, "apple-touch-icon.png"));
 
 // The share image (og:image, twitter:image), 1200x630: the dark ground, the
 // mark large with its crosshair, the name in Michroma and the role under it,

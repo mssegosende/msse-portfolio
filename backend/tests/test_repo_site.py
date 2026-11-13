@@ -18,13 +18,65 @@ def png_size(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", data[16:24])
 
 
-def test_favicon_svg_is_the_mark_with_michromas_s_and_follows_the_colour_scheme():
+def test_favicon_svg_follows_the_browser_white_or_navy_on_no_ground():
     svg = (PUBLIC / "favicon.svg").read_text("utf8")
 
     assert S_PATH in svg  # the S as a path, not text in a font
     assert "<text" not in svg
-    assert "prefers-color-scheme:dark" in svg
+    assert "<rect" not in svg  # transparent: no ground
     assert "M6 60H24" not in svg  # no crosshair at favicon size
+    light, dark = svg.split("@media (prefers-color-scheme:dark)")
+    assert "#0E2C4C" in light and "#FFFFFF" not in light
+    assert "#FFFFFF" in dark and "#0E2C4C" not in dark
+    assert "stroke-width:7" in svg  # heavier brackets for 16px
+
+
+def test_png_fallbacks_are_the_white_mark_on_a_dark_tile():
+    """Read the PNGs' corner and centre pixels: dark tile, white mark."""
+    import zlib
+
+    def pixels(path: Path):
+        data = path.read_bytes()
+        w, h = struct.unpack(">II", data[16:24])
+        # Colour type 6 is RGBA, 2 is RGB (an opaque image may be saved without alpha).
+        bpp = 4 if data[25] == 6 else 3
+        idat, i = b"", 8
+        while i < len(data):
+            n = struct.unpack(">I", data[i : i + 4])[0]
+            if data[i + 4 : i + 8] == b"IDAT":
+                idat += data[i + 8 : i + 8 + n]
+            i += 12 + n
+        raw = zlib.decompress(idat)
+        stride = w * bpp
+        rows, prev = [], bytearray(stride)
+        for y in range(h):
+            f, line = raw[y * (stride + 1)], bytearray(raw[y * (stride + 1) + 1 : (y + 1) * (stride + 1)])
+            for x in range(stride):
+                a = line[x - bpp] if x >= bpp else 0
+                b, c = prev[x], prev[x - bpp] if x >= bpp else 0
+                if f == 1:
+                    line[x] = (line[x] + a) & 255
+                elif f == 2:
+                    line[x] = (line[x] + b) & 255
+                elif f == 3:
+                    line[x] = (line[x] + (a + b) // 2) & 255
+                elif f == 4:
+                    p = a + b - c
+                    pa, pb, pc = abs(p - a), abs(p - b), abs(p - c)
+                    line[x] = (line[x] + (a if pa <= pb and pa <= pc else b if pb <= pc else c)) & 255
+            rows.append(bytes(line))
+            prev = line
+        return w, h, lambda x, y: tuple(rows[y][x * bpp : x * bpp + bpp]) + ((255,) if bpp == 3 else ())
+
+    # Points in the mark's own units (the 120 square): (49, 33) lies between
+    # the top bracket arms, nothing drawn there; (30, 30) is the top-left
+    # bracket's corner. Each file maps its viewBox onto its pixels.
+    for name, (origin, span) in (("favicon-32.png", (24, 72)), ("apple-touch-icon.png", (0, 120))):
+        w, h, px = pixels(PUBLIC / name)
+        at = lambda ux, uy: px(round((ux - origin) / span * (w - 1)), round((uy - origin) / span * (h - 1)))
+        r, g, b, a = at(49, 33)
+        assert a > 200 and max(r, g, b) < 40, (name, "dark ground", (r, g, b, a))
+        assert min(at(30, 30)[:3]) > 230, (name, "white mark", at(30, 30))
 
 
 def test_png_icons_have_their_sizes():
