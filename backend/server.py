@@ -10,6 +10,7 @@ Environment (see .env.example):
 - CORS_ORIGINS      comma-separated origins allowed to call the API. In production
                     the form is same-origin and needs none; this is for local dev
                     and for a frontend hosted elsewhere.
+- API_DOCS          "1" turns on /docs, /redoc and /openapi.json (local only).
 """
 
 import logging
@@ -44,7 +45,18 @@ def _cors_origins() -> list[str]:
     return [origin.strip().rstrip("/") for origin in raw.split(",") if origin.strip()]
 
 
-app = FastAPI(title="MSSE portfolio contact service")
+def _docs_settings() -> dict:
+    """FastAPI's /docs, /redoc and /openapi.json only with API_DOCS=1: off in
+    production, so the API's shape is not published."""
+    on = os.environ.get("API_DOCS") == "1"
+    return {
+        "docs_url": "/docs" if on else None,
+        "redoc_url": "/redoc" if on else None,
+        "openapi_url": "/openapi.json" if on else None,
+    }
+
+
+app = FastAPI(title="MSSE portfolio contact service", **_docs_settings())
 api_router = APIRouter(prefix="/api")
 
 

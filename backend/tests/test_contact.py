@@ -167,3 +167,18 @@ def test_cors_rejects_other_origins(client):
     )
 
     assert "access-control-allow-origin" not in res.headers
+
+
+@pytest.mark.parametrize("path", ["/docs", "/redoc", "/openapi.json"])
+def test_api_docs_are_off_by_default(client, path):
+    assert client.get(path).status_code == 404
+
+
+def test_api_docs_turn_on_only_with_api_docs_1(monkeypatch):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    for value, expected in [("1", 200), ("0", 404), ("true", 404)]:
+        monkeypatch.setenv("API_DOCS", value)
+        app = FastAPI(**server._docs_settings())
+        assert TestClient(app).get("/openapi.json").status_code == expected, value
