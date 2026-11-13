@@ -2,9 +2,13 @@ import { expect, test, type Page } from "@playwright/test";
 import { blockSpline, DESKTOP, openHome, PHONE } from "./helpers";
 
 // Every status indicator, one style (María Sol, 13 Nov): the label white
-// (--crt-title), the dot in --crt-phosphor. The old pink (#F472B6) is gone.
+// (--crt-title); the dot bright, with the glow of Capabilities' lit rail
+// numbers, steady, all the same. The old pink (#F472B6) is gone.
 const TITLE = "rgb(238, 248, 255)"; // --crt-title, dark
-const PHOSPHOR = "rgb(125, 198, 246)"; // --crt-phosphor, dark
+const PHOSPHOR = "rgb(218, 248, 255)"; // the dot's core: --crt-row-value, dark
+// The reference glow (0.878, 0.439), as the browser reports it.
+const GLOW =
+  "rgba(108, 185, 238, 0.88) 0px 0px 6px 0px, rgba(108, 185, 238, 0.44) 0px 0px 14px 0px";
 const PINK = /244,\s*114,\s*182/;
 
 /** Every element whose computed colour, background or shadow is the old pink. */
@@ -20,8 +24,12 @@ const pinkElements = (page: Page) =>
   }, PINK.source);
 
 const dotsAndLabels = async (page: Page) => {
-  for (const dot of await page.locator(".crt-status-dot, .crt-status__dot").all())
+  for (const dot of await page.locator(".crt-status-dot, .crt-status__dot").all()) {
     await expect(dot).toHaveCSS("background-color", PHOSPHOR);
+    await expect(dot).toHaveCSS("box-shadow", GLOW);
+    await expect(dot).toHaveCSS("width", "8px");
+    await expect(dot).toHaveCSS("animation-name", "none"); // steady: no dull pulse
+  }
   for (const label of await page.locator(".crt-status-label, .crt-status").all())
     await expect(label).toHaveCSS("color", TITLE);
 };

@@ -1471,15 +1471,25 @@ textarea:-webkit-autofill {
 .crt-status-label {
   color: var(--crt-title);
 }
+/* The dot: one size, a bright core and the glow of Capabilities' lit rail
+   numbers (Ø01 / Ø02 / Ø03, .crt-rail-btn[aria-pressed]) as the reference,
+   steady (María Sol, 13 Nov: no dull pulse; all the same). */
 .crt-status__dot,
 .crt-status-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--crt-phosphor);
-  box-shadow: 0 0 8px var(--crt-phosphor);
+  background: var(--crt-row-value);
+  box-shadow:
+    0 0 6px rgba(40, 110, 220, 0.5),
+    0 0 10px rgba(40, 110, 220, 0.18);
 }
-.crt-status__dot {
-  width: 6px;
-  height: 6px;
+:root[data-theme="dark"] .crt-status__dot,
+:root[data-theme="dark"] .crt-status-dot {
+  box-shadow:
+    0 0 6px rgba(108, 185, 238, 0.878),
+    0 0 14px rgba(108, 185, 238, 0.439);
 }
 .crt-link {
   color: var(--crt-text);

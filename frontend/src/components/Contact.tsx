@@ -587,7 +587,7 @@ export const Contact = () => {
               <span
                 aria-hidden="true"
                 data-testid="channel-status-dot"
-                className="crt-status-dot h-2 w-2 animate-pulse-dot motion-reduce:animate-none"
+                className="crt-status-dot"
               />
             </div>
             <div aria-hidden="true" className={s.typed}>

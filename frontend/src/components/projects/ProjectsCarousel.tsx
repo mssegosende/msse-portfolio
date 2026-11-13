@@ -116,9 +116,12 @@ export const ProjectsCarousel = () => {
                 <span className="text-[var(--crt-row-value)]">
                   <Num value={p.num} />
                 </span>
-                <span className="crt-status uppercase">
-                  {i === 0 ? "FEATURED" : (p.status ?? "")}
-                </span>
+                {(i === 0 || p.status) && (
+                  <span className="crt-status flex items-center gap-1.5 uppercase">
+                    <span aria-hidden="true" className="crt-status__dot" />
+                    {i === 0 ? "FEATURED" : p.status}
+                  </span>
+                )}
               </div>
               <div className="px-3 pt-3">
                 <GifPlayer

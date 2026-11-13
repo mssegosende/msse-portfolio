@@ -297,7 +297,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         </>,
       )}
       {isMobile ? (
-        <span role="img" aria-label="Status online" className="crt-status-dot mt-1.5 h-2 w-2" />
+        <span role="img" aria-label="Status online" className="crt-status-dot mt-1.5" />
       ) : (
         <div
           className="crt-glow-label crt-status-label absolute flex items-center gap-2.5 font-vt text-[22px] tracking-[0.14em]"
@@ -308,7 +308,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
             zoom: kTitle,
           }}
         >
-          <span aria-hidden="true" className="crt-status-dot h-2 w-2" />
+          <span aria-hidden="true" className="crt-status-dot" />
           <span>STATUS: ONLINE</span>
         </div>
       )}
@@ -544,13 +544,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
                     : "gap-2 text-[20px] tracking-[0.14em]"
                 }`}
               >
-                <span
-                  data-testid="hero-status-dot"
-                  aria-hidden="true"
-                  className={`crt-status-dot animate-pulse-dot motion-reduce:animate-none ${
-                    isMobile ? "h-1.5 w-1.5" : "h-[7px] w-[7px]"
-                  }`}
-                />
+                <span data-testid="hero-status-dot" aria-hidden="true" className="crt-status-dot" />
                 <span data-testid="hero-status">
                   {isMobile ? profile.status : `STATUS: ${profile.status}`}
                 </span>
