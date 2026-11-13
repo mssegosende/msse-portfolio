@@ -52,7 +52,7 @@ export const tourVideos: TourVideo[] = [
   entry("06", "SHIPPED", "Lynx", "Fraud and elder-exploitation detection."),
   entry("07", "SHIPPED", "Marvel Characters", "My first React and TypeScript app."),
   entry("08", "SHIPPED", "Blaze", "An AI co-authoring Markdown editor."),
-  entry("09", "FROM MARCH TO NOW", "Built, not deployed yet", "Work that runs, but is not live."),
+  entry("09", "SHIPPED", "Built, not deployed yet", "Work that runs, but is not live."),
   entry("10", "FROM MARCH TO NOW", "March to June", "What I built in those months."),
   entry("11", "FROM MARCH TO NOW", "July to November", "What I built in those months."),
   entry("12", "THE SERIES", "The series, on the shelf", "The cheat-sheet series."),
