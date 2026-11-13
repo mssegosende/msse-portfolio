@@ -38,7 +38,9 @@ logger = logging.getLogger("contact")
 # onboarding@resend.dev works without a verified domain, but Resend then only
 # delivers to the address the Resend account was created with.
 FROM_ADDRESS = "Portfolio <onboarding@resend.dev>"
-DEFAULT_CORS_ORIGINS = "https://msse-portfolio.vercel.app,http://localhost:3000"
+# Production only. Local dev adds http://localhost:3000 through CORS_ORIGINS in
+# backend/.env, so a production deploy never trusts a local origin.
+DEFAULT_CORS_ORIGINS = "https://msse-portfolio.vercel.app"
 
 
 def _cors_origins() -> list[str]:

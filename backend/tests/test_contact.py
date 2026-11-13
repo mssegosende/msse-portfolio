@@ -213,3 +213,9 @@ def test_unknown_fields_are_422_and_not_echoed(client, sent):
     assert res.json() == {"detail": "Invalid input.", "fields": []}
     assert "is_admin" not in res.text
     assert sent == []
+
+
+def test_cors_default_is_the_production_domain_only(monkeypatch):
+    monkeypatch.delenv("CORS_ORIGINS")
+
+    assert server._cors_origins() == ["https://msse-portfolio.vercel.app"]
