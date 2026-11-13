@@ -5,3 +5,15 @@ updates:
     directory: /
     schedule:
       interval: monthly
+
+  # The site (pnpm; Dependabot's npm ecosystem reads pnpm-lock.yaml).
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: monthly
+
+  # The contact service (requirements.txt and requirements-dev.txt).
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: monthly

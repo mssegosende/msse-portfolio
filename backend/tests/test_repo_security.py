@@ -100,3 +100,12 @@ def test_ci_token_is_read_only_by_default():
     assert re.search(r"^permissions:\n  contents: read\n", top_level, re.M)
     # The one job that needs more asks for it itself.
     assert "id-token: write" in ci.split("\njobs:", 1)[1]
+
+
+def test_dependabot_watches_actions_npm_and_pip():
+    config = (ROOT / ".github/dependabot.yml").read_text("utf8")
+    watched = re.findall(r"package-ecosystem: (\S+)\n\s+directory: (\S+)", config)
+
+    assert ("github-actions", "/") in watched
+    assert ("npm", "/frontend") in watched
+    assert ("pip", "/backend") in watched
