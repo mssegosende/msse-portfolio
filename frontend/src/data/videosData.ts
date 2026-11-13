@@ -8,7 +8,7 @@ import { INTRO_VIDEO } from "./introVideo";
  * <id>.vtt when there are captions), with its real length.
  * The projects' card recordings stay in Projects (María Sol); here each
  * project is a narrated scene 4 video, added as it is recorded, never a
- * placeholder with its name. TODO(content): 04-08 still show the intro
+ * placeholder with its name. TODO(content): 10-13 still show the intro
  * placeholder until her clips for them exist.
  */
 export type VideoGroup = "INTRO" | "SHIPPED" | "FROM MARCH TO NOW" | "THE SERIES";
@@ -86,11 +86,18 @@ export const tourVideos: TourVideo[] = [
   entry("04", "SHIPPED", "Alphecca", "An LLM selection and cost calculator.", { duration: 47 }),
   entry("05", "SHIPPED", "Ethos", "A clinic booking app, full stack.", { duration: 55 }),
   entry("06", "SHIPPED", "Lynx", "Fraud and elder-exploitation detection.", { duration: 46 }),
-  entry("07", "SHIPPED", "Built, not deployed yet", "Work that runs, but is not live."),
-  entry("08", "FROM MARCH TO NOW", "March to June", "What I built in those months."),
-  entry("09", "FROM MARCH TO NOW", "July to November", "What I built in those months."),
-  entry("10", "THE SERIES", "The series, on the shelf", "The cheat-sheet series."),
-  entry("11", "THE SERIES", "Thank you", "Thanks for watching."),
+  entry("07", "SHIPPED", "Marvel Characters", "My first React and TypeScript app.", {
+    duration: 57,
+  }),
+  entry("08", "SHIPPED", "Blaze", "An AI co-authoring Markdown editor.", { duration: 40 }),
+  // clip_scene4_7_ns: what is built but not shipped yet.
+  entry("09", "SHIPPED", "Built, not deployed yet", "Work that runs, but is not live.", {
+    duration: 58,
+  }),
+  entry("10", "FROM MARCH TO NOW", "March to June", "What I built in those months."),
+  entry("11", "FROM MARCH TO NOW", "July to November", "What I built in those months."),
+  entry("12", "THE SERIES", "The series, on the shelf", "The cheat-sheet series."),
+  entry("13", "THE SERIES", "Thank you", "Thanks for watching."),
 ];
 
 /** "Ø05"-style number (the slashed zero, as the rest of the site). */
