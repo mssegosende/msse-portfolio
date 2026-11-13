@@ -291,6 +291,11 @@ const oneRun = async (browser, { phone, dark }) => {
     await page.waitForTimeout(2500);
     s["projects-hover"] = await measure(page, cdp, { ms: 8000 });
   }
+  // Scene 5 (Let's Talk), arrived: the page's end, its typing and traces live.
+  await page.mouse.move(5, 5);
+  await scrollTo(page, await page.evaluate(() => document.documentElement.scrollHeight));
+  await page.waitForTimeout(4000);
+  s["contact"] = await measure(page, cdp, { ms: 10_000 });
   await context.close();
   return { revealMs, enteredMs, sceneMs, fcpMs, errors, scenarios: s };
 };
