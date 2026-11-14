@@ -61,7 +61,7 @@ export const HeroWordmark = ({
     className={`hero-wordmark--depth pointer-events-none absolute inset-x-0 overflow-hidden ${
       // Phones: behind the head, which sits at 20% of the height
       // (choreography's PHONE_CROWN_AT): 186px at the old 183px crown.
-      isMobile ? "hero-wordmark--depth-phone top-[calc(20vh+3px)]" : "top-[16.67%]"
+      isMobile ? "hero-wordmark--depth-phone top-[calc(var(--vh)*20+3px)]" : "top-[16.67%]"
     }`}
   >
     <div className={`hero-title-in hero-wordmark ${isMobile ? "hero-wordmark--phone" : ""}`}>
@@ -79,8 +79,9 @@ export const HeroWordmark = ({
 
 // Desktop crosshair around the head (Hero.dc.html at 1440x900: box 525,28
 // 360x372). The camera keeps its vertical field of view, so the head scales
-// with the window height and stays centred: the box is in vh from the centre.
-const VH = (px: number) => `${(px / 900) * 100}vh`;
+// with the window height and stays centred: the box is in vh from the centre
+// (--vh: index.css; the reference height in capture mode).
+const VH = (px: number) => `calc(var(--vh) * ${(px / 900) * 100})`;
 
 /**
  * [core.head] crosshair around the robot's head, with its tags. The timeline
@@ -180,7 +181,14 @@ export const SystemCheck = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; sca
   // Hero.dc.html: 64 from the left, 340 wide (~24vw), scaled with the window;
   // 104px from the bottom, clear of the floating MSSE:// signature under it
   // (María Sol, pre-launch: they collided at the design's 56).
-  <div ref={ref} data-testid="hero-system-check" className="absolute bottom-[104px] left-[4.44vw]">
+  // Its 104px from the bottom shrink with the HUD on a short window (never
+  // grow: the signature under it keeps its size).
+  <div
+    ref={ref}
+    data-testid="hero-system-check"
+    className="absolute left-[4.44vw]"
+    style={{ bottom: 104 * Math.min(1, scale) }}
+  >
     {/* The load fade on the whole window: the frame never shows alone. */}
     <div
       className="hero-bar-in w-[340px] border border-crt-line bg-[var(--crt-panel)] px-4 py-3.5"
@@ -210,7 +218,7 @@ export const SystemCheck = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; sca
  * 590px less the button), raised on a short screen so the lines and SCROLL
  * stay above the dock and the browser's bars (svh: the visible height).
  */
-export const PHONE_HEADLINE_TOP = "min(528px, calc(100svh - 240px))";
+export const PHONE_HEADLINE_TOP = "min(528px, calc(var(--svh) * 100 - 240px))";
 
 /** Ø1.3: BUILD THE FUTURE / ONE SYSTEM AT A TIME, top-right (phones: centred, low). */
 export const HeroHeadline = ({
@@ -231,7 +239,7 @@ export const HeroHeadline = ({
     className={`hero-headline absolute font-inter font-extralight uppercase tracking-[0.3em] ${
       isMobile
         ? "inset-x-0 text-center text-[15px] leading-[1.7]"
-        : "right-[4.44vw] top-[6.4vh] text-right text-[22px] leading-[1.6]"
+        : "right-[4.44vw] top-[calc(var(--vh)*6.4)] text-right text-[22px] leading-[1.6]"
     }`}
     style={isMobile ? { top: PHONE_HEADLINE_TOP } : undefined}
   >
@@ -279,7 +287,7 @@ const Scroll = ({ ref, isMobile }: { ref?: Ref<HTMLDivElement>; isMobile: boolea
       data-testid="scroll-cue"
       className={`pointer-events-none absolute left-1/2 crt-cue flex w-20 flex-col items-center font-vt uppercase tracking-[0.2em] ${
         isMobile
-          ? "bottom-[calc(100vh-100svh+env(safe-area-inset-bottom,0px)+64px)] -ml-10 gap-1.5 text-[17px]"
+          ? "bottom-[calc(var(--vh)*100-var(--svh)*100+env(safe-area-inset-bottom,0px)+64px)] -ml-10 gap-1.5 text-[17px]"
           : "bottom-[30px] -ml-10 gap-2 text-[20px]"
       }`}
     >

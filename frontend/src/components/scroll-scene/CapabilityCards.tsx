@@ -16,7 +16,7 @@ interface CapabilityCardsProps {
    */
   stacked?: boolean;
   /** Desktop: the rail's and the card's scale (ScrollScene's fluid frame). */
-  scale?: { rail: number; card: number; cardTop?: number };
+  scale?: { rail: number; card: number; cardTop?: number; railTop?: number };
   /** Desktop: the card's height at scale 1, px, as it changes (the body grows it). */
   onCardHeight?: (h: number) => void;
 }
@@ -160,7 +160,13 @@ export const CapabilityCards = ({
       className="pointer-events-none absolute inset-0"
     >
       {/* Each at its place in the 1440 x 900 frame, scaled (ScrollScene). */}
-      <div className="pointer-events-auto absolute" style={at(150, 776)}>
+      <div
+        className="pointer-events-auto absolute"
+        style={{
+          ...at(150, 776),
+          ...(scale.railTop === undefined ? {} : { top: scale.railTop }),
+        }}
+      >
         <div className="w-[548px]" style={{ zoom: scale.rail }}>
           <Rail active={step} onPick={onPick} isMobile={false} />
         </div>

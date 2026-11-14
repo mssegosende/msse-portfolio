@@ -17,6 +17,7 @@ const CROSS_TOP = 24;
 const CROSS_EASE = 0.2;
 import { noteRenderedFrame, prepareToRun } from "../../lib/spline/quality";
 import { REDUCED_MOTION_QUERY } from "../../lib/motion";
+import { layoutViewport } from "../../lib/capture";
 import { scenesIdle } from "../../lib/sceneFocus";
 import { whoosh } from "../../lib/sound";
 import type { SplineApp, ViewTransform } from "../../lib/spline/types";
@@ -140,6 +141,24 @@ interface HeroTimelineOptions {
  * Scene 2: the giant head (layer 2) under the CAPABILITIES title, one card per
  * step (Ø2.1-Ø2.3); after that the dock appears and the cards rotate.
  */
+// Turning still (capture mode, or reduced motion switched on with the page
+// open) restacks the hero: React moves scene 2 out of the pinned section. The
+// pins wrap the hero and the sections in GSAP's spacers, and React's DOM moves
+// next to them run before this hook's cleanup, so they threw ("insertBefore:
+// not a child") and the page went blank. React can see the still mode before
+// any media query event (a resize re-renders and reads the query live), so the
+// pins come down during the render that stacks the hero (unpinForStill:
+// idempotent, a no-op once they are down); the hooks rebuild them when the
+// still mode ends.
+const unpinBeforeStill = new Set<() => void>();
+const unpinForStill = () => {
+  unpinBeforeStill.forEach((unpin) => unpin());
+  unpinBeforeStill.clear();
+  // The sections' crossfade pins too (useSectionDissolve): scene 2 goes in
+  // before the section after the hero, which sits in a spacer.
+  ScrollTrigger.getAll().forEach((st) => st.pin && st.kill(true));
+};
+
 export const useHeroTimeline = ({
   isMobile,
   stacked,
@@ -150,6 +169,8 @@ export const useHeroTimeline = ({
   els,
   scenes,
 }: HeroTimelineOptions) => {
+  // Stacked this render: the pins come down before React commits it.
+  if (stacked) unpinForStill();
   // A phone theme reload comes from the dock, so the sequence was already seen:
   // start with the dock shown.
   const [journeyDone, setJourneyDone] = useState(pendingJourneyDone);
@@ -231,9 +252,10 @@ export const useHeroTimeline = ({
     const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
     // Phones frame against the section (the canvas), which is 100vh: on iOS the
     // large viewport, taller than innerHeight while the browser bars show.
+    // Capture mode (lib/capture): the reference frame, not the stretched window.
     const viewport = {
       width: window.innerWidth || 2000,
-      height: (isMobile ? sectionRef.current?.clientHeight : 0) || window.innerHeight || 900,
+      height: (isMobile ? sectionRef.current?.clientHeight : 0) || layoutViewport().height || 900,
     };
     const vw = vwOf(viewport.width);
     const { startScale, startY, heroDx, altScale, altY } = heroFraming(isMobile, reduce, viewport);
@@ -315,6 +337,21 @@ export const useHeroTimeline = ({
       giantNow = frameGiant();
     };
     window.addEventListener("resize", reframe2);
+    // Scene 1's framing follows the window too (desktop; phones frame against
+    // their section and keep their load framing): a docked DevTools or any
+    // resize keeps the robot in proportion (heroFraming's fit).
+    const reframe1 = () => {
+      if (isMobile) return;
+      const v = layoutViewport();
+      const f = heroFraming(false, reduce, v);
+      heroView.scale = f.startScale;
+      heroView.x = vwOf(v.width)(f.heroDx);
+      heroView.y = f.startY;
+      heroAltView.scale = f.altScale;
+      heroAltView.x = vwOf(v.width)((f.heroDx * f.altScale) / f.startScale);
+      heroAltView.y = f.altY;
+    };
+    window.addEventListener("resize", reframe1);
     const title2Size = new ResizeObserver(reframe2);
     if (title2Ref.current) title2Size.observe(title2Ref.current);
     const updateScene2View = () => {
@@ -806,38 +843,124 @@ export const useHeroTimeline = ({
       };
 
       // Desktop: a window resize keeps the visitor at the same point of the
-      // sequence (pinPointToKeep). Only the refresh that follows a resize, and
-      // from the live scroll position: the visitor's own scroll always wins.
-      // Phones are left as they were.
+      // sequence (pinPointToKeep). Only the refreshes that follow a resize;
+      // the visitor's own scroll before it is the point kept. Phones are left
+      // as they were.
       const st = tl.scrollTrigger;
       if (st && !isMobile) {
-        let resized = false;
+        // The point is read from the last scroll before the resize: crossing
+        // 1024px moves the scroll before any resize event or refresh runs
+        // (the sections' crossfades come off or on with the CSS), so the
+        // live position is already another point (DevTools docked at the side
+        // lost the scene). Every refresh in the 1.5s after the last resize
+        // event puts it back: the resize's own, and the crossfades' that
+        // follow it.
+        const HOLD_MS = 1500;
+        let resizedAt = -Infinity;
+        let refreshedAt = 0;
+        let refreshTimer = 0;
+        let settleTimer = 0;
+        // Past the pin the sections' tops move with its length, so there the
+        // point is the share of the section under the window's top.
+        const SECTIONS = ["projects", "about", "contact"];
+        // A section pinned for its crossfade moves with the scroll inside its
+        // spacer: the spacer is its place in the page.
+        const box = (id: string) => {
+          const el = document.getElementById(id);
+          const parent = el?.parentElement;
+          return parent?.classList.contains("pin-spacer") ? parent : el;
+        };
+        const sectionAt = (y: number) => {
+          for (const id of SECTIONS) {
+            const el = box(id);
+            if (!el) continue;
+            const top = el.getBoundingClientRect().top + window.scrollY;
+            if (y >= top && y < top + el.offsetHeight)
+              return { id, share: (y - top) / el.offsetHeight };
+          }
+          return null;
+        };
+        const read = () => ({
+          y: window.scrollY,
+          start: st.start,
+          end: st.end,
+          section: window.scrollY >= st.end - 1 ? sectionAt(window.scrollY) : null,
+        });
+        let before = read();
         let keep: number | null = null;
+        let keepSection: { id: string; share: number } | null = null;
+        let readFrame = 0;
+        const holding = () => performance.now() - resizedAt < HOLD_MS;
+        const onScroll = () => {
+          if (holding() || readFrame) return;
+          readFrame = requestAnimationFrame(() => {
+            readFrame = 0;
+            if (!holding()) before = read();
+          });
+        };
         const onResize = () => {
-          resized = true;
+          if (!holding()) {
+            cancelAnimationFrame(readFrame);
+            readFrame = 0;
+            keep = pinPointToKeep({
+              resized: true,
+              scrollY: before.y,
+              start: before.start,
+              end: before.end,
+            });
+            keepSection = before.section;
+          }
+          resizedAt = performance.now();
+          // ScrollTrigger refreshes itself 0.2s of GSAP time after a resize;
+          // on slow frames (the Spline scenes mid-resize) GSAP's lag smoothing
+          // stretches that to seconds, with the pin still at the old height. A
+          // wall-clock refresh 250ms after the last resize event backs it up,
+          // only if it hasn't refreshed since.
+          clearTimeout(refreshTimer);
+          refreshTimer = window.setTimeout(() => {
+            if (refreshedAt < resizedAt) ScrollTrigger.refresh();
+          }, 250);
+          // Once more when it has settled: the sections below the hero change
+          // height in React renders after the last refresh (About's crossfade
+          // share, the crossfades coming off or on).
+          clearTimeout(settleTimer);
+          settleTimer = window.setTimeout(() => {
+            if (keep !== null || keepSection) restore();
+          }, HOLD_MS - 300);
         };
-        const onRefreshInit = () => {
-          // Before the revert: the pin's start and end are still the ones the
-          // current scroll position was made against.
-          keep = pinPointToKeep({ resized, scrollY: window.scrollY, start: st.start, end: st.end });
-          resized = false;
-        };
-        const onRefresh = () => {
-          if (keep === null) return;
-          const y = Math.round(st.start + keep * (st.end - st.start));
-          keep = null;
+        // Back to the kept point: the pin's share, or past it the section's.
+        const restore = () => {
+          let y: number;
+          if (keep !== null) y = Math.round(st.start + keep * (st.end - st.start));
+          else {
+            const el = keepSection ? box(keepSection.id) : null;
+            if (!el || !keepSection) return;
+            const top = el.getBoundingClientRect().top + window.scrollY;
+            y = Math.round(top + keepSection.share * el.offsetHeight);
+          }
           if (Math.abs(window.scrollY - y) < 1) return;
           const lenis = getLenis();
           if (lenis) lenis.scrollTo(y, { immediate: true, force: true });
           else window.scrollTo(0, y);
           ScrollTrigger.update();
         };
+        const onRefresh = () => {
+          refreshedAt = performance.now();
+          if (!holding() || (keep === null && !keepSection)) {
+            before = read();
+            return;
+          }
+          restore();
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
         window.addEventListener("resize", onResize);
-        ScrollTrigger.addEventListener("refreshInit", onRefreshInit);
         ScrollTrigger.addEventListener("refresh", onRefresh);
         stopKeepProgress = () => {
+          clearTimeout(refreshTimer);
+          clearTimeout(settleTimer);
+          cancelAnimationFrame(readFrame);
+          window.removeEventListener("scroll", onScroll);
           window.removeEventListener("resize", onResize);
-          ScrollTrigger.removeEventListener("refreshInit", onRefreshInit);
           ScrollTrigger.removeEventListener("refresh", onRefresh);
         };
       }
@@ -897,8 +1020,11 @@ export const useHeroTimeline = ({
     const onScroll = () => ScrollTrigger.update();
     if (lenis) lenis.on("scroll", onScroll);
     const refresh = setTimeout(() => ScrollTrigger.refresh(), 900);
+    const unpin = () => ctx.revert();
+    if (!stacked) unpinBeforeStill.add(unpin);
 
     return () => {
+      unpinBeforeStill.delete(unpin);
       restoreScrollRef.current = window.scrollY;
       if (restoreRaf) cancelAnimationFrame(restoreRaf);
       // Stop writing rotations into apps being torn down: these refs outlive the
@@ -910,6 +1036,7 @@ export const useHeroTimeline = ({
       clearTimeout(refresh);
       removeMouse?.();
       window.removeEventListener("resize", reframe2);
+      window.removeEventListener("resize", reframe1);
       title2Size.disconnect();
       heroVisibility.disconnect();
       stopStacked();

@@ -344,7 +344,7 @@ export const Contact = () => {
   const desktop = useMediaQuery("(min-width: 1024px)");
   const { kw, height } = useFrame();
   const zoom = clampScale(Math.min(kw, height / CONTACT_H));
-  const stageStyle = desktop ? { zoom, minHeight: `calc(100vh / ${zoom})` } : undefined;
+  const stageStyle = desktop ? { zoom, minHeight: `calc(var(--vh) * 100 / ${zoom})` } : undefined;
 
   // Ø5.1 text, Ø5.2 the card, Ø5.3 the footer: one after another on arrival.
   const rise = (i: number) => ({

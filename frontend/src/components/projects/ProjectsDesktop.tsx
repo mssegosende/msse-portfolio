@@ -19,6 +19,7 @@ import { FitName, ScrollText } from "./ProjectCard";
 import { ProjectMedia } from "./ProjectMedia";
 import { useCrossfade } from "@/hooks/useSectionDissolve";
 import { useOwnsCenter } from "@/hooks/useOwnsCenter";
+import { REDUCED_MOTION_QUERY } from "@/lib/motion";
 
 const N = PROJECTS.length;
 /** The head and the featured card at zoom 1, px (measured at 1440). */
@@ -234,7 +235,7 @@ const TerminalTile = () => (
  * picking a card sends that project up, and the one it replaces joins the grid.
  */
 export const ProjectsDesktop = () => {
-  const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const reduced = useMediaQuery(REDUCED_MOTION_QUERY);
   const sectionRef = useRef<HTMLElement>(null);
   const wordShown = useOwnsCenter(sectionRef);
   useProjectsInView(sectionRef);

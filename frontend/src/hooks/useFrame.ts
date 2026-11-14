@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { layoutViewport } from "@/lib/capture";
 
 /** The designs' frame (design/crt/.../*.dc.html, desktop). */
 export const FRAME = { width: 1440, height: 900 };
@@ -11,9 +12,9 @@ export interface Frame {
   kh: number;
 }
 
+// The window, or the reference frame in capture mode (lib/capture).
 const read = (): Frame => {
-  const width = window.innerWidth;
-  const height = window.innerHeight;
+  const { width, height } = layoutViewport();
   return { width, height, kw: width / FRAME.width, kh: height / FRAME.height };
 };
 

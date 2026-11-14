@@ -4,6 +4,7 @@ import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { DataRow } from "../crt/CrtPieces";
 import { MORPH_MS, smoothstep, TICK_MS, wavePath, type Shape } from "./ascii";
 import { AsciiObject } from "./AsciiObject";
+import { REDUCED_MOTION_QUERY } from "@/lib/motion";
 
 // Option A "Dossier" (design/crt/msse-crt-redesign/design-source/Main.dc.html
 // and Mobile.dc.html): a frame with nodes, SUBSYSTEM header, the boxed
@@ -33,7 +34,7 @@ let lastScopeShape: Shape = 0;
  * the last card's, and the frame counter (still with reduced motion).
  */
 const Scope = ({ step, part }: { step: Shape; part: string }) => {
-  const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const reduced = useMediaQuery(REDUCED_MOTION_QUERY);
   const pathRef = useRef<SVGPathElement>(null);
   const frameRef = useRef<HTMLSpanElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -116,7 +117,7 @@ export const CapabilityCard = ({ card, isMobile }: { card: Card; isMobile: boole
   const step = (Number(card.num) - 1) as Shape;
   const num = card.num.padStart(2, "0");
   const nodes = isMobile ? NODES_PHONE : NODES_DESKTOP;
-  const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const reduced = useMediaQuery(REDUCED_MOTION_QUERY);
   return (
     <article
       data-testid={`capability-card-${card.num}`}

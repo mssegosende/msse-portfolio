@@ -3,11 +3,11 @@
  * null to leave the scroll alone.
  *
  * The pin's length is a share of the viewport height, so after a window resize
- * the same scroll px is another beat of the sequence: the refresh that follows
- * a resize keeps the visitor's point instead. Any other refresh (load, the
- * timer after load, fonts, a restore) never moves the scroll, and the point is
- * read from the live scroll position, not from ScrollTrigger's last update: a
- * scroll the visitor made just before the refresh is the one kept.
+ * the same scroll px is another beat of the sequence: the refreshes that
+ * follow a resize keep the visitor's point instead. Any other refresh (load,
+ * the timer after load, fonts, a restore) never moves the scroll. The point is
+ * read from the last scroll before the resize (useHeroTimeline), since a
+ * window crossing 1024px moves the scroll before the resize event fires.
  */
 export const pinPointToKeep = ({
   resized,
@@ -15,11 +15,11 @@ export const pinPointToKeep = ({
   start,
   end,
 }: {
-  /** A window resize happened since the last refresh. */
+  /** A window resize happened (the caller holds the point while it settles). */
   resized: boolean;
-  /** window.scrollY when the refresh starts (refreshInit, before the revert). */
+  /** window.scrollY at the last scroll before the resize. */
   scrollY: number;
-  /** The pin's start and end before the refresh, px. */
+  /** The pin's start and end at that scroll, px. */
   start: number;
   end: number;
 }): number | null => {

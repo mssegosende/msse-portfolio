@@ -41,6 +41,26 @@ describe("heroFraming", () => {
   });
 });
 
+describe("heroFraming on a docked DevTools", () => {
+  const frame = { width: 1440, height: 900 };
+  it("keeps the designed size at 16:10 and on wider windows (short, DevTools at the bottom)", () => {
+    const base = heroFraming(false, false, frame).startScale;
+    expect(heroFraming(false, false, { width: 1440, height: 500 }).startScale).toBe(base);
+    expect(heroFraming(false, false, { width: 1920, height: 1080 }).startScale).toBe(base);
+  });
+
+  it("scales the robot down on a window narrower than 16:10 (DevTools at the side), keeping its share of the width", () => {
+    const base = heroFraming(false, false, frame).startScale;
+    const side = heroFraming(false, false, { width: 900, height: 900 });
+    expect(side.startScale).toBeCloseTo(base * (900 / 900 / 1.6), 5);
+    // The black robot scales with it.
+    expect(side.altScale / side.startScale).toBeCloseTo(
+      heroFraming(false, false, frame).altScale / base,
+      5,
+    );
+  });
+});
+
 describe("giantHeadFraming", () => {
   it("puts the desktop head right of centre, by the same share at any height", () => {
     const a = giantHeadFraming(false, { width: 1440, height: 900 });

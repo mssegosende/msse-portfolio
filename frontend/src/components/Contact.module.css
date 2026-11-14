@@ -658,7 +658,10 @@ textarea.input {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce),
+  print,
+  screen and (max-aspect-ratio: 1/3),
+  screen and (min-width: 1024px) and (max-aspect-ratio: 2/5) {
   .reveal {
     transition: none;
     transform: none;

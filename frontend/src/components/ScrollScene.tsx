@@ -18,6 +18,8 @@ import { DOSSIER_H, DOSSIER_W } from "./scroll-scene/CapabilityCards";
 
 // Room kept under scene 2's card for the dock, px.
 const DOCK_ROOM = 100;
+/** The dock's own band at the bottom of the window, px. */
+const DOCK_CLEAR = 78;
 import { AsciiObject } from "./scroll-scene/AsciiObject";
 import type { Shape } from "./scroll-scene/ascii";
 import { goToSection } from "../hooks/useActiveSection";
@@ -35,12 +37,16 @@ import { useCalloutsAboveDock } from "./scroll-scene/useCalloutsAboveDock";
 import { useHeroScenes } from "./scroll-scene/useHeroScenes";
 import { useHeroElements, useHeroTimeline } from "./scroll-scene/useHeroTimeline";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { CAPTURE_QUERY, layoutViewport } from "../lib/capture";
 
 patchSplineRuntime(Application);
 
-// One screen of the hero (its section's h-screen min-h-[640px]).
-const PANE_H = "h-[max(100vh,640px)]";
-const PANE_MIN_H = "min-h-[max(100vh,640px)]";
+// One screen of the hero (its section's height): the viewport's, in --vh
+// (index.css: 1vh, or the reference height in capture mode, lib/capture),
+// down to 460px, so a short window (DevTools docked at the bottom) still
+// shows the whole screen, nothing cut below it.
+const PANE_H = "h-[max(calc(var(--vh)*100),460px)]";
+const PANE_MIN_H = "min-h-[max(calc(var(--vh)*100),460px)]";
 
 // Longest wait for the robot before the wordmark and top bar fade in anyway, ms.
 const HERO_IN_CAP = 6000;
@@ -118,7 +124,9 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     if (robotSettled) bootDone("robot");
   }, [robotSettled]);
   const entered = useEntered();
-  const heroIn = (revealed || capped) && entered;
+  // Capture mode (a full-page shot or a print): no loading screen to enter by.
+  const capture = useMediaQuery(CAPTURE_QUERY);
+  const heroIn = (revealed || capped) && (entered || capture);
 
   // Hidden desktop mounts also get visibility:hidden, which takes them out of
   // compositing and hit-testing: one live robot per layer.
@@ -151,10 +159,8 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
   // Scene 2 desktop is the 1440 x 900 design scaled to the window (A9's one
   // factor, scene2Scale). The title no longer dodges a giant head: the robot
   // has left (CRT redesign), so the old title fit has nothing to fit around.
-  const [viewport, setViewport] = useState(() => ({
-    width: window.innerWidth,
-    height: window.innerHeight,
-  }));
+  // The window, or the reference frame in capture mode (lib/capture).
+  const [viewport, setViewport] = useState(layoutViewport);
   useEffect(() => {
     if (isMobile) return undefined;
     // One update per frame: a drag fires resize far more often.
@@ -163,7 +169,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       if (frame) return;
       frame = requestAnimationFrame(() => {
         frame = 0;
-        setViewport({ width: window.innerWidth, height: window.innerHeight });
+        setViewport(layoutViewport());
       });
     };
     window.addEventListener("resize", onResize);
@@ -185,7 +191,9 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
   // Hero.dc.html's sizes at the window's width, capped by its height, so they
   // grow on big screens and shrink on small ones without reaching the head
   // or the dock (María Sol, 12 Nov).
-  const kHud = clampScale(Math.min(kw, 1.15 * kh), 0.75, 1.9);
+  // Down to 0.55, so a short window (DevTools docked at the bottom) keeps the
+  // tour tile and SYSTEM CHECK apart and on screen.
+  const kHud = clampScale(Math.min(kw, 1.15 * kh), 0.55, 1.9);
   // The card's height follows its body (never clipped): measured, then fitted
   // (María Sol, 13 Nov) between WHAT THE CORE RUNS ON (its block at y 52:
   // the label and the title, ~72px at scale 1, then a gap) and the bottom of
@@ -193,10 +201,17 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
   // and type scaled together.
   const [dossierH, setDossierH] = useState(DOSSIER_H);
   const cardTop = 52 * kh + 94 * kTitle;
-  const cardBottom = Math.min(776 * kh + 46 * kObject, viewport.height - DOCK_ROOM * 0.75);
+  // The rail sits at y 776, lifted clear of the dock on a short window
+  // (DevTools docked at the bottom: it went under the dock). The dock takes
+  // the bottom 78px (16px off the edge, ~60px tall): at 1440 x 900 the rail
+  // ends right above it, as designed.
+  const railTop = Math.min(776 * kh, viewport.height - DOCK_CLEAR - 46 * kObject);
+  const cardBottom = Math.min(railTop + 46 * kObject, viewport.height - DOCK_ROOM * 0.75);
   const kCard = clampScale(
     Math.min(kw, (cardBottom - cardTop) / dossierH, (viewport.width - 64 - 800 * kw) / DOSSIER_W),
-    0.5,
+    // Down to 0.45: at 1440 x 500 (DevTools docked at the bottom) 0.5 still
+    // reached under the dock.
+    0.45,
   );
   /** A block of the frame at (x, y), scaled by k from its top-left corner. */
   const block = (x: number, y: number, k: number, children: ReactNode, className = "") => (
@@ -349,7 +364,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
       onPick={pickStep}
       isMobile={isMobile}
       stacked={stacked}
-      scale={{ rail: kObject, card: kCard, cardTop }}
+      scale={{ rail: kObject, card: kCard, cardTop, railTop }}
       onCardHeight={setDossierH}
     />
   );
@@ -381,7 +396,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
         data-theme="dark"
         data-hero-in={heroIn}
         data-stacked={stacked}
-        className="relative h-screen min-h-[640px] w-full overflow-hidden"
+        className={`relative w-full overflow-hidden ${PANE_H}`}
       >
         <HeroHeading />
         {!stacked && scene2Ground}
@@ -485,7 +500,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
                     src="/robot-alpha.png"
                     alt="MSG·01 humanoid unit — static render"
                     data-testid="hero-robot-fallback"
-                    className="relative h-[80vh] object-contain md:h-[95vh]"
+                    className="relative h-[calc(var(--vh)*80)] object-contain md:h-[calc(var(--vh)*95)]"
                   />
                 </div>
               </div>
@@ -521,7 +536,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
               the same top, a box as tall as that line (22px at 1.6), the
               text centred in it, at the same scale. */}
           <div
-            className={`absolute ${isMobile ? "inset-x-5 top-[22px]" : "left-[4.44vw] top-[6.4vh]"}`}
+            className={`absolute ${isMobile ? "inset-x-5 top-[22px]" : "left-[4.44vw] top-[calc(var(--vh)*6.4)]"}`}
           >
             <div
               className={`hero-bar-in flex items-center ${

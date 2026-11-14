@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { pendingThemeReload } from "@/lib/themeReload";
+import { REDUCED_MOTION_QUERY } from "@/lib/motion";
+import { CAPTURE_QUERY } from "@/lib/capture";
 
 // The page's Lenis instance, while App is mounted.
 let instance: Lenis | null = null;
@@ -19,7 +21,14 @@ export const useLenis = (): void => {
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
+    // Capture mode (a full-page shot or a print, lib/capture): paused, so the
+    // still page is not scrolled under the shot; back on when it ends.
+    const capture = window.matchMedia(CAPTURE_QUERY);
+    const follow = () => (capture.matches ? lenis.stop() : lenis.start());
+    follow();
+    capture.addEventListener("change", follow);
     return () => {
+      capture.removeEventListener("change", follow);
       cancelAnimationFrame(raf);
       lenis.destroy();
       instance = null;
@@ -51,7 +60,7 @@ export const scrollToTop = (): void => {
 
 /** Smooth scroll to a document offset (instant with reduced motion). */
 export const scrollToY = (y: number): void => {
-  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+  const reduce = window.matchMedia?.(REDUCED_MOTION_QUERY).matches ?? false;
   if (instance) instance.scrollTo(y, reduce ? { immediate: true } : { duration: 1.4 });
   else window.scrollTo({ top: y, behavior: reduce ? "instant" : "smooth" });
 };

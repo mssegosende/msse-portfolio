@@ -3,6 +3,7 @@ import { tourVideos } from "../../data/videosData";
 import { openGallery } from "../../lib/gallery";
 import { bootDone } from "../../lib/boot";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
+import { REDUCED_MOTION_QUERY } from "@/lib/motion";
 
 // How many videos the README tour holds (the gallery's channels).
 const VIDEO_COUNT = tourVideos.length;
@@ -28,7 +29,7 @@ export const IntroTile = ({ ref, scale = 1 }: { ref?: Ref<HTMLDivElement>; scale
     img.onload = img.onerror = () => bootDone("intro");
     img.src = THUMB.poster;
   }, []);
-  const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const reduced = useMediaQuery(REDUCED_MOTION_QUERY);
   // The tile comes in with the first scroll step, so its clip waits for the
   // first scroll (or a hover/focus on it): nothing downloads at load.
   const [armed, setArmed] = useState(() => window.scrollY > 0);

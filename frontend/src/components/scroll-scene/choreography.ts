@@ -88,7 +88,12 @@ export const heroFraming = (isMobile: boolean, _reduce: boolean, { width, height
   // CRT redesign (Hero.dc.html): pulled back so the head shows whole, the
   // shoulders ~80% of the width; the head high in the frame (María Sol,
   // 12 Nov), the crown ~1.5% from the top.
-  const HERO_SCALE = 1.3;
+  // The camera's vertical field of view is fixed, so the robot already
+  // follows the window's height; a window narrower than the 1440 x 900
+  // frame's 16:10 (DevTools docked at the side) scales it down by that much
+  // more, so it keeps its share of the width. Never up.
+  const fit = Math.min(1, Math.max(0.45, width / height / (1440 / 900)));
+  const HERO_SCALE = 1.3 * fit;
   const HERO_CROWN_NATIVE = 0.0456;
   const HERO_CROWN_TARGET = 0.015;
   const yAt = (scale: number) =>

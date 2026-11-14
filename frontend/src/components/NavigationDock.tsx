@@ -23,6 +23,7 @@ export const NavigationDock = ({ visible }: { visible: boolean }) => {
     // inside is hidden (useCalloutsAboveDock).
     <div
       data-dock-slot=""
+      data-capture-hide
       className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-3"
     >
       <motion.nav

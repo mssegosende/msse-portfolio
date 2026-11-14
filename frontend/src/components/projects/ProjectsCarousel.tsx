@@ -10,6 +10,7 @@ import { GifPlayer } from "./GifPlayer";
 import { FitName, ScrollText } from "./ProjectCard";
 import { ProjectLinks, ProjectsHead } from "./ProjectsDesktop";
 import s from "./projects.module.css";
+import { REDUCED_MOTION_QUERY } from "@/lib/motion";
 
 const GAP = 14;
 const EDGE = 20; // the track's left padding (scroll-padding)
@@ -27,7 +28,7 @@ const NODES = [
  * when it ends, the carousel moves on; with reduced motion only on swipe.
  */
 export const ProjectsCarousel = () => {
-  const reduced = useMediaQuery("(prefers-reduced-motion: reduce)");
+  const reduced = useMediaQuery(REDUCED_MOTION_QUERY);
   const dark = useTheme().theme === "dark";
   const sectionRef = useRef<HTMLElement>(null);
   const wordShown = useOwnsCenter(sectionRef);

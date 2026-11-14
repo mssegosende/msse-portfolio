@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { REDUCED_MOTION_QUERY } from "@/lib/motion";
 
 // Scene 5's grid, recoloured to the CRT phosphor (SPEC §7; laid as a
 // perspective floor by its container in Contact.module.css). Originally
@@ -23,7 +24,7 @@ export const GridField = () => {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
     const still =
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      window.matchMedia(REDUCED_MOTION_QUERY).matches ||
       window.matchMedia("(pointer: coarse)").matches;
 
     let w = 0;

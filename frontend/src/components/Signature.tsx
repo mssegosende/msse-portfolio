@@ -23,6 +23,7 @@ export const Signature = () => {
     <div
       ref={ref}
       data-testid="signature"
+      data-capture-hide
       aria-hidden="true"
       // signature-halo (index.css): readable over the robot's shoulder in
       // scene 2, silver in dark (María Sol, 9 Nov), black in light.

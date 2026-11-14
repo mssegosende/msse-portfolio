@@ -3,6 +3,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SECTION_XF_VH } from "@/components/scroll-scene/choreography";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { CAPTURE_QUERY } from "@/lib/capture";
 import { whoosh } from "@/lib/sound";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -27,7 +28,10 @@ export const XF = {
   cardsDur: 0.22,
 };
 
-/** Where the crossfades play: desktop, with motion. Phones and reduced motion scroll plainly. */
+/**
+ * Where the crossfades play: desktop, with motion. Phones, reduced motion and
+ * capture mode (lib/capture: a full-page shot or a print) scroll plainly.
+ */
 export const XF_QUERY = "(min-width: 1024px) and (prefers-reduced-motion: no-preference)";
 
 /** The crossfade's scroll, px: the 1 -> 2 one (~112% of the viewport height). */
@@ -87,7 +91,9 @@ export const useCrossfade = (
   /** Refresh after the hero's pin and the sections above. */
   priority: number,
 ) => {
-  const on = useMediaQuery(XF_QUERY);
+  const xf = useMediaQuery(XF_QUERY);
+  const capture = useMediaQuery(CAPTURE_QUERY);
+  const on = xf && !capture;
   useLayoutEffect(() => {
     const into = ref.current;
     if (!on || !into) return undefined;

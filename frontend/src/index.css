@@ -2,6 +2,58 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Capture mode (lib/capture.ts: a full-page screenshot or a print; the same
+   media list there). --vh / --svh stand for 1vh / 1svh in the sizes a scene
+   takes from the viewport; a capture stretches the viewport to the whole
+   page, so there they are the reference height's hundredth instead (a
+   1440 x 900 frame per scene on desktop widths, an 844px phone screen
+   below). The loading screen never shows; print keeps the dark ground. */
+:root {
+  --vh: 1vh;
+  --svh: 1svh;
+}
+@media print, screen and (min-width: 1024px) and (max-aspect-ratio: 2/5) {
+  :root {
+    --vh: 9px;
+    --svh: 9px;
+  }
+}
+@media screen and (max-width: 1023px) and (max-aspect-ratio: 1/3) {
+  :root {
+    --vh: 8.44px;
+    --svh: 8.44px;
+  }
+}
+@media screen and (min-width: 1024px) and (max-aspect-ratio: 1/3) {
+  :root {
+    --vh: 9px;
+    --svh: 9px;
+  }
+}
+@media print,
+  screen and (max-aspect-ratio: 1/3),
+  screen and (min-width: 1024px) and (max-aspect-ratio: 2/5) {
+  #boot {
+    display: none !important;
+  }
+  /* The fixed chrome (the dock, the section rail, the floating signature)
+     would land mid-capture and at its foot; the page reads without them. */
+  [data-capture-hide] {
+    display: none !important;
+  }
+}
+@page {
+  size: 1440px 900px;
+  margin: 0;
+}
+@media print {
+  html,
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
 /* Theme tokens. --ink and --surface are RGB channels, so any alpha can be
    written rgb(var(--ink) / 0.08) and inverts with the theme. Light is the
    default on bare :root; dark only overrides the channels. */
@@ -554,8 +606,10 @@ textarea:-webkit-autofill {
    (María Sol, 13 Nov). Desktop: the design's 19.5vw (330px at 1440); phones
    (María Sol, 13 Nov): much bigger, behind the head. */
 .hero-wordmark--depth {
-  --sign-fs: 19.5vw;
-  --sign-pad: max(12vw, 72px);
+  /* The width's share, capped by the height's (the frame's 19.5vw at 16:10),
+     so a short window (DevTools docked at the bottom) keeps its proportion. */
+  --sign-fs: min(19.5vw, calc(var(--vh) * 31.2));
+  --sign-pad: max(min(12vw, calc(var(--vh) * 19.2)), 72px);
   padding-block: var(--sign-pad);
   margin-top: calc(-1 * var(--sign-pad));
   --sign-mask: radial-gradient(
@@ -715,7 +769,10 @@ textarea:-webkit-autofill {
     0 0 12px rgba(11, 13, 16, 0.6);
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce),
+  print,
+  screen and (max-aspect-ratio: 1/3),
+  screen and (min-width: 1024px) and (max-aspect-ratio: 2/5) {
   .cap-rise,
   .cap-sink {
     animation-duration: 0.01s;
@@ -1294,7 +1351,10 @@ textarea:-webkit-autofill {
     transform: scale(1);
   }
 }
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce),
+  print,
+  screen and (max-aspect-ratio: 1/3),
+  screen and (min-width: 1024px) and (max-aspect-ratio: 2/5) {
   .crt-sky__star {
     animation: none;
   }
@@ -1494,7 +1554,10 @@ textarea:-webkit-autofill {
     opacity: 0.5;
   }
 }
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce),
+  print,
+  screen and (max-aspect-ratio: 1/3),
+  screen and (min-width: 1024px) and (max-aspect-ratio: 2/5) {
   .crt-status__dot,
   .crt-status-dot {
     animation: none;
@@ -1569,7 +1632,10 @@ textarea:-webkit-autofill {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce),
+  print,
+  screen and (max-aspect-ratio: 1/3),
+  screen and (min-width: 1024px) and (max-aspect-ratio: 2/5) {
   .crt-glitch {
     display: none;
   }
@@ -1646,7 +1712,10 @@ textarea:-webkit-autofill {
   outline: 1px solid var(--crt-title);
   outline-offset: 2px;
 }
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce),
+  print,
+  screen and (max-aspect-ratio: 1/3),
+  screen and (min-width: 1024px) and (max-aspect-ratio: 2/5) {
   .crt-bio__text {
     transition: none;
   }

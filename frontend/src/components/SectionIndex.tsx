@@ -19,6 +19,7 @@ export const SectionIndex = () => {
     <nav
       aria-label="Sections"
       data-testid="section-index"
+      data-capture-hide
       className="fixed right-[0.8vw] top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center lg:flex"
       style={{ zoom }}
     >
