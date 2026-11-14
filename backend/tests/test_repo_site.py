@@ -18,16 +18,18 @@ def png_size(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", data[16:24])
 
 
-def test_favicon_svg_follows_the_browser_white_or_navy_on_no_ground():
+def test_favicon_svg_is_white_only_on_no_ground():
     svg = (PUBLIC / "favicon.svg").read_text("utf8")
 
     assert S_PATH in svg  # the S as a path, not text in a font
     assert "<text" not in svg
     assert "<rect" not in svg  # transparent: no ground
     assert "M6 60H24" not in svg  # no crosshair at favicon size
-    light, dark = svg.split("@media (prefers-color-scheme:dark)")
-    assert "#0E2C4C" in light and "#FFFFFF" not in light
-    assert "#FFFFFF" in dark and "#0E2C4C" not in dark
+    # White only, whatever the browser's scheme (María Sol, 13 Nov: the navy
+    # one vanished on a dark tab).
+    assert "#FFFFFF" in svg
+    assert "#0E2C4C" not in svg
+    assert "prefers-color-scheme" not in svg
     assert "stroke-width:7" in svg  # heavier brackets for 16px
 
 

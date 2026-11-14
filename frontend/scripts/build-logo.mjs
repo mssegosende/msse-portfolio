@@ -43,9 +43,11 @@ const fullMark = (c, { bracket = BRACKET_STROKE, crosshair = CROSSHAIR_STROKE } 
   `<path d="${BRACKETS}" fill="none" stroke="${c.text}" stroke-width="${bracket}"/>` +
   `<path d="${S_PATH}" fill="${c.core}"/></svg>\n`;
 
-// The favicon follows the BROWSER's colour scheme, not the site's theme
-// (María Sol, 13 Nov): no ground (transparent), the mark pure white on a dark
-// browser and --crt-core (#0E2C4C) on a light one; cropped to the brackets
+// The favicon: no ground (transparent), the mark pure white (María Sol,
+// 13 Nov: white only; the navy one vanished on a dark tab, since Chrome
+// answers prefers-color-scheme from the system, not from its own dark theme).
+// The navy variant for a light browser stays here, off, for the light-mode
+// branch (FAVICON_FOLLOWS_SCHEME); cropped to the brackets
 // (24..96), no crosshair, strokes heavy enough for 16px (7 units = ~1.6px at
 // 16). The S is drawn 1.3x larger with a thin stroke of its own colour: wider
 // than that and its openings close into an 8.
@@ -54,12 +56,16 @@ const FAV_STROKE = 7;
 const FAV_S_STROKE = 1.2;
 const FAV_S = `transform="translate(60 60) scale(1.3) translate(-60 -60)"`;
 const FAV = { dark: "#FFFFFF", light: "#0E2C4C" };
+const FAVICON_FOLLOWS_SCHEME = false;
 const markBody = (b, s) => `<path ${b} d="${BRACKETS}"/>` + `<path ${s} ${FAV_S} d="${S_PATH}"/>`;
+const FAV_BASE = FAVICON_FOLLOWS_SCHEME ? FAV.light : FAV.dark;
 const faviconSvg =
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${FAV_BOX}"><style>` +
-  `.b{fill:none;stroke:${FAV.light};stroke-width:${FAV_STROKE}}` +
-  `.s{fill:${FAV.light};stroke:${FAV.light};stroke-width:${FAV_S_STROKE};stroke-linejoin:round}` +
-  `@media (prefers-color-scheme:dark){.b{stroke:${FAV.dark}}.s{fill:${FAV.dark};stroke:${FAV.dark}}}` +
+  `.b{fill:none;stroke:${FAV_BASE};stroke-width:${FAV_STROKE}}` +
+  `.s{fill:${FAV_BASE};stroke:${FAV_BASE};stroke-width:${FAV_S_STROKE};stroke-linejoin:round}` +
+  (FAVICON_FOLLOWS_SCHEME
+    ? `@media (prefers-color-scheme:dark){.b{stroke:${FAV.dark}}.s{fill:${FAV.dark};stroke:${FAV.dark}}}`
+    : "") +
   `</style>` +
   markBody('class="b"', 'class="s"') +
   `</svg>
