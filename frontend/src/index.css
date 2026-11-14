@@ -1471,9 +1471,10 @@ textarea:-webkit-autofill {
 .crt-status-label {
   color: var(--crt-title);
 }
-/* The dot: one size, a bright core and the glow of Capabilities' lit rail
-   numbers (Ø01 / Ø02 / Ø03, .crt-rail-btn[aria-pressed]) as the reference,
-   steady (María Sol, 13 Nov: no dull pulse; all the same). */
+/* The dot: one size, the glow of Capabilities' lit rail numbers (Ø01 / Ø02 /
+   Ø03, .crt-rail-btn[aria-pressed]) as the reference, and all of them blink
+   together (María Sol, 13 Nov: all the same, bright, blinking; a near-white
+   core). The blink only dips to half, so a dot never reads dull. */
 .crt-status__dot,
 .crt-status-dot {
   flex: none;
@@ -1484,12 +1485,29 @@ textarea:-webkit-autofill {
   box-shadow:
     0 0 6px rgba(40, 110, 220, 0.5),
     0 0 10px rgba(40, 110, 220, 0.18);
+  animation: crt-status-blink 2.2s ease-in-out infinite;
 }
 :root[data-theme="dark"] .crt-status__dot,
 :root[data-theme="dark"] .crt-status-dot {
+  background: #f4fdff;
   box-shadow:
     0 0 6px rgba(108, 185, 238, 0.878),
     0 0 14px rgba(108, 185, 238, 0.439);
+}
+@keyframes crt-status-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .crt-status__dot,
+  .crt-status-dot {
+    animation: none;
+  }
 }
 .crt-link {
   color: var(--crt-text);

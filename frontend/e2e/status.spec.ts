@@ -2,10 +2,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { blockSpline, DESKTOP, openHome, PHONE } from "./helpers";
 
 // Every status indicator, one style (María Sol, 13 Nov): the label white
-// (--crt-title); the dot bright, with the glow of Capabilities' lit rail
-// numbers, steady, all the same. The old pink (#F472B6) is gone.
+// (--crt-title); the dot near-white, with the glow of Capabilities' lit rail
+// numbers, all blinking the same way (never below half); still under reduced
+// motion. The old pink (#F472B6) is gone.
 const TITLE = "rgb(238, 248, 255)"; // --crt-title, dark
-const PHOSPHOR = "rgb(218, 248, 255)"; // the dot's core: --crt-row-value, dark
+const PHOSPHOR = "rgb(244, 253, 255)"; // the dot's core, dark: near-white
 // The reference glow (0.878, 0.439), as the browser reports it.
 const GLOW =
   "rgba(108, 185, 238, 0.88) 0px 0px 6px 0px, rgba(108, 185, 238, 0.44) 0px 0px 14px 0px";
@@ -23,12 +24,12 @@ const pinkElements = (page: Page) =>
       .map((el) => el.outerHTML.slice(0, 80));
   }, PINK.source);
 
-const dotsAndLabels = async (page: Page) => {
+const dotsAndLabels = async (page: Page, blink = "crt-status-blink") => {
   for (const dot of await page.locator(".crt-status-dot, .crt-status__dot").all()) {
     await expect(dot).toHaveCSS("background-color", PHOSPHOR);
     await expect(dot).toHaveCSS("box-shadow", GLOW);
     await expect(dot).toHaveCSS("width", "8px");
-    await expect(dot).toHaveCSS("animation-name", "none"); // steady: no dull pulse
+    await expect(dot).toHaveCSS("animation-name", blink);
   }
   for (const label of await page.locator(".crt-status-label, .crt-status").all())
     await expect(label).toHaveCSS("color", TITLE);
@@ -66,5 +67,16 @@ test.describe("phone", () => {
     );
     await dotsAndLabels(page);
     expect(await pinkElements(page)).toEqual([]);
+  });
+});
+
+test.describe("reduced motion", () => {
+  test.use({ viewport: DESKTOP, reducedMotion: "reduce" });
+
+  test("the dots hold still", async ({ page }) => {
+    await blockSpline(page);
+    await page.goto("/");
+    await expect(page.getByTestId("hero-status-dot")).toBeAttached();
+    await dotsAndLabels(page, "none");
   });
 });
