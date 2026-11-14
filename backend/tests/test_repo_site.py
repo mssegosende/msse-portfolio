@@ -18,19 +18,30 @@ def png_size(path: Path) -> tuple[int, int]:
     return struct.unpack(">II", data[16:24])
 
 
-def test_favicon_svg_is_white_only_on_no_ground():
+def test_favicon_svg_follows_the_browser_white_or_navy_on_no_ground():
     svg = (PUBLIC / "favicon.svg").read_text("utf8")
 
     assert S_PATH in svg  # the S as a path, not text in a font
     assert "<text" not in svg
     assert "<rect" not in svg  # transparent: no ground
     assert "M6 60H24" not in svg  # no crosshair at favicon size
-    # White only, whatever the browser's scheme (María Sol, 13 Nov: the navy
-    # one vanished on a dark tab).
-    assert "#FFFFFF" in svg
-    assert "#0E2C4C" not in svg
-    assert "prefers-color-scheme" not in svg
+    light, dark = svg.split("@media (prefers-color-scheme:dark)")
+    assert "#0E2C4C" in light and "#FFFFFF" not in light
+    assert "#FFFFFF" in dark and "#0E2C4C" not in dark
     assert "stroke-width:7" in svg  # heavier brackets for 16px
+
+
+def test_the_two_fixed_favicons_the_page_swaps_between():
+    # White for a dark tab, navy for a light one; one colour each, no ground.
+    for name, colour, other in (
+        ("favicon-dark.svg", "#FFFFFF", "#0E2C4C"),
+        ("favicon-light.svg", "#0E2C4C", "#FFFFFF"),
+    ):
+        svg = (PUBLIC / name).read_text("utf8")
+        assert S_PATH in svg
+        assert colour in svg and other not in svg
+        assert "<rect" not in svg and "prefers-color-scheme" not in svg
+        assert 'stroke-width="7"' in svg
 
 
 def test_png_fallbacks_are_the_white_mark_on_a_dark_tile():

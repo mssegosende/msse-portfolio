@@ -5,6 +5,7 @@ import App from "@/App";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { SoundLab } from "@/components/SoundLab";
 import { bootDone, bootSkip } from "@/lib/boot";
+import { followBrowserScheme } from "@/lib/favicon";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("index.html has no #root");
@@ -14,6 +15,9 @@ if (!root) throw new Error("index.html has no #root");
 const soundLab = new URLSearchParams(window.location.search).get("view") === "sounds";
 bootDone("app");
 if (soundLab) bootSkip();
+
+// The tab icon: navy on a light browser, white on a dark one.
+followBrowserScheme();
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>

@@ -43,11 +43,12 @@ const fullMark = (c, { bracket = BRACKET_STROKE, crosshair = CROSSHAIR_STROKE } 
   `<path d="${BRACKETS}" fill="none" stroke="${c.text}" stroke-width="${bracket}"/>` +
   `<path d="${S_PATH}" fill="${c.core}"/></svg>\n`;
 
-// The favicon: no ground (transparent), the mark pure white (María Sol,
-// 13 Nov: white only; the navy one vanished on a dark tab, since Chrome
-// answers prefers-color-scheme from the system, not from its own dark theme).
-// The navy variant for a light browser stays here, off, for the light-mode
-// branch (FAVICON_FOLLOWS_SCHEME); cropped to the brackets
+// The favicon follows the browser (María Sol, 13 Nov): no ground
+// (transparent), the mark white on a dark tab and --crt-core (#0E2C4C) on a
+// light one. Inside an SVG favicon Chrome answers prefers-color-scheme from the
+// system, not from its own light/dark mode, so the page also swaps the icon
+// itself (src/lib/favicon.ts) between the two fixed ones below; favicon.svg,
+// with its media query, is what a browser without the script shows. Cropped to the brackets
 // (24..96), no crosshair, strokes heavy enough for 16px (7 units = ~1.6px at
 // 16). The S is drawn 1.3x larger with a thin stroke of its own colour: wider
 // than that and its openings close into an 8.
@@ -56,7 +57,7 @@ const FAV_STROKE = 7;
 const FAV_S_STROKE = 1.2;
 const FAV_S = `transform="translate(60 60) scale(1.3) translate(-60 -60)"`;
 const FAV = { dark: "#FFFFFF", light: "#0E2C4C" };
-const FAVICON_FOLLOWS_SCHEME = false;
+const FAVICON_FOLLOWS_SCHEME = true;
 const markBody = (b, s) => `<path ${b} d="${BRACKETS}"/>` + `<path ${s} ${FAV_S} d="${S_PATH}"/>`;
 const FAV_BASE = FAVICON_FOLLOWS_SCHEME ? FAV.light : FAV.dark;
 const faviconSvg =
@@ -95,6 +96,22 @@ const touchIcon =
 const pub = path.join(root, "public");
 const design = path.join(root, "../design/logo");
 writeFileSync(path.join(pub, "favicon.svg"), faviconSvg);
+// The two fixed icons the page picks between (one colour each, no query).
+for (const [name, colour] of [
+  ["favicon-dark.svg", FAV.dark],
+  ["favicon-light.svg", FAV.light],
+]) {
+  writeFileSync(
+    path.join(pub, name),
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${FAV_BOX}">` +
+      markBody(
+        `fill="none" stroke="${colour}" stroke-width="${FAV_STROKE}"`,
+        `fill="${colour}" stroke="${colour}" stroke-width="${FAV_S_STROKE}" stroke-linejoin="round"`,
+      ) +
+      `</svg>
+`,
+  );
+}
 writeFileSync(path.join(design, "msse-mark-dark.svg"), fullMark(THEME.dark));
 writeFileSync(path.join(design, "msse-mark-light.svg"), fullMark(THEME.light));
 
