@@ -74,7 +74,6 @@ export const useHeroElements = () =>
     checkRef: createRef<HTMLDivElement>(),
     scrollCueRef: createRef<HTMLDivElement>(),
     headlineRef: createRef<HTMLDivElement>(),
-    skipRef: createRef<HTMLButtonElement>(),
     layer2Ref: createRef<HTMLDivElement>(),
     title2Ref: createRef<HTMLDivElement>(),
     // Scene 2's card stack (phones place it above the dock).
@@ -152,7 +151,7 @@ export const useHeroTimeline = ({
   scenes,
 }: HeroTimelineOptions) => {
   // A phone theme reload comes from the dock, so the sequence was already seen:
-  // start with the dock shown and no SKIP INTRO.
+  // start with the dock shown.
   const [journeyDone, setJourneyDone] = useState(pendingJourneyDone);
   const journeyRef = useRef(pendingJourneyDone);
   // Scene 2's card on screen (-1 before the first), and whether the pin is at its end.
@@ -173,7 +172,6 @@ export const useHeroTimeline = ({
   const applyGazeRef = useRef<(() => void) | null>(null);
   // Whether scene 1 still shows (the crosshair tracks the head only then).
   const scene1ShownRef = useRef<{ on: boolean } | null>(null);
-  const heroEndRef = useRef(0);
   // Normalized cursor over the hero (-0.5..0.5), for the heads.
   const mouseNRef = useRef({ x: 0, y: 0 });
   // When the cursor last moved (performance.now()): scene 2's head follows it
@@ -207,7 +205,6 @@ export const useHeroTimeline = ({
       checkRef,
       scrollCueRef,
       headlineRef,
-      skipRef,
       layer2Ref,
       title2Ref,
       cardsRef,
@@ -679,8 +676,6 @@ export const useHeroTimeline = ({
         defaults: { ease: "none" },
         // The card on screen follows the scrubbed time.
         onUpdate: () => {
-          // SKIP INTRO turns dark over scene 2's light ground (scene 1 keeps it light).
-          if (skipRef.current) skipRef.current.dataset.scene = tl.time() >= XFADE_AT ? "2" : "1";
           if (scene1ShownRef.current) scene1ShownRef.current.on = tl.time() < XFADE_AT + 0.06;
           const idx = cardIndexAt(tl.time());
           if (idx !== cardIndexRef.current) {
@@ -716,8 +711,8 @@ export const useHeroTimeline = ({
             if (isTouchDevice && !isMobile) touchParallax(p);
             setAtEnd(p > 0.985);
             // The dock comes with scene 2, once the crossfade from scene 1 is
-            // over, and SKIP INTRO (scene 1's) goes (María Sol, pre-launch:
-            // it used to wait for the pin's end). Latches once: the dock stays
+            // over (María Sol, pre-launch: it used to wait for the pin's end).
+            // Latches once: the dock stays
             // even if the visitor scrolls back up.
             const shown = p * (self.animation?.duration() ?? 1);
             if (shown >= XFADE_AT + XFADE_DURATION && !journeyRef.current) {
@@ -779,10 +774,6 @@ export const useHeroTimeline = ({
       // ---- scene 2: the cards; which one shows comes from onUpdate --------------
       const firstCard = SCENE2.cards[0] ?? 1;
       tl.to(cardsEl, { autoAlpha: 1, duration: 0.02 }, firstCard - 0.02);
-      // Phones: SKIP INTRO shares the card's spot, so it leaves when the cards come.
-      if (isMobile && skipRef.current) {
-        tl.to(skipRef.current, { autoAlpha: 0, duration: 0.04 }, firstCard - 0.05);
-      }
       // Hold, so the last card reads before the pin releases.
       tl.to({}, { duration: Math.max(0.01, SCENE2.end - tl.duration()) });
 
@@ -813,8 +804,6 @@ export const useHeroTimeline = ({
         });
         if ((hero || layer2) && scenesLoadedRef.current) noteRenderedFrame();
       };
-
-      if (tl.scrollTrigger) heroEndRef.current = tl.scrollTrigger.end;
 
       // Desktop: a window resize keeps the visitor at the same point of the
       // sequence (pinPointToKeep). Only the refresh that follows a resize, and
@@ -933,19 +922,8 @@ export const useHeroTimeline = ({
     // scenes are stable objects.
   }, [isMobile, stacked, sceneUrl, els, scenes]);
 
-  // Lands just past the pin, at the top of the projects.
-  const skipIntro = () => {
-    const projects = document.getElementById("projects");
-    const y = stacked
-      ? (projects?.getBoundingClientRect().top ?? 0) + window.scrollY - 4
-      : heroEndRef.current || window.innerHeight * 7;
-    const lenis = getLenis();
-    if (lenis) lenis.scrollTo(y + 4, { duration: 1.1 });
-    else window.scrollTo({ top: y + 4, behavior: "smooth" });
-  };
-
   // Stacked: scene 2 as it ends, every card out.
   return stacked
-    ? { journeyDone, skipIntro, cardIndex: cardIndexAt(SCENE2.end), atEnd: true }
-    : { journeyDone, skipIntro, cardIndex, atEnd };
+    ? { journeyDone, cardIndex: cardIndexAt(SCENE2.end), atEnd: true }
+    : { journeyDone, cardIndex, atEnd };
 };

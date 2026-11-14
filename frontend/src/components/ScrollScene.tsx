@@ -67,7 +67,6 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     checkRef,
     scrollCueRef,
     headlineRef,
-    skipRef,
     layer2Ref,
     title2Ref,
     cardsRef,
@@ -215,7 +214,7 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
     </div>
   );
 
-  const { journeyDone, skipIntro, cardIndex } = useHeroTimeline({
+  const { cardIndex } = useHeroTimeline({
     isMobile,
     stacked,
     onFail: () => setStackedFallback(true),
@@ -552,26 +551,6 @@ export const ScrollScene = ({ onJourneyEnd }: { onJourneyEnd?: () => void }) => 
             </div>
           </div>
         </div>
-
-        {/* Skip intro, until the sequence has been seen (then the dock takes over). */}
-        {!journeyDone && (
-          <button
-            ref={skipRef}
-            data-testid="skip-intro"
-            onClick={skipIntro}
-            className={`crt-skip pointer-events-auto absolute min-h-11 whitespace-nowrap font-vt uppercase ${
-              isMobile
-                ? "bottom-[calc(env(safe-area-inset-bottom,0px)+10px)] right-3 px-2 text-[17px] tracking-[0.18em]"
-                : "bottom-9 right-14 px-3 text-[20px] tracking-[0.2em]"
-            } ${
-              // On phones the timeline drives its opacity (it hides with the cards); a CSS
-              // transition would lag behind it.
-              isMobile ? "" : "transition-[opacity,color] duration-300"
-            }`}
-          >
-            <span className="hero-bar-in">Skip intro &gt;&gt;</span>
-          </button>
-        )}
 
         {!stacked && scene2Cards}
         {/* CRT overlays over the whole pinned hero (scenes 1 and 2). */}

@@ -962,7 +962,7 @@ textarea:-webkit-autofill {
 :root[data-theme="dark"] .crt-hero-glow {
   background: radial-gradient(closest-side, rgba(108, 185, 238, 0.13), rgba(108, 185, 238, 0));
 }
-/* SCROLL and SKIP INTRO. Light: the ink (12.9:1 on the paper; María Sol,
+/* SCROLL. Light: the ink (12.9:1 on the paper; María Sol,
    pre-launch: it read grey), with a paper halo where it crosses the robot. */
 .crt-cue {
   color: var(--crt-title);
@@ -1306,15 +1306,6 @@ textarea:-webkit-autofill {
 }
 :root[data-theme="dark"] .crt-scope__head {
   filter: drop-shadow(0 0 5px #6ebaef);
-}
-
-/* SKIP INTRO moves to the bottom centre in scene 2 (Main.dc.html); the
-   timeline marks the button's scene. */
-.crt-skip[data-scene="2"] {
-  right: auto;
-  left: 50%;
-  bottom: 22px;
-  transform: translateX(-50%);
 }
 
 /* ---- CRT redesign phase 4: projects ---- */
