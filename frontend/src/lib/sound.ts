@@ -61,6 +61,9 @@ const load = (c: AudioContext) =>
       try {
         const res = await fetch(FILES[k]);
         buffers[k] = await c.decodeAudioData(await res.arrayBuffer());
+        // The loop starts as soon as its own file is ready, not after the
+        // last short clip (decoding is slow on phones).
+        if (k === "background" && on) startBackground();
       } catch {
         /* that one stays silent */
       }
@@ -73,16 +76,29 @@ const load = (c: AudioContext) =>
 // context is made and nothing is scheduled (a sound scheduled on a suspended
 // context would play late, on that first gesture): sound "on" from a saved
 // choice stays silent until then, and then works normally.
+//
+// Phones (María Sol, 13 Nov: the music worked so-so on phones): a finger's
+// pointerdown is not a gesture that unlocks audio (its touchend or click is),
+// so a context made there stayed suspended and the music waited for some later
+// tap, or never came. Now only an unlocking event counts
+// (navigator.userActivation where the browser has it), and every tap resumes a
+// context that is not running: the system suspends it on a call, another
+// app's audio or a locked screen (iOS: "interrupted"), and a resume without a
+// gesture there can fail.
 let gestured = false;
 if (typeof window !== "undefined") {
-  const first = () => {
+  const unlock = () => {
+    if (navigator.userActivation && !navigator.userActivation.isActive) return;
     gestured = true;
-    for (const type of GESTURES) window.removeEventListener(type, first, true);
     if (on && audio()) startBackground();
   };
-  const GESTURES = ["pointerdown", "keydown", "touchend"] as const;
-  for (const type of GESTURES) window.addEventListener(type, first, true);
+  for (const type of ["pointerdown", "pointerup", "touchend", "click", "keydown"] as const)
+    window.addEventListener(type, unlock, true);
 }
+
+/** Phones: a larger audio buffer, so a busy page doesn't make the music crackle. */
+const coarse = () =>
+  typeof window.matchMedia === "function" && window.matchMedia("(pointer: coarse)").matches;
 
 /** The context, if sound is on (or `force`: the test page), and the tab visible. */
 const audio = (force = false): AudioContext | null => {
@@ -93,7 +109,17 @@ const audio = (force = false): AudioContext | null => {
       window.AudioContext ??
       (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AC) return null;
-    ctx = new AC();
+    // iOS: Web Audio is muted by the ring/silent switch unless the page asks
+    // for media playback (Safari 16.4+); sound is the visitor's own choice.
+    const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
+    if (session) {
+      try {
+        session.type = "playback";
+      } catch {
+        /* an older Safari: the switch decides */
+      }
+    }
+    ctx = new AC({ latencyHint: coarse() ? "playback" : "interactive" });
     master = ctx.createGain();
     master.gain.value = 10 ** (MASTER_DB / 20);
     const limiter = ctx.createDynamicsCompressor();
@@ -101,7 +127,8 @@ const audio = (force = false): AudioContext | null => {
     limiter.ratio.value = 6;
     master.connect(limiter).connect(ctx.destination);
   }
-  if (ctx.state === "suspended") void ctx.resume().catch(() => {});
+  // "suspended", or iOS's "interrupted" (not in the DOM types).
+  if (ctx.state !== "running" && ctx.state !== "closed") void ctx.resume().catch(() => {});
   void load(ctx);
   return ctx;
 };

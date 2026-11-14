@@ -68,6 +68,33 @@ describe("lib/sound", () => {
     expect(contexts).toHaveLength(1);
   });
 
+  it("phones: every later tap resumes a context that is not running (suspended, interrupted)", async () => {
+    const { setSound } = await import("./sound");
+    setSound(true);
+    window.dispatchEvent(new Event("touchend"));
+    const c = contexts[0] as FakeAudioContext;
+    const resume = vi.spyOn(c, "resume");
+    // The system took audio away (a call, another app, iOS "interrupted").
+    c.state = "interrupted";
+    window.dispatchEvent(new Event("click"));
+    expect(resume).toHaveBeenCalledTimes(1);
+    c.state = "running";
+    window.dispatchEvent(new Event("click"));
+    expect(resume).toHaveBeenCalledTimes(1); // running: left alone
+    expect(contexts).toHaveLength(1);
+  });
+
+  it("a touch's pointerdown does not unlock audio; its touchend does", async () => {
+    vi.stubGlobal("navigator", { ...navigator, userActivation: { isActive: false } });
+    const { setSound } = await import("./sound");
+    setSound(true);
+    window.dispatchEvent(new Event("pointerdown"));
+    expect(contexts).toHaveLength(0);
+    vi.stubGlobal("navigator", { ...navigator, userActivation: { isActive: true } });
+    window.dispatchEvent(new Event("touchend"));
+    expect(contexts).toHaveLength(1);
+  });
+
   it("the SOUND setting saves the entry choice for the next visit", async () => {
     const { setSound } = await import("./sound");
     setSound(true);
